@@ -4692,25 +4692,60 @@ export default function App() {
 
           {/* Right Column: Figma Make "Tanya Nara" AI Panel */}
           <aside className="ai-panel-box desktop-only">
-            <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
+            <div className="ai-panel-inner">
               <div>
                 <div className="ai-heading-box">
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div className="ai-orbit-box">N</div>
                     <div>
-                      <h2 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "#17201d" }}>Tanya Nara</h2>
-                      <p style={{ fontSize: 10.5, color: "#727d78", margin: 0 }}>Tutor belajar pribadimu</p>
+                      <h2 style={{ fontSize: 13.5, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.01em" }}>Tanya Nara</h2>
+                      <p style={{ fontSize: 10, color: "#727d78", margin: 0, fontWeight: 500 }}>Tutor Belajar Pribadi</p>
                     </div>
                   </div>
-                  <span className="online-label-box">
-                    <i />
-                    Online
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span className="online-label-box">
+                      <i />
+                      Online
+                    </span>
+                    {messages.length > 0 && (
+                      <button
+                        onClick={() => setMessages([])}
+                        title="Bersihkan riwayat percakapan"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#8a9691",
+                          cursor: "pointer",
+                          padding: "3px 4px",
+                          borderRadius: 4,
+                          display: "flex",
+                          alignItems: "center",
+                          transition: "0.15s ease"
+                        }}
+                      >
+                        <RotateCw size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="ai-context-indicator">
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
+                    <Sparkles size={11} color="#4b6623" />
+                    <span className="ctx-title">{activeDocTitle || "Modul Belajar"}</span>
+                  </div>
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "#56645e" }}>
+                    {activeTab === "quiz" ? "Kuis" : activeTab === "flashcards" ? "Kartu" : activeTab === "summary" ? "Rangkuman" : "Materi"}
                   </span>
                 </div>
 
-                <div className="chat-window-box no-scrollbar" style={{ minHeight: 240, maxHeight: "calc(100vh - 360px)" }}>
+                <div className="chat-window-box no-scrollbar" style={{ minHeight: 220, maxHeight: "calc(100vh - 380px)" }}>
                   <div className="ai-note-box">
-                    Aku sudah membaca modul dan soal yang sedang kamu pelajari. Tanyakan apa saja jika ada rumus atau konsep yang membingungkan.
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4, fontWeight: 700, color: "#17201d", fontSize: 11.5 }}>
+                      <Brain size={13} color="#18221f" />
+                      <span>Asisten Belajar Tanka</span>
+                    </div>
+                    Tanyakan bagian yang belum jelas, minta contoh angka kecil, atau kirimkan jawaban latihan manualmu untuk dikoreksi bertahap.
                   </div>
                   {messages.map((m) => (
                     <div
@@ -4724,18 +4759,19 @@ export default function App() {
                     >
                       <div
                         style={{
-                          maxWidth: "88%",
-                          padding: "9px 12px",
+                          maxWidth: "90%",
+                          padding: m.role === "user" ? "9px 13px" : "11px 14px",
                           borderRadius: m.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                          backgroundColor: m.role === "user" ? "#18221f" : "#f4f6f2",
+                          backgroundColor: m.role === "user" ? "#18221f" : "#ffffff",
                           color: m.role === "user" ? "#eff5ec" : "#17201d",
-                          fontSize: 12,
-                          lineHeight: 1.5,
-                          border: m.role === "user" ? "none" : "1px solid #dce4d7"
+                          fontSize: 12.5,
+                          lineHeight: 1.55,
+                          border: m.role === "user" ? "none" : "1px solid #dde1da",
+                          boxShadow: m.role === "user" ? "0 2px 8px rgba(24, 34, 31, 0.12)" : "0 2px 8px rgba(27, 39, 35, 0.02)"
                         }}
                       >
                         {m.role === "assistant" ? (
-                          <div className="nara-md-response" style={{ fontSize: 12, lineHeight: 1.5 }}>
+                          <div className="nara-md-response" style={{ fontSize: 12.5, lineHeight: 1.55 }}>
                             <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
                               {m.content}
                             </ReactMarkdown>
@@ -4745,8 +4781,9 @@ export default function App() {
                     </div>
                   ))}
                   {isChatSending && (
-                    <div style={{ fontSize: 11, color: "#727d78", fontStyle: "italic", padding: "4px 8px" }}>
-                      Nara sedang menyusun penjelasan...
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#607069", fontStyle: "italic", padding: "4px 8px" }}>
+                      <Sparkles size={12} color="#18221f" />
+                      <span>Nara sedang menyusun penjelasan...</span>
                     </div>
                   )}
                   <div ref={chatEndRef} />
@@ -4783,17 +4820,17 @@ export default function App() {
                 >
                   <input
                     type="text"
-                    placeholder="Ketik pertanyaanmu..."
+                    placeholder="Tanya Nara atau ketik jawaban latihan..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     disabled={isChatSending}
                   />
-                  <button type="submit" disabled={isChatSending || !chatInput.trim()}>
+                  <button type="submit" disabled={isChatSending || !chatInput.trim()} title="Kirim pertanyaan">
                     ↑
                   </button>
                 </form>
-                <p style={{ margin: "8px 0 0", fontSize: 9.5, color: "#8a9691", textAlign: "center" }}>
-                  AI dapat membuat kesalahan. Tetap periksa rumus penting.
+                <p style={{ margin: "7px 0 0", fontSize: 9.5, color: "#8a9691", textAlign: "center" }}>
+                  AI tersinkronisasi otomatis dengan modul & soal aktif.
                 </p>
               </div>
             </div>

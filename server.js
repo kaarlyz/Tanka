@@ -661,23 +661,42 @@ ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat,
       const isMathDomain = detectRealMath(doc.content);
 
       let typeGuidance = "";
-      if (quizType === "beginner") {
-        typeGuidance = `TIPE KUIS: PEMULA & ULANGAN HARIAN SEKOLAH (PERSIS GAYA GURU KELAS)
-- PRINSIP: Guru sekolah membuat soal langsung dari poin-poin yang tertulis di slide/modul. Jangan mengarang skenario fiktif yang aneh-aneh.
-- VARIASI SOAL ULANGAN SEKOLAH (IKUTI URUTAN MATERI DARI AWAL):
-  * Soal 1 (Definisi Pembuka): Tanyakan langsung definisi dasar atau istilah paling awal (misal: "Karya yang dibuat dengan keterampilan tangan dan memiliki fungsi pakai serta estetika disebut...", atau ordo matriks dasar).
-  * Soal 2 (Pengecualian / Klasifikasi): Uji daftar fungsi atau karakter (misal: "Berikut ini yang BUKAN merupakan fungsi dasar karya kerajinan adalah...").
-  * Soal 3 (Tokoh / Periode / Ciri Utama): Tanyakan tokoh kunci atau ciri era (misal: "Tokoh pelopor gerakan Arts and Crafts adalah...").
-  * Soal 4-5 (Kaidah Khusus / Komparasi Langsung): Tanyakan perbandingan gaya atau teknik yang tertulis jelas di materi (misal: "Ciri khas gaya Art Deco dibanding Art Nouveau adalah...").
-- OPSI JAWABAN (A, B, C, D, E) WAJIB SINGKAT, PADAT, DAN LANGSUNG KE INTI (istilah, nama tokoh, atau nilai hasil). Dilarang opsi berupa cerita panjang.`;
-      } else if (quizType === "conceptual") {
-        typeGuidance = `TIPE KUIS: STANDAR UJIAN SEMESTER / UJIAN SEKOLAH
-- Fokus pada penguasaan materi modul secara menyeluruh: definisi, hubungan sebab-akibat, tokoh, dan pembeda konsep yang sering tertukar di ujian.
-- Pertanyaan langsung pada inti materi tanpa skenario berbelit-belit. Opsi jawaban ringkas dan terfokus.`;
+      if (isMathDomain) {
+        if (quizType === "beginner") {
+          typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - PEMULA & FONDASI BERTAHAP
+- PRINSIP: Mulai dari angka kecil konkret, jangan cuma rumus abstrak, sampai siswa bisa mengerjakan sendiri.
+- URUTAN TANGGA KESULITAN (WAJIB DARI MUDAH KE MENENGAH):
+  * Soal 1 (Pemanasan Fondasi): Identifikasi visual atau cara baca notasi dengan angka kecil konkret (contoh: ordo matriks dasar dan mencari elemen baris-kolom $a_{12}$).
+  * Soal 2–3 (Operasi Tunggal Sederhana): Satu langkah pengerjaan yang bisa diselesaikan di kertas dalam hitungan detik (contoh: penjumlahan/pengurangan matriks 2x2 angka bulat kecil, atau cek syarat sahnya operasi).
+  * Soal 4–5 (Kaidah Operasi Bertahap): Transpos, perkalian skalar, atau perkalian matriks dasar baris x kolom dengan angka kecil (1, 2, 3, dst).
+- OPSI JAWABAN (A, B, C, D, E): WAJIB berupa angka, ordo, atau matriks hasil yang ringkas dan terfokus pada angka akhir. Dilarang cerita panjang!
+- PEMBAHASAN STEPPER: Langkah 1 bedah premis -> Langkah 2 tuliskan proses hitung eksplisit kali-tambahnya -> Langkah 3 simpulan.`;
+        } else if (quizType === "conceptual") {
+          typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - STANDAR UJIAN SEKOLAH
+- Uji pemahaman operasional dan sifat-sifat aljabar: determinan, invers, sifat komutatif/asosiatif, dan sistem persamaan matriks standar ujian sekolah.
+- Soal to-the-point dengan angka bulat rapi. Opsi ringkas. Pembahasan menjabarkan langkah hitung tuntas.`;
+        } else {
+          typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - HOTS & SELEKSI TINGGI
+- Penalaran tingkat tinggi: matriks transformasi gabungan, determinan matriks singular berparameter ($k$), atau pembuktian sifat aljabar non-rutin.`;
+        }
       } else {
-        typeGuidance = `TIPE KUIS: ANALISIS MENDALAM & PREDIKSI UJIAN (HOTS / SELEKSI TINGGI)
-- Fokus pada penalaran tingkat tinggi, analisis variabel tersembunyi, komparasi multi-konsep, dan pemecahan masalah non-rutin.
-- Rancang variasi soal yang berpotensi menjadi soal pembeda nilai di ujian seleksi atau kompetisi.`;
+        if (quizType === "beginner") {
+          typeGuidance = `TIPE KUIS: TEORI / NON-HITUNGAN - PEMULA & ULANGAN HARIAN SEKOLAH (PERSIS GAYA GURU KELAS)
+- PRINSIP: Guru kelas membuat soal langsung dari poin-poin yang tertulis di slide/modul. DILARANG membuat cerita fiktif yang aneh-aneh.
+- VARIASI SOAL ULANGAN SEKOLAH (IKUTI URUTAN MATERI DARI BAB AWAL KE AKHIR):
+  * Soal 1 (Definisi Harfiah Bab Awal): Tanyakan langsung definisi dasar atau istilah paling awal (misal: "Karya yang dibuat dengan keterampilan tangan dan memiliki fungsi pakai serta estetika disebut...").
+  * Soal 2 (Pengecualian / Klasifikasi): Uji daftar fungsi atau karakter (misal: "Berikut ini yang BUKAN merupakan fungsi dasar karya kerajinan adalah...").
+  * Soal 3 (Tokoh / Periode / Ciri Utama): Tanyakan tokoh kunci atau ciri era yang tertulis di materi (misal: "Tokoh pelopor gerakan Arts and Crafts adalah...").
+  * Soal 4–5 (Kaidah Khusus / Komparasi Langsung): Tanyakan perbandingan gaya atau teknik yang tertulis jelas di materi (misal: "Ciri khas gaya Art Deco dibanding Art Nouveau adalah...").
+- OPSI JAWABAN (A, B, C, D, E): WAJIB SINGKAT, PADAT, DAN LANGSUNG KE INTI (istilah, nama tokoh, atau fakta). DILARANG opsi berupa cerita panjang.`;
+        } else if (quizType === "conceptual") {
+          typeGuidance = `TIPE KUIS: TEORI / NON-HITUNGAN - STANDAR UJIAN SEMESTER
+- Fokus pada penguasaan modul menyeluruh: hubungan sebab-akibat, perbandingan antar-wilayah, dan analisis pembeda konsep yang sering tertukar di ujian.
+- Pertanyaan langsung pada inti materi tanpa narasi berbelit-belit.`;
+        } else {
+          typeGuidance = `TIPE KUIS: TEORI / NON-HITUNGAN - ANALISIS MENDALAM (HOTS / SELEKSI TINGGI)
+- Analisis kritis antar-teori, evaluasi studi kasus nyata, dan keterkaitan multi-variabel sosial/estetika.`;
+        }
       }
 
       // Query unresolved mistakes for adaptive remedial weighting

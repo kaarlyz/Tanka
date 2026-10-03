@@ -1052,12 +1052,26 @@
         }
       }
 
-      /* Print stylesheet for clean PDF & physical study notes */
+      /* Print stylesheet for clean, publication-grade PDF & physical study notes */
       @media print {
-        body {
-          background: #ffffff !important;
-          color: #000000 !important;
+        @page {
+          size: A4 portrait;
+          margin: 16mm 14mm 16mm 14mm;
         }
+
+        html, body, #root, .app-shell, .workspace-shell, .figma-grid, .main-content-area, .content-scroll {
+          height: auto !important;
+          min-height: auto !important;
+          max-height: none !important;
+          overflow: visible !important;
+          overflow-y: visible !important;
+          overflow-x: visible !important;
+          position: static !important;
+          background: #ffffff !important;
+          color: #17201d !important;
+          font-family: "Manrope", sans-serif !important;
+        }
+
         .sidebar-shell,
         .ai-panel-box,
         .lesson-footer-bar,
@@ -1065,9 +1079,13 @@
         .tab-bar-container,
         .desktop-only,
         .mobile-only,
-        button {
+        .drawer-overlay,
+        button,
+        .formula-actions,
+        .print-hidden {
           display: none !important;
         }
+
         .app-shell,
         .workspace-shell,
         .figma-grid,
@@ -1077,13 +1095,121 @@
           margin: 0 !important;
           padding: 0 !important;
           border: none !important;
+        }
+
+        .learning-card-white {
+          border: 1px solid #dde1da !important;
+          border-radius: 8px !important;
+          box-shadow: none !important;
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+          padding: 20px 24px !important;
+          margin-bottom: 24px !important;
           background: #ffffff !important;
         }
-        .learning-card-white {
-          border: 1px solid #cccccc !important;
-          box-shadow: none !important;
-          page-break-inside: avoid;
-          padding: 16px !important;
+
+        /* Publication-grade Markdown & Typography rules for Print */
+        .markdown-body h1, .nara-md-response h1 {
+          font-size: 20pt !important;
+          font-weight: 800 !important;
+          color: #111a17 !important;
+          border-bottom: 2px solid #18221f !important;
+          padding-bottom: 6px !important;
+          margin: 20pt 0 10pt !important;
+          break-after: avoid !important;
+          page-break-after: avoid !important;
+        }
+
+        .markdown-body h2, .nara-md-response h2 {
+          font-size: 15pt !important;
+          font-weight: 800 !important;
+          color: #18221f !important;
+          border-bottom: 1px solid #cdd4ca !important;
+          padding-bottom: 4px !important;
+          margin: 16pt 0 8pt !important;
+          break-after: avoid !important;
+          page-break-after: avoid !important;
+        }
+
+        .markdown-body h3, .nara-md-response h3 {
+          font-size: 12pt !important;
+          font-weight: 700 !important;
+          color: #2b3934 !important;
+          margin: 12pt 0 6pt !important;
+          break-after: avoid !important;
+          page-break-after: avoid !important;
+        }
+
+        .markdown-body p, .nara-md-response p,
+        .markdown-body li, .nara-md-response li {
+          font-size: 10pt !important;
+          line-height: 1.6 !important;
+          color: #24302b !important;
+        }
+
+        /* Prevent table and diagram clipping */
+        .markdown-body table, .nara-md-response table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          margin: 12pt 0 !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          font-size: 9pt !important;
+        }
+
+        .markdown-body th, .nara-md-response th {
+          background: #f0f4ee !important;
+          color: #18221f !important;
+          font-weight: 700 !important;
+          border: 1px solid #c5cec3 !important;
+          padding: 6pt 8pt !important;
+          text-align: left !important;
+        }
+
+        .markdown-body td, .nara-md-response td {
+          border: 1px solid #d8dfd6 !important;
+          padding: 5pt 8pt !important;
+          color: #2c3933 !important;
+        }
+
+        .markdown-body tr:nth-child(even), .nara-md-response tr:nth-child(even) {
+          background: #fafbf9 !important;
+        }
+
+        /* ASCII diagrams and code blocks: Wrap properly without leaking out */
+        .markdown-body pre, .nara-md-response pre {
+          background: #f6f8f5 !important;
+          border: 1px solid #d4ded2 !important;
+          border-left: 3px solid #65a30d !important;
+          border-radius: 6px !important;
+          padding: 8pt 10pt !important;
+          font-family: "DM Mono", "Courier New", monospace !important;
+          font-size: 8.5pt !important;
+          line-height: 1.4 !important;
+          color: #1e2a25 !important;
+          white-space: pre-wrap !important;
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+          margin: 10pt 0 !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+
+        .markdown-body code, .nara-md-response code {
+          font-family: "DM Mono", monospace !important;
+          font-size: 8.5pt !important;
+          background: #f0f4ee !important;
+          padding: 1pt 3pt !important;
+          border-radius: 3px !important;
+        }
+
+        .markdown-body blockquote, .nara-md-response blockquote {
+          border-left: 3px solid #72a728 !important;
+          background: #f6faf2 !important;
+          padding: 6pt 10pt !important;
+          margin: 10pt 0 !important;
+          font-style: italic !important;
+          color: #38483f !important;
         }
       }
     </style>

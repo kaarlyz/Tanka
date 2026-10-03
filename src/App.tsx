@@ -343,7 +343,7 @@ export default function App() {
   const [summaryStyle, setSummaryStyle] = useState<"tutor" | "intuitive" | "memorization">("tutor");
 
   // Quiz Type state
-  const [quizType, setQuizType] = useState<"conceptual" | "analytical">("conceptual");
+  const [quizType, setQuizType] = useState<"beginner" | "conceptual" | "analytical">("beginner");
 
   // Document Enrichment (Web Search / Eksternal) state
   const [isEnriching, setIsEnriching] = useState(false);
@@ -2393,39 +2393,31 @@ export default function App() {
                     <span style={{ fontSize: 11, color: "#727d78" }}>butir</span>
 
                     {/* Quiz Focus / Difficulty Selector */}
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 6, backgroundColor: "#fafbf8", padding: 2, borderRadius: 6, border: "1px solid #dce1da" }}>
-                      <button
-                        onClick={() => setQuizType("conceptual")}
-                        style={{
-                          backgroundColor: quizType === "conceptual" ? "#18221f" : "transparent",
-                          color: quizType === "conceptual" ? "#c8f064" : "#56615d",
-                          border: quizType === "conceptual" ? "1px solid #18221f" : "1px solid transparent",
-                          borderRadius: 5,
-                          padding: "4px 9px",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: "pointer"
-                        }}
-                        title="Ujian Biasa / Ulangan: Menguji langsung fakta, istilah, dan konsep yang tertulis di teks"
-                      >
-                        Konseptual
-                      </button>
-                      <button
-                        onClick={() => setQuizType("analytical")}
-                        style={{
-                          backgroundColor: quizType === "analytical" ? "#18221f" : "transparent",
-                          color: quizType === "analytical" ? "#c8f064" : "#56615d",
-                          border: quizType === "analytical" ? "1px solid #18221f" : "1px solid transparent",
-                          borderRadius: 5,
-                          padding: "4px 9px",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: "pointer"
-                        }}
-                        title="Analisis Mendalam: HOTS, studi kasus, perbandingan konsep, dan prediksi soal penentu ujian"
-                      >
-                        Prediksi Ujian
-                      </button>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 6, backgroundColor: "#fafbf8", padding: 2, borderRadius: 6, border: "1px solid #dce1da" }}>
+                      {[
+                        { id: "beginner", label: "Pemula", title: "Pemula & Bertahap: Mulai dari angka kecil sederhana dan pilihan ringkas" },
+                        { id: "conceptual", label: "Standar", title: "Standar Ujian Sekolah: Pemahaman konsep dan skenario harian" },
+                        { id: "analytical", label: "HOTS", title: "HOTS / Ujian Seleksi: Analisis tingkat tinggi dan pemecahan masalah non-rutin" }
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => setQuizType(item.id as any)}
+                          style={{
+                            backgroundColor: quizType === item.id ? "#18221f" : "transparent",
+                            color: quizType === item.id ? "#c8f064" : "#56615d",
+                            border: quizType === item.id ? "1px solid #18221f" : "1px solid transparent",
+                            borderRadius: 5,
+                            padding: "4px 8px",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "0.15s ease"
+                          }}
+                          title={item.title}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 

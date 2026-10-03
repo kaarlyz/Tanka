@@ -643,11 +643,20 @@ ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat,
       const isMathDomain = detectRealMath(doc.content);
 
       let typeGuidance = "";
-      if (quizType === "conceptual") {
-        typeGuidance = `TIPE KUIS: KONSEPTUAL TERAPAN & PEMAHAMAN LOGIS
-- HINDARI SOAL HAFALAN ROBOTIK yang hanya menguji ingatan teks (DILARANG: "Berdasarkan definisi pada modul...", "Menurut teks di atas...").
-- Gunakan SOAL APLIKATIF SKENARIO RINGAN: Berikan situasi praktis, contoh kasus mini, atau konteks nyata, lalu uji apakah pembelajar paham cara kerja konsep tersebut.
-- Tetap ramah untuk ujian sekolah/harian tanpa hitungan yang berbelit-belit.`;
+      if (quizType === "beginner") {
+        typeGuidance = `TIPE KUIS: PEMULA & FONDASI BERTAHAP (SCAFFOLDING BELAJAR DARI NOL)
+- TUJUAN UTAMA: Sangat ramah pemula yang baru pertama kali belajar materi ini. Bangun pemahaman dan rasa percaya diri langkah demi langkah.
+- ATURAN TANGGA KESULITAN (URUTAN WAJIB DARI MUDAH KE MENENGAH):
+  * Soal 1 (Fondasi Terendah): Pemanasan visual / identifikasi dasar langsung dengan angka kecil (contoh: ordo matriks dasar dan cara baca elemen baris-kolom).
+  * Soal 2–3 (Operasi Tunggal Sederhana): Satu langkah pengerjaan saja dengan angka bulat kecil (contoh: penjumlahan 2 matriks ordo 2x2, atau cek syarat sahnya operasi).
+  * Soal 4–5 (Kaidah Inti Bertahap): Perkalian skalar sederhana atau perkalian baris x kolom dasar dengan angka kecil (1, 2, 3, dst).
+- LARANGAN KERAS UNTUK MODE PEMULA:
+  * DILARANG membuat skenario cerita panjang berbelit-belit (JANGAN ada narasi database inventaris gudang cabang, dsb).
+  * OPSI JAWABAN (A, B, C, D, E) HARUS PENDEK, TEGAS, DAN JELAS (cukup nilai angka, ordo, atau frasa 3-6 kata). DILARANG membuat opsi berparagraf panjang yang melelahkan siswa.`;
+      } else if (quizType === "conceptual") {
+        typeGuidance = `TIPE KUIS: STANDAR PEMAHAMAN TERAPAN (UJIAN SEKOLAH / ULANGAN HARIAN)
+- Fokus pada variasi soal ujian sekolah standar yang menguji pemahaman konsep secara jelas.
+- Pertanyaan to-the-point dengan skenario ringan. Opsi jawaban ringkas dan terfokus pada hasil.`;
       } else {
         typeGuidance = `TIPE KUIS: ANALISIS MENDALAM & PREDIKSI UJIAN (HOTS / SELEKSI TINGGI)
 - Fokus pada penalaran tingkat tinggi, analisis variabel tersembunyi, komparasi multi-konsep, dan pemecahan masalah non-rutin.
@@ -678,10 +687,11 @@ Buatkan TEPAT ${finalCount} butir soal pilihan ganda dengan 5 PILIHAN JAWABAN (A
 
 ${typeGuidance}
 
-STANDAR KUALITAS SOAL (ANTI-SLOP & HIDUP):
-1. Setiap soal harus terasa alami dan relevan. Hindari kalimat pembuka klise seperti "Berdasarkan materi...", langsung masuk ke skenario atau inti pertanyaan.
-2. OPSI PENGECOH (DISTRACTORS):
-   - 4 pilihan salah HARUS berasal dari miskonsepsi nyata, kesalahan kalkulasi umum, atau konsep yang saling tertukar. Jangan pernah membuat opsi konyol.
+STANDAR KUALITAS SOAL (ANTI-SLOP & RAMAH SISWA):
+1. Pertanyaan harus fokus langsung ke inti masalah tanpa basa-basi bertele-tele.
+2. OPSI PILIHAN JAWABAN (A, B, C, D, E):
+   - Buat opsi yang RINGKAS, PADAT, dan TIDAK MEMBINGUNGKAN (siswa harus bisa membaca seluruh opsi dalam hitungan detik).
+   - 4 pilihan salah HARUS berasal dari kesalahan hitung wajar atau miskonsepsi nyata, bukan kalimat membingungkan.
 3. KUNCI JAWABAN & SINKRONISASI INDEKS (MUTLAK):
    - correctIndex: 0 = Pilihan A
    - correctIndex: 1 = Pilihan B
@@ -690,11 +700,11 @@ STANDAR KUALITAS SOAL (ANTI-SLOP & HIDUP):
    - correctIndex: 4 = Pilihan E
    - Kunci jawaban WAJIB terdistribusi secara acak merata di antara opsi A, B, C, D, dan E.
    - Pada teks "desc" langkah pembahasan dan "explanation", HURUF YANG DISEBUT WAJIB SINKRON 100% dengan correctIndex.
-4. KUALITAS PEMBAHASAN STEP-BY-STEP (DILARANG MALAS):
-   - Setiap "desc" dalam "steps" WAJIB terdiri dari minimal 2-3 kalimat penjelasan yang tuntas.
-   - Langkah 1: Bedah apa yang diketahui dan konsep yang menjadi kunci pemecahan.
-   - Langkah 2: Uraikan alur pembuktian atau penalaran detail mengapa opsi benar terpilih DAN mengapa opsi pengecoh gugur.
-   - Langkah 3: Berikan simpulan tegas yang memantapkan pemahaman.
+4. KUALITAS PEMBAHASAN STEP-BY-STEP:
+   - Setiap "desc" dalam "steps" terdiri dari 2-3 kalimat penjelasan runut yang membimbing pemula.
+   - Langkah 1: Bedah apa yang diketahui dan konsep dasar yang dipakai.
+   - Langkah 2: Tunjukkan proses pengerjaan eksplisit mengapa opsi benar terpilih.
+   - Langkah 3: Simpulan jelas yang memantapkan pemahaman.
 
 ${weaknessContext}
 ${mathRule}
@@ -750,14 +760,36 @@ ${doc.content.slice(0, 15000)}
       }
 
       // Server-side True Randomization: Fisher-Yates shuffle of options to prevent any predictable pattern
+      const letters = ["A", "B", "C", "D", "E"];
       questions.forEach((q) => {
         if (Array.isArray(q.options) && q.options.length >= 2) {
-          const originalCorrect = q.options[q.correctIndex];
+          const oldCorrectIdx = typeof q.correctIndex === "number" && q.correctIndex >= 0 ? q.correctIndex : 0;
+          const originalCorrect = q.options[oldCorrectIdx];
+          const oldLetter = letters[oldCorrectIdx] || "A";
+
           for (let i = q.options.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
           }
           q.correctIndex = q.options.indexOf(originalCorrect);
+          const newLetter = letters[q.correctIndex] || "A";
+
+          // Dynamically synchronize letter references in explanation and steps
+          if (q.explanation) {
+            q.explanation = q.explanation
+              .replace(new RegExp(`(Pilihan|Opsi)\\s+${oldLetter}\\b`, "gi"), `$1 ${newLetter}`)
+              .replace(/(Pilihan|Opsi)\s+[A-E]\s+(benar|tepat)/gi, `$1 ${newLetter} $2`);
+          }
+
+          if (Array.isArray(q.steps)) {
+            q.steps = q.steps.map((s) => {
+              let desc = s.desc || "";
+              desc = desc
+                .replace(new RegExp(`(pilihan|opsi)\\s+${oldLetter}\\b`, "gi"), `$1 ${newLetter}`)
+                .replace(/(pilihan|opsi)\s+[A-E]\s+(benar|tepat)/gi, `$1 ${newLetter} $2`);
+              return { ...s, desc };
+            });
+          }
         }
       });
 

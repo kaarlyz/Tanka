@@ -1174,14 +1174,33 @@
           color: #24302b !important;
         }
 
-        /* Prevent table and diagram clipping */
+        .markdown-body ul, .nara-md-response ul,
+        .markdown-body ol, .nara-md-response ol {
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+          margin-bottom: 8pt !important;
+          padding-left: 16pt !important;
+        }
+
+        .markdown-body li, .nara-md-response li {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          margin-bottom: 4pt !important;
+        }
+
+        /* Prevent table and diagram clipping & orphan pages */
         .markdown-body table, .nara-md-response table {
           width: 100% !important;
           border-collapse: collapse !important;
           margin: 12pt 0 !important;
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+          font-size: 9pt !important;
+        }
+
+        .markdown-body tr, .nara-md-response tr {
           break-inside: avoid !important;
           page-break-inside: avoid !important;
-          font-size: 9pt !important;
         }
 
         .markdown-body th, .nara-md-response th {

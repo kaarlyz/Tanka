@@ -415,16 +415,19 @@ Identifikasi SELURUH konsep inti, kaidah operasional, rumus & variabel, aturan b
 Jangan batasi jumlah kartu secara artifisial — buat kartu sebanyak yang dibutuhkan agar MENCENGKERAM SELURUH KONSEP POKOK dokumen (biasanya antara 8 hingga 20+ kartu tergantung kekayaan materi), tanpa kartu pengisi.
 
 ATURAN STRUKTUR KARTU (INTUISI & ACTIVE RECALL KUAT):
-1. Sisi Depan (Front) - Stimulus Terarah (3-10 kata):
-   - DILARANG KERAS membuat kartu depan hanya 1 kata ambigu (seperti "Matriks" atau "Inflasi" saja).
-   - Selalu berikan konteks yang jelas:
-     * Definisi/Konsep: "Konsep dasar matriks & analogi praktisnya" atau "Prinsip estetika Art Nouveau"
-     * Aturan/Kaidah: "Syarat mutlak agar penjumlahan dua matriks sah dilakukan"
-     * Kasus/Aplikasi Kilat: "Jika matriks punya 3 baris dan 5 kolom, bagaimana notasi ordonya?"
-     * Pembeda/Jebakan: "Mengapa perkalian matriks A x B tidak selalu sama dengan B x A?"
-   - DILARANG membuat soal cerita panjang atau paragraf soal di sisi depan.
-2. Sisi Belakang (Back) - Kaidah Intuitif & Terapan (1-3 kalimat):
-   - Jangan sekadar definisi kamus kaku. Berikan intuisi "mengapa/bagaimana" yang langsung klik di kepala siswa.
+1. DISTRIBUSI SEIMBANG DARI AWAL HINGGA AKHIR MATERI (MUTLAK):
+   - Kartu 1–3: WAJIB mengekstrak FONDASI & DEFINISI DASAR di bab pembuka (misal: apa definisi kriya/kerajinan, perbedaan fungsi pakai vs hias, peran bahan lokal & gilda). DILARANG LANGSUNG LOMPAT ke materi akhir.
+   - Kartu 4–8: Perkembangan konsep, konteks sejarah, atau perbandingan regional di bab tengah.
+   - Kartu 9–dst: Aliran desain, tokoh kunci, dan teknik khusus di bab akhir.
+2. Sisi Depan (Front) - Stimulus Terarah (3-10 kata):
+   - DILARANG KERAS membuat kartu depan hanya 1 kata ambigu (seperti "Matriks" atau "Kriya" saja).
+   - Selalu berikan stimulus spesifik:
+     * Definisi/Konsep: "Definisi karya kerajinan dan 3 fungsi dasarnya"
+     * Aturan/Kaidah: "Karakter utama kerajinan era Abad Pertengahan"
+     * Pembeda/Jebakan: "Perbedaan mendasar gaya Art Nouveau vs Art Deco"
+3. Sisi Belakang (Back) - Penjelasan Manusiawi & Terbayang Nyata (1-3 kalimat):
+   - DILARANG KERAS menggunakan jargon robotik/palsu (seperti 'kawat aditif', 'tampung cacat retakan', 'manipulasi ruang 2.5D').
+   - Jelaskan dengan bahasa yang membuat orang langsung terbayang wujud fisiknya, contoh konkretnya, dan bagaimana membedakannya dari konsep lain.
    - Jika ada rumus matematika/persamaan, WAJIB gunakan sintaks LaTeX KaTeX yang dibungkus tanda dollar ($...$).
 
 Format output WAJIB HANYA berupa array JSON murni tanpa markdown codeblock formatting atau teks pengantar:
@@ -542,6 +545,15 @@ Pelajari materi di bawah dan susun panduan belajar bertahap dengan gaya tutor la
 
 ${styleGuidance}
 
+STANDAR INTEGRITAS PENGAJARAN (ANTI-LOMPAT & ANTI-JARGON ROBOTIK):
+1. FONDASI PEMBUKA WAJIB DIBEDAH PERTAMA KALI:
+   - Mulai dari konsep dasar paling awal di dokumen (definisi objek/materi, fungsi utama, karakter dasar).
+   - DILARANG LANGSUNG LOMPAT ke aliran modern atau tokoh spesifik tanpa menanamkan fondasi dasarnya.
+2. DILARANG MENGGUNAKAN JARGON BIROKRATIK/PALSU:
+   - Jelaskan konsep dengan bahasa manusia yang langsung terbayang wujud fisiknya, contoh bendanya, dan pembeda dari teknik lain (jangan gunakan frasa dingin seperti 'kawat aditif' atau 'tampung cacat retakan').
+3. KRONOLOGI SEJARAH & RELASI SEBAB-AKIBAT:
+   - Sajikan urutan waktu secara konsisten dan logis (misal: tradisi awal/abad pertengahan -> reaksi revolusi industri -> aliran modern -> era kontemporer).
+
 Format dengan Markdown rapi, KaTeX LaTeX ($...$ inline atau $$...$$ blok) untuk rumus/angka, dan kotak penekanan untuk trik kunci.
 
 Materi Lengkap:
@@ -553,8 +565,14 @@ Lakukan AUDIT LENGKAP terhadap seluruh isi dokumen dan susun Catatan Inti & Peta
 
 ${styleGuidance}
 
-PRINSIP WAJIB:
-- Jangan biarkan materi terasa seperti kamus hafalan mati. Hubungkan teori dengan tujuan praktisnya.
+STANDAR INTEGRITAS PENGAJARAN (ANTI-LOMPAT & ANTI-JARGON ROBOTIK):
+1. FONDASI PEMBUKA WAJIB DIBEDAH PERTAMA KALI:
+   - Mulai dari konsep dasar paling awal di dokumen (definisi objek/materi, fungsi utama, karakter dasar).
+   - DILARANG LANGSUNG LOMPAT ke aliran modern atau tokoh spesifik tanpa menanamkan fondasi dasarnya.
+2. DILARANG MENGGUNAKAN JARGON BIROKRATIK/PALSU:
+   - Jelaskan konsep dengan bahasa manusia yang langsung terbayang wujud fisiknya, contoh bendanya, dan pembeda dari teknik lain (jangan gunakan frasa dingin seperti 'kawat aditif' atau 'tampung cacat retakan').
+3. KRONOLOGI SEJARAH & RELASI SEBAB-AKIBAT:
+   - Sajikan urutan waktu secara konsisten dan logis (misal: tradisi awal/abad pertengahan -> reaksi revolusi industri -> aliran modern -> era kontemporer).
 
 STRUKTUR SISTEMATIS CATATAN:
 1. **Peta Konsep & Kerangka Besar**:
@@ -688,11 +706,16 @@ Buatkan TEPAT ${finalCount} butir soal pilihan ganda dengan 5 PILIHAN JAWABAN (A
 ${typeGuidance}
 
 STANDAR KUALITAS SOAL (ANTI-SLOP & RAMAH SISWA):
-1. Pertanyaan harus fokus langsung ke inti masalah tanpa basa-basi bertele-tele.
-2. OPSI PILIHAN JAWABAN (A, B, C, D, E):
+1. SEBARAN TOPIK PROPORSIONAL DARI BAB AWAL HINGGA AKHIR:
+   - Soal 1 (Level Fondasi): WAJIB diambil dari BAB AWAL materi (definisi dasar objek/materi, fungsi utama, karakter awal, atau premis dasar). Siswa pemula yang baru membaca halaman pembuka harus bisa memahaminya.
+   - Soal 2–3 (Level Perkembangan & Konteks): Diambil dari BAB TENGAH materi (konteks sejarah, ciri khas era, perbandingan konsep atau operasi bertahap).
+   - Soal 4–5 (Level Lanjutan & Penerapan): Diambil dari BAB AKHIR materi (tokoh kunci, teknik khusus, atau analisis pembeda).
+   - DILARANG KERAS memusatkan seluruh butir soal hanya pada istilah-istilah di slide/halaman terakhir!
+2. Pertanyaan harus fokus langsung ke inti masalah tanpa basa-basi bertele-tele.
+3. OPSI PILIHAN JAWABAN (A, B, C, D, E):
    - Buat opsi yang RINGKAS, PADAT, dan TIDAK MEMBINGUNGKAN (siswa harus bisa membaca seluruh opsi dalam hitungan detik).
    - 4 pilihan salah HARUS berasal dari kesalahan hitung wajar atau miskonsepsi nyata, bukan kalimat membingungkan.
-3. KUNCI JAWABAN & SINKRONISASI INDEKS (MUTLAK):
+4. KUNCI JAWABAN & SINKRONISASI INDEKS (MUTLAK):
    - correctIndex: 0 = Pilihan A
    - correctIndex: 1 = Pilihan B
    - correctIndex: 2 = Pilihan C
@@ -700,7 +723,7 @@ STANDAR KUALITAS SOAL (ANTI-SLOP & RAMAH SISWA):
    - correctIndex: 4 = Pilihan E
    - Kunci jawaban WAJIB terdistribusi secara acak merata di antara opsi A, B, C, D, dan E.
    - Pada teks "desc" langkah pembahasan dan "explanation", HURUF YANG DISEBUT WAJIB SINKRON 100% dengan correctIndex.
-4. KUALITAS PEMBAHASAN STEP-BY-STEP:
+5. KUALITAS PEMBAHASAN STEP-BY-STEP:
    - Setiap "desc" dalam "steps" terdiri dari 2-3 kalimat penjelasan runut yang membimbing pemula.
    - Langkah 1: Bedah apa yang diketahui dan konsep dasar yang dipakai.
    - Langkah 2: Tunjukkan proses pengerjaan eksplisit mengapa opsi benar terpilih.

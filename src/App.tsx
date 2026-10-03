@@ -4313,9 +4313,9 @@ export default function App() {
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: 14, marginTop: 8, fontSize: 11, color: "#4b5563", fontFamily: "'DM Mono', monospace" }}>
-                        <span>Panjang: {activeDoc?.wordCount || 0} kata</span>
+                        <span>Panjang: {formattedSummary ? formattedSummary.trim().split(/\s+/).filter(Boolean).length : 0} kata</span>
                         <span>•</span>
-                        <span>Estimasi Baca: {activeDoc?.readingTimeMinutes || 0} menit</span>
+                        <span>Estimasi Baca: {Math.max(1, Math.ceil((formattedSummary ? formattedSummary.trim().split(/\s+/).filter(Boolean).length : 0) / 180))} menit</span>
                         <span>•</span>
                         <span>Gaya: {summaryStyle === "tutor" ? "Tutor Bertahap & Latihan" : summaryStyle === "intuitive" ? "Sederhana & Intuitif" : "Poin Hafalan"}</span>
                       </div>

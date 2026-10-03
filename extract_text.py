@@ -40,6 +40,11 @@ def extract_pptx(file_path):
                         t = paragraph.text.strip()
                         if t:
                             cur.append(t)
+                if shape.has_table:
+                    for row in shape.table.rows:
+                        row_txt = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                        if row_txt:
+                            cur.append(" | ".join(row_txt))
             if cur:
                 slides_text.append(f"--- Slide {idx} ---\n" + "\n".join(cur))
         return "\n\n".join(slides_text)

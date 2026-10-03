@@ -163,6 +163,22 @@ async function search9Router(query) {
   return "";
 }
 
+// Robust check for genuine mathematical / calculation content (avoiding false positives on dates, slide numbers, dashes)
+function detectRealMath(content) {
+  if (!content) return false;
+  const cleaned = content
+    .replace(/Slide\s*\d+/gi, "")
+    .replace(/\b\d{4}\s*[-–]\s*\d{4}\b/g, "")
+    .replace(/\b(bab|ch|chapter|page|halaman|vol|no)\.?\s*\d+/gi, "");
+
+  if (/[√∑∫≤≥±≠πθλαβγΔ∂∞≈≡]/.test(cleaned)) return true;
+  if (/\\(frac|sqrt|lim|int|sum|prod|alpha|beta|theta|pi|partial|infty|approx|times|div)\b/.test(cleaned)) return true;
+
+  const hasAlgebraicKeywords = /(rumus|persamaan|kalkulasi|perhitungan|fungsi kuadrat|trigonometri|aljabar|matematika|derivatif|integral|vektor)/i.test(cleaned);
+  const hasAlgebraicPattern = /\b[a-zA-Z]\s*=\s*[\d\w\(\)\+\-\*\/\^]+/i.test(cleaned);
+  return hasAlgebraicKeywords && hasAlgebraicPattern;
+}
+
 // Detect concise academic topic title based on content
 async function detectDocumentTitle(content, fallback = "Dokumen Materi") {
   try {
@@ -471,7 +487,7 @@ ${doc.content.slice(0, 25000)}
       const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
       if (!doc) return sendJSON(res, { error: "Document not found" }, 404);
 
-      const hasMath = /[=+*/^√∑∫≤≥±-]/.test(doc.content) && (doc.content.includes("rumus") || doc.content.includes("persamaan") || doc.content.includes("hitung") || /\d+\s*[=+*xX/-]/.test(doc.content));
+      const isMathDomain = detectRealMath(doc.content);
 
       let styleGuidance = "";
       if (style === "memorization") {
@@ -481,7 +497,7 @@ ${doc.content.slice(0, 25000)}
       } else if (style === "academic") {
         styleGuidance = `GAYA PENULISAN: STRUKTUR FORMAL AKADEMIK LENGKAP
 - Susun secara komprehensif, presisi tinggi, dan metodologis.
-- Bedah latar belakang teoritis, relasi sebab-akibat multi-variabel, dan analisis kritis mendalam.`;
+- Bedah latar belakang teoritis, relasi sebab-akibat, dan analisis kritis mendalam.`;
       } else {
         styleGuidance = `GAYA PENULISAN: BAHASA SEDERHANA & INTUITIF (MUDAH DIPAHAMI)
 - Gunakan bahasa yang mengalir, santai, dan analogi dunia nyata untuk menyederhanakan ide yang rumit.
@@ -489,9 +505,13 @@ ${doc.content.slice(0, 25000)}
 - PRINSIP: Materi tetap 100% lengkap dan mencakup seluruh isi, tetapi disajikan dengan cara yang paling mudah dipahami oleh siapa saja.`;
       }
 
-      const mathRule = hasMath
-        ? `Jika terdapat rumus/perhitungan matematis, WAJIB gunakan format KaTeX LaTeX ($...$ inline atau $$...$$ blok) dengan pecahan bertingkat \\frac{a}{b}, akar \\sqrt{...}, dan eksponen kuadrat.`
-        : `Materi ini bersifat konseptual/teori non-matematis: JANGAN memaksakan membuat rumus atau variabel hitungan buatan. Fokus pada struktur ide, argumen, dan definisi.`;
+      const mathSectionBlock = isMathDomain
+        ? `3. **Rumus, Persamaan, & Aturan Pokok**:
+   - Tuliskan rumus matematika/fisika yang benar-benar ada dalam materi menggunakan KaTeX LaTeX ($...$ inline atau $$...$$ blok).
+   - Berikan pembacaan intuitif rumus dan keterangan variabel lengkap.`
+        : `3. **Kaidah Pokok, Karakteristik Utama, & Klasifikasi**:
+   - DILARANG KERAS MENGARANG RUMUS/PERSAMAAN MATEMATIKA PALSU (PSEUDO-MATH) seperti membuat $V = f(X, Y)$ atau persamaan fungsi simbolik buatan untuk materi seni, sejarah, kriya, atau ilmu sosial.
+   - Sajikan prinsip inti, kaidah perancangan, matriks perbandingan gaya/era, atau taksonomi klasifikasi murni konseptual tanpa rumus buatan sama sekali.`;
 
       const prompt = `Anda adalah pakar sintesis materi akademik dan perancang modul pembelajaran berdaya ingat tinggi.
 Lakukan AUDIT LENGKAP terhadap seluruh isi dokumen dan susun Catatan Inti & Peta Konsep Komprehensif yang MENCAKUP SELURUH materi tanpa ada bagian penting yang terlewat.
@@ -503,9 +523,7 @@ STRUKTUR SISTEMATIS CATATAN:
    - Gambaran besar topik, tujuan pemahaman, dan hubungan logis antar sub-bahasan utama.
 2. **Bedah Definisi & Istilah Esensial**:
    - Setiap istilah, konsep teknis, atau kosakata penting dijelaskan secara lugas dengan analogi konkret jika diperlukan.
-3. **Poin Inti, Aturan, atau Persamaan Pokok**:
-   - ${mathRule}
-   - Jabarkan keterangan jelas untuk tiap konsep atau kondisi berlakunya aturan.
+${mathSectionBlock}
 4. **Pola Kritis & Analisis Jebakan (Common Pitfalls)**:
    - Miskonsepsi yang paling sering terjadi, kekeliruan pemahaman umum, dan trik membedakannya saat ujian/praktek.
 5. **Checklist Pemahaman Mandiri**:
@@ -581,7 +599,7 @@ ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat,
       const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
       if (!doc) return sendJSON(res, { error: "Document not found" }, 404);
 
-      const hasMath = /[=+*/^√∑∫≤≥±-]/.test(doc.content) && (doc.content.includes("rumus") || doc.content.includes("persamaan") || doc.content.includes("hitung") || /\d+\s*[=+*xX/-]/.test(doc.content));
+      const isMathDomain = detectRealMath(doc.content);
 
       let typeGuidance = "";
       if (quizType === "conceptual") {
@@ -608,10 +626,11 @@ ${unresolvedMistakes.map((m, i) => `${i + 1}. Soal Terkait: "${m.question}" | An
 PRIORITAS: Alokasikan 1 atau 2 butir soal variasi baru yang menyasar konsep di atas untuk menguji apakah pemahaman pembelajar sudah benar-benar pulih.\n`;
       }
 
-      const mathRule = hasMath
+      const mathRule = isMathDomain
         ? `ATURAN FORMAT MATEMATIKA:
 Jika materi/soal mengandung rumus atau hitungan, WAJIB gunakan KaTeX LaTeX ($...$ inline atau $$...$$ blok), contoh: $\\frac{a}{b}$, $\\sqrt{x}$, $x^2$.`
-        : `Materi bersifat konseptual/teori: JANGAN memaksakan rumus atau angka buatan jika materi berupa bahasa, sejarah, atau teori sosial. Kosongkan "formula" ("") jika materi non-rumus.`;
+        : `ATURAN MATERI NON-HITUNGAN:
+Materi ini adalah materi konseptual/teori non-matematika. DILARANG KERAS memaksakan rumus atau angka hitungan buatan. Kosongkan field "formula": "" dan fokus pada pemahaman konsep/fakta.`;
 
       const prompt = `Anda adalah pembuat soal ujian akademik profesional.
 Buatkan TEPAT ${finalCount} butir soal pilihan ganda dengan 5 PILIHAN JAWABAN (A, B, C, D, E).

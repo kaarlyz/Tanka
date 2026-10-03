@@ -414,25 +414,30 @@ Lakukan AUDIT MENYELURUH terhadap seluruh isi dokumen materi di bawah ini.
 Identifikasi SELURUH konsep inti, kaidah operasional, rumus & variabel, aturan baku, perbedaan konsep yang sering tertukar, dan contoh aplikasi cepat.
 Jangan batasi jumlah kartu secara artifisial — buat kartu sebanyak yang dibutuhkan agar MENCENGKERAM SELURUH KONSEP POKOK dokumen (biasanya antara 8 hingga 20+ kartu tergantung kekayaan materi), tanpa kartu pengisi.
 
-ATURAN STRUKTUR KARTU (INTUISI & ACTIVE RECALL KUAT):
-1. DISTRIBUSI SEIMBANG DARI AWAL HINGGA AKHIR MATERI (MUTLAK):
-   - Kartu 1–3: WAJIB mengekstrak FONDASI & DEFINISI DASAR di bab pembuka (misal: apa definisi kriya/kerajinan, perbedaan fungsi pakai vs hias, peran bahan lokal & gilda). DILARANG LANGSUNG LOMPAT ke materi akhir.
-   - Kartu 4–8: Perkembangan konsep, konteks sejarah, atau perbandingan regional di bab tengah.
-   - Kartu 9–dst: Aliran desain, tokoh kunci, dan teknik khusus di bab akhir.
-2. Sisi Depan (Front) - Stimulus Terarah (3-10 kata):
-   - DILARANG KERAS membuat kartu depan hanya 1 kata ambigu (seperti "Matriks" atau "Kriya" saja).
-   - Selalu berikan stimulus spesifik:
-     * Definisi/Konsep: "Definisi karya kerajinan dan 3 fungsi dasarnya"
-     * Aturan/Kaidah: "Karakter utama kerajinan era Abad Pertengahan"
-     * Pembeda/Jebakan: "Perbedaan mendasar gaya Art Nouveau vs Art Deco"
-3. Sisi Belakang (Back) - Penjelasan Manusiawi & Terbayang Nyata (1-3 kalimat):
+ATURAN STRUKTUR KARTU (PRINSIP ATOMIK SUPERMEMO / ANKI):
+1. PRINSIP 1 KARTU = 1 FAKTA ATOMIK TUNGGAL (DILARANG KARTU KOMBO 'DAN ... DAN ...'):
+   - DILARANG KERAS menggabungkan dua topik atau daftar panjang dalam satu kartu (misal: 'Definisi X dan 4 fungsinya' -> SALAH BESAR).
+   - JIKA SATU TOPIK MEMILIKI BEBERAPA CABANG/POIN, WAJIB PISAH JADI BEBERAPA KARTU ATOMIK:
+     * Kartu 1: "Apa definisi dasar karya kerajinan?" -> Jawaban singkat (1 kalimat).
+     * Kartu 2: "Sebutkan 4 fungsi/nilai utama karya kerajinan." -> "Fungsi pakai, fungsi hias, fungsi simbolik, dan nilai ekonomi."
+     * Kartu 3: "Apa yang dimaksud fungsi simbolik pada kerajinan?" -> "Karya bernilai ritual adat, spiritual, atau status sosial (contoh: keris pusaka)."
+     * Kartu 4: "Apa yang dimaksud fungsi pakai pada kerajinan?" -> "Karya untuk kebutuhan fisik praktis sehari-hari (contoh: cangkir keramik, baju tenun)."
+   - Setiap kartu harus bisa dijawab dalam 3–5 detik di kepala tanpa beban menghafal paragraf tebal!
+2. DISTRIBUSI SEIMBANG DARI AWAL HINGGA AKHIR MATERI (MUTLAK):
+   - Kartu 1–4: FONDASI & DEFINISI DASAR di bab pembuka (misal: definisi objek, bahan dasar, peran awal). DILARANG LANGSUNG LOMPAT ke materi akhir.
+   - Kartu 5–8: Perkembangan konsep, konteks sejarah, hukum/aturan di bab tengah.
+   - Kartu 9–dst: Tokoh kunci, teknik khusus, dan pembeda aliran di bab akhir.
+3. SISI DEPAN (Front) - Pertanyaan Spesifik & Langsung ke Sasaran (3-10 kata):
+   - DILARANG membuat kartu depan hanya 1 kata ambigu (seperti "Matriks" atau "Kriya" saja).
+   - Gunakan pertanyaan langsung: "Apa syarat dua matriks dapat dijumlahkan?", "Apa fungsi utama gilda perajin di Abad Pertengahan?", "Apa ciri visual gaya Art Deco?"
+4. SISI BELAKANG (Back) - Penjelasan Manusiawi, Ringkas & Terbayang Nyata (1-2 kalimat):
    - DILARANG KERAS menggunakan jargon robotik/palsu (seperti 'kawat aditif', 'tampung cacat retakan', 'manipulasi ruang 2.5D').
    - Jelaskan dengan bahasa yang membuat orang langsung terbayang wujud fisiknya, contoh konkretnya, dan bagaimana membedakannya dari konsep lain.
    - Jika ada rumus matematika/persamaan, WAJIB gunakan sintaks LaTeX KaTeX yang dibungkus tanda dollar ($...$).
 
 Format output WAJIB HANYA berupa array JSON murni tanpa markdown codeblock formatting atau teks pengantar:
 [
-  {"front": "Stimulus Terarah & Konteks Jelas", "back": "Penjelasan intuitif, kaidah inti, atau bentuk rumus kunci"}
+  {"front": "Pertanyaan stimulus atomik tunggal", "back": "Jawaban ringkas 1-2 kalimat konkret atau nilai rumus"}
 ]
 
 Materi:
@@ -729,11 +734,22 @@ STANDAR KUALITAS SOAL (ANTI-SLOP & RAMAH SISWA):
    - Soal 2–3 (Level Perkembangan & Konteks): Diambil dari BAB TENGAH materi (konteks sejarah, ciri khas era, perbandingan konsep atau operasi bertahap).
    - Soal 4–5 (Level Lanjutan & Penerapan): Diambil dari BAB AKHIR materi (tokoh kunci, teknik khusus, atau analisis pembeda).
    - DILARANG KERAS memusatkan seluruh butir soal hanya pada istilah-istilah di slide/halaman terakhir!
-2. Pertanyaan harus fokus langsung ke inti masalah tanpa basa-basi bertele-tele.
-3. OPSI PILIHAN JAWABAN (A, B, C, D, E):
+2. BAHASA PERTANYAAN WAJIB LANGSUNG KE SASARAN OBJEKTIF (TO-THE-POINT & ALAMI):
+   - Gunakan kalimat tanya ujian baku modern yang ringkas, hindari basa-basi atau frasa kaku yang berbelit-belit.
+   - Contoh Matematika:
+     * TEPAT: "Jika $2x + 3 = 11$, maka nilai $x = \\dots$" atau "Nilai $x$ dari persamaan $2x + 3 = 11$ adalah..."
+     * SALAH / KAKU: "Jika $2x + 3 = 11$, berapa nilai $x$ yang memenuhi persamaan?"
+   - Contoh Teori / Kualitatif:
+     * TEPAT: "Tokoh pelopor gerakan Arts and Crafts di Inggris adalah..."
+     * SALAH / KAKU: "Berdasarkan tinjauan materi di atas, siapakah tokoh yang memelopori..."
+3. ATURAN PENGISIAN FIELD "formula" PADA SOAL (MUTLAK):
+   - Field "formula" pada soal HANYA diisi jika ada matriks besar atau ekspresi matematika khusus yang menjadi fokus stimulus visual (contoh: "$$\\begin{bmatrix} 2 & 1 \\\\ 4 & 5 \\end{bmatrix}$$").
+   - JIKA SOAL SUDAH BERUPA KALIMAT BIASA (seperti "Jika $2x + 3 = 11$, maka $x = \\dots$"), MAKA FIELD "formula" WAJIB KOSONGKAN: "".
+   - DILARANG KERAS menaruh rumus solusi umum (misal: $ax + b = c \\implies x = \\frac{c - b}{a}$) di field "formula" soal karena akan memunculkan kotak rumus yang membocorkan langkah dan mengganggu fokus siswa. Rumus pengerjaan HANYA berada di "steps" dan "explanation"!
+4. OPSI PILIHAN JAWABAN (A, B, C, D, E):
    - Buat opsi yang RINGKAS, PADAT, dan TIDAK MEMBINGUNGKAN (siswa harus bisa membaca seluruh opsi dalam hitungan detik).
    - 4 pilihan salah HARUS berasal dari kesalahan hitung wajar atau miskonsepsi nyata, bukan kalimat membingungkan.
-4. KUNCI JAWABAN & SINKRONISASI INDEKS (MUTLAK):
+5. KUNCI JAWABAN & SINKRONISASI INDEKS (MUTLAK):
    - correctIndex: 0 = Pilihan A
    - correctIndex: 1 = Pilihan B
    - correctIndex: 2 = Pilihan C
@@ -741,7 +757,7 @@ STANDAR KUALITAS SOAL (ANTI-SLOP & RAMAH SISWA):
    - correctIndex: 4 = Pilihan E
    - Kunci jawaban WAJIB terdistribusi secara acak merata di antara opsi A, B, C, D, dan E.
    - Pada teks "desc" langkah pembahasan dan "explanation", HURUF YANG DISEBUT WAJIB SINKRON 100% dengan correctIndex.
-5. KUALITAS PEMBAHASAN STEP-BY-STEP:
+6. KUALITAS PEMBAHASAN STEP-BY-STEP:
    - Setiap "desc" dalam "steps" terdiri dari 2-3 kalimat penjelasan runut yang membimbing pemula.
    - Langkah 1: Bedah apa yang diketahui dan konsep dasar yang dipakai.
    - Langkah 2: Tunjukkan proses pengerjaan eksplisit mengapa opsi benar terpilih.
@@ -754,17 +770,17 @@ Format output WAJIB HANYA berupa array JSON valid tanpa markdown fence atau teks
 [
   {
     "id": 1,
-    "question": "Pertanyaan berbasis skenario/aplikasi...",
-    "options": ["Opsi A", "Opsi B", "Opsi C", "Opsi D", "Opsi E"],
-    "correctIndex": 0,
-    "formula": "${isMathDomain ? '$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$ (Rumus kunci jika materi berhitung)' : ''}",
+    "question": "Jika $2x + 3 = 11$, maka nilai $x = \\dots$",
+    "options": ["3", "4", "7", "8", "14"],
+    "correctIndex": 1,
+    "formula": "",
     "steps": [
-      {"step": 1, "title": "Identifikasi Masalah & Premis", "desc": "Penjelasan mendalam 2-3 kalimat mengenai apa yang ditanyakan dan konsep yang relevan..."},
-      {"step": 2, "title": "Bedah Analisis & Eliminasi Pengecoh", "desc": "Penjelasan rinci 2-3 kalimat mengapa opsi tertentu benar dan opsi lainnya keliru..."},
-      {"step": 3, "title": "Kesimpulan Solutif", "desc": "Simpulan konklusif yang mengunci jawaban dan menegaskan kaidah intinya..."}
+      {"step": 1, "title": "Identifikasi Masalah & Bentuk Persamaan", "desc": "Persamaan yang diberikan adalah $2x + 3 = 11$. Tujuannya adalah mengisolasi variabel $x$ pada satu ruas."},
+      {"step": 2, "title": "Operasi Aljabar Eliminasi", "desc": "Kurangkan kedua ruas dengan 3: $2x = 11 - 3 = 8$. Kemudian bagi kedua ruas dengan 2: $x = \\frac{8}{2} = 4$."},
+      {"step": 3, "title": "Kesimpulan & Pengujian", "desc": "Diperoleh $x = 4$. Pengujian: $2(4) + 3 = 8 + 3 = 11$ (terbukti benar). Pilihan yang tepat adalah B."}
     ],
-    "explanation": "Penjelasan menyeluruh mengapa jawaban huruf tersebut tepat...",
-    "pitfall": "Jebakan umum: pembelajar sering terkecoh pada opsi X karena..."
+    "explanation": "Nilai $x$ dari persamaan $2x + 3 = 11$ adalah 4 (Pilihan B).",
+    "pitfall": "Jebakan umum: Siswa sering lupa mengurangkan 3 sebelum membagi, atau salah menghitung $11 - 3$."
   }
 ]
 

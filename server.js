@@ -417,23 +417,22 @@ Jangan batasi jumlah kartu secara artifisial — buat kartu sebanyak yang dibutu
 ATURAN STRUKTUR KARTU (PRINSIP ATOMIK SUPERMEMO / ANKI):
 1. PRINSIP 1 KARTU = 1 FAKTA ATOMIK TUNGGAL (DILARANG KARTU KOMBO 'DAN ... DAN ...'):
    - DILARANG KERAS menggabungkan dua topik atau daftar panjang dalam satu kartu (misal: 'Definisi X dan 4 fungsinya' -> SALAH BESAR).
-   - JIKA SATU TOPIK MEMILIKI BEBERAPA CABANG/POIN, WAJIB PISAH JADI BEBERAPA KARTU ATOMIK:
-     * Kartu 1: "Apa definisi dasar karya kerajinan?" -> Jawaban singkat (1 kalimat).
-     * Kartu 2: "Sebutkan 4 fungsi/nilai utama karya kerajinan." -> "Fungsi pakai, fungsi hias, fungsi simbolik, dan nilai ekonomi."
-     * Kartu 3: "Apa yang dimaksud fungsi simbolik pada kerajinan?" -> "Karya bernilai ritual adat, spiritual, atau status sosial (contoh: keris pusaka)."
-     * Kartu 4: "Apa yang dimaksud fungsi pakai pada kerajinan?" -> "Karya untuk kebutuhan fisik praktis sehari-hari (contoh: cangkir keramik, baju tenun)."
+   - JIKA SATU TOPIK MEMILIKI BEBERAPA CABANG/POIN, WAJIB DIPISAH MENJADI BEBERAPA KARTU ATOMIK:
+     * Kartu 1: Menanyakan definisi dasar tunggal konsep.
+     * Kartu 2: Menyebutkan daftar poin/cabang secara ringkas.
+     * Kartu 3: Membedah arti spesifik dari salah satu poin kunci tersebut.
+     * Kartu 4: Menanyakan contoh konkret / aplikasi dari konsep tersebut.
    - Setiap kartu harus bisa dijawab dalam 3–5 detik di kepala tanpa beban menghafal paragraf tebal!
 2. DISTRIBUSI SEIMBANG DARI AWAL HINGGA AKHIR MATERI (MUTLAK):
-   - Kartu 1–4: FONDASI & DEFINISI DASAR di bab pembuka (misal: definisi objek, bahan dasar, peran awal). DILARANG LANGSUNG LOMPAT ke materi akhir.
-   - Kartu 5–8: Perkembangan konsep, konteks sejarah, hukum/aturan di bab tengah.
-   - Kartu 9–dst: Tokoh kunci, teknik khusus, dan pembeda aliran di bab akhir.
+   - Kartu 1–4: FONDASI & DEFINISI DASAR di bab pembuka dokumen sumber. DILARANG LANGSUNG LOMPAT ke materi akhir.
+   - Kartu 5–8: Perkembangan konsep, konteks, aturan/sifat di bab tengah.
+   - Kartu 9–dst: Tokoh kunci, teknik khusus, dan pembeda konsep di bab akhir.
 3. SISI DEPAN (Front) - Pertanyaan Spesifik & Langsung ke Sasaran (3-10 kata):
-   - DILARANG membuat kartu depan hanya 1 kata ambigu (seperti "Matriks" atau "Kriya" saja).
-   - Gunakan pertanyaan langsung: "Apa syarat dua matriks dapat dijumlahkan?", "Apa fungsi utama gilda perajin di Abad Pertengahan?", "Apa ciri visual gaya Art Deco?"
-4. SISI BELAKANG (Back) - Penjelasan Manusiawi, Ringkas & Terbayang Nyata (1-2 kalimat):
-   - DILARANG KERAS menggunakan jargon robotik/palsu (seperti 'kawat aditif', 'tampung cacat retakan', 'manipulasi ruang 2.5D').
-   - Jelaskan dengan bahasa yang membuat orang langsung terbayang wujud fisiknya, contoh konkretnya, dan bagaimana membedakannya dari konsep lain.
-   - Jika ada rumus matematika/persamaan, WAJIB gunakan sintaks LaTeX KaTeX yang dibungkus tanda dollar ($...$).
+   - Gunakan pertanyaan langsung ke objek materi: "Apa definisi dari [Konsep]?", "Apa syarat berlakunya [Aturan]?", "Siapa pencetus teori [Konsep]?", "Apa ciri khas utama dari [Kategori]?"
+   - DILARANG membuat kartu depan hanya 1 kata ambigu.
+4. SISI BELAKANG (Back) - Jawaban Padat, Konkret & Manusiawi (1-2 kalimat):
+   - Bebas jargon robotik palsu. Langsung ke inti poin kunci.
+   - Jika materi kuantitatif/eksak, gunakan LaTeX ($...$) untuk simbol dan rumus.
 
 Format output WAJIB HANYA berupa array JSON murni tanpa markdown codeblock formatting atau teks pengantar:
 [
@@ -507,16 +506,15 @@ ${doc.content.slice(0, 25000)}
 - PRINSIP: Jelaskan persis seperti seorang mentor sebaya yang asyik, to-the-point, dan membimbing siswa langkah demi langkah agar BISA MENGERJAKAN SOAL SENDIRI.
 - Kalimat Pembuka: "Bisa. Kita mulai dari [topik dasar], tapi jangan cuma hafal rumus/teori—kita bikin bertahap sampai kamu bisa ngerjain soal sendiri."
 - STRUKTUR PENJABARAN:
-  1. Pecah topik menjadi poin-poin bertingkat (1, 2, 3, dst.) dari yang paling dasar.
-  2. Setiap poin WAJIB menyertakan CONTOH KONKRET KECIL yang SESUAI BIDANG ILMUNYA:
-     - Eksak / Matematika: Gunakan angka bulat kecil konkret atau matriks ordo kecil.
-     - Ekonomi / Ilmu Sosial: Gunakan "Tabel Perbandingan 2 Negara × 2 Komoditas" atau angka unit sederhana. DILARANG KERAS menyebut tabel ekonomi sebagai 'matriks 2x2' (istilah matriks hanya untuk aljabar linier).
-     - Sejarah / Kriya / Bahasa: Gunakan contoh karya fisik, peristiwa nyata, atau kalimat konkret.
-  3. Tuliskan PROSES KERJANYA SECARA EKSPLISIT: Jangan langsung beri hasil jadi! Uraikan langkah manualnya secara runut.
-  4. Berikan "CARA MENGINGAT / INTUISI KUNCI" dalam format tegas: misal [BARIS x KOLOM] untuk matriks, atau [BIAYA TERENDAH = SPESIALISASI] untuk ekonomi.
+  1. Pecah topik menjadi poin-poin bertingkat (1, 2, 3, dst.) dari fondasi pembuka.
+  2. Setiap poin WAJIB menyertakan CONTOH KONKRET DENGAN DATA / ANGKA / SKENARIO yang relevan dengan disiplin ilmunya:
+     - Jaga kemurnian peristilahan: dilarang meminjam istilah dari mapel lain (jangan gunakan istilah matematika pada materi sosial/ekonomi, dan jangan gunakan istilah sosial pada materi eksak).
+     - Berikan data angka kecil yang mudah dihitung di kepala atau skenario konkret 1 paragraf.
+  3. Tuliskan PROSES KERJANYA SECARA EKSPLISIT: Jangan langsung beri hasil akhir! Uraikan langkah logis / hitungan manualnya secara bertahap sampai selesai.
+  4. Berikan "CARA MENGINGAT / INTUISI KUNCI" dalam format tegas: [KATA KUNCI ATAU KAIDAH RINGKAS].
   5. Soroti syarat kritis atau jebakan yang paling sering bikin siswa keliru.
   6. SEKSI WAJIB PENUTUP: "SEKARANG LATIHAN (KERJAKAN MANUAL)"
-     - Sajikan 5 soal latihan mandiri bertingkat (Soal 1 pemanasan konsep, Soal 2-4 hitungan/analisis bertahap, Soal 5 soal tantangan proses lengkap).
+     - Sajikan 5 soal latihan mandiri bertingkat (Soal 1 pemanasan konsep dasar, Soal 2-4 analisis/hitungan bertahap, Soal 5 tantangan proses lengkap).
      - Perintahkan: "Jangan lihat pembahasan dulu. Kerjakan manual dan tulis prosesnya."
      - Kalimat penutup: "Kirim jawaban 1–5 ke panel Tanya Nara di samping, nanti aku koreksi satu per satu dan kalau sudah benar kita naik level!"
 - UNIVERSAL KE SEMUA MAPEL:
@@ -535,7 +533,7 @@ ${doc.content.slice(0, 25000)}
         styleGuidance = `GAYA PENULISAN: BAHASA SEDERHANA & INTUITIF (TUTOR SEBAYA / NON-TEORITIS)
 - HINDARI bahasa diktat kaku yang menjemukan. Jelaskan seperti seorang mentor senior yang cerdas dan asyik.
 - Mulai dari masalah nyata: "Kenapa konsep ini diciptakan? Di mana kita menjumpainya dalam kehidupan nyata?"
-- Gunakan analogi konkret yang langsung memicu 'Aha! moment' (misal: matriks sebagai tabel stok toko/grid piksel, inflasi sebagai air yang terlalu banyak di adonan).
+- Gunakan analogi konkret yang langsung memicu 'Aha! moment' dari kehidupan sehari-hari.
 - Pertahankan substansi 100% lengkap dan akurat, hanya ubah cara penyampaiannya agar hidup dan mudah dicerna.`;
       }
 
@@ -545,7 +543,7 @@ ${doc.content.slice(0, 25000)}
    - Wajib sertakan cara membaca rumus dengan bahasa manusia biasa dan contoh angka kecil sederhana agar pembaca langsung paham cara memakainya.`
         : `3. **Kaidah Pokok, Karakteristik Utama, & Klasifikasi**:
    - DILARANG KERAS MENGARANG RUMUS/PERSAMAAN MATEMATIKA PALSU (PSEUDO-MATH) seperti membuat $V = f(X, Y)$ atau persamaan fungsi simbolik buatan untuk materi seni, sejarah, kriya, atau ilmu sosial.
-   - Sajikan prinsip inti, kaidah perancangan, matriks perbandingan gaya/era, atau taksonomi klasifikasi murni konseptual tanpa rumus buatan sama sekali.`;
+   - Sajikan prinsip inti, kaidah perancangan, tabel perbandingan konsep, atau taksonomi klasifikasi murni konseptual tanpa rumus buatan sama sekali.`;
 
       const prompt = style === "tutor"
         ? `Anda adalah mentor belajar pribadi yang ramah, taktis, dan fokus pada penguasaan mandiri.
@@ -671,39 +669,38 @@ ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat,
       let typeGuidance = "";
       if (isMathDomain) {
         if (quizType === "beginner") {
-          typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - PEMULA & FONDASI BERTAHAP
-- PRINSIP: Mulai dari angka kecil konkret, jangan cuma rumus abstrak, sampai siswa bisa mengerjakan sendiri.
-- URUTAN TANGGA KESULITAN (WAJIB DARI MUDAH KE MENENGAH):
-  * Soal 1 (Pemanasan Fondasi): Identifikasi visual atau cara baca notasi dengan angka kecil konkret (contoh: ordo matriks dasar dan mencari elemen baris-kolom $a_{12}$).
-  * Soal 2–3 (Operasi Tunggal Sederhana): Satu langkah pengerjaan yang bisa diselesaikan di kertas dalam hitungan detik (contoh: penjumlahan/pengurangan matriks 2x2 angka bulat kecil, atau cek syarat sahnya operasi).
-  * Soal 4–5 (Kaidah Operasi Bertahap): Transpos, perkalian skalar, atau perkalian matriks dasar baris x kolom dengan angka kecil (1, 2, 3, dst).
-- OPSI JAWABAN (A, B, C, D, E): WAJIB berupa angka, ordo, atau matriks hasil yang ringkas dan terfokus pada angka akhir. Dilarang cerita panjang!
-- PEMBAHASAN STEPPER: Langkah 1 bedah premis -> Langkah 2 tuliskan proses hitung eksplisit kali-tambahnya -> Langkah 3 simpulan.`;
+          typeGuidance = `TIPE KUIS: EKSAK / KUANTITATIF - PEMULA & FONDASI BERTAHAP
+- PRINSIP: Mulai dari angka kecil konkret dan pembacaan notasi dasar, bukan rumus abstrak yang menakutkan pemula.
+- URUTAN TANGGA KESULITAN (DARI MUDAH KE MENENGAH):
+  * Soal 1 (Pemanasan Fondasi): Identifikasi variabel/elemen, membaca grafik/tabel, atau pemahaman dimensi/ordo dari besaran materi terkait.
+  * Soal 2–3 (Operasi Tunggal Sederhana): Satu langkah pengerjaan dasar (substitusi langsung nilai angka kecil, atau verifikasi syarat legal operasi).
+  * Soal 4–5 (Operasi Terarah Bertahap): Operasi 2 tahap pengerjaan (penyederhanaan, eliminasi bertahap, atau penerapan rumus inti).
+- OPSI JAWABAN (A, B, C, D, E): WAJIB berupa angka bulat, nilai pecahan sederhana, atau notasi variabel yang ringkas dan to-the-point. Dilarang cerita panjang!
+- PEMBAHASAN STEPPER: Langkah 1 identifikasi apa yang diketahui -> Langkah 2 tuliskan proses hitung eksplisit baris per baris -> Langkah 3 simpulan hasil.`;
         } else if (quizType === "conceptual") {
-          typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - STANDAR UJIAN SEKOLAH
-- Uji pemahaman operasional dan sifat-sifat aljabar: determinan, invers, sifat komutatif/asosiatif, dan sistem persamaan matriks standar ujian sekolah.
-- Soal to-the-point dengan angka bulat rapi. Opsi ringkas. Pembahasan menjabarkan langkah hitung tuntas.`;
+          typeGuidance = `TIPE KUIS: EKSAK / KUANTITATIF - STANDAR UJIAN SEKOLAH
+- Uji sifat-sifat matematis, pemecahan persamaan standar, hubungan antar-variabel, dan penerapan aturan baku materi.
+- Soal to-the-point dengan angka bulat rapi. Pembahasan menjabarkan langkah hitung tuntas.`;
         } else {
-          typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - HOTS & SELEKSI TINGGI
-- Penalaran tingkat tinggi: matriks transformasi gabungan, determinan matriks singular berparameter ($k$), atau pembuktian sifat aljabar non-rutin.`;
+          typeGuidance = `TIPE KUIS: EKSAK / KUANTITATIF - HOTS & SELEKSI TINGGI
+- Penalaran tingkat tinggi: penggabungan multi-aturan, pemecahan parameter variabel tak diketahui, atau pembuktian sifat non-rutin.`;
         }
       } else {
         if (quizType === "beginner") {
-          typeGuidance = `TIPE KUIS: TEORI / NON-HITUNGAN - PEMULA & ULANGAN HARIAN SEKOLAH (PERSIS GAYA GURU KELAS)
-- PRINSIP: Guru kelas membuat soal langsung dari poin-poin yang tertulis di slide/modul. DILARANG membuat cerita fiktif yang aneh-aneh.
-- VARIASI SOAL ULANGAN SEKOLAH (IKUTI URUTAN MATERI DARI BAB AWAL KE AKHIR):
-  * Soal 1 (Definisi Harfiah Bab Awal): Tanyakan langsung definisi dasar atau istilah paling awal (misal: "Karya yang dibuat dengan keterampilan tangan dan memiliki fungsi pakai serta estetika disebut...").
-  * Soal 2 (Pengecualian / Klasifikasi): Uji daftar fungsi atau karakter (misal: "Berikut ini yang BUKAN merupakan fungsi dasar karya kerajinan adalah...").
-  * Soal 3 (Tokoh / Periode / Ciri Utama): Tanyakan tokoh kunci atau ciri era yang tertulis di materi (misal: "Tokoh pelopor gerakan Arts and Crafts adalah...").
-  * Soal 4–5 (Kaidah Khusus / Komparasi Langsung): Tanyakan perbandingan gaya atau teknik yang tertulis jelas di materi (misal: "Ciri khas gaya Art Deco dibanding Art Nouveau adalah...").
-- OPSI JAWABAN (A, B, C, D, E): WAJIB SINGKAT, PADAT, DAN LANGSUNG KE INTI (istilah, nama tokoh, atau fakta). DILARANG opsi berupa cerita panjang.`;
+          typeGuidance = `TIPE KUIS: KONSEPTUAL / ILMU SOSIAL / TEORI - PEMULA & ULANGAN HARIAN
+- PRINSIP: Guru kelas menyusun soal langsung dari poin-poin yang tertera di dokumen/silabus sumber. DILARANG mengarang cerita fiktif di luar konteks materi.
+- POLA VARIASI SOAL UJIAN (IKUTI URUTAN MATERI DARI BAB PEMBUKA KE BAB AKHIR):
+  * Soal 1 (Definisi Harfiah Bab Awal): Tanyakan definisi dasar konsep atau istilah pokok paling awal dari materi sumber.
+  * Soal 2 (Pengecualian / Klasifikasi): Uji daftar fungsi, karakter, atau jenis ("Berikut ini yang BUKAN merupakan...").
+  * Soal 3 (Tokoh / Periode / Peristiwa / Latar Belakang): Tanyakan tokoh penggagas, periode era, atau latar belakang yang tertulis di materi.
+  * Soal 4–5 (Kaidah Pembeda & Komparasi Langsung): Tanyakan perbandingan dua konsep/aliran/prinsip yang tertulis jelas di materi agar siswa tidak tertukar.
+- OPSI JAWABAN (A, B, C, D, E): WAJIB SINGKAT, PADAT, DAN LANGSUNG KE INTI (istilah, nama tokoh, frasa pendek, atau klasifikasi). DILARANG opsi berupa paragraf panjang.`;
         } else if (quizType === "conceptual") {
-          typeGuidance = `TIPE KUIS: TEORI / NON-HITUNGAN - STANDAR UJIAN SEMESTER
-- Fokus pada penguasaan modul menyeluruh: hubungan sebab-akibat, perbandingan antar-wilayah, dan analisis pembeda konsep yang sering tertukar di ujian.
-- Pertanyaan langsung pada inti materi tanpa narasi berbelit-belit.`;
+          typeGuidance = `TIPE KUIS: KONSEPTUAL / ILMU SOSIAL / TEORI - STANDAR UJIAN SEMESTER
+- Uji penguasaan konsep menyeluruh: hubungan sebab-akibat, perbandingan antar-kategori, dan analisis pembeda istilah yang sering tertukar di ujian.`;
         } else {
-          typeGuidance = `TIPE KUIS: TEORI / NON-HITUNGAN - ANALISIS MENDALAM (HOTS / SELEKSI TINGGI)
-- Analisis kritis antar-teori, evaluasi studi kasus nyata, dan keterkaitan multi-variabel sosial/estetika.`;
+          typeGuidance = `TIPE KUIS: KONSEPTUAL / ILMU SOSIAL / TEORI - ANALISIS MENDALAM (HOTS)
+- Analisis kritis antar-teori, evaluasi studi kasus kontekstual, dan keterkaitan multi-variabel fenomena materi.`;
         }
       }
 

@@ -177,25 +177,26 @@ async function multiSourceAcademicSearch(topic, subject = "") {
   const cleanSubject = (subject || "").trim();
   if (!cleanTopic) return "";
 
-  // 1. Wikipedia Indonesia (Ensiklopedi & Konsep Baku)
+  // 1. Wikipedia Indonesia (Ensiklopedi & Konsep Baku Lengkap - Tanpa Memotong Intro)
   try {
     const wikiQueries = [cleanTopic, `${cleanTopic} ${cleanSubject || "konsep"}`.trim()];
     for (const q of wikiQueries) {
-      const url = `https://id.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=3&prop=extracts&exintro=1&explaintext=1&format=json`;
+      const url = `https://id.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=2&prop=extracts&explaintext=1&format=json`;
       const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
       if (res.ok) {
         const data = await res.json();
         const pages = Object.values(data.query?.pages || {});
         for (const p of pages) {
-          if (p.extract && p.extract.length > 40 && !findings.encyclopedia.some(e => e.title === p.title)) {
-            findings.encyclopedia.push({ title: p.title, snippet: p.extract.slice(0, 400) });
+          if (p.extract && p.extract.length > 50 && !findings.encyclopedia.some(e => e.title === p.title)) {
+            // Ambil hingga 3000 karakter materi utuh agar mencakup klasifikasi, rumus, dan sejarah teori
+            findings.encyclopedia.push({ title: p.title, snippet: p.extract.slice(0, 3000) });
           }
         }
       }
     }
   } catch (err) {}
 
-  // 2. Wikibooks Indonesia (Buku Teks Bebas & Modul Ajar)
+  // 2. Wikibooks Indonesia (Buku Teks Bebas & Bab Kurikulum)
   try {
     const url = `https://id.wikibooks.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&gsrlimit=2&prop=extracts&explaintext=1&format=json`;
     const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
@@ -203,8 +204,8 @@ async function multiSourceAcademicSearch(topic, subject = "") {
       const data = await res.json();
       const pages = Object.values(data.query?.pages || {});
       for (const p of pages) {
-        if (p.extract && p.extract.length > 40 && !findings.textbook.some(t => t.title === p.title)) {
-          findings.textbook.push({ title: p.title, snippet: p.extract.slice(0, 400) });
+        if (p.extract && p.extract.length > 50 && !findings.textbook.some(t => t.title === p.title)) {
+          findings.textbook.push({ title: p.title, snippet: p.extract.slice(0, 2000) });
         }
       }
     }
@@ -219,7 +220,7 @@ async function multiSourceAcademicSearch(topic, subject = "") {
       const items = data.message?.items || [];
       for (const it of items) {
         const title = it.title?.[0];
-        const snippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 300) : "";
+        const snippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 400) : "";
         if (title && !findings.curriculumLiterature.some(c => c.title === title)) {
           findings.curriculumLiterature.push({ title, snippet });
         }
@@ -227,7 +228,7 @@ async function multiSourceAcademicSearch(topic, subject = "") {
     }
   } catch (err) {}
 
-  // 4. Ruangguru Pedagogical Articles (Modul Pembelajaran Kurikulum Sekolah SD/SMP/SMA)
+  // 4. Ruangguru Pedagogical Articles (Modul Pembelajaran Kurikulum Sekolah SD/SMP/SMA - Ekstraksi Dalam)
   try {
     const searchUrl = `https://www.ruangguru.com/blog/?s=${encodeURIComponent(cleanTopic)}`;
     const rRes = await fetch(searchUrl, {
@@ -238,24 +239,26 @@ async function multiSourceAcademicSearch(topic, subject = "") {
       const cardRegex = /<a[^>]+href="(https:\/\/www\.ruangguru\.com\/blog\/[^"]+)"[^>]*>[\s\S]*?<h2 class="content-title">([\s\S]*?)<\/h2>/gi;
       const articles = [];
       let m;
-      while ((m = cardRegex.exec(rHtml)) !== null && articles.length < 3) {
+      while ((m = cardRegex.exec(rHtml)) !== null && articles.length < 2) {
         const url = m[1];
         if (url.includes("/blog/c/") || url.includes("/tag/")) continue;
         const title = m[2].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").trim();
         articles.push({ url, title });
       }
 
-      for (const art of articles.slice(0, 2)) {
+      for (const art of articles) {
         try {
           const artRes = await fetch(art.url, { headers: { "User-Agent": "Mozilla/5.0" } });
           if (artRes.ok) {
             const artHtml = await artRes.text();
-            const paras = [...artHtml.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+            // Ekstraksi seluruh teks materi (paragraf, sub-heading h2/h3, daftar poin li)
+            const paras = [...artHtml.matchAll(/<(?:p|h[234]|li)[^>]*>([\s\S]*?)<\/(?:p|h[234]|li)>/gi)]
               .map(p => p[1].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").replace(/&nbsp;/g, " ").trim())
-              .filter(p => p.length > 50 && !p.includes("minutes read") && !p.includes("Download") && !p.includes("Copyright"));
-            const snippet = paras.slice(1, 4).join(" ");
-            if (snippet.length > 40) {
-              findings.ruangguru.push({ title: art.title, url: art.url, snippet: snippet.slice(0, 450) });
+              .filter(p => p.length > 25 && !p.includes("minutes read") && !p.includes("Download") && !p.includes("Copyright"));
+            const fullBody = paras.slice(1, 18).join("\n");
+            if (fullBody.length > 80) {
+              // Ambil hingga 3500 karakter materi mengajar Ruangguru yang komprehensif
+              findings.ruangguru.push({ title: art.title, url: art.url, snippet: fullBody.slice(0, 3500) });
             }
           }
         } catch {}

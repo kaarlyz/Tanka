@@ -373,12 +373,79 @@ export default function App() {
     setTimeout(() => setStatusNotice(""), 3500);
   }
 
-  function copyToClipboard(text: string, label = "Teks") {
-    navigator.clipboard.writeText(text).then(() => {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  function copyToClipboard(text: string, label = "Teks", key = "default") {
+    if (!text || !text.trim()) {
+      showNotice(`Tidak ada teks ${label.toLowerCase()} yang dapat disalin`);
+      return;
+    }
+
+    const onCopiedSuccess = () => {
+      setCopiedId(key);
+      setTimeout(() => setCopiedId(null), 2000);
       showNotice(`${label} berhasil disalin ke clipboard`);
-    }).catch(() => {
-      showNotice("Gagal menyalin teks");
-    });
+    };
+
+    // 1. Jika Secure Context (HTTPS / localhost), gunakan navigator.clipboard.writeText
+    const isSecure = typeof window !== "undefined" && window.isSecureContext === true;
+    if (isSecure && typeof navigator !== "undefined" && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(text).then(() => {
+        onCopiedSuccess();
+      }).catch(() => {
+        fallbackCopy(text, onCopiedSuccess);
+      });
+      return;
+    }
+
+    // 2. Jika diakses via HTTP LAN (misal IP 192.168.x.x di HP), WAJIB sinkron panggil fallbackCopy saat gesture sentuh masih aktif
+    fallbackCopy(text, onCopiedSuccess);
+  }
+
+  function fallbackCopy(text: string, onSuccess: () => void) {
+    let successful = false;
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.width = "2em";
+      textArea.style.height = "2em";
+      textArea.style.padding = "0";
+      textArea.style.border = "none";
+      textArea.style.outline = "none";
+      textArea.style.boxShadow = "none";
+      textArea.style.background = "transparent";
+      textArea.style.opacity = "0.01";
+      document.body.appendChild(textArea);
+
+      textArea.focus();
+      textArea.select();
+      textArea.setSelectionRange(0, textArea.value.length);
+
+      successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+    } catch (err) {
+      console.error("Fallback execCommand error:", err);
+      successful = false;
+    }
+
+    if (successful) {
+      onSuccess();
+    } else {
+      // Fallback terakhir: jika clipboard sistem memblokir akses otomatis, beri opsi salin manual lewat modal/prompt
+      try {
+        const ok = window.prompt("Salin teks di bawah ini (tekan Salin / Ctrl+C):", text);
+        if (ok !== null) {
+          onSuccess();
+        } else {
+          showNotice("Gagal menyalin teks ke clipboard");
+        }
+      } catch {
+        showNotice("Gagal menyalin teks ke clipboard");
+      }
+    }
   }
 
   function downloadAsMarkdown(filename: string, content: string) {
@@ -2014,6 +2081,27 @@ export default function App() {
                         >
                           <Globe size={14} color="#4b6623" />
                           <span>{isEnriching ? "Meneliti..." : "Perkaya Materi (Web Search)"}</span>
+                        </button>
+
+                        <button
+                          onClick={() => copyToClipboard(activeDocContent, "Isi Modul", "docContent")}
+                          style={{
+                            backgroundColor: copiedId === "docContent" ? "#ecfdf5" : "#ffffff",
+                            border: `1px solid ${copiedId === "docContent" ? "#10b981" : "#dce1da"}`,
+                            color: copiedId === "docContent" ? "#065f46" : "#56615d",
+                            borderRadius: 8,
+                            padding: "6px 12px",
+                            fontSize: 12,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            transition: "all 0.15s ease"
+                          }}
+                          title="Salin seluruh isi dokumen/modul ke clipboard"
+                        >
+                          {copiedId === "docContent" ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
+                          <span>{copiedId === "docContent" ? "Tersalin!" : "Salin Modul"}</span>
                         </button>
 
                         <button
@@ -4287,11 +4375,11 @@ export default function App() {
                         </button>
 
                         <button
-                          onClick={() => copyToClipboard(activeDocSummary, "Rangkuman")}
+                          onClick={() => copyToClipboard(activeDocSummary, "Rangkuman", "summary")}
                           style={{
-                            backgroundColor: "#ffffff",
-                            border: "1px solid #dce1da",
-                            color: "#17201d",
+                            backgroundColor: copiedId === "summary" ? "#ecfdf5" : "#ffffff",
+                            border: `1px solid ${copiedId === "summary" ? "#10b981" : "#dce1da"}`,
+                            color: copiedId === "summary" ? "#065f46" : "#17201d",
                             borderRadius: 8,
                             padding: "8px 12px",
                             fontSize: 12,
@@ -4299,12 +4387,13 @@ export default function App() {
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
-                            gap: 6
+                            gap: 6,
+                            transition: "all 0.15s ease"
                           }}
                           title="Salin Markdown ke clipboard"
                         >
-                          <Copy size={14} />
-                          <span>Salin</span>
+                          {copiedId === "summary" ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
+                          <span>{copiedId === "summary" ? "Tersalin!" : "Salin"}</span>
                         </button>
 
                         <button

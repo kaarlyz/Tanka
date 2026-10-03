@@ -662,19 +662,18 @@ ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat,
 
       let typeGuidance = "";
       if (quizType === "beginner") {
-        typeGuidance = `TIPE KUIS: PEMULA & FONDASI BERTAHAP (SCAFFOLDING BELAJAR DARI NOL)
-- TUJUAN UTAMA: Sangat ramah pemula yang baru pertama kali belajar materi ini. Bangun pemahaman dan rasa percaya diri langkah demi langkah.
-- ATURAN TANGGA KESULITAN (URUTAN WAJIB DARI MUDAH KE MENENGAH):
-  * Soal 1 (Fondasi Terendah): Pemanasan visual / identifikasi dasar langsung dengan angka kecil (contoh: ordo matriks dasar dan cara baca elemen baris-kolom).
-  * Soal 2–3 (Operasi Tunggal Sederhana): Satu langkah pengerjaan saja dengan angka bulat kecil (contoh: penjumlahan 2 matriks ordo 2x2, atau cek syarat sahnya operasi).
-  * Soal 4–5 (Kaidah Inti Bertahap): Perkalian skalar sederhana atau perkalian baris x kolom dasar dengan angka kecil (1, 2, 3, dst).
-- LARANGAN KERAS UNTUK MODE PEMULA:
-  * DILARANG membuat skenario cerita panjang berbelit-belit (JANGAN ada narasi database inventaris gudang cabang, dsb).
-  * OPSI JAWABAN (A, B, C, D, E) HARUS PENDEK, TEGAS, DAN JELAS (cukup nilai angka, ordo, atau frasa 3-6 kata). DILARANG membuat opsi berparagraf panjang yang melelahkan siswa.`;
+        typeGuidance = `TIPE KUIS: PEMULA & ULANGAN HARIAN SEKOLAH (PERSIS GAYA GURU KELAS)
+- PRINSIP: Guru sekolah membuat soal langsung dari poin-poin yang tertulis di slide/modul. Jangan mengarang skenario fiktif yang aneh-aneh.
+- VARIASI SOAL ULANGAN SEKOLAH (IKUTI URUTAN MATERI DARI AWAL):
+  * Soal 1 (Definisi Pembuka): Tanyakan langsung definisi dasar atau istilah paling awal (misal: "Karya yang dibuat dengan keterampilan tangan dan memiliki fungsi pakai serta estetika disebut...", atau ordo matriks dasar).
+  * Soal 2 (Pengecualian / Klasifikasi): Uji daftar fungsi atau karakter (misal: "Berikut ini yang BUKAN merupakan fungsi dasar karya kerajinan adalah...").
+  * Soal 3 (Tokoh / Periode / Ciri Utama): Tanyakan tokoh kunci atau ciri era (misal: "Tokoh pelopor gerakan Arts and Crafts adalah...").
+  * Soal 4-5 (Kaidah Khusus / Komparasi Langsung): Tanyakan perbandingan gaya atau teknik yang tertulis jelas di materi (misal: "Ciri khas gaya Art Deco dibanding Art Nouveau adalah...").
+- OPSI JAWABAN (A, B, C, D, E) WAJIB SINGKAT, PADAT, DAN LANGSUNG KE INTI (istilah, nama tokoh, atau nilai hasil). Dilarang opsi berupa cerita panjang.`;
       } else if (quizType === "conceptual") {
-        typeGuidance = `TIPE KUIS: STANDAR PEMAHAMAN TERAPAN (UJIAN SEKOLAH / ULANGAN HARIAN)
-- Fokus pada variasi soal ujian sekolah standar yang menguji pemahaman konsep secara jelas.
-- Pertanyaan to-the-point dengan skenario ringan. Opsi jawaban ringkas dan terfokus pada hasil.`;
+        typeGuidance = `TIPE KUIS: STANDAR UJIAN SEMESTER / UJIAN SEKOLAH
+- Fokus pada penguasaan materi modul secara menyeluruh: definisi, hubungan sebab-akibat, tokoh, dan pembeda konsep yang sering tertukar di ujian.
+- Pertanyaan langsung pada inti materi tanpa skenario berbelit-belit. Opsi jawaban ringkas dan terfokus.`;
       } else {
         typeGuidance = `TIPE KUIS: ANALISIS MENDALAM & PREDIKSI UJIAN (HOTS / SELEKSI TINGGI)
 - Fokus pada penalaran tingkat tinggi, analisis variabel tersembunyi, komparasi multi-konsep, dan pemecahan masalah non-rutin.

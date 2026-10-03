@@ -245,6 +245,7 @@ export default function App() {
   const [activeDocTitle, setActiveDocTitle] = useState("");
   const [activeDocContent, setActiveDocContent] = useState("");
   const [activeDocSummary, setActiveDocSummary] = useState("");
+  const activeDoc = documents.find((d) => d.id === activeDocId) || null;
 
   const [activeTab, setActiveTab] = useState<"material" | "flashcards" | "quiz" | "feynman" | "summary" | "chat" | "mistakes">("material");
 
@@ -4440,9 +4441,13 @@ export default function App() {
                         </h2>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                           {flashcards.map((fc, fIdx) => (
-                            <div key={fIdx} style={{ border: "1px solid #dce1da", borderRadius: 8, padding: "10px 12px", background: "#f8f9f5", breakInside: "avoid" }}>
-                              <strong style={{ fontSize: 12, color: "#22370c", display: "block", marginBottom: 4 }}>{fc.question}</strong>
-                              <p style={{ fontSize: 11, color: "#374151", margin: 0, lineHeight: 1.5 }}>{fc.answer}</p>
+                            <div key={fc.id || fIdx} style={{ border: "1px solid #dce1da", borderRadius: 8, padding: "10px 12px", background: "#f8f9f5", breakInside: "avoid" }}>
+                              <strong style={{ fontSize: 12, color: "#22370c", display: "block", marginBottom: 4 }}>
+                                <MathView text={fc.front} />
+                              </strong>
+                              <p style={{ fontSize: 11, color: "#374151", margin: 0, lineHeight: 1.5 }}>
+                                <MathView text={fc.back} />
+                              </p>
                             </div>
                           ))}
                         </div>
@@ -4460,20 +4465,22 @@ export default function App() {
                         </h2>
                         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                           {quizQuestions.map((q, qIdx) => (
-                            <div key={qIdx} style={{ border: "1px solid #dce1da", borderRadius: 8, padding: "12px 14px", background: "#ffffff", breakInside: "avoid" }}>
+                            <div key={q.id || qIdx} style={{ border: "1px solid #dce1da", borderRadius: 8, padding: "12px 14px", background: "#ffffff", breakInside: "avoid" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                                 <span style={{ fontSize: 11, fontWeight: 700, color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>SOAL {qIdx + 1}</span>
                               </div>
                               <div style={{ fontSize: 12.5, fontWeight: 600, color: "#111827", marginBottom: 8 }}>
                                 <MathView text={q.question} />
                               </div>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
-                                {q.options.map((opt, oIdx) => (
-                                  <div key={oIdx} style={{ fontSize: 11, padding: "4px 8px", borderRadius: 4, background: oIdx === q.correctIndex ? "#ecfccb" : "#f3f4f6", border: oIdx === q.correctIndex ? "1px solid #bef264" : "1px solid transparent", color: oIdx === q.correctIndex ? "#365314" : "#374151" }}>
-                                    <strong>{String.fromCharCode(65 + oIdx)}.</strong> {opt} {oIdx === q.correctIndex && "✓ (Kunci)"}
-                                  </div>
-                                ))}
-                              </div>
+                              {Array.isArray(q.options) && q.options.length > 0 && (
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
+                                  {q.options.map((opt, oIdx) => (
+                                    <div key={oIdx} style={{ fontSize: 11, padding: "4px 8px", borderRadius: 4, background: oIdx === q.correctIndex ? "#ecfccb" : "#f3f4f6", border: oIdx === q.correctIndex ? "1px solid #bef264" : "1px solid transparent", color: oIdx === q.correctIndex ? "#365314" : "#374151" }}>
+                                      <strong>{String.fromCharCode(65 + oIdx)}.</strong> <MathView text={opt} /> {oIdx === q.correctIndex && "✓ (Kunci)"}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                               <div style={{ fontSize: 11, color: "#4b5563", background: "#f8f9f5", padding: "8px 10px", borderRadius: 6, lineHeight: 1.5 }}>
                                 <strong style={{ color: "#1f2937" }}>Pembahasan: </strong>
                                 <MathView text={q.explanation} />

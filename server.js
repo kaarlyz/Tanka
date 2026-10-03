@@ -1261,13 +1261,16 @@ ${doc.content.slice(0, 10000)}
       const { topic, model = "ag/gemini-3.8-flash-low" } = await getBody(req);
       if (!topic || !topic.trim()) return sendJSON(res, { error: "Topic required" }, 400);
 
-      const prompt = `Pengguna ingin mempelajari topik berikut tanpa memiliki file dokumen/buku:
+      const prompt = `Pengguna ingin mempelajari topik/sub-topik berikut:
 "${topic.trim()}"
 
 Tugas Anda:
-1. Identifikasi bidang ilmu yang relevan (misal: Matematika, Ekonomi, Sosiologi, Bahasa, Pemrograman, Sains, Sejarah, dll).
-2. Tentukan judul topik formal akademik (contoh: "Matriks Transformasi Geometri Ordo 2x2", "Dasar-Dasar Machine Learning Supervisi").
-3. Buat 2 atau 3 pertanyaan diagnostik interaktif singkat untuk memastikan materi yang disusun tepat sasaran sesuai kebutuhan pengguna. Tiap pertanyaan memiliki 3 atau 4 pilihan opsi ringkas.
+1. Identifikasi bidang ilmu yang relevan (misal: Matematika, Ekonomi, Sosiologi, Fisika, Biologi, Sejarah, dll).
+2. Tentukan judul topik formal akademik ("formalTitle") YANG DISIPLIN & MENGIKUTI RUANG LINGKUP (SCOPE) PERMINTAAN:
+   - DILARANG memperlebar judul menjadi bab induk raksasa jika pengguna meminta sub-topik spesifik!
+   - Contoh BENAR: Jika input "faktor pendorong perubahan sosial", judul formal adalah "Faktor Pendorong dan Penghambat Perubahan Sosial", BUKAN "Sosiologi: Teori Perubahan Sosial Lengkap".
+   - Contoh BENAR: Jika input "aturan rantai turunan", judul formal adalah "Kalkulus: Aturan Rantai Diferensial Fungsi Komposisi", BUKAN "Kalkulus Diferensial Integral Lengkap".
+3. Buat 2 atau 3 pertanyaan diagnostik interaktif singkat terfokus pada sub-topik tersebut untuk memastikan materi yang disusun tepat sasaran sesuai kebutuhan pengguna. Tiap pertanyaan memiliki 3 atau 4 pilihan opsi ringkas.
 
 Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
 {
@@ -1339,14 +1342,27 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
       }
 
       const prompt = `Anda adalah pendidik ahli spesialis kurikulum nasional (Kurikulum Merdeka / SMA / UTBK) dan penyusunan modul ajar berstandar tinggi.
-Pengguna ingin mempelajari materi dari topik: "${topic}"
+Pengguna ingin mempelajari materi dari topik spesifik: "${topic}"
 Judul Formal Modul: "${formalTitle || topic}"
 Bidang / Mata Pelajaran: "${subject || "Umum"}"
 Preferensi / Kebutuhan Pembelajar:
 ${Object.entries(answers).map(([k, v]) => `- ${k}: ${v}`).join("\n")}
 ${webContext}
 TUGAS UTAMA:
-Susun dokumen materi ajar belajar mandiri yang LENGKAP, OTENTIK, MENDALAM, dan SESUAI TERMINOLOGI RESMI KURIKULUM INDONESIA (bukan sekadar ringkasan pendek).
+Susun dokumen materi ajar belajar mandiri yang MENDALAM, TAJAM, TERFOKUS 100% PADA SUB-TOPIK YANG DIMINTA, dan SESUAI KURIKULUM RESMI INDONESIA.
+
+PRINSIP KUNCI RUANG LINGKUP (STRICT SCOPE LOCK — ANTI-SCOPE-CREEP):
+1. FOKUS 100% PADA SUB-TOPIK YANG DIMINTA!
+   - DILARANG KERAS memperluas materi menjadi rangkuman bab induk raksasa yang membuang ruang.
+   - Jangan memasukkan materi sub-bab lain yang tidak ditanyakan (misal jika ditanya "Faktor Pendorong", JANGAN jelaskan definisi bab besar dari 4 tokoh sosiologi, jangan bahas bentuk perubahan lambat/cepat, jangan bahas discovery/invention/innovation).
+   - Berikan pengantar hanya 1-2 kalimat untuk menyambungkan posisi materi ke konteks besarnya, lalu LANGSUNG masuk ke substansi sub-topik yang diminta.
+2. PASANGAN DIKOTOMI & LAWAN TANDING KONSEP UJIAN (PENTING):
+   - Soal ujian sekolah / UTBK hampir selalu menguji konsep faktor/proses dalam format perbandingan dengan lawannya:
+     * Jika materi FAKTOR PENDORONG: WAJIB bahas tuntas klasifikasi Faktor Pendorong (Internal & Eksternal) DAN sandingkan dengan FAKTOR PENGHAMBAT (vested interest, adat kolot, isolasi geografis, prasangka budaya luar).
+     * Jika materi PROSES EKSOGEN/ENDOGEN: Perjelas garis batas kapan suatu peristiwa terhitung internal vs eksternal.
+3. KELENGKAPAN TAKSONOMI KURIKULUM RESMI (BUKU TEKS & RUANGGURU):
+   - Uraikan butir-butir resmi yang biasa diujikan di sekolah secara lengkap (misal 8 faktor pendorong sosiologis resmi), jangan hanya menyebut 2-3 poin sambil mengarang analogi panjang.
+   - Setiap butir wajib disertai CONTOH KASUS NYATA di Indonesia yang konkret dan mudah dibayangkan siswa.
 
 STANDAR TERMINOLOGI & PENDIDIKAN INDONESIA (MUTLAK):
 1. GUNAKAN TERMINOLOGI RESMI BUKU TEKS & KURIKULUM:
@@ -1359,17 +1375,19 @@ STANDAR TERMINOLOGI & PENDIDIKAN INDONESIA (MUTLAK):
      * Gunakan peristilahan ilmiah baku tanpa rumus semu (pseudo-math).
 
 STRUKTUR ISI MODUL:
-1. **Definisi & Peta Konsep Utama**: Penjelasan inti konsep dengan bahasa lugas, latar belakang lahirnya konsep, dan analogi intuitif manusiawi.
-2. **Kaidah Pokok, Karakteristik, & Rumus/Aturan Baku**:
-   - Jika eksak: tuliskan rumus LaTeX dengan keterangan variabel dan satuan.
-   - Jika non-eksak: sajikan tabel perbandingan, taksonomi konsep, atau aturan hukum/teori.
-3. **Pola Soal Ujian & Strategi Solusi**: Variasi pola soal yang paling sering keluar di ujian sekolah / UTBK beserta trik efisiensi/pengerjaan cepat.
-4. **2 Contoh Soal Bertingkat Beserta Langkah Solusi Sistematis**:
-   - Contoh 1: Tingkat Konseptual / Sedang (langkah demi langkah dari angka/kasus kecil).
-   - Contoh 2: Tingkat Analisis Kritis / Kasus Lanjutan (evaluasi mendalam).
-5. **Analisis Jebakan & Miskonsepsi**: Hal yang sering mengecoh saat menghadapi ujian atau aplikasi praktis.
+1. **Peta Konsep & Inti Sub-Topik**:
+   - 1-2 kalimat pengantar posisi materi, diikuti bagan taksonomi ringkas sub-topik (faktor pendorong vs penghambat, atau syarat vs konsekuensi).
+2. **Bedah Mendalam Butir-Butir Materi Baku**:
+   - Uraikan setiap butir klasifikasi kurikulum secara sistematis, lengkap dengan penjelasan logis dan contoh kasus riil.
+3. **Komparasi Lawan Tanding / Garis Batas Kritis**:
+   - Tabel perbandingan komparatif (misal Faktor Pendorong vs Faktor Penghambat, atau Syarat A vs Syarat B) agar siswa tidak tertukar di ujian.
+4. **Pola Soal Ujian & Jebakan Konseptual (Common Pitfalls)**:
+   - 3-4 jebakan khas yang paling sering mengecoh siswa di ujian sekolah / UTBK terkait sub-topik ini.
+5. **2 Contoh Soal Ujian Bertingkat Beserta Pembahasan Tuntas**:
+   - Soal 1: Tingkat Pemahaman / Analisis Kasus Sedang.
+   - Soal 2: Tingkat HOTS / Penalaran Kritis dengan pembahasan bertahap.
 
-Tulis materi secara utuh dan kaya (minimal 700-1200 kata) dalam bahasa Indonesia yang enak dibaca dan grounded pada sumber kurikulum nyata.`;
+Tulis materi secara padat, tajam, dan berbobot akademis tinggi (minimal 800-1200 kata) dalam bahasa Indonesia yang lugas dan enak dipelajari.`;
 
       const content = await callRouter([
         { role: "system", content: "Anda adalah pengajar ahli yang menyusun modul ajar dan buku teks studi mendalam berbasis kurikulum resmi." },

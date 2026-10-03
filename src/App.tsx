@@ -3136,17 +3136,29 @@ export default function App() {
                         <div
                           style={{
                             marginTop: 16,
-                            backgroundColor: "#111116",
-                            border: "1px solid rgba(16, 185, 129, 0.3)",
+                            backgroundColor: "#fbfcf9",
+                            border: "1px solid #dde1da",
                             borderRadius: 12,
-                            padding: "18px",
-                            boxShadow: "0 8px 30px rgba(0, 0, 0, 0.5)"
+                            padding: "16px 18px",
+                            boxShadow: "0 4px 20px rgba(27, 39, 35, 0.04)"
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <MessageSquare size={16} color="#10b981" />
-                              <span style={{ fontSize: 14, fontWeight: 700, color: "#f4f4f5" }}>
+                              <div
+                                style={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: 6,
+                                  backgroundColor: "#18221f",
+                                  display: "grid",
+                                  placeItems: "center",
+                                  color: "#c8f064"
+                                }}
+                              >
+                                <Sparkles size={13} />
+                              </div>
+                              <span style={{ fontSize: 13.5, fontWeight: 800, color: "#17201d", letterSpacing: "-0.01em" }}>
                                 Tutor Bedah Soal AI
                               </span>
                               <span
@@ -3154,21 +3166,32 @@ export default function App() {
                                   fontSize: 10,
                                   fontWeight: 700,
                                   textTransform: "uppercase",
-                                  color: "#10b981",
-                                  backgroundColor: "rgba(16, 185, 129, 0.12)",
+                                  letterSpacing: "0.03em",
+                                  color: isAnswerSubmitted ? "#065f46" : "#92400e",
+                                  backgroundColor: isAnswerSubmitted ? "#ecfdf5" : "#fef3c7",
+                                  border: `1px solid ${isAnswerSubmitted ? "#a7f3d0" : "#fde68a"}`,
                                   padding: "2px 8px",
                                   borderRadius: 999
                                 }}
                               >
-                                {isAnswerSubmitted ? "Konteks Kunci & Pembahasan" : "Mode Petunjuk Berpikir"}
+                                {isAnswerSubmitted ? "Konteks Kunci & Pembahasan" : "Petunjuk Berpikir"}
                               </span>
                             </div>
                             <button
                               onClick={() => setIsQuizChatOpen(false)}
-                              style={{ background: "none", border: "none", color: "#71717a", cursor: "pointer", padding: 4 }}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#727d78",
+                                cursor: "pointer",
+                                padding: 4,
+                                borderRadius: 4,
+                                display: "flex",
+                                alignItems: "center"
+                              }}
                               title="Tutup Chat"
                             >
-                              <X size={16} />
+                              <X size={15} />
                             </button>
                           </div>
 
@@ -3194,14 +3217,31 @@ export default function App() {
                                 disabled={isQuizChatSending}
                                 style={{
                                   whiteSpace: "nowrap",
-                                  backgroundColor: "#16161d",
-                                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                                  color: "#a1a1aa",
+                                  backgroundColor: "#ffffff",
+                                  border: "1px solid #dce1da",
+                                  color: "#495751",
                                   borderRadius: 999,
-                                  padding: "4px 10px",
+                                  padding: "5px 11px",
                                   fontSize: 11,
+                                  fontWeight: 600,
                                   cursor: isQuizChatSending ? "not-allowed" : "pointer",
-                                  flexShrink: 0
+                                  flexShrink: 0,
+                                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+                                  transition: "0.15s ease"
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isQuizChatSending) {
+                                    e.currentTarget.style.backgroundColor = "#18221f";
+                                    e.currentTarget.style.color = "#c8f064";
+                                    e.currentTarget.style.borderColor = "#18221f";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isQuizChatSending) {
+                                    e.currentTarget.style.backgroundColor = "#ffffff";
+                                    e.currentTarget.style.color = "#495751";
+                                    e.currentTarget.style.borderColor = "#dce1da";
+                                  }
                                 }}
                               >
                                 {chip}
@@ -3212,7 +3252,18 @@ export default function App() {
                           {/* Chat messages thread */}
                           <div style={{ maxHeight: 280, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 12, paddingRight: 4 }}>
                             {(!quizChatMessages[currentQuestionIndex] || quizChatMessages[currentQuestionIndex].length === 0) ? (
-                              <div style={{ fontSize: 12.5, color: "#71717a", padding: "12px 0", textAlign: "center" }}>
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  color: "#56645e",
+                                  padding: "12px 14px",
+                                  textAlign: "center",
+                                  backgroundColor: "#ffffff",
+                                  borderRadius: 8,
+                                  border: "1px solid #e2e7df",
+                                  lineHeight: 1.5
+                                }}
+                              >
                                 {isAnswerSubmitted
                                   ? "Ada yang membingungkan dari pembahasan? Tanyakan ke AI atau ketuk salah satu pertanyaan cepat di atas."
                                   : "Bingung cara menjawab soal ini? Ketuk salah satu petunjuk cepat di atas atau tanyakan ke AI."}
@@ -3226,13 +3277,14 @@ export default function App() {
                                     style={{
                                       alignSelf: isUser ? "flex-end" : "flex-start",
                                       maxWidth: "88%",
-                                      backgroundColor: isUser ? "#10b981" : "#16161d",
-                                      color: isUser ? "#09090b" : "#d4d4d8",
-                                      border: isUser ? "none" : "1px solid rgba(255, 255, 255, 0.08)",
-                                      borderRadius: 10,
-                                      padding: "10px 14px",
-                                      fontSize: 13,
+                                      backgroundColor: isUser ? "#18221f" : "#ffffff",
+                                      color: isUser ? "#eff5ec" : "#17201d",
+                                      border: isUser ? "none" : "1px solid #dde1da",
+                                      borderRadius: isUser ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                                      padding: isUser ? "9px 13px" : "11px 14px",
+                                      fontSize: 12.5,
                                       lineHeight: "1.55",
+                                      boxShadow: isUser ? "0 2px 8px rgba(24, 34, 31, 0.1)" : "0 2px 8px rgba(27, 39, 35, 0.02)",
                                       whiteSpace: "pre-wrap"
                                     }}
                                   >
@@ -3245,21 +3297,36 @@ export default function App() {
                               <div
                                 style={{
                                   alignSelf: "flex-start",
-                                  backgroundColor: "#16161d",
-                                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                                  borderRadius: 10,
+                                  backgroundColor: "#ffffff",
+                                  border: "1px solid #dde1da",
+                                  borderRadius: 8,
                                   padding: "8px 12px",
-                                  fontSize: 12,
-                                  color: "#10b981"
+                                  fontSize: 11.5,
+                                  color: "#495651",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6
                                 }}
                               >
-                                Tutor AI sedang menganalisis soal dan opsi...
+                                <Sparkles size={12} color="#18221f" />
+                                <span>Tutor AI sedang menganalisis soal dan opsi...</span>
                               </div>
                             )}
                           </div>
 
                           {/* Chat input box */}
-                          <div style={{ display: "flex", gap: 8 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #d6ded4",
+                              borderRadius: 10,
+                              padding: "4px 6px 4px 12px",
+                              boxShadow: "0 2px 8px rgba(27, 39, 35, 0.03)"
+                            }}
+                          >
                             <input
                               type="text"
                               value={quizChatInput}
@@ -3273,33 +3340,36 @@ export default function App() {
                               placeholder={isAnswerSubmitted ? "Tanyakan hal spesifik tentang pembahasan..." : "Minta petunjuk atau klarifikasi soal..."}
                               style={{
                                 flex: 1,
-                                backgroundColor: "#16161d",
-                                border: "1px solid rgba(255, 255, 255, 0.1)",
-                                borderRadius: 8,
-                                padding: "9px 12px",
-                                fontSize: 13,
-                                color: "#f4f4f5",
-                                outline: "none"
+                                backgroundColor: "transparent",
+                                border: "none",
+                                fontSize: 12.5,
+                                fontFamily: "inherit",
+                                color: "#17201d",
+                                outline: "none",
+                                padding: "6px 0"
                               }}
                             />
                             <button
                               onClick={() => handleSendQuizQuestionChat()}
                               disabled={isQuizChatSending || !quizChatInput.trim()}
                               style={{
-                                backgroundColor: "#10b981",
-                                color: "#09090b",
+                                backgroundColor: "#18221f",
+                                color: "#c8f064",
                                 border: "none",
                                 borderRadius: 8,
-                                padding: "0 14px",
+                                padding: "0 12px",
+                                height: 32,
                                 fontSize: 12.5,
                                 fontWeight: 700,
                                 cursor: isQuizChatSending || !quizChatInput.trim() ? "not-allowed" : "pointer",
                                 display: "flex",
                                 alignItems: "center",
-                                gap: 4
+                                gap: 5,
+                                opacity: isQuizChatSending || !quizChatInput.trim() ? 0.45 : 1,
+                                transition: "0.15s ease"
                               }}
                             >
-                              <Send size={13} />
+                              <Send size={12} />
                               <span>Kirim</span>
                             </button>
                           </div>

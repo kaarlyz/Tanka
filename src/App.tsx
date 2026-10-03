@@ -340,7 +340,7 @@ export default function App() {
 
   // Summary state
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [summaryStyle, setSummaryStyle] = useState<"intuitive" | "memorization" | "academic">("intuitive");
+  const [summaryStyle, setSummaryStyle] = useState<"tutor" | "intuitive" | "memorization">("tutor");
 
   // Quiz Type state
   const [quizType, setQuizType] = useState<"conceptual" | "analytical">("conceptual");
@@ -4108,9 +4108,9 @@ export default function App() {
                     Gaya Rangkuman:
                   </span>
                   {[
+                    { id: "tutor", label: "Tutor Bertahap & Latihan", desc: "Panduan bertahap dari nol, contoh angka/kasus nyata, trik ingat, dan 5 latihan mandiri" },
                     { id: "intuitive", label: "Sederhana & Intuitif", desc: "Bahasa santai & mudah dimengerti, konsep 100% utuh" },
-                    { id: "memorization", label: "Poin Hafalan & Ujian", desc: "Istilah kunci, klasifikasi, dan mnemonik cepat" },
-                    { id: "academic", label: "Akademik Lengkap", desc: "Peta konsep formal & bedah teori metodologis" }
+                    { id: "memorization", label: "Poin Hafalan & Ujian", desc: "Istilah kunci, klasifikasi, dan mnemonik cepat" }
                   ].map((s) => (
                     <button
                       key={s.id}
@@ -4325,7 +4325,7 @@ export default function App() {
                         <span>•</span>
                         <span>Estimasi Baca: {activeDoc?.readingTimeMinutes || 0} menit</span>
                         <span>•</span>
-                        <span>Gaya: {summaryStyle === "intuitive" ? "Sederhana & Intuitif" : summaryStyle === "memorization" ? "Poin Hafalan" : "Akademik Lengkap"}</span>
+                        <span>Gaya: {summaryStyle === "tutor" ? "Tutor Bertahap & Latihan" : summaryStyle === "intuitive" ? "Sederhana & Intuitif" : "Poin Hafalan"}</span>
                       </div>
                     </div>
 

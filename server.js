@@ -494,7 +494,25 @@ ${doc.content.slice(0, 25000)}
       const isMathDomain = detectRealMath(doc.content);
 
       let styleGuidance = "";
-      if (style === "memorization") {
+      if (style === "tutor") {
+        styleGuidance = `GAYA PENULISAN: TUTOR BERTAHAP & LATIHAN MANDIRI (SCAFFOLDED COACHING)
+- PRINSIP: Jelaskan persis seperti seorang mentor sebaya yang asyik, to-the-point, dan membimbing siswa langkah demi langkah agar BISA MENGERJAKAN SOAL SENDIRI.
+- Kalimat Pembuka: "Bisa. Kita mulai dari [topik dasar], tapi jangan cuma hafal rumus/teori—kita bikin bertahap sampai kamu bisa ngerjain soal sendiri."
+- STRUKTUR PENJABARAN:
+  1. Pecah topik menjadi poin-poin bertingkat (1, 2, 3, dst.) dari yang paling dasar.
+  2. Setiap poin WAJIB menyertakan CONTOH KONKRET KECIL (misal: matriks angka kecil 2x2 atau 2x3, skenario kasus riil singkat).
+  3. Tuliskan PROSES KERJANYA SECARA EKSPLISIT: Jangan langsung beri hasil jadi! Uraikan langkah manualnya (misal: (1)(5) + (2)(7) = 5 + 14 = 19).
+  4. Berikan "CARA MENGINGAT / INTUISI KUNCI" dalam format tegas: misal [BARIS x KOLOM], bukan elemen seletak.
+  5. Soroti syarat kritis atau jebakan yang paling sering bikin siswa keliru.
+  6. SEKSI WAJIB PENUTUP: "SEKARANG LATIHAN (KERJAKAN MANUAL)"
+     - Sajikan 5 soal latihan mandiri bertingkat (Soal 1 pemanasan konsep, Soal 2-4 hitungan/analisis bertahap, Soal 5 soal tantangan proses lengkap).
+     - Perintahkan: "Jangan lihat pembahasan dulu. Kerjakan manual dan tulis prosesnya."
+     - Kalimat penutup: "Kirim jawaban 1–5 ke panel Tanya Nara di samping, nanti aku koreksi satu per satu dan kalau sudah benar kita naik level!"
+- UNIVERSAL KE SEMUA MAPEL:
+  * Eksak/Matematika: Angka kecil -> proses langkah per langkah -> trik hitung -> 5 latihan mandiri.
+  * Sosial/Sejarah: Skenario nyata -> klasifikasi bertahap -> trik bedakan -> 5 latihan studi kasus mandiri.
+  * Bahasa/Seni: Kalimat/karya konkret -> bedah kaidah bertahap -> trik identifikasi -> 5 latihan analisis mandiri.`;
+      } else if (style === "memorization") {
         styleGuidance = `GAYA PENULISAN: POIN HAFALAN & INTISARI UJIAN CEPAT
 - Fokus pada materi yang wajib dihafal: istilah kunci, nama tokoh/proses, bagan klasifikasi, poin perbandingan yang sering mengecoh.
 - Gunakan ringkasan poin-poin padat, tabel perbandingan, dan mnemonik agar mudah diingat dalam waktu singkat.`;
@@ -518,7 +536,19 @@ ${doc.content.slice(0, 25000)}
    - DILARANG KERAS MENGARANG RUMUS/PERSAMAAN MATEMATIKA PALSU (PSEUDO-MATH) seperti membuat $V = f(X, Y)$ atau persamaan fungsi simbolik buatan untuk materi seni, sejarah, kriya, atau ilmu sosial.
    - Sajikan prinsip inti, kaidah perancangan, matriks perbandingan gaya/era, atau taksonomi klasifikasi murni konseptual tanpa rumus buatan sama sekali.`;
 
-      const prompt = `Anda adalah pakar sintesis materi edukasi yang mampu mengubah materi rumit/kering menjadi modul belajar yang sangat hidup, aplikatif, dan mudah dipahami.
+      const prompt = style === "tutor"
+        ? `Anda adalah mentor belajar pribadi yang ramah, taktis, dan fokus pada penguasaan mandiri.
+Pelajari materi di bawah dan susun panduan belajar bertahap dengan gaya tutor langsung sesuai instruksi:
+
+${styleGuidance}
+
+Format dengan Markdown rapi, KaTeX LaTeX ($...$ inline atau $$...$$ blok) untuk rumus/angka, dan kotak penekanan untuk trik kunci.
+
+Materi Lengkap:
+"""
+${doc.content.slice(0, 25000)}
+"""`
+        : `Anda adalah pakar sintesis materi edukasi yang mampu mengubah materi rumit/kering menjadi modul belajar yang sangat hidup, aplikatif, dan mudah dipahami.
 Lakukan AUDIT LENGKAP terhadap seluruh isi dokumen dan susun Catatan Inti & Peta Konsep Komprehensif yang MENCAKUP SELURUH materi tanpa ada bagian penting yang terlewat.
 
 ${styleGuidance}
@@ -567,10 +597,12 @@ ${doc.content.slice(0, 25000)}
         }
       }
 
-      const systemPrompt = `Anda adalah Nara, tutor belajar AI yang cerdas dan adaptif.
+      const systemPrompt = `Anda adalah Nara, tutor belajar AI yang ramah, cerdas, adaptif, dan suportif.
 Tugas Anda: Menjelaskan konsep secara to-the-point, interaktif, dan mudah dipahami.
-Jika ada rumus atau definisi penting, jelaskan intuisi di baliknya.
-Sesuaikan gaya jawaban dengan level materi — bahasa sederhana untuk dasar, presisi akademik untuk tingkat lanjut.
+Jika pengguna mengirimkan jawaban latihan mandiri (seperti Soal 1–5 dari modul tutor), koreksi jawaban mereka SATU PER SATU secara teliti dan bersahabat:
+- Tunjukkan nomor mana yang sudah 100% tepat.
+- Jika ada nomor yang keliru, tunjukkan di mana letak melesetnya dan beri petunjuk cara berpikirnya tanpa memarahi.
+- Berikan skor/apresiasi, lalu tawarkan materi lanjutan ("Mau kita lanjut ke transpose dan determinan sekarang?").
 ${contextText}Jawab pertanyaan pengguna dengan jelas dan fokus.
 ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat, atau variabel aljabar, WAJIB bungkus ekspresi dengan tanda dollar ($...$ untuk inline, $$...$$ untuk blok) menggunakan LaTeX standar (misal $ax^2 + bx + c = 0$, $\\frac{a}{b}$, $\\sqrt{x}$, $\\sum$) agar ter-render sempurna oleh KaTeX. JANGAN biarkan rumus mentah tanpa tanda dollar.`;
 

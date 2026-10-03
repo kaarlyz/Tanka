@@ -446,18 +446,26 @@
       .streak-top-row strong {
         color: #d6f58d;
       }
-      .streak-bar-box {
-        height: 5px;
+      .streak-days {
+        display: flex;
+        justify-content: space-between;
         margin: 10px 0 8px;
-        overflow: hidden;
-        background: #3d4945;
-        border-radius: 8px;
       }
-      .streak-bar-fill {
-        display: block;
-        height: 100%;
+      .streak-days span {
+        width: 26px;
+        height: 26px;
+        display: grid;
+        place-items: center;
+        color: #728079;
+        background: #2b3833;
+        border-radius: 6px;
+        font-size: 8.5px;
+        font-weight: 700;
+        font-family: "DM Mono", monospace;
+      }
+      .streak-days span.filled {
+        color: #1f291d;
         background: #c8f064;
-        border-radius: 8px;
       }
       .streak-card-box p {
         margin: 0;
@@ -752,6 +760,56 @@
         height: 100%;
         background: #72a728;
         border-radius: 999px;
+      }
+      .footer-steps {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        color: #8c9792;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .footer-steps span {
+        position: relative;
+        padding-left: 12px;
+      }
+      .footer-steps span::before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: 0;
+        width: 5px;
+        height: 5px;
+        background: #c9cfca;
+        border-radius: 50%;
+      }
+      .footer-steps span.done {
+        color: #4b6623;
+        font-weight: 700;
+      }
+      .footer-steps span.done::before {
+        background: #65a30d;
+      }
+      .insight-box {
+        display: flex;
+        gap: 14px;
+        margin-top: 18px;
+        padding: 16px 18px;
+        background: #f0f4ec;
+        border: 1px solid #d9e0d6;
+        border-radius: 12px;
+      }
+      .insight-box .nara-mini {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        color: #1f291d;
+        background: #c8f064;
+        border-radius: 7px 7px 7px 2px;
+        font-size: 10px;
+        font-weight: 800;
       }
       .learning-card-white {
         background: #ffffff;

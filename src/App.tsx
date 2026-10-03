@@ -1605,13 +1605,17 @@ export default function App() {
         <div>
           <div className="streak-card-box">
             <div className="streak-top-row">
-              <span>Target TKA Teladan</span>
-              <strong>4/5</strong>
+              <span>Target mingguan</span>
+              <strong style={{ fontFamily: "'DM Mono', monospace" }}>4/5 hari</strong>
             </div>
-            <div className="streak-bar-box">
-              <span className="streak-bar-fill" style={{ width: "80%" }} />
+            <div className="streak-days">
+              {["S", "S", "R", "K", "J"].map((day, idx) => (
+                <span className={idx < 4 ? "filled" : ""} key={`${day}-${idx}`}>
+                  {idx < 4 ? "✓" : day}
+                </span>
+              ))}
             </div>
-            <p>Gladi Bersih: 5-8 Okt 2026. Satu sesi lagi untuk targetmu.</p>
+            <p>Satu sesi lagi untuk mencapai target belajarmu.</p>
           </div>
 
           <button className="profile-row-box">
@@ -2141,6 +2145,19 @@ export default function App() {
                         <Sparkles size={15} color="#10b981" />
                         Baca Rangkuman
                       </button>
+                    </div>
+
+                    {/* 💡 Catatan Nara Insight Box (from Figma Make design) */}
+                    <div className="insight-box">
+                      <span className="nara-mini">N</span>
+                      <div>
+                        <strong style={{ fontSize: 11, color: "#18221f", fontWeight: 800 }}>
+                          Catatan Nara · Panduan Belajar
+                        </strong>
+                        <p style={{ margin: "4px 0 0", color: "#56645e", fontSize: 12, lineHeight: "1.55" }}>
+                          Kuasai konsep inti materi terlebih dahulu sebelum menguji diri lewat kuis. Jika ada kalimat atau bagian materi yang membingungkan, tanyakan langsung ke panel tutor Nara di sisi kanan.
+                        </p>
+                      </div>
                     </div>
 
                     {/* Collapsible Raw Text Editor */}
@@ -3815,17 +3832,18 @@ export default function App() {
                       <span style={{ fontSize: 13, fontWeight: 700, color: "#6f7975", fontFamily: "'DM Mono', monospace" }}>
                         Kartu {currentCardIndex + 1} dari {flashcards.length}
                       </span>
-                      <div style={{ display: "flex", gap: 5 }}>
+                      <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
                         {flashcards.map((fc, i) => (
                           <div
                             key={fc.id}
                             style={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: "50%",
+                              width: i === currentCardIndex ? 18 : 6,
+                              height: 6,
+                              borderRadius: 4,
+                              transition: "all 0.2s ease",
                               backgroundColor:
                                 i === currentCardIndex
-                                  ? "#72a728"
+                                  ? "#65a30d"
                                   : fc.difficulty === "easy"
                                   ? "#0ea5e9"
                                   : fc.difficulty === "good"
@@ -4598,16 +4616,47 @@ export default function App() {
           return (
         <footer className="lesson-footer-bar desktop-only">
           <div className="course-progress-box">
-            <span>Progres materi</span>
+            <span>Progres modul</span>
             <div className="course-progress-bar">
               <div className="course-progress-bar-fill" style={{ width: `${progressPct}%` }} />
             </div>
             <strong style={{ color: "#17201d", fontFamily: "'DM Mono', monospace" }}>{progressPct}%</strong>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#6f7975" }}>
-            <span>Target: Gladi Bersih TKA Teladan (5-8 Okt 2026)</span>
+          <div className="footer-steps">
+            <span className={hasContent ? "done" : ""}>Materi</span>
+            <span className={hasFlashcards ? "done" : ""}>Flashcard</span>
+            <span className={hasQuiz ? "done" : ""}>Latihan</span>
+            <span className={hasSummary ? "done" : ""}>Rangkuman</span>
           </div>
+
+          <button
+            onClick={() => {
+              if (activeTab === "material") setActiveTab("flashcards");
+              else if (activeTab === "flashcards") setActiveTab("quiz");
+              else if (activeTab === "quiz") setActiveTab("summary");
+              else setActiveTab("material");
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 14px",
+              color: "#18221f",
+              backgroundColor: "#c8f064",
+              border: 0,
+              borderRadius: 8,
+              fontSize: 11.5,
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "0.15s ease"
+            }}
+          >
+            <span>
+              {activeTab === "material" ? "Lanjut ke Flashcard" : activeTab === "flashcards" ? "Lanjut ke Latihan Soal" : activeTab === "quiz" ? "Lanjut ke Rangkuman" : "Kembali ke Materi"}
+            </span>
+            <ChevronRight size={14} />
+          </button>
         </footer>
           );
         })()}

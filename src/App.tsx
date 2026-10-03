@@ -270,6 +270,7 @@ export default function App() {
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
   const [isQuizCompleted, setIsQuizCompleted] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [solutionStep, setSolutionStep] = useState(0);
 
   // Exam Mode state
   const [quizMode, setQuizMode] = useState<"study" | "exam">("study");
@@ -1129,6 +1130,7 @@ export default function App() {
     if (currentQuestionIndex > 0) {
       const prevIdx = currentQuestionIndex - 1;
       setCurrentQuestionIndex(prevIdx);
+      setSolutionStep(0);
       const prevAnswer = userAnswers[prevIdx];
       setSelectedOption(prevAnswer !== undefined ? prevAnswer : null);
       if (quizMode === "study") {
@@ -1143,6 +1145,7 @@ export default function App() {
 
   function handleNextQuizQuestion() {
     setIsQuizChatOpen(false);
+    setSolutionStep(0);
     const nextIdx = currentQuestionIndex + 1;
     if (nextIdx < quizQuestions.length) {
       setCurrentQuestionIndex(nextIdx);
@@ -2722,9 +2725,16 @@ export default function App() {
                         boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
                       }}
                     >
-                      <div style={{ fontSize: 16, fontWeight: 600, lineHeight: "1.6", color: "#17201d", marginBottom: 18 }}>
+                      <div style={{ fontSize: 16, fontWeight: 600, lineHeight: "1.6", color: "#17201d", marginBottom: currentQuestion?.formula ? 12 : 18 }}>
                         <MathView text={currentQuestion?.question} />
                       </div>
+
+                      {/* Question Formula Card (Blackboard styling from Figma Make) */}
+                      {currentQuestion?.formula && (
+                        <div className="question-formula">
+                          <MathView text={currentQuestion.formula} />
+                        </div>
+                      )}
 
                       {/* 5 Options (A, B, C, D, E) */}
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -2877,70 +2887,80 @@ export default function App() {
                             </div>
                           )}
 
-                          {/* 2. Structured Steps (if available) */}
+                          {/* 2. Interactive Solution Stepper (from Figma Make design) */}
                           {currentQuestion.steps && currentQuestion.steps.length > 0 ? (
-                            <div style={{ marginBottom: 14 }}>
-                              <div
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  textTransform: "uppercase",
-                                  letterSpacing: "0.08em",
-                                  color: "#45544e",
-                                  marginBottom: 8,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 6,
-                                  fontFamily: "'DM Mono', monospace"
-                                }}
-                              >
-                                <ListChecks size={14} color="#4b6623" /> Langkah Pengerjaan Terstruktur
+                            <div className="solution-panel">
+                              <div className="solution-head">
+                                <div>
+                                  <span>PEMBAHASAN TERSTRUKTUR</span>
+                                  <h3>Bedah Langkah Pengerjaan</h3>
+                                </div>
+                                <strong>{currentQuestion.steps.length} langkah</strong>
                               </div>
-                              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                                {currentQuestion.steps.map((st, idx) => (
-                                  <div
-                                    key={idx}
-                                    style={{
-                                      backgroundColor: "#ffffff",
-                                      border: "1px solid #dde1da",
-                                      borderRadius: 8,
-                                      padding: "10px 14px",
-                                      display: "flex",
-                                      alignItems: "flex-start",
-                                      gap: 12
-                                    }}
+
+                              <div className="solution-stepper">
+                                {currentQuestion.steps.map((st, sIdx) => (
+                                  <button
+                                    key={sIdx}
+                                    type="button"
+                                    className={`${solutionStep === sIdx ? "active" : ""} ${solutionStep > sIdx ? "passed" : ""}`}
+                                    onClick={() => setSolutionStep(sIdx)}
                                   >
-                                    <div
-                                      style={{
-                                        width: 22,
-                                        height: 22,
-                                        borderRadius: 999,
-                                        backgroundColor: "#eef8db",
-                                        color: "#273f15",
-                                        fontSize: 11,
-                                        fontWeight: 800,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        flexShrink: 0,
-                                        fontFamily: "'DM Mono', monospace",
-                                        marginTop: 2
-                                      }}
-                                    >
-                                      {st.step || (idx + 1)}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                      {st.title && (
-                                        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#17201d", marginBottom: 3 }}>
-                                          <MathView text={st.title} />
-                                        </div>
-                                      )}
-                                      <div style={{ fontSize: 13, color: "#45544e", lineHeight: "1.55" }}>
-                                        <MathView text={st.desc} />
-                                      </div>
-                                    </div>
-                                  </div>
+                                    <span>{solutionStep > sIdx ? "✓" : sIdx + 1}</span>
+                                    <small>Langkah {sIdx + 1}</small>
+                                  </button>
                                 ))}
+                              </div>
+
+                              {(() => {
+                                const activeSt = currentQuestion.steps[Math.min(solutionStep, currentQuestion.steps.length - 1)];
+                                return (
+                                  <div className="solution-content-card">
+                                    <span>LANGKAH {Math.min(solutionStep, currentQuestion.steps.length - 1) + 1}</span>
+                                    {activeSt.title && <h4><MathView text={activeSt.title} /></h4>}
+                                    <p><MathView text={activeSt.desc} /></p>
+                                    {activeSt.formula && (
+                                      <div className="solution-formula-box">
+                                        <MathView text={activeSt.formula} />
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+
+                              <div className="solution-actions-row">
+                                <button
+                                  type="button"
+                                  disabled={solutionStep === 0}
+                                  onClick={() => setSolutionStep((s) => Math.max(0, s - 1))}
+                                  style={{
+                                    backgroundColor: "#ffffff",
+                                    border: "1px solid #dce1da",
+                                    color: solutionStep === 0 ? "#9ca3af" : "#17201d",
+                                    cursor: solutionStep === 0 ? "not-allowed" : "pointer"
+                                  }}
+                                >
+                                  <ChevronLeft size={14} /> Langkah Sebelumnya
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (solutionStep < currentQuestion.steps.length - 1) {
+                                      setSolutionStep((s) => s + 1);
+                                    } else {
+                                      handleNextQuizQuestion();
+                                    }
+                                  }}
+                                  style={{
+                                    backgroundColor: "#18221f",
+                                    border: "none",
+                                    color: "#c8f064",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  <span>{solutionStep === currentQuestion.steps.length - 1 ? "Soal Berikutnya" : "Langkah Lanjut"}</span>
+                                  <ChevronRight size={14} />
+                                </button>
                               </div>
                             </div>
                           ) : (

@@ -811,6 +811,201 @@
         font-size: 10px;
         font-weight: 800;
       }
+
+      /* Figma Make Math & Formula Typography */
+      .hero-formula {
+        margin-top: 18px;
+        padding: 20px 22px;
+        text-align: center;
+        background: #19231f;
+        border: 1px solid #2a3832;
+        border-radius: 10px;
+        overflow-x: auto;
+      }
+      .hero-formula .katex {
+        color: #eef4ef;
+        font-size: 1.55em;
+      }
+      .hero-formula small {
+        display: block;
+        margin-top: 10px;
+        color: #84918b;
+        font-size: 11px;
+        font-family: "DM Mono", monospace;
+      }
+
+      .formula-note {
+        margin-top: 14px;
+        padding: 12px 14px;
+        color: #273e0e;
+        text-align: center;
+        background: #f0f6e4;
+        border: 1px solid #d4e4be;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+      .formula-note.warn {
+        color: #78352e;
+        background: #fdf2f0;
+        border-color: #f7c5be;
+      }
+      .formula-note .katex {
+        font-size: 1.1em;
+      }
+
+      .question-formula {
+        margin: 14px 0 16px;
+        padding: 18px 20px;
+        color: #eef4ef;
+        text-align: center;
+        background: #19231f;
+        border: 1px solid #2a3832;
+        border-radius: 10px;
+        overflow-x: auto;
+      }
+      .question-formula .katex {
+        color: #eef4ef;
+        font-size: 1.45em;
+      }
+
+      /* Interactive Solution Stepper */
+      .solution-panel {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #dce1da;
+      }
+      .solution-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .solution-head span {
+        color: #4b6623;
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-family: "DM Mono", monospace;
+      }
+      .solution-head h3 {
+        margin: 4px 0 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: #17201d;
+      }
+      .solution-head > strong {
+        color: #6f7975;
+        font-size: 11px;
+        font-family: "DM Mono", monospace;
+      }
+      .solution-stepper {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        margin: 18px 0;
+        padding: 0 16px;
+      }
+      .solution-stepper::before {
+        content: "";
+        position: absolute;
+        top: 14px;
+        left: 36px;
+        right: 36px;
+        height: 2px;
+        background: #d8ddd7;
+        z-index: 0;
+      }
+      .solution-stepper button {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        color: #727d78;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+      }
+      .solution-stepper button > span {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        background: #edf0eb;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+      }
+      .solution-stepper button.active > span,
+      .solution-stepper button.passed > span {
+        color: #1a2515;
+        background: #c8f064;
+      }
+      .solution-stepper button.active small {
+        color: #17201d;
+        font-weight: 700;
+      }
+      .solution-stepper small {
+        font-size: 10.5px;
+        color: #6f7975;
+      }
+      .solution-content-card {
+        padding: 16px 18px;
+        background: #f4f6f1;
+        border: 1px solid #dce2da;
+        border-radius: 10px;
+        margin-bottom: 12px;
+      }
+      .solution-content-card > span {
+        color: #4b6623;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        font-family: "DM Mono", monospace;
+      }
+      .solution-content-card h4 {
+        margin: 6px 0 6px;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #17201d;
+      }
+      .solution-content-card p {
+        margin: 0;
+        color: #45544e;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .solution-content-card .solution-formula-box {
+        margin-top: 12px;
+        padding: 12px 14px;
+        color: #24380e;
+        text-align: center;
+        background: #e9f2d8;
+        border: 1px solid #cce0a8;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+      .solution-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+      }
+      .solution-actions-row button {
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
       .learning-card-white {
         background: #ffffff;
         border: 1px solid #dde1da;

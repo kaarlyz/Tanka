@@ -997,7 +997,16 @@ Format output WAJIB HANYA berupa JSON valid tanpa teks tambahan:
     }
 
     if (req.method === "GET" && pathname === "/api/mistakes") {
-      const rows = db.prepare("SELECT * FROM mistake_notebook WHERE resolved = 0 ORDER BY updated_at DESC").all();
+      const urlObj = new URL(req.url, "http://localhost");
+      const docId = urlObj.searchParams.get("docId");
+      let query = "SELECT * FROM mistake_notebook WHERE resolved = 0";
+      const params = [];
+      if (docId) {
+        query += " AND doc_id = ?";
+        params.push(docId);
+      }
+      query += " ORDER BY updated_at DESC";
+      const rows = db.prepare(query).all(...params);
       const mistakes = rows.map(r => ({
         id: r.id,
         docId: r.doc_id,

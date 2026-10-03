@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -284,6 +284,14 @@ export default function App() {
   // Mistake Notebook state
   const [mistakes, setMistakes] = useState<MistakeItem[]>([]);
   const [isDrillingMistakes, setIsDrillingMistakes] = useState(false);
+  const [mistakeFilterScope, setMistakeFilterScope] = useState<"current" | "all">("current");
+
+  const activeDocMistakes = useMemo(() => {
+    if (!activeDocId) return mistakes;
+    return mistakes.filter((m) => m.docId === activeDocId);
+  }, [mistakes, activeDocId]);
+
+  const displayedMistakes = mistakeFilterScope === "current" && activeDocId ? activeDocMistakes : mistakes;
 
   // Formula Cheatsheet Drawer state
   const [isFormulaDrawerOpen, setIsFormulaDrawerOpen] = useState(false);
@@ -601,8 +609,9 @@ export default function App() {
   }
 
   function startMistakeDrill() {
-    if (mistakes.length === 0) return;
-    const questions: QuizQuestion[] = mistakes.map((m, idx) => ({
+    const targetList = mistakeFilterScope === "current" && activeDocId ? activeDocMistakes : mistakes;
+    if (targetList.length === 0) return;
+    const questions: QuizQuestion[] = targetList.map((m, idx) => ({
       id: idx + 1,
       question: m.question,
       options: m.options,
@@ -622,7 +631,7 @@ export default function App() {
     setQuizMode("study");
     setIsDrillingMistakes(true);
     setActiveTab("quiz");
-    showNotice(`Memulai Drill Ulang ${questions.length} Soal yang Pernah Salah!`);
+    showNotice(`Memulai Drill Ulang ${questions.length} Soal ${mistakeFilterScope === "current" && activeDocId ? "pada modul ini" : "lintas modul"}!`);
   }
 
   async function fetchOrExtractFormulas() {
@@ -1396,7 +1405,7 @@ export default function App() {
             {[
               { id: "material", label: "Materi Saya", mark: "M" },
               { id: "quiz", label: "Latihan Kuis", mark: "L", count: quizQuestions.length },
-              { id: "mistakes", label: "Bank Soal Salah", mark: "B", count: mistakes.length, highlight: mistakes.length > 0 },
+              { id: "mistakes", label: "Bank Soal Salah", mark: "B", count: activeDocId ? activeDocMistakes.length : mistakes.length, highlight: (activeDocId ? activeDocMistakes.length : mistakes.length) > 0 },
               { id: "flashcards", label: "Flashcard 3D", mark: "K", count: flashcards.length },
               { id: "feynman", label: "Uji Feynman", mark: "F" }
             ].map((nav) => {
@@ -1752,7 +1761,7 @@ export default function App() {
             {[
               { id: "material", label: "Materi & Status", icon: BookOpen },
               { id: "quiz", label: "Latihan Soal", count: quizQuestions.length, icon: Target },
-              { id: "mistakes", label: "Bank Soal Salah", count: mistakes.length, icon: AlertTriangle, highlight: mistakes.length > 0 },
+              { id: "mistakes", label: "Bank Soal Salah", count: activeDocMistakes.length, icon: AlertTriangle, highlight: activeDocMistakes.length > 0 },
               { id: "feynman", label: "Uji Feynman", icon: Brain },
               { id: "flashcards", label: "Flashcards 3D", count: flashcards.length, icon: Layers },
               { id: "summary", label: "Rangkuman AI", icon: Sparkles }
@@ -2610,9 +2619,12 @@ export default function App() {
                         Ulangi Tryout
                       </button>
 
-                      {mistakes.length > 0 && (
+                      {activeDocMistakes.length > 0 && (
                         <button
-                          onClick={() => setActiveTab("mistakes")}
+                          onClick={() => {
+                            setMistakeFilterScope("current");
+                            setActiveTab("mistakes");
+                          }}
                           style={{
                             backgroundColor: "#fef2f2",
                             border: "1px solid #fecaca",
@@ -2628,7 +2640,7 @@ export default function App() {
                           }}
                         >
                           <AlertTriangle size={14} />
-                          <span>Buka Bank Soal Salah ({mistakes.length})</span>
+                          <span>Buka Bank Soal Salah ({activeDocMistakes.length})</span>
                         </button>
                       )}
 
@@ -3307,7 +3319,7 @@ export default function App() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <AlertTriangle size={20} color="#b45309" />
                       <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
-                        Buku Dosa & Bank Soal Salah ({mistakes.length})
+                        Buku Dosa & Bank Soal Salah ({displayedMistakes.length})
                       </h2>
                     </div>
                     <p style={{ fontSize: 12.5, color: "#6f7975", marginTop: 4 }}>
@@ -3315,31 +3327,73 @@ export default function App() {
                     </p>
                   </div>
 
-                  {mistakes.length > 0 && (
-                    <button
-                      onClick={startMistakeDrill}
-                      style={{
-                        backgroundColor: "#18221f",
-                        color: "#c8f064",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: "9px 16px",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)"
-                      }}
-                    >
-                      <Target size={14} />
-                      <span>Drill Semua Soal Salah ({mistakes.length})</span>
-                    </button>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {/* Scope Filter Buttons: Modul Ini vs Semua Modul */}
+                    {activeDocId && (
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 3, backgroundColor: "#fafbf8", padding: 2, borderRadius: 6, border: "1px solid #dce1da" }}>
+                        <button
+                          onClick={() => setMistakeFilterScope("current")}
+                          style={{
+                            backgroundColor: mistakeFilterScope === "current" ? "#18221f" : "transparent",
+                            color: mistakeFilterScope === "current" ? "#c8f064" : "#56615d",
+                            border: mistakeFilterScope === "current" ? "1px solid #18221f" : "1px solid transparent",
+                            borderRadius: 5,
+                            padding: "4px 10px",
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "0.15s ease"
+                          }}
+                          title="Tampilkan hanya soal salah dari materi aktif"
+                        >
+                          Modul Ini ({activeDocMistakes.length})
+                        </button>
+                        <button
+                          onClick={() => setMistakeFilterScope("all")}
+                          style={{
+                            backgroundColor: mistakeFilterScope === "all" ? "#18221f" : "transparent",
+                            color: mistakeFilterScope === "all" ? "#c8f064" : "#56615d",
+                            border: mistakeFilterScope === "all" ? "1px solid #18221f" : "1px solid transparent",
+                            borderRadius: 5,
+                            padding: "4px 10px",
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "0.15s ease"
+                          }}
+                          title="Tampilkan seluruh catatan soal salah dari semua modul"
+                        >
+                          Semua Modul ({mistakes.length})
+                        </button>
+                      </div>
+                    )}
+
+                    {displayedMistakes.length > 0 && (
+                      <button
+                        onClick={startMistakeDrill}
+                        style={{
+                          backgroundColor: "#18221f",
+                          color: "#c8f064",
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "9px 16px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)"
+                        }}
+                      >
+                        <Target size={14} />
+                        <span>Drill {mistakeFilterScope === "current" && activeDocId ? "Soal Modul Ini" : "Semua Soal"} ({displayedMistakes.length})</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {mistakes.length === 0 ? (
+                {displayedMistakes.length === 0 ? (
                   <div
                     style={{
                       backgroundColor: "#ffffff",
@@ -3352,10 +3406,14 @@ export default function App() {
                   >
                     <Check size={36} color="#4b6623" style={{ margin: "0 auto 12px" }} />
                     <h3 style={{ fontSize: 18, fontWeight: 800, color: "#17201d" }}>
-                      Buku Dosa Bersih!
+                      {mistakeFilterScope === "current" && activeDocId
+                        ? `Buku Dosa Bersih untuk "${activeDocTitle || "Modul Ini"}"!`
+                        : "Buku Dosa Bersih!"}
                     </h3>
-                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 420, margin: "6px auto 16px" }}>
-                      Belum ada catatan soal yang keliru, atau semua soal salah telah berhasil Anda kuasai. Lanjutkan latihan mandiri dengan paket soal baru!
+                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 440, margin: "6px auto 16px" }}>
+                      {mistakeFilterScope === "current" && activeDocId && mistakes.length > 0
+                        ? `Tidak ada soal yang salah pada modul ini. (Terdapat ${mistakes.length} catatan soal salah di modul lain).`
+                        : "Belum ada catatan soal yang keliru, atau semua soal salah telah berhasil Anda kuasai. Lanjutkan latihan mandiri dengan paket soal baru!"}
                     </p>
                     <button
                       onClick={() => setActiveTab("quiz")}
@@ -3375,7 +3433,7 @@ export default function App() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                    {mistakes.map((m, idx) => (
+                    {displayedMistakes.map((m, idx) => (
                       <div
                         key={m.id}
                         style={{

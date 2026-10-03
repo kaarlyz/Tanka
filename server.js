@@ -411,21 +411,25 @@ Tulis dalam Bahasa Indonesia yang lugas, padat, dan terstruktur rapi dengan Mark
 
       const prompt = `Anda adalah spesialis metode Active Recall & Spaced Repetition (standar SuperMemo / Anki).
 Lakukan AUDIT MENYELURUH terhadap seluruh isi dokumen materi di bawah ini.
-Identifikasi SELURUH istilah kunci, definisi esensial, rumus & variabel, aturan baku, atau perbedaan konsep yang sering tertukar.
-Jangan batasi jumlah kartu secara artifisial — buat kartu sebanyak yang dibutuhkan agar MENCENGKERAM SELURUH KONSEP POKOK dokumen (biasanya antara 8 hingga 20+ kartu tergantung kekayaan materi), tanpa membuat kartu pengisi (no filler).
+Identifikasi SELURUH konsep inti, kaidah operasional, rumus & variabel, aturan baku, perbedaan konsep yang sering tertukar, dan contoh aplikasi cepat.
+Jangan batasi jumlah kartu secara artifisial — buat kartu sebanyak yang dibutuhkan agar MENCENGKERAM SELURUH KONSEP POKOK dokumen (biasanya antara 8 hingga 20+ kartu tergantung kekayaan materi), tanpa kartu pengisi.
 
-ATURAN STRUKTUR KARTU (MINIMUM INFORMATION PRINCIPLE):
-1. DILARANG membuat soal cerita panjang, hitungan bertingkat, atau pertanyaan kuis di sisi depan.
-2. Sisi Depan (Front):
-   - Wajib berupa stimulus ingatan atomik singkat (maksimal 3-8 kata).
-   - Bentuk: Istilah asing/teknis, Nama Teorema/Hukum, Simbol/Variabel Rumus, atau Pertanyaan pemicu langsung (Contoh: "Hukum Permintaan", "Kapan fungsi kuadrat definit positif?", "Dativ vs Akkusativ pada Wechselpräpositionen").
-3. Sisi Belakang (Back):
-   - Definisi lugas, arti istilah, atau bentuk rumus kunci dalam 1-2 kalimat padat yang mudah dihafal.
-   - Jika ada rumus matematika/persamaan, WAJIB gunakan sintaks LaTeX rapi yang dibungkus tanda dollar ($...$).
+ATURAN STRUKTUR KARTU (INTUISI & ACTIVE RECALL KUAT):
+1. Sisi Depan (Front) - Stimulus Terarah (3-10 kata):
+   - DILARANG KERAS membuat kartu depan hanya 1 kata ambigu (seperti "Matriks" atau "Inflasi" saja).
+   - Selalu berikan konteks yang jelas:
+     * Definisi/Konsep: "Konsep dasar matriks & analogi praktisnya" atau "Prinsip estetika Art Nouveau"
+     * Aturan/Kaidah: "Syarat mutlak agar penjumlahan dua matriks sah dilakukan"
+     * Kasus/Aplikasi Kilat: "Jika matriks punya 3 baris dan 5 kolom, bagaimana notasi ordonya?"
+     * Pembeda/Jebakan: "Mengapa perkalian matriks A x B tidak selalu sama dengan B x A?"
+   - DILARANG membuat soal cerita panjang atau paragraf soal di sisi depan.
+2. Sisi Belakang (Back) - Kaidah Intuitif & Terapan (1-3 kalimat):
+   - Jangan sekadar definisi kamus kaku. Berikan intuisi "mengapa/bagaimana" yang langsung klik di kepala siswa.
+   - Jika ada rumus matematika/persamaan, WAJIB gunakan sintaks LaTeX KaTeX yang dibungkus tanda dollar ($...$).
 
 Format output WAJIB HANYA berupa array JSON murni tanpa markdown codeblock formatting atau teks pengantar:
 [
-  {"front": "Istilah atau Konsep Kunci", "back": "Definisi atau kaidah esensial"}
+  {"front": "Stimulus Terarah & Konteks Jelas", "back": "Penjelasan intuitif, kaidah inti, atau bentuk rumus kunci"}
 ]
 
 Materi:
@@ -497,37 +501,42 @@ ${doc.content.slice(0, 25000)}
       } else if (style === "academic") {
         styleGuidance = `GAYA PENULISAN: STRUKTUR FORMAL AKADEMIK LENGKAP
 - Susun secara komprehensif, presisi tinggi, dan metodologis.
-- Bedah latar belakang teoritis, relasi sebab-akibat, dan analisis kritis mendalam.`;
+- Bedah latar belakang teoritis, relasi sebab-akibat, dan analisis kritis mendalam tanpa kehilangan keterbacaan.`;
       } else {
-        styleGuidance = `GAYA PENULISAN: BAHASA SEDERHANA & INTUITIF (MUDAH DIPAHAMI)
-- Gunakan bahasa yang mengalir, santai, dan analogi dunia nyata untuk menyederhanakan ide yang rumit.
-- HINDARI jargon berbelit-belit TANPA memotong fakta penting.
-- PRINSIP: Materi tetap 100% lengkap dan mencakup seluruh isi, tetapi disajikan dengan cara yang paling mudah dipahami oleh siapa saja.`;
+        styleGuidance = `GAYA PENULISAN: BAHASA SEDERHANA & INTUITIF (TUTOR SEBAYA / NON-TEORITIS)
+- HINDARI bahasa diktat kaku yang menjemukan. Jelaskan seperti seorang mentor senior yang cerdas dan asyik.
+- Mulai dari masalah nyata: "Kenapa konsep ini diciptakan? Di mana kita menjumpainya dalam kehidupan nyata?"
+- Gunakan analogi konkret yang langsung memicu 'Aha! moment' (misal: matriks sebagai tabel stok toko/grid piksel, inflasi sebagai air yang terlalu banyak di adonan).
+- Pertahankan substansi 100% lengkap dan akurat, hanya ubah cara penyampaiannya agar hidup dan mudah dicerna.`;
       }
 
       const mathSectionBlock = isMathDomain
         ? `3. **Rumus, Persamaan, & Aturan Pokok**:
    - Tuliskan rumus matematika/fisika yang benar-benar ada dalam materi menggunakan KaTeX LaTeX ($...$ inline atau $$...$$ blok).
-   - Berikan pembacaan intuitif rumus dan keterangan variabel lengkap.`
+   - Wajib sertakan cara membaca rumus dengan bahasa manusia biasa dan contoh angka kecil sederhana agar pembaca langsung paham cara memakainya.`
         : `3. **Kaidah Pokok, Karakteristik Utama, & Klasifikasi**:
    - DILARANG KERAS MENGARANG RUMUS/PERSAMAAN MATEMATIKA PALSU (PSEUDO-MATH) seperti membuat $V = f(X, Y)$ atau persamaan fungsi simbolik buatan untuk materi seni, sejarah, kriya, atau ilmu sosial.
    - Sajikan prinsip inti, kaidah perancangan, matriks perbandingan gaya/era, atau taksonomi klasifikasi murni konseptual tanpa rumus buatan sama sekali.`;
 
-      const prompt = `Anda adalah pakar sintesis materi akademik dan perancang modul pembelajaran berdaya ingat tinggi.
+      const prompt = `Anda adalah pakar sintesis materi edukasi yang mampu mengubah materi rumit/kering menjadi modul belajar yang sangat hidup, aplikatif, dan mudah dipahami.
 Lakukan AUDIT LENGKAP terhadap seluruh isi dokumen dan susun Catatan Inti & Peta Konsep Komprehensif yang MENCAKUP SELURUH materi tanpa ada bagian penting yang terlewat.
 
 ${styleGuidance}
 
+PRINSIP WAJIB:
+- Jangan biarkan materi terasa seperti kamus hafalan mati. Hubungkan teori dengan tujuan praktisnya.
+
 STRUKTUR SISTEMATIS CATATAN:
 1. **Peta Konsep & Kerangka Besar**:
-   - Gambaran besar topik, tujuan pemahaman, dan hubungan logis antar sub-bahasan utama.
-2. **Bedah Definisi & Istilah Esensial**:
-   - Setiap istilah, konsep teknis, atau kosakata penting dijelaskan secara lugas dengan analogi konkret jika diperlukan.
+   - Diagram hierarki topik (ASCII tree) yang memperlihatkan alur logika dari dasar ke lanjutan.
+   - 2 kalimat pembuka: Masalah nyata apa yang dijawab oleh materi ini.
+2. **Bedah Konsep Kunci & Analogi Nyata**:
+   - Setiap istilah/konsep tidak hanya didefinisikan secara formal, tapi WAJIB dilengkapi minimal 1 analogi konkret atau contoh kasus nyata.
 ${mathSectionBlock}
 4. **Pola Kritis & Analisis Jebakan (Common Pitfalls)**:
-   - Miskonsepsi yang paling sering terjadi, kekeliruan pemahaman umum, dan trik membedakannya saat ujian/praktek.
+   - Miskonsepsi yang paling sering membuat siswa salah kaprah saat ujian/praktek, lengkap dengan trik membedakannya.
 5. **Checklist Pemahaman Mandiri**:
-   - 3-4 pertanyaan refleksi konseptual singkat untuk memastikan pembelajar telah menguasai seluruh isi materi secara utuh.
+   - 3-4 pertanyaan refleksi aplikatif untuk menguji apakah pembaca benar-benar paham secara fungsional.
 
 Format dengan Markdown rapi, sub-heading yang jelas, dan penekanan cetak tebal pada istilah kunci.
 
@@ -603,14 +612,14 @@ ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat,
 
       let typeGuidance = "";
       if (quizType === "conceptual") {
-        typeGuidance = `TIPE KUIS: KONSEPTUAL & TEKSTUAL (UJIAN HARIAN / UMUM / SEKOLAH)
-- Fokus langsung pada fakta, definisi, istilah, dan konsep yang tertulis di materi.
-- Jangan gunakan hitungan berbelit-belit atau jebakan logika berlebihan.
-- Tujuannya: Menguji pemahaman langsung dan daya ingat terhadap materi.`;
+        typeGuidance = `TIPE KUIS: KONSEPTUAL TERAPAN & PEMAHAMAN LOGIS
+- HINDARI SOAL HAFALAN ROBOTIK yang hanya menguji ingatan teks (DILARANG: "Berdasarkan definisi pada modul...", "Menurut teks di atas...").
+- Gunakan SOAL APLIKATIF SKENARIO RINGAN: Berikan situasi praktis, contoh kasus mini, atau konteks nyata, lalu uji apakah pembelajar paham cara kerja konsep tersebut.
+- Tetap ramah untuk ujian sekolah/harian tanpa hitungan yang berbelit-belit.`;
       } else {
-        typeGuidance = `TIPE KUIS: ANALISIS MENDALAM & PREDIKSI UJIAN (HOTS / LANJUT / SELEKSI)
-- Fokus pada penalaran kritis, studi kasus aplikatif, dan perbandingan antar konsep.
-- Rancang variasi soal serinci mungkin yang berpotensi keluar sebagai soal penentu di ujian lanjutan.`;
+        typeGuidance = `TIPE KUIS: ANALISIS MENDALAM & PREDIKSI UJIAN (HOTS / SELEKSI TINGGI)
+- Fokus pada penalaran tingkat tinggi, analisis variabel tersembunyi, komparasi multi-konsep, dan pemecahan masalah non-rutin.
+- Rancang variasi soal yang berpotensi menjadi soal pembeda nilai di ujian seleksi atau kompetisi.`;
       }
 
       // Query unresolved mistakes for adaptive remedial weighting
@@ -632,15 +641,29 @@ Jika materi/soal mengandung rumus atau hitungan, WAJIB gunakan KaTeX LaTeX ($...
         : `ATURAN MATERI NON-HITUNGAN:
 Materi ini adalah materi konseptual/teori non-matematika. DILARANG KERAS memaksakan rumus atau angka hitungan buatan. Kosongkan field "formula": "" dan fokus pada pemahaman konsep/fakta.`;
 
-      const prompt = `Anda adalah pembuat soal ujian akademik profesional.
+      const prompt = `Anda adalah pembuat soal ujian akademik profesional berstandar tinggi.
 Buatkan TEPAT ${finalCount} butir soal pilihan ganda dengan 5 PILIHAN JAWABAN (A, B, C, D, E).
 
 ${typeGuidance}
 
-STRATEGI OPSI PENGECOH (DISTRACTORS):
-4 pilihan jawaban yang salah HARUS dibuat secara cerdas dari miskonsepsi nyata, kata kunci yang mirip tapi beda konteks, atau kebalikan logika. Jangan gunakan opsi konyol/absurd.
+STANDAR KUALITAS SOAL (ANTI-SLOP & HIDUP):
+1. Setiap soal harus terasa alami dan relevan. Hindari kalimat pembuka klise seperti "Berdasarkan materi...", langsung masuk ke skenario atau inti pertanyaan.
+2. OPSI PENGECOH (DISTRACTORS):
+   - 4 pilihan salah HARUS berasal dari miskonsepsi nyata, kesalahan kalkulasi umum, atau konsep yang saling tertukar. Jangan pernah membuat opsi konyol.
+3. KUNCI JAWABAN & SINKRONISASI INDEKS (MUTLAK):
+   - correctIndex: 0 = Pilihan A
+   - correctIndex: 1 = Pilihan B
+   - correctIndex: 2 = Pilihan C
+   - correctIndex: 3 = Pilihan D
+   - correctIndex: 4 = Pilihan E
+   - Kunci jawaban WAJIB terdistribusi secara acak merata di antara opsi A, B, C, D, dan E.
+   - Pada teks "desc" langkah pembahasan dan "explanation", HURUF YANG DISEBUT WAJIB SINKRON 100% dengan correctIndex.
+4. KUALITAS PEMBAHASAN STEP-BY-STEP (DILARANG MALAS):
+   - Setiap "desc" dalam "steps" WAJIB terdiri dari minimal 2-3 kalimat penjelasan yang tuntas.
+   - Langkah 1: Bedah apa yang diketahui dan konsep yang menjadi kunci pemecahan.
+   - Langkah 2: Uraikan alur pembuktian atau penalaran detail mengapa opsi benar terpilih DAN mengapa opsi pengecoh gugur.
+   - Langkah 3: Berikan simpulan tegas yang memantapkan pemahaman.
 
-Kunci jawaban WAJIB terdistribusi secara acak merata di antara opsi A, B, C, D, dan E.
 ${weaknessContext}
 ${mathRule}
 
@@ -648,17 +671,17 @@ Format output WAJIB HANYA berupa array JSON valid tanpa markdown fence atau teks
 [
   {
     "id": 1,
-    "question": "Pertanyaan soal...",
-    "options": ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D", "Pilihan E"],
+    "question": "Pertanyaan berbasis skenario/aplikasi...",
+    "options": ["Opsi A", "Opsi B", "Opsi C", "Opsi D", "Opsi E"],
     "correctIndex": 0,
     "formula": "${isMathDomain ? '$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$ (Rumus kunci jika materi berhitung)' : ''}",
     "steps": [
-      {"step": 1, "title": "Identifikasi Konsep / Premis", "desc": "Hal yang diketahui dan ditanyakan..."},
-      {"step": 2, "title": "Analisis & Pembahasan", "desc": "Mengapa opsi yang tepat dipilih dan opsi lain keliru..."},
-      {"step": 3, "title": "Kesimpulan", "desc": "Jawaban akhir..."}
+      {"step": 1, "title": "Identifikasi Masalah & Premis", "desc": "Penjelasan mendalam 2-3 kalimat mengenai apa yang ditanyakan dan konsep yang relevan..."},
+      {"step": 2, "title": "Bedah Analisis & Eliminasi Pengecoh", "desc": "Penjelasan rinci 2-3 kalimat mengapa opsi tertentu benar dan opsi lainnya keliru..."},
+      {"step": 3, "title": "Kesimpulan Solutif", "desc": "Simpulan konklusif yang mengunci jawaban dan menegaskan kaidah intinya..."}
     ],
-    "explanation": "Ringkasan konsep mengapa jawaban ini tepat berdasarkan materi...",
-    "pitfall": "Jebakan umum: opsi lain sering mengecoh karena..."
+    "explanation": "Penjelasan menyeluruh mengapa jawaban huruf tersebut tepat...",
+    "pitfall": "Jebakan umum: pembelajar sering terkecoh pada opsi X karena..."
   }
 ]
 
@@ -678,13 +701,17 @@ ${doc.content.slice(0, 15000)}
       if (cleanJSON.endsWith("```")) cleanJSON = cleanJSON.slice(0, -3);
       cleanJSON = cleanJSON.trim();
 
+      // Clean trailing commas before closing braces/brackets (common LLM JSON quirk)
+      cleanJSON = cleanJSON.replace(/,\s*([\]}])/g, "$1");
+
       let questions = [];
       try {
         questions = JSON.parse(cleanJSON);
       } catch (parseErr) {
         const jsonMatch = cleanJSON.match(/\[\s*\{[\s\S]*\}\s*\]/);
         if (jsonMatch) {
-          questions = JSON.parse(jsonMatch[0]);
+          const sanitizedMatch = jsonMatch[0].replace(/,\s*([\]}])/g, "$1");
+          questions = JSON.parse(sanitizedMatch);
         } else {
           return sendJSON(res, { error: "Format JSON soal tidak valid dari model AI", raw: reply }, 500);
         }

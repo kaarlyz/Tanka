@@ -43,7 +43,8 @@
         perspective: 1200px;
         width: 100%;
         max-width: 680px;
-        margin: 0 auto;
+        margin: 14px auto 0;
+        padding-top: 10px;
       }
       .flashcard-card {
         position: relative;
@@ -68,10 +69,11 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 32px;
+        padding: 32px 28px;
         box-sizing: border-box;
         border: 1px solid #dde1da;
         box-shadow: 0 10px 35px rgba(27, 39, 35, 0.08);
+        overflow-y: auto;
       }
       .flashcard-front {
         background: #ffffff;
@@ -894,9 +896,18 @@
         color: #17201d;
       }
       .solution-head > strong {
-        color: #6f7975;
+        color: #4b6623;
+        background: #eef8db;
+        border: 1px solid #d4e4be;
+        padding: 3px 10px;
+        border-radius: 999px;
         font-size: 11px;
+        font-weight: 700;
         font-family: "DM Mono", monospace;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+        margin-left: 14px;
+        flex-shrink: 0;
       }
       .solution-stepper {
         position: relative;

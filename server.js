@@ -508,9 +508,12 @@ ${doc.content.slice(0, 25000)}
 - Kalimat Pembuka: "Bisa. Kita mulai dari [topik dasar], tapi jangan cuma hafal rumus/teori—kita bikin bertahap sampai kamu bisa ngerjain soal sendiri."
 - STRUKTUR PENJABARAN:
   1. Pecah topik menjadi poin-poin bertingkat (1, 2, 3, dst.) dari yang paling dasar.
-  2. Setiap poin WAJIB menyertakan CONTOH KONKRET KECIL (misal: matriks angka kecil 2x2 atau 2x3, skenario kasus riil singkat).
-  3. Tuliskan PROSES KERJANYA SECARA EKSPLISIT: Jangan langsung beri hasil jadi! Uraikan langkah manualnya (misal: (1)(5) + (2)(7) = 5 + 14 = 19).
-  4. Berikan "CARA MENGINGAT / INTUISI KUNCI" dalam format tegas: misal [BARIS x KOLOM], bukan elemen seletak.
+  2. Setiap poin WAJIB menyertakan CONTOH KONKRET KECIL yang SESUAI BIDANG ILMUNYA:
+     - Eksak / Matematika: Gunakan angka bulat kecil konkret atau matriks ordo kecil.
+     - Ekonomi / Ilmu Sosial: Gunakan "Tabel Perbandingan 2 Negara × 2 Komoditas" atau angka unit sederhana. DILARANG KERAS menyebut tabel ekonomi sebagai 'matriks 2x2' (istilah matriks hanya untuk aljabar linier).
+     - Sejarah / Kriya / Bahasa: Gunakan contoh karya fisik, peristiwa nyata, atau kalimat konkret.
+  3. Tuliskan PROSES KERJANYA SECARA EKSPLISIT: Jangan langsung beri hasil jadi! Uraikan langkah manualnya secara runut.
+  4. Berikan "CARA MENGINGAT / INTUISI KUNCI" dalam format tegas: misal [BARIS x KOLOM] untuk matriks, atau [BIAYA TERENDAH = SPESIALISASI] untuk ekonomi.
   5. Soroti syarat kritis atau jebakan yang paling sering bikin siswa keliru.
   6. SEKSI WAJIB PENUTUP: "SEKARANG LATIHAN (KERJAKAN MANUAL)"
      - Sajikan 5 soal latihan mandiri bertingkat (Soal 1 pemanasan konsep, Soal 2-4 hitungan/analisis bertahap, Soal 5 soal tantangan proses lengkap).
@@ -1195,29 +1198,53 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
       const { topic, formalTitle, subject, answers = {}, model = "ag/gemini-3.8-flash-low" } = await getBody(req);
       if (!topic) return sendJSON(res, { error: "Topic required" }, 400);
 
-      const prompt = `Anda adalah pendidik ahli spesialis kurikulum dan penyusunan modul ajar komprehensif.
-Pengguna ingin mempelajari materi: "${topic}"
-Judul Formal: "${formalTitle || topic}"
+      // Search real curriculum syllabus & authoritative educational sources
+      let webContext = "";
+      try {
+        const searchQuery = `${formalTitle || topic} silabus SMA kurikulum merdeka materi buku teks`.trim();
+        const webRes = await search9Router(searchQuery);
+        if (webRes) {
+          webContext = `\nHASIL PENELUSURAN REFERENSI KURIKULUM & SUMBER INTERNET:\n${webRes}\n\n`;
+        }
+      } catch (err) {
+        console.error("Web search for topic generate failed:", err);
+      }
+
+      const prompt = `Anda adalah pendidik ahli spesialis kurikulum nasional (Kurikulum Merdeka / SMA / UTBK) dan penyusunan modul ajar berstandar tinggi.
+Pengguna ingin mempelajari materi dari topik: "${topic}"
+Judul Formal Modul: "${formalTitle || topic}"
 Bidang / Mata Pelajaran: "${subject || "Umum"}"
 Preferensi / Kebutuhan Pembelajar:
 ${Object.entries(answers).map(([k, v]) => `- ${k}: ${v}`).join("\n")}
+${webContext}
+TUGAS UTAMA:
+Susun dokumen materi ajar belajar mandiri yang LENGKAP, OTENTIK, MENDALAM, dan SESUAI TERMINOLOGI RESMI KURIKULUM INDONESIA (bukan sekadar ringkasan pendek).
 
-Tugas Anda: Susun dokumen materi belajar mandiri yang LENGKAP, MENDALAM, dan TERSTRUKTUR (bukan sekadar ringkasan pendek).
-Struktur isi materi:
-1. **Definisi & Peta Konsep Utama**: Penjelasan inti konsep dengan bahasa lugas dan analogi intuitif.
-2. **Rumus Kunci & Persamaan / Aturan Pokok**:
-   - Jika ada rumus/persamaan, WAJIB gunakan LaTeX ($...$ atau $$...$$) dengan garis pecahan horizontal bertingkat \\frac{a}{b}, akar \\sqrt{...}, sigma \\sum, dan eksponen kuadrat.
-   - Cantumkan keterangan jelas setiap variabel dan satuan/kondisi.
-3. **Pola Soal Ujian & Strategi Solusi**: Variasi pola soal yang sering diujikan beserta trik efisiensi/pengerjaan cepat.
+STANDAR TERMINOLOGI & PENDIDIKAN INDONESIA (MUTLAK):
+1. GUNAKAN TERMINOLOGI RESMI BUKU TEKS & KURIKULUM:
+   - Jika bidang EKONOMI (misal Perdagangan Internasional/Keunggulan Komparatif David Ricardo):
+     * Gunakan istilah resmi: "Tabel Produksi 2 Negara x 2 Komoditas" atau "Tabel Keunggulan Komparatif", BUKAN "matriks 2x2"! Istilah matriks hanya untuk aljabar linier matematika.
+     * Jelaskan konsep Dasar Tukar Dalam Negeri (DTD), Biaya Peluang (Opportunity Cost), dan Terms of Trade (ToT).
+   - Jika bidang MATEMATIKA / FISIKA / KIMIA:
+     * Gunakan notasi baku dan KaTeX ($...$ inline atau $$...$$ blok).
+   - Jika bidang SOSIOLOGI / SEJARAH / SENI:
+     * Gunakan peristilahan ilmiah baku tanpa rumus semu (pseudo-math).
+
+STRUKTUR ISI MODUL:
+1. **Definisi & Peta Konsep Utama**: Penjelasan inti konsep dengan bahasa lugas, latar belakang lahirnya konsep, dan analogi intuitif manusiawi.
+2. **Kaidah Pokok, Karakteristik, & Rumus/Aturan Baku**:
+   - Jika eksak: tuliskan rumus LaTeX dengan keterangan variabel dan satuan.
+   - Jika non-eksak: sajikan tabel perbandingan, taksonomi konsep, atau aturan hukum/teori.
+3. **Pola Soal Ujian & Strategi Solusi**: Variasi pola soal yang paling sering keluar di ujian sekolah / UTBK beserta trik efisiensi/pengerjaan cepat.
 4. **2 Contoh Soal Bertingkat Beserta Langkah Solusi Sistematis**:
-   - Contoh 1: Tingkat Konseptual / Sedang.
-   - Contoh 2: Tingkat Analisis Kritis / Kasus Lanjutan.
+   - Contoh 1: Tingkat Konseptual / Sedang (langkah demi langkah dari angka/kasus kecil).
+   - Contoh 2: Tingkat Analisis Kritis / Kasus Lanjutan (evaluasi mendalam).
 5. **Analisis Jebakan & Miskonsepsi**: Hal yang sering mengecoh saat menghadapi ujian atau aplikasi praktis.
 
-Tulis materi secara utuh dan kaya (minimal 600-1000 kata) dalam bahasa Indonesia akademis yang enak dibaca.`;
+Tulis materi secara utuh dan kaya (minimal 700-1200 kata) dalam bahasa Indonesia yang enak dibaca dan grounded pada sumber kurikulum nyata.`;
 
       const content = await callRouter([
-        { role: "system", content: "Anda adalah pengajar ahli yang menyusun modul ajar dan buku teks studi mendalam." },
+        { role: "system", content: "Anda adalah pengajar ahli yang menyusun modul ajar dan buku teks studi mendalam berbasis kurikulum resmi." },
         { role: "user", content: prompt }
       ], model, 0.3);
 

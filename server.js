@@ -163,12 +163,13 @@ async function search9Router(query) {
   return "";
 }
 
-// Multi-source academic & curriculum aggregator (Wikipedia ID, Wikibuku, CrossRef Educational Research & 9Router)
+// Multi-source academic & curriculum aggregator (Wikipedia ID, Wikibuku, CrossRef Educational Research, Ruangguru & 9Router)
 async function multiSourceAcademicSearch(topic, subject = "") {
   const findings = {
     encyclopedia: [],
     textbook: [],
     curriculumLiterature: [],
+    ruangguru: [],
     web: []
   };
 
@@ -226,7 +227,43 @@ async function multiSourceAcademicSearch(topic, subject = "") {
     }
   } catch (err) {}
 
-  // 4. 9Router Search (jika search provider aktif)
+  // 4. Ruangguru Pedagogical Articles (Modul Pembelajaran Kurikulum Sekolah SD/SMP/SMA)
+  try {
+    const searchUrl = `https://www.ruangguru.com/blog/?s=${encodeURIComponent(cleanTopic)}`;
+    const rRes = await fetch(searchUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+    });
+    if (rRes.ok) {
+      const rHtml = await rRes.text();
+      const cardRegex = /<a[^>]+href="(https:\/\/www\.ruangguru\.com\/blog\/[^"]+)"[^>]*>[\s\S]*?<h2 class="content-title">([\s\S]*?)<\/h2>/gi;
+      const articles = [];
+      let m;
+      while ((m = cardRegex.exec(rHtml)) !== null && articles.length < 3) {
+        const url = m[1];
+        if (url.includes("/blog/c/") || url.includes("/tag/")) continue;
+        const title = m[2].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").trim();
+        articles.push({ url, title });
+      }
+
+      for (const art of articles.slice(0, 2)) {
+        try {
+          const artRes = await fetch(art.url, { headers: { "User-Agent": "Mozilla/5.0" } });
+          if (artRes.ok) {
+            const artHtml = await artRes.text();
+            const paras = [...artHtml.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+              .map(p => p[1].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").replace(/&nbsp;/g, " ").trim())
+              .filter(p => p.length > 50 && !p.includes("minutes read") && !p.includes("Download") && !p.includes("Copyright"));
+            const snippet = paras.slice(1, 4).join(" ");
+            if (snippet.length > 40) {
+              findings.ruangguru.push({ title: art.title, url: art.url, snippet: snippet.slice(0, 450) });
+            }
+          }
+        } catch {}
+      }
+    }
+  } catch (err) {}
+
+  // 5. 9Router Search (jika search provider aktif)
   try {
     const res9 = await search9Router(`${cleanTopic} ${cleanSubject} silabus SMA kurikulum merdeka`);
     if (res9) {
@@ -235,6 +272,10 @@ async function multiSourceAcademicSearch(topic, subject = "") {
   } catch (err) {}
 
   let bundle = "";
+  if (findings.ruangguru.length) {
+    bundle += "### 🎒 REFERENSI PEDAGOGIS & POLA AJAR RUANGGURU (Kurikulum Sekolah):\n" +
+      findings.ruangguru.map((r, i) => `${i + 1}. **${r.title}**: ${r.snippet}`).join("\n\n") + "\n\n";
+  }
   if (findings.encyclopedia.length) {
     bundle += "### 📚 KONSEP & DEFINISI ENSIKLOPEDIS RESMI (Wikipedia ID):\n" +
       findings.encyclopedia.slice(0, 4).map((e, i) => `${i + 1}. **${e.title}**: ${e.snippet}`).join("\n\n") + "\n\n";

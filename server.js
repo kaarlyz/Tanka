@@ -651,7 +651,7 @@ Format output WAJIB HANYA berupa array JSON valid tanpa markdown fence atau teks
     "question": "Pertanyaan soal...",
     "options": ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D", "Pilihan E"],
     "correctIndex": 0,
-    "formula": "${hasMath ? '$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$ (Rumus kunci jika materi berhitung)' : ''}",
+    "formula": "${isMathDomain ? '$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$ (Rumus kunci jika materi berhitung)' : ''}",
     "steps": [
       {"step": 1, "title": "Identifikasi Konsep / Premis", "desc": "Hal yang diketahui dan ditanyakan..."},
       {"step": 2, "title": "Analisis & Pembahasan", "desc": "Mengapa opsi yang tepat dipilih dan opsi lain keliru..."},

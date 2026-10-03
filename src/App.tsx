@@ -4290,6 +4290,7 @@ export default function App() {
                   </div>
                 ) : (
                   <div
+                    className="learning-card-white markdown-body print-document-container"
                     style={{
                       backgroundColor: "#ffffff",
                       border: "1px solid #dde1da",
@@ -4301,6 +4302,32 @@ export default function App() {
                       boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
                     }}
                   >
+                    {/* Publication Header for Print only */}
+                    <div className="print-only" style={{ borderBottom: "2px solid #18221f", paddingBottom: 14, marginBottom: 20 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                        <div>
+                          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+                            TANKA · MODUL BELAJAR EDITORIAL
+                          </span>
+                          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#18221f", margin: "4px 0 0" }}>
+                            {activeDoc?.title || "Modul Pembelajaran"}
+                          </h1>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <span style={{ fontSize: 10, color: "#6b7280", fontFamily: "'DM Mono', monospace" }}>
+                            Dicetak: {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 14, marginTop: 8, fontSize: 11, color: "#4b5563", fontFamily: "'DM Mono', monospace" }}>
+                        <span>Panjang: {activeDoc?.wordCount || 0} kata</span>
+                        <span>•</span>
+                        <span>Estimasi Baca: {activeDoc?.readingTimeMinutes || 0} menit</span>
+                        <span>•</span>
+                        <span>Gaya: {summaryStyle === "intuitive" ? "Sederhana & Intuitif" : summaryStyle === "memorization" ? "Poin Hafalan" : "Akademik Lengkap"}</span>
+                      </div>
+                    </div>
+
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm, remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -4340,6 +4367,41 @@ export default function App() {
                             {children}
                           </blockquote>
                         ),
+                        pre: ({ children }) => (
+                          <pre
+                            style={{
+                              backgroundColor: "#f6f8f5",
+                              border: "1px solid #d4ded2",
+                              borderLeft: "3px solid #65a30d",
+                              borderRadius: 8,
+                              padding: "12px 14px",
+                              fontFamily: "'DM Mono', monospace",
+                              fontSize: 11.5,
+                              lineHeight: 1.45,
+                              color: "#18221f",
+                              overflowX: "auto",
+                              whiteSpace: "pre-wrap",
+                              wordBreak: "break-word",
+                              margin: "14px 0"
+                            }}
+                          >
+                            {children}
+                          </pre>
+                        ),
+                        code: ({ children }) => (
+                          <code
+                            style={{
+                              fontFamily: "'DM Mono', monospace",
+                              fontSize: 12,
+                              backgroundColor: "#f0f4ee",
+                              color: "#1f2b26",
+                              padding: "2px 5px",
+                              borderRadius: 4
+                            }}
+                          >
+                            {children}
+                          </code>
+                        ),
                         table: ({ children }) => (
                           <div style={{ overflowX: "auto", margin: "14px 0" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, border: "1px solid #dde1da", borderRadius: 8, overflow: "hidden" }}>
@@ -4366,6 +4428,61 @@ export default function App() {
                     >
                       {formattedSummary}
                     </ReactMarkdown>
+
+                    {/* Print Appendix 1: Flashcards / Glosarium Konsep Kunci */}
+                    {flashcards && flashcards.length > 0 && (
+                      <div className="print-only" style={{ marginTop: 28, paddingTop: 20, borderTop: "2px solid #18221f", breakBefore: "page" }}>
+                        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+                          LAMPIRAN I · FLASHCARDS & DEFINISI KUNCI
+                        </span>
+                        <h2 style={{ fontSize: 16, fontWeight: 800, color: "#18221f", margin: "4px 0 14px 0" }}>
+                          Glosarium Konsep & Kaidah Inti
+                        </h2>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                          {flashcards.map((fc, fIdx) => (
+                            <div key={fIdx} style={{ border: "1px solid #dce1da", borderRadius: 8, padding: "10px 12px", background: "#f8f9f5", breakInside: "avoid" }}>
+                              <strong style={{ fontSize: 12, color: "#22370c", display: "block", marginBottom: 4 }}>{fc.question}</strong>
+                              <p style={{ fontSize: 11, color: "#374151", margin: 0, lineHeight: 1.5 }}>{fc.answer}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Print Appendix 2: Soal Latihan & Pembahasan Kunci */}
+                    {quizQuestions && quizQuestions.length > 0 && (
+                      <div className="print-only" style={{ marginTop: 28, paddingTop: 20, borderTop: "2px solid #18221f", breakBefore: "page" }}>
+                        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+                          LAMPIRAN II · LATIHAN KUIS & PEMBAHASAN
+                        </span>
+                        <h2 style={{ fontSize: 16, fontWeight: 800, color: "#18221f", margin: "4px 0 14px 0" }}>
+                          Paket Soal & Pembahasan Terstruktur
+                        </h2>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                          {quizQuestions.map((q, qIdx) => (
+                            <div key={qIdx} style={{ border: "1px solid #dce1da", borderRadius: 8, padding: "12px 14px", background: "#ffffff", breakInside: "avoid" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>SOAL {qIdx + 1}</span>
+                              </div>
+                              <div style={{ fontSize: 12.5, fontWeight: 600, color: "#111827", marginBottom: 8 }}>
+                                <MathView text={q.question} />
+                              </div>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
+                                {q.options.map((opt, oIdx) => (
+                                  <div key={oIdx} style={{ fontSize: 11, padding: "4px 8px", borderRadius: 4, background: oIdx === q.correctIndex ? "#ecfccb" : "#f3f4f6", border: oIdx === q.correctIndex ? "1px solid #bef264" : "1px solid transparent", color: oIdx === q.correctIndex ? "#365314" : "#374151" }}>
+                                    <strong>{String.fromCharCode(65 + oIdx)}.</strong> {opt} {oIdx === q.correctIndex && "✓ (Kunci)"}
+                                  </div>
+                                ))}
+                              </div>
+                              <div style={{ fontSize: 11, color: "#4b5563", background: "#f8f9f5", padding: "8px 10px", borderRadius: 6, lineHeight: 1.5 }}>
+                                <strong style={{ color: "#1f2937" }}>Pembahasan: </strong>
+                                <MathView text={q.explanation} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

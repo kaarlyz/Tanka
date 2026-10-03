@@ -1052,14 +1052,22 @@
         }
       }
 
+      .print-only {
+        display: none !important;
+      }
+
       /* Print stylesheet for clean, publication-grade PDF & physical study notes */
       @media print {
         @page {
           size: A4 portrait;
-          margin: 16mm 14mm 16mm 14mm;
+          margin: 14mm 12mm 14mm 12mm;
         }
 
-        html, body, #root, .app-shell, .workspace-shell, .figma-grid, .main-content-area, .content-scroll {
+        .print-only {
+          display: block !important;
+        }
+
+        html, body, #root, .app-shell, .workspace-shell, .figma-grid, .lesson-panel-box, .main-content-area, .content-scroll {
           height: auto !important;
           min-height: auto !important;
           max-height: none !important;
@@ -1070,6 +1078,12 @@
           background: #ffffff !important;
           color: #17201d !important;
           font-family: "Manrope", sans-serif !important;
+          display: block !important;
+          flex: none !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
         }
 
         .sidebar-shell,
@@ -1089,8 +1103,10 @@
         .app-shell,
         .workspace-shell,
         .figma-grid,
+        .lesson-panel-box,
         .main-content-area {
           display: block !important;
+          flex: none !important;
           width: 100% !important;
           margin: 0 !important;
           padding: 0 !important;

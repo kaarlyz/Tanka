@@ -163,6 +163,97 @@ async function search9Router(query) {
   return "";
 }
 
+// Multi-source academic & curriculum aggregator (Wikipedia ID, Wikibuku, CrossRef Educational Research & 9Router)
+async function multiSourceAcademicSearch(topic, subject = "") {
+  const findings = {
+    encyclopedia: [],
+    textbook: [],
+    curriculumLiterature: [],
+    web: []
+  };
+
+  const cleanTopic = (topic || "").trim();
+  const cleanSubject = (subject || "").trim();
+  if (!cleanTopic) return "";
+
+  // 1. Wikipedia Indonesia (Ensiklopedi & Konsep Baku)
+  try {
+    const wikiQueries = [cleanTopic, `${cleanTopic} ${cleanSubject || "konsep"}`.trim()];
+    for (const q of wikiQueries) {
+      const url = `https://id.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=3&prop=extracts&exintro=1&explaintext=1&format=json`;
+      const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
+      if (res.ok) {
+        const data = await res.json();
+        const pages = Object.values(data.query?.pages || {});
+        for (const p of pages) {
+          if (p.extract && p.extract.length > 40 && !findings.encyclopedia.some(e => e.title === p.title)) {
+            findings.encyclopedia.push({ title: p.title, snippet: p.extract.slice(0, 400) });
+          }
+        }
+      }
+    }
+  } catch (err) {}
+
+  // 2. Wikibooks Indonesia (Buku Teks Bebas & Modul Ajar)
+  try {
+    const url = `https://id.wikibooks.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&gsrlimit=2&prop=extracts&explaintext=1&format=json`;
+    const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
+    if (res.ok) {
+      const data = await res.json();
+      const pages = Object.values(data.query?.pages || {});
+      for (const p of pages) {
+        if (p.extract && p.extract.length > 40 && !findings.textbook.some(t => t.title === p.title)) {
+          findings.textbook.push({ title: p.title, snippet: p.extract.slice(0, 400) });
+        }
+      }
+    }
+  } catch (err) {}
+
+  // 3. CrossRef Open Academic API (Jurnal Kurikulum & Kajian Buku Teks Indonesia)
+  try {
+    const url = `https://api.crossref.org/works?query=${encodeURIComponent(`${cleanTopic} Kurikulum Merdeka SMA ${cleanSubject}`.trim())}&rows=3&select=title,abstract`;
+    const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0 (mailto:study@tanka.app)" } });
+    if (res.ok) {
+      const data = await res.json();
+      const items = data.message?.items || [];
+      for (const it of items) {
+        const title = it.title?.[0];
+        const snippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 300) : "";
+        if (title && !findings.curriculumLiterature.some(c => c.title === title)) {
+          findings.curriculumLiterature.push({ title, snippet });
+        }
+      }
+    }
+  } catch (err) {}
+
+  // 4. 9Router Search (jika search provider aktif)
+  try {
+    const res9 = await search9Router(`${cleanTopic} ${cleanSubject} silabus SMA kurikulum merdeka`);
+    if (res9) {
+      findings.web.push(res9);
+    }
+  } catch (err) {}
+
+  let bundle = "";
+  if (findings.encyclopedia.length) {
+    bundle += "### 📚 KONSEP & DEFINISI ENSIKLOPEDIS RESMI (Wikipedia ID):\n" +
+      findings.encyclopedia.slice(0, 4).map((e, i) => `${i + 1}. **${e.title}**: ${e.snippet}`).join("\n\n") + "\n\n";
+  }
+  if (findings.textbook.length) {
+    bundle += "### 📖 MODUL & BUKU TEKS TERBUKA (Wikibuku ID):\n" +
+      findings.textbook.slice(0, 2).map((t, i) => `${i + 1}. **${t.title}**: ${t.snippet}`).join("\n\n") + "\n\n";
+  }
+  if (findings.curriculumLiterature.length) {
+    bundle += "### 🎓 LITERATUR KURIKULUM & KAJIAN BUKU AJAR (CrossRef):\n" +
+      findings.curriculumLiterature.slice(0, 3).map((c, i) => `${i + 1}. **${c.title}**${c.snippet ? ": " + c.snippet : ""}`).join("\n\n") + "\n\n";
+  }
+  if (findings.web.length) {
+    bundle += "### 🌐 HASIL PENCARIAN WEB RESMI:\n" + findings.web.join("\n\n") + "\n\n";
+  }
+
+  return bundle.trim();
+}
+
 // Robust check for genuine mathematical / calculation content (avoiding false positives on dates, slide numbers, dashes)
 function detectRealMath(content) {
   if (!content) return false;
@@ -310,10 +401,10 @@ const server = http.createServer(async (req, res) => {
       const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
       if (!doc) return sendJSON(res, { error: "Dokumen tidak ditemukan" }, 404);
 
-      let webFindings = await search9Router(`${doc.title} ${focusTopic || ""}`.trim());
+      let webFindings = await multiSourceAcademicSearch(doc.title, focusTopic);
       let webContext = "";
       if (webFindings) {
-        webContext = `\nHASIL PENCARIAN REFERENSI INTERNET TERBARU (9Router Web Search):\n${webFindings}\n\n`;
+        webContext = `\nHASIL PENELUSURAN REFERENSI AKADEMIK & KURIKULUM MULTI-SUMBER:\n${webFindings}\n\n`;
       }
 
       const prompt = `Anda adalah asisten riset dan pengayaan materi pembelajaran komprehensif.
@@ -1195,16 +1286,15 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
       const { topic, formalTitle, subject, answers = {}, model = "ag/gemini-3.8-flash-low" } = await getBody(req);
       if (!topic) return sendJSON(res, { error: "Topic required" }, 400);
 
-      // Search real curriculum syllabus & authoritative educational sources
+      // Search multi-source academic & curriculum sources (Wikipedia, Wikibuku, CrossRef Educational Research)
       let webContext = "";
       try {
-        const searchQuery = `${formalTitle || topic} silabus SMA kurikulum merdeka materi buku teks`.trim();
-        const webRes = await search9Router(searchQuery);
+        const webRes = await multiSourceAcademicSearch(formalTitle || topic, subject);
         if (webRes) {
-          webContext = `\nHASIL PENELUSURAN REFERENSI KURIKULUM & SUMBER INTERNET:\n${webRes}\n\n`;
+          webContext = `\nHASIL PENELUSURAN REFERENSI KURIKULUM & SUMBER INTERNET MULTI-SUMBER:\n${webRes}\n\n`;
         }
       } catch (err) {
-        console.error("Web search for topic generate failed:", err);
+        console.error("Multi-source academic search for topic generate failed:", err);
       }
 
       const prompt = `Anda adalah pendidik ahli spesialis kurikulum nasional (Kurikulum Merdeka / SMA / UTBK) dan penyusunan modul ajar berstandar tinggi.

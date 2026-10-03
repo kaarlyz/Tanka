@@ -645,14 +645,13 @@ ${doc.content.slice(0, 25000)}
   3. Tuliskan PROSES KERJANYA SECARA EKSPLISIT: Jangan langsung beri hasil akhir! Uraikan langkah logis / hitungan manualnya secara bertahap sampai selesai.
   4. Berikan "CARA MENGINGAT / INTUISI KUNCI" dalam format tegas: [KATA KUNCI ATAU KAIDAH RINGKAS].
   5. Soroti syarat kritis atau jebakan yang paling sering bikin siswa keliru.
-  6. SEKSI WAJIB PENUTUP: "SEKARANG LATIHAN (KERJAKAN MANUAL)"
-     - Sajikan 5 soal latihan mandiri bertingkat (Soal 1 pemanasan konsep dasar, Soal 2-4 analisis/hitungan bertahap, Soal 5 tantangan proses lengkap).
-     - Perintahkan: "Jangan lihat pembahasan dulu. Kerjakan manual dan tulis prosesnya."
-     - Kalimat penutup: "Kirim jawaban 1–5 ke panel Tanya Nara di samping, nanti aku koreksi satu per satu dan kalau sudah benar kita naik level!"
+  6. SEKSI PENUTUP: "INTISARI KUNCI (MENTAL MODEL)"
+     - Tuliskan 3–4 kaidah emas / intisari paling krusial untuk merekatkan pemahaman sebelum menghadapi ujian.
+     - DILARANG KERAS membuat daftar soal latihan / kuis / pertanyaan PR di dalam catatan (latihan soal sudah memiliki tab interaktif tersendiri di aplikasi).
 - UNIVERSAL KE SEMUA MAPEL:
-  * Eksak/Matematika: Angka kecil -> proses langkah per langkah -> trik hitung -> 5 latihan mandiri.
-  * Sosial/Sejarah: Skenario nyata -> klasifikasi bertahap -> trik bedakan -> 5 latihan studi kasus mandiri.
-  * Bahasa/Seni: Kalimat/karya konkret -> bedah kaidah bertahap -> trik identifikasi -> 5 latihan analisis mandiri.`;
+  * Eksak/Matematika: Angka kecil -> proses langkah per langkah -> trik hitung -> intisari rumus mental.
+  * Sosial/Sejarah: Skenario nyata -> klasifikasi bertahap -> trik bedakan -> intisari komparasi.
+  * Bahasa/Seni: Kalimat/karya konkret -> bedah kaidah bertahap -> trik identifikasi -> intisari analisis.`;
       } else if (style === "memorization") {
         styleGuidance = `GAYA PENULISAN: POIN HAFALAN & INTISARI UJIAN CEPAT
 - Fokus pada materi yang wajib dihafal: istilah kunci, nama tokoh/proses, bagan klasifikasi, poin perbandingan yang sering mengecoh.
@@ -721,8 +720,9 @@ STRUKTUR SISTEMATIS CATATAN:
 ${mathSectionBlock}
 4. **Pola Kritis & Analisis Jebakan (Common Pitfalls)**:
    - Miskonsepsi yang paling sering membuat siswa salah kaprah saat ujian/praktek, lengkap dengan trik membedakannya.
-5. **Checklist Pemahaman Mandiri**:
-   - 3-4 pertanyaan refleksi aplikatif untuk menguji apakah pembaca benar-benar paham secara fungsional.
+5. **Rangkuman Eksekutif & Kaidah Kunci (Mental Model)**:
+   - 3-4 intisari mutlak dan prinsip kunci untuk merekatkan materi di kepala.
+   - DILARANG menyertakan daftar soal latihan / kuis / pertanyaan PR di dalam catatan (latihan soal sudah memiliki tab interaktif tersendiri di aplikasi).
 
 Format dengan Markdown rapi, sub-heading yang jelas, dan penekanan cetak tebal pada istilah kunci.
 
@@ -1383,9 +1383,8 @@ STRUKTUR ISI MODUL:
    - Tabel perbandingan komparatif (misal Faktor Pendorong vs Faktor Penghambat, atau Syarat A vs Syarat B) agar siswa tidak tertukar di ujian.
 4. **Pola Soal Ujian & Jebakan Konseptual (Common Pitfalls)**:
    - 3-4 jebakan khas yang paling sering mengecoh siswa di ujian sekolah / UTBK terkait sub-topik ini.
-5. **2 Contoh Soal Ujian Bertingkat Beserta Pembahasan Tuntas**:
-   - Soal 1: Tingkat Pemahaman / Analisis Kasus Sedang.
-   - Soal 2: Tingkat HOTS / Penalaran Kritis dengan pembahasan bertahap.
+5. **Studi Kasus Kontekstual & Bedah Solusi Nyata**:
+   - Sajikan 1 skenario studi kasus riil terapan, lalu bedah dan analisis secara tuntas langkah demi langkah sebagai demonstrasi penerapan materi (DILARANG menaruh daftar lembar soal latihan / PR tanpa pembahasan di catatan, karena latihan soal sudah memiliki tab khusus interaktif tersendiri).
 
 Tulis materi secara padat, tajam, dan berbobot akademis tinggi (minimal 800-1200 kata) dalam bahasa Indonesia yang lugas dan enak dipelajari.`;
 

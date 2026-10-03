@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Production build artifacts
+dist/
+
+# SQLite databases & user sessions
+*.sqlite
+*.sqlite3
+*.db
+tanka.sqlite
+
+# Secrets & Environment variables
+.env
+.env.*
+!.env.example
+
+# Temporary files & logs
+*.log
+.DS_Store
+.cache/
+__pycache__/
+*.pyc

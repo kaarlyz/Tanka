@@ -516,7 +516,62 @@ function renderVisualDiagramOrPre(children: any) {
     );
   }
 
-  // Pattern 5: Generic Hierarchical Diagram / ASCII Flow Nodes
+  // Pattern 5: Universal Sequential Flow / Pipeline (e.g. A > B > C or A ➔ B ➔ C)
+  const isArrowPipeline = /(?:[➔➜→>]|-->|==>)/.test(text) && !/[┌└├│]/.test(text);
+  if (isArrowPipeline) {
+    const rawSegments = text
+      .split(/\s*(?:[➔➜→>]|-->|==>)\s*/)
+      .map(s => s.replace(/[┌└├│─┬┴┼+|=]+/g, " ").trim())
+      .filter(s => s.length > 1);
+
+    if (rawSegments.length >= 2 && rawSegments.length <= 6) {
+      return (
+        <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 14, boxShadow: "0 4px 18px rgba(0,0,0,0.03)" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
+            ➔ Alur Transformasi & Tahapan Konsep
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            {rawSegments.map((item, idx) => (
+              <React.Fragment key={idx}>
+                <div style={{ flex: "1 1 140px", padding: "12px 14px", backgroundColor: "#ffffff", border: "1px solid #dce2da", borderRadius: 10, textAlign: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.02)" }}>
+                  <div style={{ fontSize: 9.5, fontWeight: 800, textTransform: "uppercase", color: "#566b36", fontFamily: "'DM Mono', monospace" }}>Tahap 0{idx + 1}</div>
+                  <strong style={{ fontSize: 13, color: "#18211e", display: "block", marginTop: 4 }}>{item}</strong>
+                </div>
+                {idx < rawSegments.length - 1 && <span style={{ fontSize: 16, color: "#779f2f", fontWeight: 800, padding: "0 2px" }}>➔</span>}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Pattern 6: Universal Dual Comparison (e.g. A vs B or 2-sided concepts)
+  const isComparison = (upper.includes(" VS ") || upper.includes(" VERSUS ") || (upper.includes("1.") && upper.includes("2.") && upper.includes("SUMBU"))) && !/[┌└├│]/.test(text);
+  if (isComparison) {
+    const parts = text.split(/\s*(?:vs|versus)\s*/i).map(s => s.trim()).filter(Boolean);
+    if (parts.length === 2) {
+      return (
+        <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 14 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
+            ⚖️ Komparasi Dua Konsep Berseberangan
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ padding: "14px 16px", backgroundColor: "#fbf6e8", border: "1px solid #fae8b8", borderRadius: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#92400e", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Kategori A</span>
+              <strong style={{ fontSize: 13.5, color: "#78350f", display: "block", marginTop: 4 }}>{parts[0]}</strong>
+            </div>
+            <div style={{ padding: "14px 16px", backgroundColor: "#edf7ed", border: "1px solid #c8e6c9", borderRadius: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#1b5e20", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Kategori B</span>
+              <strong style={{ fontSize: 13.5, color: "#2e7d32", display: "block", marginTop: 4 }}>{parts[1]}</strong>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Pattern 7: Generic Hierarchical Diagram / ASCII Flow Nodes (Applies to ALL subjects)
   const hasBoxChars = /[┌└├│─┬┴┼]|\+[-=]{2,}|-->|==>/.test(text);
   if (hasBoxChars) {
     const rawLines = text.split("\n");

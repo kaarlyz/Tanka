@@ -7,7 +7,7 @@ import { Sparkles, Download, Copy, Volume2, VolumeX, CheckCircle2, ChevronRight,
 import { DocumentItem, QuizQuestion, Flashcard } from "../../types";
 import { MathView } from "../common/MathView";
 import { AIProcessLoader } from "../common/AIProcessLoader";
-import { renderVisualDiagramOrPre } from "../common/DiagramRenderer";
+import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText } from "../common/DiagramRenderer";
 
 export interface SummaryTabProps {
   activeDoc: DocumentItem | null | undefined;

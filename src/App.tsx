@@ -317,6 +317,9 @@ export default function App() {
     setChatInput,
     isChatSending,
     chatEndRef,
+    stagedAttachment,
+    handleAttachFile,
+    handleClearAttachment,
     handleSendMessage
   } = useChat({ activeDocId, selectedModel, showNotice });
 
@@ -781,6 +784,9 @@ export default function App() {
                   setChatInput={setChatInput}
                   handleSendMessage={handleSendMessage}
                   isChatSending={isChatSending}
+                  stagedAttachment={stagedAttachment}
+                  handleAttachFile={handleAttachFile}
+                  handleClearAttachment={handleClearAttachment}
                 />
               )}
             </div>
@@ -799,6 +805,9 @@ export default function App() {
             chatInput={chatInput}
             setChatInput={setChatInput}
             handleSendMessage={handleSendMessage}
+            stagedAttachment={stagedAttachment}
+            handleAttachFile={handleAttachFile}
+            handleClearAttachment={handleClearAttachment}
           />
         </div>
       </div>

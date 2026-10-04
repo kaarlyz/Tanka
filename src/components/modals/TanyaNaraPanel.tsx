@@ -1,10 +1,11 @@
-import React from "react";
-import { RotateCw, X, Sparkles, Brain } from "lucide-react";
+import React, { useRef } from "react";
+import { RotateCw, X, Sparkles, Brain, Paperclip, FileText, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { ActiveTab, ChatMessage } from "../../types";
+import { StagedChatFile } from "../../hooks/useChat";
 
 export interface TanyaNaraPanelProps {
   activeTab: ActiveTab;
@@ -18,6 +19,9 @@ export interface TanyaNaraPanelProps {
   chatInput: string;
   setChatInput: (val: string) => void;
   handleSendMessage: (textToSend?: string) => Promise<void> | void;
+  stagedAttachment?: StagedChatFile | null;
+  handleAttachFile?: (file: File) => Promise<void>;
+  handleClearAttachment?: () => void;
 }
 
 export function TanyaNaraPanel({
@@ -32,25 +36,43 @@ export function TanyaNaraPanel({
   chatInput,
   setChatInput,
   handleSendMessage,
+  stagedAttachment,
+  handleAttachFile,
+  handleClearAttachment,
 }: TanyaNaraPanelProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   React.useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [messages, isChatSending]);
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+      const file = e.clipboardData.files[0];
+      if (handleAttachFile) {
+        handleAttachFile(file);
+        e.preventDefault();
+      }
+    }
+  };
+
   return (
     <>
-      {activeTab !== "home" && isAiPanelOpen && (
+      {isAiPanelOpen && (
         <div
           className="ai-panel-backdrop open"
           onClick={() => setIsAiPanelOpen(false)}
         />
       )}
       <aside
-        className={`ai-panel-box ${(activeTab !== "home" && isAiPanelOpen) ? "open" : ""}`}
+        className={`ai-panel-box ${isAiPanelOpen ? "open" : ""}`}
         style={{
-          display: (activeTab !== "home" && isAiPanelOpen) ? "flex" : "none",
+          display: isAiPanelOpen ? "flex" : "none",
+          width: 380,
+          minWidth: 320,
+          maxWidth: 420,
           flexShrink: 0,
           height: "100%",
           maxHeight: "100vh",
@@ -146,10 +168,10 @@ export function TanyaNaraPanel({
             <div className="ai-context-indicator">
               <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
                 <Sparkles size={11} color="#4b6623" />
-                <span className="ctx-title">{activeDocTitle || "Modul Belajar"}</span>
+                <span className="ctx-title">{activeDocTitle || "Tutor Bebas (Tanpa Modul)"}</span>
               </div>
               <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "#56645e" }}>
-                {activeTab === "quiz" ? "Kuis" : activeTab === "flashcards" ? "Kartu" : activeTab === "summary" ? "Rangkuman" : "Materi"}
+                {activeTab === "quiz" ? "Kuis" : activeTab === "flashcards" ? "Kartu" : activeTab === "summary" ? "Rangkuman" : activeTab === "home" ? "Umum" : "Materi"}
               </span>
             </div>
           </div>
@@ -173,8 +195,9 @@ export function TanyaNaraPanel({
                 <Brain size={13} color="#18221f" />
                 <span>Asisten Belajar Tanka</span>
               </div>
-              Tanyakan bagian yang belum jelas, minta contoh angka kecil, atau kirimkan jawaban latihan manualmu untuk dikoreksi bertahap.
+              Tanyakan materi apa saja, unggah foto soal latihan, atau lampirkan berkas PDF/tugas untuk dibedah Nara langkah demi langkah.
             </div>
+
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -198,20 +221,59 @@ export function TanyaNaraPanel({
                     boxShadow: m.role === "user" ? "0 2px 8px rgba(24, 34, 31, 0.12)" : "0 2px 8px rgba(27, 39, 35, 0.02)"
                   }}
                 >
+                  {/* Attachment in message */}
+                  {m.attachment && (
+                    <div style={{ marginBottom: 6 }}>
+                      {m.attachment.type === "image" && m.attachment.url ? (
+                        <img
+                          src={m.attachment.url}
+                          alt={m.attachment.name}
+                          style={{
+                            maxWidth: "100%",
+                            maxHeight: 180,
+                            borderRadius: 8,
+                            display: "block",
+                            objectFit: "contain",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                            marginBottom: 4
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "4px 8px",
+                          borderRadius: 6,
+                          backgroundColor: m.role === "user" ? "rgba(255,255,255,0.15)" : "#eef2ea",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          marginBottom: 4
+                        }}>
+                          <FileText size={13} />
+                          <span>{m.attachment.name}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {m.role === "assistant" ? (
                     <div className="nara-md-response" style={{ fontSize: 12.5, lineHeight: 1.55 }}>
                       <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
                         {m.content}
                       </ReactMarkdown>
                     </div>
-                  ) : m.content}
+                  ) : (
+                    <div>{m.content}</div>
+                  )}
                 </div>
               </div>
             ))}
+
             {isChatSending && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#607069", fontStyle: "italic", padding: "4px 8px" }}>
                 <Sparkles size={12} color="#18221f" />
-                <span>Nara sedang menyusun penjelasan...</span>
+                <span>Nara sedang menganalisis materi & menyusun jawaban...</span>
               </div>
             )}
             <div ref={chatEndRef} />
@@ -239,26 +301,123 @@ export function TanyaNaraPanel({
               ))}
             </div>
 
+            {/* Staged Attachment Preview Pill */}
+            {stagedAttachment && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  backgroundColor: "#f0f4ec",
+                  border: "1px solid #c9d8c3",
+                  borderRadius: 8,
+                  padding: "5px 8px",
+                  marginBottom: 6,
+                  fontSize: 11.5,
+                  color: "#273b18"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden" }}>
+                  {stagedAttachment.type === "image" && stagedAttachment.previewUrl ? (
+                    <img
+                      src={stagedAttachment.previewUrl}
+                      alt="Preview"
+                      style={{ width: 22, height: 22, objectFit: "cover", borderRadius: 4, border: "1px solid #b6c9af" }}
+                    />
+                  ) : (
+                    <FileText size={15} color="#446128" />
+                  )}
+                  <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
+                    {stagedAttachment.name}
+                  </span>
+                  <span style={{ fontSize: 10, color: "#6e806a" }}>
+                    ({Math.round(stagedAttachment.file.size / 1024)} KB)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearAttachment}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#6e806a",
+                    padding: "2px",
+                    display: "flex",
+                    alignItems: "center"
+                  }}
+                  title="Hapus lampiran"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            )}
+
+            {/* Hidden File Input for Attachment */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              accept="image/png,image/jpeg,image/webp,.pdf,.docx,.pptx,.txt"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0] && handleAttachFile) {
+                  handleAttachFile(e.target.files[0]);
+                  e.target.value = "";
+                }
+              }}
+            />
+
             <form
               className="chat-form-box"
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSendMessage();
               }}
+              onPaste={handlePaste}
             >
+              {/* Attachment Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isChatSending}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: stagedAttachment ? "#446128" : "#65756f",
+                  cursor: "pointer",
+                  padding: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  transition: "background-color 0.15s"
+                }}
+                title="Unggah Foto Soal / Catatan atau Berkas PDF / DOCX"
+              >
+                <Paperclip size={15} />
+              </button>
+
               <input
                 type="text"
-                placeholder="Tanya Nara atau ketik jawaban latihan..."
+                placeholder={stagedAttachment ? `Bahas ${stagedAttachment.name}... (atau langsung Enter)` : "Tanya Nara, paste gambar/soal..."}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 disabled={isChatSending}
               />
-              <button type="submit" disabled={isChatSending || !chatInput.trim()} title="Kirim pertanyaan">
-                ↑
+
+              <button
+                type="submit"
+                disabled={isChatSending || (!chatInput.trim() && !stagedAttachment)}
+                title="Kirim pesan"
+              >
+                <Send size={13} />
               </button>
             </form>
+
             <p style={{ margin: "7px 0 0", fontSize: 9.5, color: "#8a9691", textAlign: "center" }}>
-              AI tersinkronisasi otomatis dengan modul & soal aktif.
+              Bisa ketik teks, lampirkan PDF, atau paste (Ctrl+V) foto soal langsung.
             </p>
           </div>
         </div>

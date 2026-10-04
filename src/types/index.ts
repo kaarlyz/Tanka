@@ -20,11 +20,19 @@ export interface Flashcard {
   created_at?: number;
 }
 
+export interface ChatAttachment {
+  name: string;
+  type: "image" | "document";
+  url?: string;
+  size?: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp?: number;
+  attachment?: ChatAttachment;
 }
 
 export interface QuizStep {

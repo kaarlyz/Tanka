@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import {
   Sparkles,
   HelpCircle,
@@ -10,598 +10,1345 @@ import {
   Copy,
   ChevronRight,
   ChevronLeft,
-  MessageSquare
+  MessageSquare,
+  Clock,
+  Play,
+  Pause,
+  Award,
+  BookOpen,
+  Target,
+  Send,
+  Flag,
+  Bookmark,
+  Check,
+  X
 } from "lucide-react";
-import { QuizQuestion, MistakeItem } from "../../types";
+import { ActiveTab, QuizQuestion, MistakeItem, ChatMessage } from "../../types";
 import { MathView } from "../common/MathView";
 import { AIProcessLoader } from "../common/AIProcessLoader";
 
 export interface QuizTabProps {
-  quizzes: QuizQuestion[];
-  activeDocId: string | null;
-  activeDocTitle: string;
-  onGenerateQuiz: (params?: {
-    customPrompt?: string;
-    quizStyle?: string;
-    focusConcept?: string;
-    mode?: "append" | "replace" | "variant";
-    count?: number;
-  }) => Promise<void> | void;
+  quizQuestions: QuizQuestion[];
+  currentQuestionIndex: number;
+  setCurrentQuestionIndex: React.Dispatch<React.SetStateAction<number>>;
+  quizQuestionCount: number;
+  setQuizQuestionCount: (n: number) => void;
+  quizMode: "practice" | "exam";
+  setQuizMode: (mode: "practice" | "exam") => void;
+  quizType: "standard" | "hots" | "conceptual" | "calculation" | "story";
+  setQuizType: (t: "standard" | "hots" | "conceptual" | "calculation" | "story") => void;
+  isDrillingMistakes: boolean;
+  userAnswers: { [key: number]: number };
+  selectedOption: number | null;
+  setSelectedOption: (opt: number | null) => void;
+  isAnswerSubmitted: boolean;
+  isQuizCompleted: boolean;
+  score: number;
+  solutionStep: number;
+  setSolutionStep: (step: number) => void;
+  examTimeLeft: number;
+  setExamTimeLeft: (t: number) => void;
+  examDurationSeconds: number;
+  setExamDurationSeconds: (d: number) => void;
+  isExamTimerRunning: boolean;
+  setIsExamTimerRunning: (r: boolean) => void;
+  examSubmitted: boolean;
+  setExamSubmitted: (s: boolean) => void;
+  examFlagged: { [key: number]: boolean };
+  toggleFlagQuestion: (idx: number) => void;
   isGeneratingQuiz: boolean;
-  onRecordMistake: (item: Partial<MistakeItem>) => Promise<void> | void;
-  onAskAIAboutQuestion?: (q: QuizQuestion, questionText: string) => void;
-  showNotice: (msg: string) => void;
+  handleGenerateQuiz: (params?: any) => void;
+  handleSelectQuizOption: (idx: number) => void;
+  handleNextQuizQuestion: () => void;
+  handlePrevQuizQuestion: () => void;
+  handleExamSubmit: () => void;
+  resetQuizState: () => void;
+  isQuizChatOpen: boolean;
+  setIsQuizChatOpen: (o: boolean) => void;
+  quizChatMessages: ChatMessage[];
+  quizChatInput: string;
+  setQuizChatInput: (v: string) => void;
+  isQuizChatSending: boolean;
+  handleSendQuizQuestionChat: () => void;
+  activeDocTitle: string;
+  activeDocId: string | null;
+  setActiveTab: (tab: ActiveTab) => void;
+  setMistakeFilterScope: (val: "current" | "all") => void;
+  activeDocMistakes: MistakeItem[];
+  mistakes: MistakeItem[];
 }
 
 export function QuizTab({
-  quizzes,
-  activeDocTitle,
-  onGenerateQuiz,
+  quizQuestions,
+  currentQuestionIndex,
+  setCurrentQuestionIndex,
+  quizQuestionCount,
+  setQuizQuestionCount,
+  quizMode,
+  setQuizMode,
+  quizType,
+  setQuizType,
+  isDrillingMistakes,
+  userAnswers,
+  selectedOption,
+  setSelectedOption,
+  isAnswerSubmitted,
+  isQuizCompleted,
+  score,
+  solutionStep,
+  setSolutionStep,
+  examTimeLeft,
+  setExamTimeLeft,
+  examDurationSeconds,
+  setExamDurationSeconds,
+  isExamTimerRunning,
+  setIsExamTimerRunning,
+  examSubmitted,
+  setExamSubmitted,
+  examFlagged,
+  toggleFlagQuestion,
   isGeneratingQuiz,
-  onRecordMistake,
-  onAskAIAboutQuestion,
-  showNotice
+  handleGenerateQuiz,
+  handleSelectQuizOption,
+  handleNextQuizQuestion,
+  handlePrevQuizQuestion,
+  handleExamSubmit,
+  resetQuizState,
+  isQuizChatOpen,
+  setIsQuizChatOpen,
+  quizChatMessages,
+  quizChatInput,
+  setQuizChatInput,
+  isQuizChatSending,
+  handleSendQuizQuestionChat,
+  activeDocTitle,
+  activeDocId,
+  setActiveTab,
+  setMistakeFilterScope,
+  activeDocMistakes,
+  mistakes,
 }: QuizTabProps) {
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
-  const [isAnswerRevealed, setIsAnswerRevealed] = useState<Record<number, boolean>>({});
-  const [quizCount, setQuizCount] = useState(5);
-  const [customPrompt, setCustomPrompt] = useState("");
-  const [quizStyle, setQuizStyle] = useState("conceptual");
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-
-  const currentQ = quizzes[currentIdx];
-  const totalQ = quizzes.length;
-
-  const handleSelectOption = (optIdx: number) => {
-    if (isAnswerRevealed[currentIdx]) return;
-
-    setUserAnswers((prev) => ({ ...prev, [currentIdx]: optIdx }));
-    setIsAnswerRevealed((prev) => ({ ...prev, [currentIdx]: true }));
-
-    if (currentQ && optIdx !== currentQ.correctIndex) {
-      onRecordMistake({
-        question: currentQ.question,
-        options: currentQ.options,
-        correctIndex: currentQ.correctIndex,
-        userAnswerIndex: optIdx,
-        formula: currentQ.formula,
-        steps: currentQ.steps,
-        explanation: currentQ.explanation,
-        pitfall: currentQ.pitfall
-      });
-      showNotice("Jawaban dicatat ke Bank Kesalahan untuk dipelajari lagi.");
-    }
-  };
-
-  const handleReset = () => {
-    setUserAnswers({});
-    setIsAnswerRevealed({});
-    setCurrentIdx(0);
-    showNotice("Kuis direset");
-  };
-
-  const handleCopyQuestion = () => {
-    if (!currentQ) return;
-    const text = `Soal:\n${currentQ.question}\n\nPilihan:\n${currentQ.options.map((o, i) => `${String.fromCharCode(65 + i)}. ${o}`).join("\n")}`;
-    navigator.clipboard.writeText(text);
-    setCopiedIdx(currentIdx);
-    showNotice("Soal disalin ke clipboard");
-    setTimeout(() => setCopiedIdx(null), 2000);
-  };
-
-  const calculateScore = () => {
-    let correct = 0;
-    quizzes.forEach((q, idx) => {
-      if (userAnswers[idx] === q.correctIndex) correct++;
-    });
-    return Math.round((correct / (quizzes.length || 1)) * 100);
-  };
-
-  const answeredCount = Object.keys(userAnswers).length;
+  const currentQuestion = quizQuestions[currentQuestionIndex];
+  const isCorrect = isAnswerSubmitted && selectedOption === currentQuestion?.correctIndex;
 
   return (
-    <div className="tab-pane-animate" style={{ maxWidth: 940, margin: "0 auto", paddingBottom: 48 }}>
-      {/* Realtime AI Adaptive Quiz Customizer Bar */}
-      <div
-        style={{
-          backgroundColor: "#ffffff",
-          border: "1px solid #dde1da",
-          borderRadius: 12,
-          padding: "16px 18px",
-          marginBottom: 18,
-          boxShadow: "0 4px 15px rgba(27, 39, 35, 0.03)"
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <Sparkles size={16} color="#566b36" />
-            <span style={{ fontSize: 13, fontWeight: 800, color: "#17201d" }}>
-              Kustomisasi Soal AI Real-Time
-            </span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 11.5, color: "#6b7280" }}>Jumlah Soal:</span>
-            <select
-              value={quizCount}
-              onChange={(e) => setQuizCount(Number(e.target.value))}
-              style={{
-                backgroundColor: "#f8f9f5",
-                border: "1px solid #dce1da",
-                borderRadius: 6,
-                padding: "3px 8px",
-                fontSize: 12,
-                color: "#18211e",
-                outline: "none"
-              }}
-            >
-              {[3, 5, 10, 15, 20].map((n) => (
-                <option key={n} value={n}>{n} Butir</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Quick Style Chips */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-          {[
-            { label: "🔄 Buat Soal Sejenis / Kloning", prompt: "Buatkan variasi latihan soal kloning (pola dan tingkat kesulitan sama, angka/fungsi berbeda) untuk uji mandiri." },
-            { label: "🎯 Banyakin Soal HOTS / Jebakan", prompt: "Perbanyak butir soal tingkat penalaran tinggi (HOTS) dengan jebakan aljabar yang sering mengecoh." },
-            { label: "💡 Soal Pemahaman Konsep Dasar", prompt: "Fokus ke pemahaman definisi dasar dan makna fisis/geometris sebelum perhitungan aljabar." },
-            { label: "📚 Soal Cerita & Studi Kasus", prompt: "Buat bentuk soal cerita kontekstual dunia nyata yang menerapkan konsep ini." },
-            { label: "📐 Fokus Hitung Aljabar & KaTeX", prompt: "Fokus ke penurunan rumus langkah demi langkah dan ketelitian substitusi aljabar." }
-          ].map((chip, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setCustomPrompt(chip.prompt)}
-              style={{
-                backgroundColor: customPrompt === chip.prompt ? "#18221f" : "#f4f6f2",
-                color: customPrompt === chip.prompt ? "#c8f064" : "#45544e",
-                border: `1px solid ${customPrompt === chip.prompt ? "#18221f" : "#dce1da"}`,
-                borderRadius: 999,
-                padding: "4px 10px",
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer"
-              }}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Custom Input & Action Buttons */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <input
-            type="text"
-            value={customPrompt}
-            onChange={(e) => setCustomPrompt(e.target.value)}
-            placeholder="Ketik keinginan Anda: misal 'buat soal sejenis angka beda', 'banyakin soal tentang dilatasi kurva'..."
-            style={{
-              flex: 1,
-              minWidth: 260,
-              backgroundColor: "#f8f9f5",
-              border: "1px solid #dce1da",
-              borderRadius: 8,
-              padding: "8px 12px",
-              fontSize: 12.5,
-              color: "#18211e",
-              outline: "none"
-            }}
-          />
-
-          <button
-            type="button"
-            onClick={() => onGenerateQuiz({ customPrompt, count: quizCount, quizStyle, mode: "replace" })}
-            disabled={isGeneratingQuiz}
-            style={{
-              backgroundColor: "#18221f",
-              color: "#c8f064",
-              border: "none",
-              borderRadius: 8,
-              padding: "8px 14px",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: isGeneratingQuiz ? "not-allowed" : "pointer"
-            }}
-          >
-            {isGeneratingQuiz ? "Menyusun..." : "Susun Ulang Kuis"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onGenerateQuiz({ customPrompt, count: quizCount, quizStyle, mode: "append" })}
-            disabled={isGeneratingQuiz || quizzes.length === 0}
-            style={{
-              backgroundColor: "#ffffff",
-              color: "#18211e",
-              border: "1px solid #dce1da",
-              borderRadius: 8,
-              padding: "8px 12px",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: isGeneratingQuiz || quizzes.length === 0 ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4
-            }}
-          >
-            <Plus size={13} />
-            <span>Tambah</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onGenerateQuiz({ customPrompt, count: quizCount, quizStyle, mode: "variant" })}
-            disabled={isGeneratingQuiz}
-            style={{
-              backgroundColor: "#f0fdf4",
-              color: "#166534",
-              border: "1px solid #bbf7d0",
-              borderRadius: 8,
-              padding: "8px 12px",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: isGeneratingQuiz ? "not-allowed" : "pointer"
-            }}
-            title="Simpan sebagai dokumen modul latihan terpisah"
-          >
-            Varian Baru
-          </button>
-        </div>
-      </div>
-
-      {/* Loading State */}
-      {isGeneratingQuiz && (
-        <AIProcessLoader
-          title="Menyusun Butir Soal Latihan Cerdas"
-          subtitle="AI membedah konsep kurva & matriks, merumuskan opsi pengecoh berbobot, dan mengunci pembahasan KaTeX."
-          badge="Adaptive Quiz Engine"
-          steps={[
-            { label: "Menganalisis Tingkat Kesulitan", detail: "Menyesuaikan butir soal dengan instruksi kustom Anda." },
-            { label: "Menyusun Pengecoh Masuk Akal", detail: "Membuat opsi jawaban salah yang berbasis miskonsepsi umum." },
-            { label: "Memvalidasi Sintaks KaTeX & Pembahasan", detail: "Menyusun langkah penurunan rumus bertahap." }
-          ]}
-        />
-      )}
-
-      {/* Main Question Card or Empty State */}
-      {!isGeneratingQuiz && quizzes.length === 0 ? (
-        <div
-          style={{
-            backgroundColor: "#ffffff",
-            border: "1px solid #dde1da",
-            borderRadius: 14,
-            padding: "44px 20px",
-            textAlign: "center"
-          }}
-        >
-          <HelpCircle size={36} color="#727d78" style={{ margin: "0 auto 12px" }} />
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: "#17201d", margin: "0 0 6px" }}>
-            Belum Ada Latihan Soal
-          </h3>
-          <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 440, margin: "0 auto 18px", lineHeight: 1.5 }}>
-            Klik tombol di bawah agar AI menyusun butir soal latihan adaptif beserta pembahasan langkah demi langkah.
-          </p>
-          <button
-            type="button"
-            onClick={() => onGenerateQuiz({ count: 5 })}
-            style={{
-              backgroundColor: "#18221f",
-              color: "#c8f064",
-              border: "none",
-              borderRadius: 8,
-              padding: "10px 22px",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer"
-            }}
-          >
-            Buat 5 Soal Latihan Sekarang
-          </button>
-        </div>
-      ) : !isGeneratingQuiz && currentQ && (
-        <div>
-          {/* Header Progress Stepper */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: "#18211e", fontFamily: "'DM Mono', monospace" }}>
-                Soal {currentIdx + 1} dari {totalQ}
-              </span>
-              <span style={{ fontSize: 11, color: "#6b7280" }}>
-                ({answeredCount}/{totalQ} Terjawab · Skor: {calculateScore()}%)
-              </span>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <button
-                type="button"
-                onClick={handleCopyQuestion}
-                style={{
-                  background: "#ffffff",
-                  border: "1px solid #dce1da",
-                  borderRadius: 6,
-                  padding: "4px 8px",
-                  fontSize: 11,
-                  color: copiedIdx === currentIdx ? "#10b981" : "#4b5563",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4
-                }}
-              >
-                <Copy size={12} />
-                <span>{copiedIdx === currentIdx ? "Tersalin!" : "Salin"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                style={{
-                  background: "#ffffff",
-                  border: "1px solid #dce1da",
-                  borderRadius: 6,
-                  padding: "4px 8px",
-                  fontSize: 11,
-                  color: "#4b5563",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4
-                }}
-              >
-                <RotateCcw size={12} />
-                <span>Ulangi</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Question Card */}
-          <div
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid #dde1da",
-              borderRadius: 14,
-              padding: "24px 26px",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-              marginBottom: 16
-            }}
-          >
-            {/* Question Text */}
-            <div style={{ fontSize: 15.5, fontWeight: 700, color: "#18211e", lineHeight: 1.6, marginBottom: 18 }}>
-              <MathView text={currentQ.question} />
-            </div>
-
-            {/* Optional Formula Box */}
-            {currentQ.formula && (
-              <div
-                style={{
-                  backgroundColor: "#19231f",
-                  borderRadius: 8,
-                  padding: "14px 18px",
-                  textAlign: "center",
-                  marginBottom: 18,
-                  overflowX: "auto"
-                }}
-              >
-                <MathView text={`$$${currentQ.formula}$$`} />
-              </div>
-            )}
-
-            {/* Options List */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-              {currentQ.options.map((opt, optIdx) => {
-                const isSelected = userAnswers[currentIdx] === optIdx;
-                const isRevealed = isAnswerRevealed[currentIdx];
-                const isCorrect = optIdx === currentQ.correctIndex;
-
-                let bg = "#fbfcf9";
-                let border = "#dce1da";
-                let textCol = "#18211e";
-
-                if (isRevealed) {
-                  if (isCorrect) {
-                    bg = "#f0fdf4";
-                    border = "#86efac";
-                    textCol = "#166534";
-                  } else if (isSelected) {
-                    bg = "#fef2f2";
-                    border = "#fca5a5";
-                    textCol = "#991b1b";
-                  }
-                } else if (isSelected) {
-                  bg = "#edf4e3";
-                  border = "#566b36";
-                  textCol = "#2d4414";
-                }
-
-                return (
-                  <button
-                    key={optIdx}
-                    type="button"
-                    onClick={() => handleSelectOption(optIdx)}
+              <div className="tab-pane-animate" style={{ maxWidth: 940, margin: "0 auto" }}>
+                {/* Quiz Question Count Selector (Shown only when quiz questions already exist) */}
+                {quizQuestions.length > 0 && (
+                  <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 12,
+                      justifyContent: "space-between",
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #dde1da",
+                      borderRadius: 12,
                       padding: "12px 16px",
-                      borderRadius: 9,
-                      border: `1.5px solid ${border}`,
-                      backgroundColor: bg,
-                      color: textCol,
-                      fontSize: 13.5,
-                      fontWeight: isSelected ? 700 : 500,
-                      textAlign: "left",
-                      cursor: isRevealed ? "default" : "pointer",
-                      transition: "all 0.15s ease"
+                      marginBottom: 16,
+                      boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)",
+                      flexWrap: "wrap",
+                      gap: 10
                     }}
                   >
-                    <span
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: "50%",
-                        backgroundColor: isRevealed && isCorrect ? "#22c55e" : isRevealed && isSelected ? "#ef4444" : isSelected ? "#566b36" : "#e5e7eb",
-                        color: isSelected || (isRevealed && (isCorrect || isSelected)) ? "#ffffff" : "#4b5563",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 12,
-                        fontWeight: 800,
-                        flexShrink: 0
-                      }}
-                    >
-                      {String.fromCharCode(65 + optIdx)}
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <MathView text={opt} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>Jumlah Soal:</span>
+                      {[3, 5, 10, 15, 20].map((num) => (
+                        <button
+                          key={num}
+                          onClick={() => setQuizQuestionCount(num)}
+                          style={{
+                            backgroundColor: quizQuestionCount === num ? "#18221f" : "#fafbf8",
+                            color: quizQuestionCount === num ? "#c8f064" : "#56615d",
+                            border: `1px solid ${quizQuestionCount === num ? "#18221f" : "#dce1da"}`,
+                            borderRadius: 6,
+                            padding: "5px 10px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          {num}
+                        </button>
+                      ))}
+
+                      {/* Stepper / Custom Number Input */}
+                      <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: "#fafbf8", border: "1px solid #dce1da", borderRadius: 6, padding: "2px 4px", gap: 2 }}>
+                        <button
+                          onClick={() => setQuizQuestionCount((prev) => Math.max(1, prev - 1))}
+                          style={{ background: "none", border: "none", color: "#56615d", cursor: "pointer", fontSize: 14, fontWeight: 700, padding: "0 6px" }}
+                          title="Kurangi 1 soal"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          max="30"
+                          value={quizQuestionCount}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val)) setQuizQuestionCount(Math.max(1, Math.min(30, val)));
+                          }}
+                          style={{
+                            width: 38,
+                            textAlign: "center",
+                            backgroundColor: "transparent",
+                            border: "none",
+                            color: "#18221f",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            fontFamily: "'DM Mono', monospace",
+                            outline: "none"
+                          }}
+                        />
+                        <button
+                          onClick={() => setQuizQuestionCount((prev) => Math.min(30, prev + 1))}
+                          style={{ background: "none", border: "none", color: "#56615d", cursor: "pointer", fontSize: 14, fontWeight: 700, padding: "0 6px" }}
+                          title="Tambah 1 soal"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <span style={{ fontSize: 11, color: "#727d78" }}>butir</span>
+
+                      {/* Quiz Focus / Difficulty Selector */}
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 6, backgroundColor: "#fafbf8", padding: 2, borderRadius: 6, border: "1px solid #dce1da" }}>
+                        {[
+                          { id: "beginner", label: "Pemula", title: "Pemula & Bertahap: Mulai dari konsep dasar dan angka sederhana" },
+                          { id: "conceptual", label: "Standar", title: "Standar Ujian: Pemahaman konsep dan skenario kontekstual" },
+                          { id: "analytical", label: "HOTS", title: "HOTS: Analisis tingkat tinggi dan pemecahan masalah non-rutin" }
+                        ].map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => setQuizType(item.id as any)}
+                            style={{
+                              backgroundColor: quizType === item.id ? "#18221f" : "transparent",
+                              color: quizType === item.id ? "#c8f064" : "#56615d",
+                              border: quizType === item.id ? "1px solid #18221f" : "1px solid transparent",
+                              borderRadius: 5,
+                              padding: "4px 8px",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              transition: "0.15s ease"
+                            }}
+                            title={item.title}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    {isRevealed && isCorrect && <CheckCircle2 size={18} color="#16a34a" />}
-                    {isRevealed && isSelected && !isCorrect && <XCircle size={18} color="#dc2626" />}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Explanation & Pitfall (Shown when answered) */}
-            {isAnswerRevealed[currentIdx] && (
-              <div
-                className="modal-scale-in"
-                style={{
-                  marginTop: 20,
-                  paddingTop: 18,
-                  borderTop: "1px solid #edf0eb",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12
-                }}
-              >
-                {/* Step-by-step Explanation */}
-                {currentQ.explanation && (
-                  <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "14px 16px" }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: "#1e293b", marginBottom: 6 }}>
-                      💡 Pembahasan Langkah Pengerjaan:
-                    </div>
-                    <div style={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>
-                      <MathView text={currentQ.explanation} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Common Pitfall Alert */}
-                {currentQ.pitfall && (
-                  <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                    <AlertTriangle size={16} color="#d97706" style={{ flexShrink: 0, marginTop: 2 }} />
-                    <div style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.5 }}>
-                      <strong>Titik Rawan Kesalahan: </strong>
-                      <MathView text={currentQ.pitfall} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Ask AI about this question trigger */}
-                {onAskAIAboutQuestion && (
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <button
-                      type="button"
-                      onClick={() => onAskAIAboutQuestion(currentQ, currentQ.question)}
+                      onClick={() => handleGenerateQuiz()}
+                      disabled={isGeneratingQuiz || !activeDocId}
                       style={{
-                        backgroundColor: "#f4f6f2",
-                        border: "1px solid #dce1da",
-                        borderRadius: 7,
-                        padding: "6px 12px",
-                        fontSize: 11.5,
+                        backgroundColor: "#18221f",
+                        color: "#c8f064",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "8px 16px",
+                        fontSize: 12.5,
                         fontWeight: 700,
-                        color: "#374151",
-                        cursor: "pointer",
+                        cursor: isGeneratingQuiz ? "not-allowed" : "pointer",
                         display: "flex",
                         alignItems: "center",
-                        gap: 5
+                        gap: 6,
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)"
                       }}
                     >
-                      <MessageSquare size={13} color="#566b36" />
-                      <span>Tanyakan Soal Ini ke Tutor AI</span>
+                      <Sparkles size={13} />
+                      {isGeneratingQuiz ? "Menyusun Soal..." : `Buat Soal Baru`}
                     </button>
                   </div>
                 )}
+
+                {/* Sub-Header & Mode Switch (Only shown when questions exist) */}
+                {quizQuestions.length > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                    <div>
+                      <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
+                        {isDrillingMistakes ? "Drill Khusus Soal yang Pernah Salah" : (quizMode === "exam" ? "Simulasi Tryout Ujian Asli" : "Simulasi Latihan Soal Pemahaman")}
+                      </h2>
+                      <p style={{ fontSize: 12, color: "#6f7975", marginTop: 2 }}>
+                        {quizMode === "exam"
+                          ? "Waktu berjalan mundur, lembar jawaban dinilai sekaligus setelah seluruh nomor selesai dikumpulkan."
+                          : "Format pilihan ganda HOTS dengan pembahasan konsep dan analisis jebakan soal."}
+                      </p>
+                    </div>
+
+                    {/* Mode Toggle Switch */}
+                    {!isDrillingMistakes && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, backgroundColor: "#ffffff", border: "1px solid #dce1da", borderRadius: 8, padding: 3 }}>
+                        <button
+                          onClick={() => {
+                            setQuizMode("study");
+                            resetQuizState();
+                          }}
+                          style={{
+                            backgroundColor: quizMode === "study" ? "#18221f" : "transparent",
+                            color: quizMode === "study" ? "#c8f064" : "#6f7975",
+                            border: quizMode === "study" ? "1px solid #18221f" : "1px solid transparent",
+                            borderRadius: 6,
+                            padding: "5px 10px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                          }}
+                        >
+                          <BookOpen size={12} />
+                          <span>Mode Belajar</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setQuizMode("exam");
+                            resetQuizState();
+                            setExamTimeLeft(quizQuestions.length * 90);
+                            setIsExamTimerRunning(true);
+                            setExamDurationSeconds(quizQuestions.length * 90);
+                          }}
+                          style={{
+                            backgroundColor: quizMode === "exam" ? "#fef3c7" : "transparent",
+                            color: quizMode === "exam" ? "#b45309" : "#6f7975",
+                            border: quizMode === "exam" ? "1px solid #f59e0b" : "1px solid transparent",
+                            borderRadius: 6,
+                            padding: "5px 10px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                          }}
+                        >
+                          <Clock size={12} />
+                          <span>Mode Tryout</span>
+                          {quizMode === "exam" && (
+                            <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: "#b45309", marginLeft: 4 }}>
+                              {Math.floor(examTimeLeft / 60)}:{(examTimeLeft % 60).toString().padStart(2, "0")}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {isGeneratingQuiz ? (
+                  <AIProcessLoader
+                    title="Menyusun Paket Latihan Soal HOTS"
+                    subtitle="AI menganalisis konsep kunci dan menyusun soal penalaran bertingkat."
+                    badge="Pembuat Soal AI"
+                    steps={[
+                      { label: "Membaca Fakta Kunci & Teori", detail: "Mengekstrak konsep esensial, tanggal, rumus, dan hubungan sebab-akibat." },
+                      { label: "Merancang Skenario Soal Kasus", detail: "Menyusun stimulus kontekstual dan pertanyaan bertingkat HOTS." },
+                      { label: "Membuat Opsi Pengecoh Cerdas", detail: "Menguji penalaran siswa agar tidak terjebak hafalan buta." },
+                      { label: "Memverifikasi Kunci & Pembahasan KaTeX", detail: "Menyiapkan penjelasan langkah demi langkah dan rumus KaTeX." }
+                    ]}
+                  />
+                ) : quizQuestions.length === 0 ? (
+                  /* Unified Quiz Setup Screen (No Redundancy) */
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #dde1da",
+                      borderRadius: 12,
+                      padding: "36px 32px",
+                      boxShadow: "0 4px 20px rgba(27, 39, 35, 0.03)"
+                    }}
+                  >
+                    <div style={{ textAlign: "center", maxWidth: 540, margin: "0 auto 28px" }}>
+                      <div
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 12,
+                          backgroundColor: "#f2f8e8",
+                          color: "#4b6623",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          margin: "0 auto 14px"
+                        }}
+                      >
+                        <Target size={24} />
+                      </div>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: "#17201d", margin: "0 0 6px" }}>
+                        Simulasi Latihan Soal Pemahaman
+                      </h2>
+                      <p style={{ fontSize: 13, color: "#6f7975", lineHeight: 1.5, margin: 0 }}>
+                        AI akan menganalisis materi aktif <strong style={{ color: "#17201d" }}>"{activeDocTitle || "Modul Ini"}"</strong> dan menyusun paket latihan pilihan ganda berkualitas tinggi.
+                      </p>
+                    </div>
+
+                    <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
+                      {/* Jumlah Soal */}
+                      <div>
+                        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 8 }}>
+                          Jumlah Butir Soal:
+                        </label>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          {[3, 5, 10, 15, 20].map((num) => (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => setQuizQuestionCount(num)}
+                              style={{
+                                flex: 1,
+                                backgroundColor: quizQuestionCount === num ? "#18221f" : "#fafbf8",
+                                color: quizQuestionCount === num ? "#c8f064" : "#56615d",
+                                border: `1px solid ${quizQuestionCount === num ? "#18221f" : "#dce1da"}`,
+                                borderRadius: 8,
+                                padding: "8px 0",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              {num} butir
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Tingkat Kesulitan */}
+                      <div>
+                        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 8 }}>
+                          Tingkat Kesulitan Soal:
+                        </label>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          {[
+                            { id: "beginner", label: "Pemula", desc: "Konsep dasar bertahap" },
+                            { id: "conceptual", label: "Standar", desc: "Pemahaman kurikulum" },
+                            { id: "analytical", label: "HOTS", desc: "Analisis & penalaran" }
+                          ].map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setQuizType(item.id as any)}
+                              style={{
+                                flex: 1,
+                                backgroundColor: quizType === item.id ? "#18221f" : "#fafbf8",
+                                color: quizType === item.id ? "#c8f064" : "#56615d",
+                                border: `1px solid ${quizType === item.id ? "#18221f" : "#dce1da"}`,
+                                borderRadius: 8,
+                                padding: "10px 8px",
+                                textAlign: "center",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              <div style={{ fontSize: 13, fontWeight: 700 }}>{item.label}</div>
+                              <div style={{ fontSize: 10.5, opacity: 0.8, marginTop: 2 }}>{item.desc}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Mode Latihan */}
+                      <div>
+                        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 8 }}>
+                          Mode Pelaksanaan:
+                        </label>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <button
+                            type="button"
+                            onClick={() => setQuizMode("study")}
+                            style={{
+                              backgroundColor: quizMode === "study" ? "#18221f" : "#fafbf8",
+                              color: quizMode === "study" ? "#c8f064" : "#56615d",
+                              border: `1px solid ${quizMode === "study" ? "#18221f" : "#dce1da"}`,
+                              borderRadius: 8,
+                              padding: "10px 12px",
+                              textAlign: "left",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8
+                            }}
+                          >
+                            <BookOpen size={16} />
+                            <div>
+                              <div style={{ fontSize: 12.5, fontWeight: 700 }}>Mode Belajar</div>
+                              <div style={{ fontSize: 10.5, opacity: 0.8 }}>Pembahasan langsung per nomor</div>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuizMode("exam")}
+                            style={{
+                              backgroundColor: quizMode === "exam" ? "#18221f" : "#fafbf8",
+                              color: quizMode === "exam" ? "#c8f064" : "#56615d",
+                              border: `1px solid ${quizMode === "exam" ? "#18221f" : "#dce1da"}`,
+                              borderRadius: 8,
+                              padding: "10px 12px",
+                              textAlign: "left",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8
+                            }}
+                          >
+                            <Clock size={16} />
+                            <div>
+                              <div style={{ fontSize: 12.5, fontWeight: 700 }}>Mode Tryout</div>
+                              <div style={{ fontSize: 10.5, opacity: 0.8 }}>Simulasi ujian berwaktu mundur</div>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Generate Button */}
+                      <button
+                        onClick={() => handleGenerateQuiz()}
+                        disabled={isGeneratingQuiz || !activeDocId}
+                        style={{
+                          backgroundColor: "#18221f",
+                          color: "#c8f064",
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "14px 24px",
+                          fontSize: 14,
+                          fontWeight: 800,
+                          cursor: isGeneratingQuiz ? "not-allowed" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          marginTop: 8,
+                          boxShadow: "0 4px 14px rgba(24, 34, 31, 0.15)"
+                        }}
+                      >
+                        <Sparkles size={16} />
+                        <span>{isGeneratingQuiz ? "Sedang Menyusun Soal..." : `Susun ${quizQuestionCount} Soal Sekarang`}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : isQuizCompleted || (quizMode === "exam" && examSubmitted) ? (
+                  /* Quiz / Exam Completed Screen */
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #dde1da",
+                      borderRadius: 12,
+                      padding: "32px 20px",
+                      textAlign: "center",
+                      boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+                    }}
+                  >
+                    <Award size={40} color={quizMode === "exam" ? "#b45309" : "#4b6623"} style={{ margin: "0 auto 10px" }} />
+                    <h3 style={{ fontSize: 20, fontWeight: 800, color: "#17201d" }}>
+                      {quizMode === "exam" ? "Rapor Hasil Tryout Simulasi" : "Hasil Latihan Selesai"}
+                    </h3>
+                    <div style={{ fontSize: 44, fontWeight: 800, color: score >= 75 ? "#22370c" : "#b45309", margin: "12px 0", fontFamily: "'DM Mono', monospace" }}>
+                      {score} / 100
+                    </div>
+
+                    <div style={{ display: "inline-flex", gap: 10, marginBottom: 16, fontSize: 12, fontWeight: 600 }}>
+                      <span style={{ color: "#22370c", backgroundColor: "#eef8db", border: "1px solid #c2e28f", padding: "4px 10px", borderRadius: 999 }}>
+                        {quizQuestions.filter((q, i) => userAnswers[i] === q.correctIndex).length} Benar
+                      </span>
+                      <span style={{ color: "#991b1b", backgroundColor: "#fef2f2", border: "1px solid #fecaca", padding: "4px 10px", borderRadius: 999 }}>
+                        {quizQuestions.filter((q, i) => userAnswers[i] !== undefined && userAnswers[i] !== q.correctIndex).length} Salah
+                      </span>
+                      <span style={{ color: "#56615d", backgroundColor: "#f4f6f2", border: "1px solid #dce1da", padding: "4px 10px", borderRadius: 999 }}>
+                        {quizQuestions.filter((q, i) => userAnswers[i] === undefined).length} Dilewati
+                      </span>
+                    </div>
+
+                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 420, margin: "0 auto 20px" }}>
+                      {score >= 80
+                        ? "Luar biasa! Tingkat pemahaman materi sangat tinggi dan memenuhi target kelulusan ujian."
+                        : score >= 60
+                        ? "Cukup baik. Soal-soal yang keliru telah otomatis dicatat ke Bank Soal Salah untuk dilatih ulang."
+                        : "Perlu drill intensif. Buka Bank Soal Salah untuk membedah akar kekeliruan konsep."}
+                    </p>
+
+                    <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+                      <button
+                        onClick={() => {
+                          setExamSubmitted(false);
+                          resetQuizState();
+                        }}
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #dce1da",
+                          color: "#17201d",
+                          borderRadius: 8,
+                          padding: "10px 18px",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          cursor: "pointer"
+                        }}
+                      >
+                        Ulangi Tryout
+                      </button>
+
+                      {activeDocMistakes.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setMistakeFilterScope("current");
+                            setActiveTab("mistakes");
+                          }}
+                          style={{
+                            backgroundColor: "#fef2f2",
+                            border: "1px solid #fecaca",
+                            color: "#ef4444",
+                            borderRadius: 8,
+                            padding: "10px 18px",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                        >
+                          <AlertTriangle size={14} />
+                          <span>Buka Bank Soal Salah ({activeDocMistakes.length})</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleGenerateQuiz()}
+                        style={{
+                          backgroundColor: "#18221f",
+                          border: "none",
+                          color: "#c8f064",
+                          borderRadius: 8,
+                          padding: "10px 18px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer"
+                        }}
+                      >
+                        Paket Soal Baru
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Active Question Card */
+                  <div>
+                    {/* Exam Mode CBT Question Strip Navigation */}
+                    {quizMode === "exam" && (
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14, padding: "10px 12px", backgroundColor: "#ffffff", border: "1px solid #dde1da", borderRadius: 10 }}>
+                        {quizQuestions.map((q, idx) => {
+                          const isAns = userAnswers[idx] !== undefined;
+                          const isCur = currentQuestionIndex === idx;
+                          const isFlg = !!examFlagged[idx];
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setCurrentQuestionIndex(idx);
+                                setSelectedOption(userAnswers[idx] !== undefined ? userAnswers[idx] : null);
+                              }}
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 6,
+                                backgroundColor: isCur ? "#18221f" : (isFlg ? "#fef3c7" : (isAns ? "#eef8db" : "#fafbf8")),
+                                color: isCur ? "#c8f064" : (isFlg ? "#b45309" : (isAns ? "#22370c" : "#56615d")),
+                                border: isCur ? "2px solid #18221f" : (isFlg ? "1px solid #f59e0b" : (isAns ? "1px solid #8dbd42" : "1px solid #dce1da")),
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                position: "relative"
+                              }}
+                            >
+                              {idx + 1}
+                              {isFlg && <Flag size={8} color="#f59e0b" style={{ position: "absolute", top: -3, right: -2 }} />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Header Progress Tracker */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#6f7975" }}>
+                        Soal {currentQuestionIndex + 1} dari {quizQuestions.length}
+                        {examFlagged[currentQuestionIndex] && (
+                          <span style={{ color: "#b45309", marginLeft: 8, fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            <Flag size={11} /> Ditandai Ragu-ragu
+                          </span>
+                        )}
+                      </span>
+                      {quizMode === "study" && (
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#22370c", backgroundColor: "#eef8db", padding: "2px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>
+                          Skor: {score} Poin
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Question Card */}
+                    <div
+                      style={{
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #dde1da",
+                        borderRadius: 12,
+                        padding: "20px 16px",
+                        marginBottom: 16,
+                        boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+                      }}
+                    >
+                      <div style={{ fontSize: 16, fontWeight: 600, lineHeight: "1.6", color: "#17201d", marginBottom: currentQuestion?.formula ? 12 : 18 }}>
+                        <MathView text={currentQuestion?.question} />
+                      </div>
+
+                      {/* Question Formula Card (Blackboard styling from Figma Make) */}
+                      {currentQuestion?.formula && (
+                        <div className="question-formula">
+                          <MathView text={currentQuestion.formula} />
+                        </div>
+                      )}
+
+                      {/* 5 Options (A, B, C, D, E) */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {currentQuestion?.options.map((opt, idx) => {
+                          const optionLetter = String.fromCharCode(65 + idx);
+                          const isSelected = selectedOption === idx;
+                          const isCorrect = idx === currentQuestion.correctIndex;
+
+                          let bgColor = "#fafbf8";
+                          let borderColor = "#dfe4dc";
+                          let textColor = "#56615d";
+                          let shadow = "none";
+
+                          if (quizMode === "study") {
+                            if (isAnswerSubmitted) {
+                              if (isCorrect) {
+                                bgColor = "#eef8db";
+                                borderColor = "#8dbd42";
+                                textColor = "#22370c";
+                              } else if (isSelected && !isCorrect) {
+                                bgColor = "#fdf2f2";
+                                borderColor = "#f87171";
+                                textColor = "#991b1b";
+                              } else {
+                                textColor = "#9ca3af";
+                                bgColor = "#f8f9f5";
+                              }
+                            }
+                          } else {
+                            if (isSelected) {
+                              bgColor = "#18221f";
+                              borderColor = "#18221f";
+                              textColor = "#c8f064";
+                            }
+                          }
+
+                          return (
+                            <button
+                              key={idx}
+                              className="quiz-option-btn"
+                              onClick={() => handleSelectQuizOption(idx)}
+                              disabled={quizMode === "study" && isAnswerSubmitted}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                textAlign: "left",
+                                gap: 12,
+                                padding: "13px 15px",
+                                minHeight: 48,
+                                backgroundColor: bgColor,
+                                border: `1px solid ${borderColor}`,
+                                borderRadius: 10,
+                                color: textColor,
+                                fontSize: 13.5,
+                                lineHeight: "1.5",
+                                cursor: quizMode === "study" && isAnswerSubmitted ? "default" : "pointer",
+                                transition: "all 0.15s ease",
+                                boxShadow: shadow
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: 6,
+                                  backgroundColor: quizMode === "study" && isAnswerSubmitted && isCorrect ? "#8dbd42" : quizMode === "study" && isAnswerSubmitted && isSelected ? "#ef4444" : (quizMode === "exam" && isSelected ? "#c8f064" : "#ffffff"),
+                                  color: (quizMode === "study" && isAnswerSubmitted && (isCorrect || isSelected)) ? "#ffffff" : (quizMode === "exam" && isSelected ? "#18221f" : "#17201d"),
+                                  border: "1px solid #dce1da",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  fontFamily: "'DM Mono', monospace",
+                                  flexShrink: 0
+                                }}
+                              >
+                                {quizMode === "study" && isAnswerSubmitted && isCorrect ? (
+                                  <Check size={14} />
+                                ) : quizMode === "study" && isAnswerSubmitted && isSelected ? (
+                                  <X size={14} />
+                                ) : (
+                                  optionLetter
+                                )}
+                              </div>
+                              <MathView text={opt} style={{ flex: 1 }} />
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Explanation & Pitfalls Box when answered (ONLY in Study Mode) */}
+                      {quizMode === "study" && isAnswerSubmitted && (
+                        <div
+                          style={{
+                            marginTop: 18,
+                            padding: "16px",
+                            backgroundColor: "#f8f9f5",
+                            borderRadius: 12,
+                            border: "1px solid #dde1da",
+                            borderLeft: selectedOption === currentQuestion.correctIndex ? "3px solid #8dbd42" : "3px solid #ef4444"
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                            {selectedOption === currentQuestion.correctIndex ? (
+                              <>
+                                <CheckCircle2 size={16} color="#4b6623" />
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "#22370c" }}>Jawaban Anda Benar</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle size={16} color="#ef4444" />
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "#991b1b" }}>
+                                  Kunci Benar: Pilihan {String.fromCharCode(65 + currentQuestion.correctIndex)}
+                                </span>
+                              </>
+                            )}
+                          </div>
+
+                          {/* 1. Formula Highlight Box (if available) */}
+                          {currentQuestion.formula && (
+                            <div
+                              style={{
+                                backgroundColor: "#1d2824",
+                                border: "1px solid #34413c",
+                                borderRadius: 10,
+                                padding: "12px 16px",
+                                marginBottom: 14
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: 700,
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.08em",
+                                  color: "#c8f064",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  marginBottom: 6,
+                                  fontFamily: "'DM Mono', monospace"
+                                }}
+                              >
+                                <Sparkles size={13} /> Rumus Kunci & Konsep Utama
+                              </div>
+                              <div style={{ textAlign: "center", fontSize: 16, color: "#e8eee9", padding: "4px 0" }}>
+                                <MathView text={currentQuestion.formula} />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 2. Interactive Solution Stepper (from Figma Make design) */}
+                          {currentQuestion.steps && currentQuestion.steps.length > 0 ? (
+                            <div className="solution-panel">
+                              <div className="solution-head">
+                                <div>
+                                  <span>PEMBAHASAN TERSTRUKTUR</span>
+                                  <h3>Bedah Langkah Pengerjaan</h3>
+                                </div>
+                                <strong>{currentQuestion.steps.length} langkah</strong>
+                              </div>
+
+                              <div className="solution-stepper">
+                                {currentQuestion.steps.map((st, sIdx) => (
+                                  <button
+                                    key={sIdx}
+                                    type="button"
+                                    className={`${solutionStep === sIdx ? "active" : ""} ${solutionStep > sIdx ? "passed" : ""}`}
+                                    onClick={() => setSolutionStep(sIdx)}
+                                  >
+                                    <span>{solutionStep > sIdx ? "✓" : sIdx + 1}</span>
+                                    <small>Langkah {sIdx + 1}</small>
+                                  </button>
+                                ))}
+                              </div>
+
+                              {(() => {
+                                const activeSt = currentQuestion.steps[Math.min(solutionStep, currentQuestion.steps.length - 1)];
+                                return (
+                                  <div className="solution-content-card">
+                                    <span>LANGKAH {Math.min(solutionStep, currentQuestion.steps.length - 1) + 1}</span>
+                                    {activeSt.title && <h4><MathView text={activeSt.title} /></h4>}
+                                    <p><MathView text={activeSt.desc} /></p>
+                                    {activeSt.formula && (
+                                      <div className="solution-formula-box">
+                                        <MathView text={activeSt.formula} />
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+
+                              <div className="solution-actions-row">
+                                <button
+                                  type="button"
+                                  disabled={solutionStep === 0}
+                                  onClick={() => setSolutionStep((s) => Math.max(0, s - 1))}
+                                  style={{
+                                    backgroundColor: "#ffffff",
+                                    border: "1px solid #dce1da",
+                                    color: solutionStep === 0 ? "#9ca3af" : "#17201d",
+                                    cursor: solutionStep === 0 ? "not-allowed" : "pointer"
+                                  }}
+                                >
+                                  <ChevronLeft size={14} /> Langkah Sebelumnya
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (solutionStep < currentQuestion.steps.length - 1) {
+                                      setSolutionStep((s) => s + 1);
+                                    } else {
+                                      handleNextQuizQuestion();
+                                    }
+                                  }}
+                                  style={{
+                                    backgroundColor: "#18221f",
+                                    border: "none",
+                                    color: "#c8f064",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  <span>{solutionStep === currentQuestion.steps.length - 1 ? "Soal Berikutnya" : "Langkah Lanjut"}</span>
+                                  <ChevronRight size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Legacy / Standard Explanation */
+                            <div style={{ fontSize: 13, color: "#45544e", lineHeight: "1.6", marginBottom: 10 }}>
+                              <strong style={{ color: "#17201d" }}>Pembahasan: </strong>
+                              <MathView text={currentQuestion.explanation} />
+                            </div>
+                          )}
+
+                          {/* 3. Pitfalls & Trap Analysis */}
+                          {currentQuestion.pitfall && (
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: "#92400e",
+                                backgroundColor: "#fffbeb",
+                                border: "1px solid #fde68a",
+                                borderRadius: 8,
+                                padding: "8px 12px",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 6
+                              }}
+                            >
+                              <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+                              <span><strong>Analisis Jebakan: </strong><MathView text={currentQuestion.pitfall} /></span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Actions: Exam Mode Stepper vs Study Mode Action Bar */}
+                    <div>
+                      {quizMode === "exam" ? (
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 16 }}>
+                          <button
+                            onClick={handlePrevQuizQuestion}
+                            disabled={currentQuestionIndex === 0}
+                            style={{
+                              backgroundColor: "#ffffff",
+                              color: currentQuestionIndex === 0 ? "#9ca3af" : "#17201d",
+                              border: "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "10px 16px",
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: currentQuestionIndex === 0 ? "not-allowed" : "pointer"
+                            }}
+                          >
+                            ← Sebelumnya
+                          </button>
+
+                          <button
+                            onClick={() => toggleFlagQuestion(currentQuestionIndex)}
+                            style={{
+                              backgroundColor: examFlagged[currentQuestionIndex] ? "#fef3c7" : "#ffffff",
+                              color: examFlagged[currentQuestionIndex] ? "#b45309" : "#56615d",
+                              border: examFlagged[currentQuestionIndex] ? "1px solid #f59e0b" : "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "10px 14px",
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                          >
+                            <Flag size={13} />
+                            <span>{examFlagged[currentQuestionIndex] ? "Batal Tandai" : "Tandai Ragu-ragu"}</span>
+                          </button>
+
+                          <div style={{ display: "flex", gap: 8 }}>
+                            {currentQuestionIndex < quizQuestions.length - 1 && (
+                              <button
+                                onClick={handleNextQuizQuestion}
+                                style={{
+                                  backgroundColor: "#ffffff",
+                                  color: "#17201d",
+                                  border: "1px solid #dce1da",
+                                  borderRadius: 8,
+                                  padding: "10px 18px",
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  cursor: "pointer"
+                                }}
+                              >
+                                Berikutnya →
+                              </button>
+                            )}
+
+                            <button
+                              onClick={handleExamSubmit}
+                              style={{
+                                backgroundColor: "#18221f",
+                                color: "#c8f064",
+                                border: "none",
+                                borderRadius: 8,
+                                padding: "10px 18px",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)"
+                              }}
+                            >
+                              Kumpulkan Lembar Tryout
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="quiz-action-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
+                          <button
+                            className="quiz-ask-ai-btn"
+                            onClick={() => setIsQuizChatOpen(!isQuizChatOpen)}
+                            style={{
+                              backgroundColor: isQuizChatOpen ? "#eef8db" : "#ffffff",
+                              border: `1px solid ${isQuizChatOpen ? "#8dbd42" : "#dce1da"}`,
+                              color: isQuizChatOpen ? "#22370c" : "#17201d",
+                              borderRadius: 8,
+                              padding: "10px 16px",
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              transition: "all 0.15s ease"
+                            }}
+                          >
+                            <MessageSquare size={14} color="#4b6623" />
+                            {isQuizChatOpen
+                              ? "Tutup Tanya AI"
+                              : isAnswerSubmitted
+                              ? "Diskusi & Tanya AI Soal Ini"
+                              : "Minta Petunjuk / Tanya AI"}
+                          </button>
+
+                          {isAnswerSubmitted && (
+                            <button
+                              className="next-quiz-btn"
+                              onClick={handleNextQuizQuestion}
+                              style={{
+                                backgroundColor: "#18221f",
+                                color: "#c8f064",
+                                border: "none",
+                                borderRadius: 8,
+                                padding: "11px 22px",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)"
+                              }}
+                            >
+                              {currentQuestionIndex < quizQuestions.length - 1 ? "Soal Berikutnya" : "Lihat Hasil Akhir"}
+                              <ChevronRight size={16} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Inline AI Question Tutor Chat Drawer */}
+                      {isQuizChatOpen && (
+                        <div
+                          style={{
+                            marginTop: 16,
+                            backgroundColor: "#fbfcf9",
+                            border: "1px solid #dde1da",
+                            borderRadius: 12,
+                            padding: "16px 18px",
+                            boxShadow: "0 4px 20px rgba(27, 39, 35, 0.04)"
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <div
+                                style={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: 6,
+                                  backgroundColor: "#18221f",
+                                  display: "grid",
+                                  placeItems: "center",
+                                  color: "#c8f064"
+                                }}
+                              >
+                                <Sparkles size={13} />
+                              </div>
+                              <span style={{ fontSize: 13.5, fontWeight: 800, color: "#17201d", letterSpacing: "-0.01em" }}>
+                                Tutor Bedah Soal AI
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.03em",
+                                  color: isAnswerSubmitted ? "#065f46" : "#92400e",
+                                  backgroundColor: isAnswerSubmitted ? "#ecfdf5" : "#fef3c7",
+                                  border: `1px solid ${isAnswerSubmitted ? "#a7f3d0" : "#fde68a"}`,
+                                  padding: "2px 8px",
+                                  borderRadius: 999
+                                }}
+                              >
+                                {isAnswerSubmitted ? "Konteks Kunci & Pembahasan" : "Petunjuk Berpikir"}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => setIsQuizChatOpen(false)}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#727d78",
+                                cursor: "pointer",
+                                padding: 4,
+                                borderRadius: 4,
+                                display: "flex",
+                                alignItems: "center"
+                              }}
+                              title="Tutup Chat"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+
+                          {/* Quick suggestion chips */}
+                          <div className="no-scrollbar" style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 10, WebkitOverflowScrolling: "touch" }}>
+                            {(isAnswerSubmitted
+                              ? [
+                                  "Kenapa opsi yang saya pilih keliru?",
+                                  "Jelaskan konsep soal ini pakai analogi sederhana",
+                                  "Apa kata kunci utama untuk menjawab soal seperti ini?",
+                                  "Apa beda mendasar opsi benar vs opsi pengecoh?"
+                                ]
+                              : [
+                                  "Beri petunjuk cara menganalisis soal ini tanpa bocorkan kunci",
+                                  "Apa arti istilah teknis dalam soal ini?",
+                                  "Apa langkah eliminasi opsi yang tepat?",
+                                  "Jelaskan materi terkait soal ini secara ringkas"
+                                ]
+                            ).map((chip, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleSendQuizQuestionChat(chip)}
+                                disabled={isQuizChatSending}
+                                style={{
+                                  whiteSpace: "nowrap",
+                                  backgroundColor: "#ffffff",
+                                  border: "1px solid #dce1da",
+                                  color: "#495751",
+                                  borderRadius: 999,
+                                  padding: "5px 11px",
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  cursor: isQuizChatSending ? "not-allowed" : "pointer",
+                                  flexShrink: 0,
+                                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+                                  transition: "0.15s ease"
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isQuizChatSending) {
+                                    e.currentTarget.style.backgroundColor = "#18221f";
+                                    e.currentTarget.style.color = "#c8f064";
+                                    e.currentTarget.style.borderColor = "#18221f";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isQuizChatSending) {
+                                    e.currentTarget.style.backgroundColor = "#ffffff";
+                                    e.currentTarget.style.color = "#495751";
+                                    e.currentTarget.style.borderColor = "#dce1da";
+                                  }
+                                }}
+                              >
+                                {chip}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Chat messages thread */}
+                          <div style={{ maxHeight: 280, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 12, paddingRight: 4 }}>
+                            {(!quizChatMessages[currentQuestionIndex] || quizChatMessages[currentQuestionIndex].length === 0) ? (
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  color: "#56645e",
+                                  padding: "12px 14px",
+                                  textAlign: "center",
+                                  backgroundColor: "#ffffff",
+                                  borderRadius: 8,
+                                  border: "1px solid #e2e7df",
+                                  lineHeight: 1.5
+                                }}
+                              >
+                                {isAnswerSubmitted
+                                  ? "Ada yang membingungkan dari pembahasan? Tanyakan ke AI atau ketuk salah satu pertanyaan cepat di atas."
+                                  : "Bingung cara menjawab soal ini? Ketuk salah satu petunjuk cepat di atas atau tanyakan ke AI."}
+                              </div>
+                            ) : (
+                              quizChatMessages[currentQuestionIndex].map((m, i) => {
+                                const isUser = m.role === "user";
+                                return (
+                                  <div
+                                    key={i}
+                                    style={{
+                                      alignSelf: isUser ? "flex-end" : "flex-start",
+                                      maxWidth: "88%",
+                                      backgroundColor: isUser ? "#18221f" : "#ffffff",
+                                      color: isUser ? "#eff5ec" : "#17201d",
+                                      border: isUser ? "none" : "1px solid #dde1da",
+                                      borderRadius: isUser ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                                      padding: isUser ? "9px 13px" : "11px 14px",
+                                      fontSize: 12.5,
+                                      lineHeight: "1.55",
+                                      boxShadow: isUser ? "0 2px 8px rgba(24, 34, 31, 0.1)" : "0 2px 8px rgba(27, 39, 35, 0.02)",
+                                      whiteSpace: "pre-wrap"
+                                    }}
+                                  >
+                                    <MathView text={m.content} />
+                                  </div>
+                                );
+                              })
+                            )}
+                            {isQuizChatSending && (
+                              <div
+                                style={{
+                                  alignSelf: "flex-start",
+                                  backgroundColor: "#ffffff",
+                                  border: "1px solid #dde1da",
+                                  borderRadius: 8,
+                                  padding: "8px 12px",
+                                  fontSize: 11.5,
+                                  color: "#495651",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6
+                                }}
+                              >
+                                <Sparkles size={12} color="#18221f" />
+                                <span>Tutor AI sedang menganalisis soal dan opsi...</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Chat input box */}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #d6ded4",
+                              borderRadius: 10,
+                              padding: "4px 6px 4px 12px",
+                              boxShadow: "0 2px 8px rgba(27, 39, 35, 0.03)"
+                            }}
+                          >
+                            <input
+                              type="text"
+                              value={quizChatInput}
+                              onChange={(e) => setQuizChatInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendQuizQuestionChat();
+                                }
+                              }}
+                              placeholder={isAnswerSubmitted ? "Tanyakan hal spesifik tentang pembahasan..." : "Minta petunjuk atau klarifikasi soal..."}
+                              style={{
+                                flex: 1,
+                                backgroundColor: "transparent",
+                                border: "none",
+                                fontSize: 12.5,
+                                fontFamily: "inherit",
+                                color: "#17201d",
+                                outline: "none",
+                                padding: "6px 0"
+                              }}
+                            />
+                            <button
+                              onClick={() => handleSendQuizQuestionChat()}
+                              disabled={isQuizChatSending || !quizChatInput.trim()}
+                              style={{
+                                backgroundColor: "#18221f",
+                                color: "#c8f064",
+                                border: "none",
+                                borderRadius: 8,
+                                padding: "0 12px",
+                                height: 32,
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                cursor: isQuizChatSending || !quizChatInput.trim() ? "not-allowed" : "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 5,
+                                opacity: isQuizChatSending || !quizChatInput.trim() ? 0.45 : 1,
+                                transition: "0.15s ease"
+                              }}
+                            >
+                              <Send size={12} />
+                              <span>Kirim</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Stepper Navigation Buttons */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <button
-              type="button"
-              onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
-              disabled={currentIdx === 0}
-              style={{
-                backgroundColor: "#ffffff",
-                border: "1px solid #dce1da",
-                borderRadius: 8,
-                padding: "8px 16px",
-                fontSize: 12.5,
-                fontWeight: 600,
-                color: currentIdx === 0 ? "#9ca3af" : "#18211e",
-                cursor: currentIdx === 0 ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 5
-              }}
-            >
-              <ChevronLeft size={15} />
-              <span>Sebelumnya</span>
-            </button>
-
-            <div style={{ display: "flex", gap: 5 }}>
-              {quizzes.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setCurrentIdx(i)}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 6,
-                    border: `1px solid ${i === currentIdx ? "#18211e" : "#dce1da"}`,
-                    backgroundColor: i === currentIdx ? "#18211e" : isAnswerRevealed[i] ? (userAnswers[i] === quizzes[i].correctIndex ? "#dcfce7" : "#fee2e2") : "#ffffff",
-                    color: i === currentIdx ? "#c8f064" : isAnswerRevealed[i] ? (userAnswers[i] === quizzes[i].correctIndex ? "#166534" : "#991b1b") : "#4b5563",
-                    fontSize: 11.5,
-                    fontWeight: 700,
-                    cursor: "pointer"
-                  }}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setCurrentIdx((i) => Math.min(totalQ - 1, i + 1))}
-              disabled={currentIdx === totalQ - 1}
-              style={{
-                backgroundColor: "#ffffff",
-                border: "1px solid #dce1da",
-                borderRadius: 8,
-                padding: "8px 16px",
-                fontSize: 12.5,
-                fontWeight: 600,
-                color: currentIdx === totalQ - 1 ? "#9ca3af" : "#18211e",
-                cursor: currentIdx === totalQ - 1 ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 5
-              }}
-            >
-              <span>Berikutnya</span>
-              <ChevronRight size={15} />
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }

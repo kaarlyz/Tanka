@@ -1,92 +1,108 @@
-export type ActiveTab = "material" | "quiz" | "feynman" | "flashcards" | "summary" | "mistakes" | "cheatsheet";
-
 export interface DocumentItem {
   id: string;
   title: string;
+  content_length?: number;
   created_at: number;
-  preview?: string;
-  content?: string;
-  summary?: string;
+  flashcard_count?: number;
+  is_exam_sheet?: boolean;
+  question_count?: number;
 }
 
-export interface FlashcardItem {
+export interface Flashcard {
   id: string;
   doc_id: string;
   front: string;
   back: string;
-  difficulty: "new" | "again" | "hard" | "good" | "easy";
-  review_count?: number;
+  level: number;
+  due_date: number;
+  created_at: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
 }
 
 export interface QuizStep {
-  step: number;
-  title: string;
-  desc: string;
+  step: string;
+  explanation: string;
 }
 
 export interface QuizQuestion {
-  id: number;
   question: string;
   options: string[];
   correctIndex: number;
   formula?: string;
-  steps?: QuizStep[];
+  steps?: string[] | QuizStep[];
   explanation?: string;
   pitfall?: string;
+}
+
+export interface FeynmanResult {
+  score: number;
+  strengths: string[];
+  misconceptions: string[];
+  missingConcepts: string[];
+  simplifiedAnalogy: string;
+  suggestedDrill: string;
 }
 
 export interface MistakeItem {
   id: string;
-  docId: string;
-  docTitle?: string;
+  doc_id: string;
+  doc_title: string;
   question: string;
   options: string[];
-  correctIndex: number;
-  userAnswerIndex: number;
+  correct_index: number;
+  user_answer_index: number;
   formula?: string;
-  steps?: QuizStep[];
+  steps?: string[];
   explanation?: string;
   pitfall?: string;
-  resolved?: number;
-  createdAt?: number;
-  updatedAt?: number;
+  resolved: number;
+  created_at: number;
+  updated_at: number;
 }
 
-export interface FeynmanEvaluation {
-  score: number;
-  verdict: string;
-  accuratePoints: string[];
-  missedOrFlawedPoints: string[];
-  perfectAnalogy: string;
-  feedback: string;
-}
-
-export interface CheatsheetItem {
+export interface FormulaItem {
   name: string;
   formula: string;
-  meaning: string;
+  explanation?: string;
   category?: string;
+  meaning?: string;
 }
 
-export interface ChatMessage {
-  id?: string;
-  role: "user" | "assistant";
-  content: string;
-  model?: string;
-  created_at?: number;
-}
+export type ActiveTab =
+  | "home"
+  | "material"
+  | "quiz"
+  | "mistakes"
+  | "feynman"
+  | "flashcards"
+  | "summary"
+  | "chat";
 
 export interface StagedFile {
   id: string;
   file: File;
   name: string;
   size: number;
-  ext: string;
+  type: string;
   previewUrl?: string;
+  base64?: string;
 }
 
 export interface EnrichSuggestion {
   title: string;
-  focus: string;
+  description: string;
+  recommendedFocus: string;
   reason: string;
+}
+
+export interface WebSearchResult {
+  title: string;
+  url: string;
+  snippet: string;
 }

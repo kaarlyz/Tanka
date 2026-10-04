@@ -1,314 +1,283 @@
-import { useState, useRef, useEffect } from "react";
-import { Brain, Mic, Sparkles, CheckCircle2, AlertTriangle, Lightbulb, MessageSquare } from "lucide-react";
-import { FeynmanEvaluation } from "../../types";
+import React from "react";
+import { Brain, Mic, MicOff, Sparkles, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
 import { MathView } from "../common/MathView";
 import { AIProcessLoader } from "../common/AIProcessLoader";
+import { FeynmanResult } from "../../types";
 
-interface FeynmanTabProps {
-  activeDocId: string | null;
-  activeDocTitle: string;
-  onEvaluate: (topic: string, explanation: string) => Promise<void>;
-  isEvaluating: boolean;
-  evaluationResult: FeynmanEvaluation | null;
-  showNotice: (msg: string) => void;
+export interface FeynmanTabProps {
+  feynmanTopic: string;
+  setFeynmanTopic: (t: string) => void;
+  feynmanExplanation: string;
+  setFeynmanExplanation: (e: string) => void;
+  feynmanResult: FeynmanResult | null;
+  isRecordingFeynman: boolean;
+  feynmanRecordingSeconds: number;
+  isEvaluatingFeynman: boolean;
+  handleToggleFeynmanRecording: () => void;
+  handleEvaluateFeynman: () => void;
 }
 
 export function FeynmanTab({
-  activeDocTitle,
-  onEvaluate,
-  isEvaluating,
-  evaluationResult,
-  showNotice
+  feynmanTopic,
+  setFeynmanTopic,
+  feynmanExplanation,
+  setFeynmanExplanation,
+  feynmanResult,
+  isRecordingFeynman,
+  feynmanRecordingSeconds,
+  isEvaluatingFeynman,
+  handleToggleFeynmanRecording,
+  handleEvaluateFeynman,
 }: FeynmanTabProps) {
-  const [topic, setTopic] = useState("");
-  const [explanation, setExplanation] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordSeconds, setRecordSeconds] = useState(0);
-
-  const recognitionRef = useRef<any>(null);
-  const timerRef = useRef<any>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-      }
-    };
-  }, []);
-
-  const handleToggleRecording = () => {
-    if (isRecording) {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-      }
-      if (timerRef.current) clearInterval(timerRef.current);
-      setIsRecording(false);
-      showNotice("Rekaman suara selesai");
-    } else {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        showNotice("Browser Anda tidak mendukung Web Speech Recognition");
-        return;
-      }
-
-      try {
-        const recognition = new SpeechRecognition();
-        recognition.lang = "id-ID";
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        recognition.onresult = (event: any) => {
-          let fullTranscript = "";
-          for (let i = 0; i < event.results.length; i++) {
-            fullTranscript += event.results[i][0].transcript + " ";
-          }
-          setExplanation(fullTranscript.trim());
-        };
-
-        recognition.onerror = (e: any) => {
-          console.warn("Speech recognition error:", e);
-          setIsRecording(false);
-          if (timerRef.current) clearInterval(timerRef.current);
-        };
-
-        recognition.start();
-        recognitionRef.current = recognition;
-        setIsRecording(true);
-        setRecordSeconds(0);
-        timerRef.current = setInterval(() => {
-          setRecordSeconds((s) => s + 1);
-        }, 1000);
-      } catch (err: any) {
-        showNotice("Gagal memulai rekam suara: " + err.message);
-      }
-    }
-  };
-
   return (
-    <div className="tab-pane-animate" style={{ maxWidth: 960, margin: "0 auto", paddingBottom: 48 }}>
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Brain size={20} color="#4b6623" />
-          <h2 style={{ fontSize: 19, fontWeight: 800, color: "#17201d", margin: 0 }}>
-            Mode Feynman: Uji Pemahaman Sendiri
-          </h2>
-        </div>
-        <p style={{ fontSize: 12.5, color: "#6f7975", marginTop: 4 }}>
-          Jelaskan kembali suatu konsep dengan kata-kata sendiri. AI akan menguji akurasi, mendeteksi miskonsepsi, dan memberi analogi pengunci memori.
-        </p>
-      </div>
-
-      <div
-        style={{
-          backgroundColor: "#ffffff",
-          border: "1px solid #dde1da",
-          borderRadius: 12,
-          padding: "24px 26px",
-          marginBottom: 18,
-          boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
-        }}
-      >
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
-            Konsep atau Istilah yang Ingin Dijelaskan
-          </label>
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder={`Contoh: Konsep pada ${activeDocTitle || "Materi Ini"}...`}
-            style={{
-              width: "100%",
-              backgroundColor: "#fafbf8",
-              border: "1px solid #dce1da",
-              borderRadius: 8,
-              padding: "10px 14px",
-              fontSize: 14,
-              color: "#17201d",
-              outline: "none"
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>
-              Penjelasan Anda (Gunakan bahasa sendiri atau rekam suara)
-            </label>
-            <button
-              type="button"
-              onClick={handleToggleRecording}
-              style={{
-                backgroundColor: isRecording ? "#fee2e2" : "#f1f5eb",
-                border: `1px solid ${isRecording ? "#fca5a5" : "#cddfc0"}`,
-                color: isRecording ? "#b91c1c" : "#3b581e",
-                borderRadius: 6,
-                padding: "4px 10px",
-                fontSize: 11.5,
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 5
-              }}
-            >
-              {isRecording ? (
-                <>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#ef4444" }} />
-                  <span>Merekam ({Math.floor(recordSeconds / 60)}:{String(recordSeconds % 60).padStart(2, "0")}) · Selesai</span>
-                </>
-              ) : (
-                <>
-                  <Mic size={13} color="#4b6623" />
-                  <span>Rekam Suara</span>
-                </>
-              )}
-            </button>
-          </div>
-          <textarea
-            rows={5}
-            value={explanation}
-            onChange={(e) => setExplanation(e.target.value)}
-            placeholder={isRecording ? "Mendengarkan ucapan Anda... Teruslah berbicara..." : "Tuliskan pemahaman Anda di sini atau gunakan 'Rekam Suara'..."}
-            style={{
-              width: "100%",
-              backgroundColor: isRecording ? "#fafdf5" : "#fafbf8",
-              border: `1px solid ${isRecording ? "#779f2f" : "#dce1da"}`,
-              borderRadius: 8,
-              padding: "12px 14px",
-              fontSize: 14,
-              lineHeight: "1.6",
-              color: "#17201d",
-              outline: "none",
-              resize: "vertical"
-            }}
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={() => onEvaluate(topic, explanation)}
-          disabled={isEvaluating || !explanation.trim()}
-          style={{
-            backgroundColor: "#18221f",
-            color: "#c8f064",
-            border: "none",
-            borderRadius: 8,
-            padding: "10px 18px",
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: isEvaluating || !explanation.trim() ? "not-allowed" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 6
-          }}
-        >
-          <Sparkles size={15} />
-          <span>{isEvaluating ? "Mengevaluasi Penjelasan..." : "Uji & Nilai Pemahaman Saya"}</span>
-        </button>
-      </div>
-
-      {/* Loading State with AIProcessLoader */}
-      {isEvaluating && (
-        <AIProcessLoader
-          title="Mengevaluasi Penjelasan Feynman"
-          subtitle="AI sedang membedah ketepatan sains dan mendeteksi celah pemahaman Anda"
-          badge="Feynman Rubric"
-          steps={[
-            { label: "Analisis Semantik", detail: "Mencocokkan istilah dan argumen dengan materi baku" },
-            { label: "Deteksi Miskonsepsi", detail: "Mencari celah pemikiran atau definisi yang terbalik" },
-            { label: "Formulasi Analogi", detail: "Merancang analogi intuitif untuk memperkuat retensi" }
-          ]}
-        />
-      )}
-
-      {/* Evaluation Results Card */}
-      {evaluationResult && !isEvaluating && (
-        <div
-          className="modal-scale-in"
-          style={{
-            backgroundColor: "#ffffff",
-            border: "1px solid #dde1da",
-            borderRadius: 14,
-            padding: "24px 26px",
-            boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, borderBottom: "1px solid #edf0eb", paddingBottom: 14 }}>
-            <div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: "#566b36", textTransform: "uppercase" }}>Hasil Evaluasi</span>
-              <h3 style={{ margin: "4px 0 0", fontSize: 17, fontWeight: 800, color: "#17201d" }}>
-                {evaluationResult.verdict}
-              </h3>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <span style={{ fontSize: 11, color: "#6b7280" }}>Skor Akurasi:</span>
-              <div style={{ fontSize: 24, fontWeight: 900, color: evaluationResult.score >= 80 ? "#15803d" : evaluationResult.score >= 60 ? "#b45309" : "#b91c1c" }}>
-                {evaluationResult.score} <span style={{ fontSize: 13, fontWeight: 500, color: "#9ca3af" }}>/ 100</span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* Accurate Points */}
-            {evaluationResult.accuratePoints?.length > 0 && (
-              <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "12px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, color: "#166534", fontWeight: 700, fontSize: 13 }}>
-                  <CheckCircle2 size={16} />
-                  <span>Poin yang Dipahami dengan Tepat:</span>
+              <div className="tab-pane-animate" style={{ maxWidth: 960, margin: "0 auto" }}>
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Brain size={20} color="#4b6623" />
+                    <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
+                      Mode Feynman: Uji Pemahaman Sendiri
+                    </h2>
+                  </div>
+                  <p style={{ fontSize: 12.5, color: "#6f7975", marginTop: 4 }}>
+                    Jelaskan kembali suatu konsep dengan kata-kata sendiri. AI akan menguji akurasi, mendeteksi miskonsepsi, dan memberi analogi pengunci memori.
+                  </p>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, color: "#166534", lineHeight: 1.5 }}>
-                  {evaluationResult.accuratePoints.map((pt, i) => (
-                    <li key={i}><MathView text={pt} /></li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
-            {/* Missed or Flawed Points */}
-            {evaluationResult.missedOrFlawedPoints?.length > 0 && (
-              <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "12px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, color: "#991b1b", fontWeight: 700, fontSize: 13 }}>
-                  <AlertTriangle size={16} />
-                  <span>Titik yang Perlu Diperbaiki / Terlewat:</span>
-                </div>
-                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12.5, color: "#991b1b", lineHeight: 1.5 }}>
-                  {evaluationResult.missedOrFlawedPoints.map((pt, i) => (
-                    <li key={i}><MathView text={pt} /></li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                <div
+                  style={{
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #dde1da",
+                    borderRadius: 12,
+                    padding: "24px 26px",
+                    marginBottom: 18,
+                    boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+                  }}
+                >
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
+                      Konsep atau Istilah yang Ingin Dijelaskan
+                    </label>
+                    <input
+                      type="text"
+                      value={feynmanTopic}
+                      onChange={(e) => setFeynmanTopic(e.target.value)}
+                      placeholder="Contoh: Arbitrase vs Mediasi, Hukum Permintaan..."
+                      style={{
+                        width: "100%",
+                        backgroundColor: "#fafbf8",
+                        border: "1px solid #dce1da",
+                        borderRadius: 8,
+                        padding: "10px 14px",
+                        fontSize: 14,
+                        color: "#17201d",
+                        outline: "none"
+                      }}
+                    />
+                  </div>
 
-            {/* Perfect Analogy */}
-            {evaluationResult.perfectAnalogy && (
-              <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, color: "#92400e", fontWeight: 700, fontSize: 13 }}>
-                  <Lightbulb size={16} />
-                  <span>Analogi Pengunci Memori:</span>
-                </div>
-                <p style={{ margin: 0, fontSize: 12.5, color: "#78350f", lineHeight: 1.5 }}>
-                  <MathView text={evaluationResult.perfectAnalogy} />
-                </p>
-              </div>
-            )}
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>
+                        Penjelasan Anda (Gunakan bahasa sendiri atau rekam suara)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleToggleFeynmanRecording}
+                        style={{
+                          backgroundColor: isRecordingFeynman ? "#fee2e2" : "#f1f5eb",
+                          border: `1px solid ${isRecordingFeynman ? "#fca5a5" : "#cddfc0"}`,
+                          color: isRecordingFeynman ? "#b91c1c" : "#3b581e",
+                          borderRadius: 6,
+                          padding: "4px 10px",
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {isRecordingFeynman ? (
+                          <>
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#ef4444" }} />
+                            <span>Merekam ({Math.floor(feynmanRecordingSeconds / 60)}:{String(feynmanRecordingSeconds % 60).padStart(2, "0")}) · Klik Selesai</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic size={13} color="#4b6623" />
+                            <span>Rekam Suara</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <textarea
+                      rows={5}
+                      value={feynmanExplanation}
+                      onChange={(e) => setFeynmanExplanation(e.target.value)}
+                      placeholder={isRecordingFeynman ? "Mendengarkan ucapan Anda... Teruslah berbicara..." : "Tuliskan pemahaman Anda di sini atau gunakan 'Rekam Suara' untuk menjelaskan lisan..."}
+                      style={{
+                        width: "100%",
+                        backgroundColor: isRecordingFeynman ? "#fafdf5" : "#fafbf8",
+                        border: `1px solid ${isRecordingFeynman ? "#779f2f" : "#dce1da"}`,
+                        borderRadius: 8,
+                        padding: "12px 14px",
+                        fontSize: 14,
+                        lineHeight: "1.6",
+                        color: "#17201d",
+                        outline: "none",
+                        resize: "vertical",
+                        transition: "border-color 0.2s ease"
+                      }}
+                    />
+                  </div>
 
-            {/* Feedback */}
-            {evaluationResult.feedback && (
-              <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "12px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, color: "#334155", fontWeight: 700, fontSize: 13 }}>
-                  <MessageSquare size={16} />
-                  <span>Ulasan Tutor:</span>
+                  <button
+                    onClick={handleEvaluateFeynman}
+                    disabled={isEvaluatingFeynman || !feynmanExplanation.trim()}
+                    style={{
+                      backgroundColor: "#18221f",
+                      color: "#c8f064",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "10px 18px",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: isEvaluatingFeynman || !feynmanExplanation.trim() ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Sparkles size={15} />
+                    {isEvaluatingFeynman ? "Mengevaluasi Penjelasan..." : "Uji & Nilai Pemahaman Saya"}
+                  </button>
                 </div>
-                <p style={{ margin: 0, fontSize: 12.5, color: "#475569", lineHeight: 1.5 }}>
-                  <MathView text={evaluationResult.feedback} />
-                </p>
+
+                {/* Feynman Evaluation Live Progress Loader */}
+                {isEvaluatingFeynman && (
+                  <AIProcessLoader
+                    title="Mengevaluasi Penjelasan Feynman"
+                    subtitle="AI menganalisis gaya bahasa, memeriksa keakuratan materi, dan mendeteksi istilah rumit (jargon)."
+                    badge="Evaluasi Pemahaman"
+                    steps={[
+                      { label: "Menganalisis Gaya Bahasa & Kesederhanaan", detail: "Mengecek apakah konsep dijelaskan dengan bahasa sendiri yang lugas." },
+                      { label: "Memverifikasi Kebenaran Fakta", detail: "Mencocokkan penjelasan dengan konsep kunci pada modul belajar." },
+                      { label: "Mendeteksi Miskonsepsi & Jargon", detail: "Menandai istilah hafalan yang belum diurai secara sederhana." },
+                      { label: "Menghitung Skor & Analogi Perbaikan", detail: "Menyiapkan rekomendasi perbaikan dan analogi baru untuk mengunci pemahaman." }
+                    ]}
+                  />
+                )}
+
+                {/* Feynman Evaluation Feedback Card */}
+                {feynmanResult && (
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #dde1da",
+                      borderRadius: 12,
+                      padding: "24px 26px",
+                      boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                      <div>
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                            letterSpacing: "1.2px",
+                            color: "#566b36",
+                            backgroundColor: "#edf4e3",
+                            border: "1px solid #d7e5c5",
+                            padding: "4px 10px",
+                            borderRadius: 20,
+                            fontFamily: "'DM Mono', monospace"
+                          }}
+                        >
+                          {feynmanResult.verdict}
+                        </span>
+                        <h3 style={{ fontSize: 17, fontWeight: 800, color: "#18211e", marginTop: 8 }}>
+                          Analisis Retensi Memori Aktif
+                        </h3>
+                      </div>
+                      <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
+                        <div
+                          style={{
+                            width: 60,
+                            height: 60,
+                            borderRadius: "50%",
+                            backgroundColor: "#c8f064",
+                            color: "#18211e",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 20,
+                            fontWeight: 800
+                          }}
+                        >
+                          {feynmanResult.score}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Accurate Points */}
+                    {feynmanResult.accuratePoints?.length > 0 && (
+                      <div style={{ marginBottom: 14, padding: "14px 16px", backgroundColor: "#e6eedc", border: "1px solid #c9dec2", borderRadius: 9 }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#364a1e", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "flex", alignItems: "center", gap: 6, fontFamily: "'DM Mono', monospace" }}>
+                          <CheckCircle2 size={14} color="#566b36" /> Poin yang Dipahami dengan Tepat
+                        </div>
+                        <ul style={{ paddingLeft: 18, fontSize: 13, color: "#18211e", lineHeight: "1.6" }}>
+                          {feynmanResult.accuratePoints.map((pt, i) => (
+                            <li key={i}><MathView text={pt} /></li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Missed Nuances */}
+                    {feynmanResult.missedOrFlawedPoints?.length > 0 && (
+                      <div style={{ marginBottom: 14, padding: "14px 16px", backgroundColor: "#faece8", border: "1px solid #f2d5ce", borderRadius: 9 }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#a2574a", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "flex", alignItems: "center", gap: 6, fontFamily: "'DM Mono', monospace" }}>
+                          <AlertTriangle size={14} color="#a2574a" /> Bagian yang Kurang Presisi / Perlu Diperdalam
+                        </div>
+                        <ul style={{ paddingLeft: 18, fontSize: 13, color: "#55625c", lineHeight: "1.6" }}>
+                          {feynmanResult.missedOrFlawedPoints.map((pt, i) => (
+                            <li key={i}><MathView text={pt} /></li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Perfect Analogy Box */}
+                    {feynmanResult.perfectAnalogy && (
+                      <div
+                        style={{
+                          backgroundColor: "#f4f6f1",
+                          border: "1px solid #dce2da",
+                          borderRadius: 9,
+                          padding: "14px 16px",
+                          marginBottom: 14
+                        }}
+                      >
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#566b36", display: "flex", alignItems: "center", gap: 6, marginBottom: 4, letterSpacing: "0.8px", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>
+                          <Lightbulb size={15} color="#566b36" /> Analogi Pengunci Memori
+                        </div>
+                        <div style={{ fontSize: 13, color: "#18211e", lineHeight: "1.6" }}>
+                          <MathView text={feynmanResult.perfectAnalogy} />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Overall Coach Feedback */}
+                    <div style={{ fontSize: 13, color: "#55625c", lineHeight: "1.6", borderTop: "1px solid #dce2da", paddingTop: 12 }}>
+                      <strong style={{ color: "#18211e" }}>Catatan Nara: </strong>
+                      <MathView text={feynmanResult.feedback} />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
   );
 }

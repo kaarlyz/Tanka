@@ -1,292 +1,325 @@
 import React from "react";
-import {
-  BookOpen,
-  HelpCircle,
-  Mic,
-  Layers,
-  FileText,
-  AlertOctagon,
-  Hash,
-  Plus,
-  UploadCloud,
-  Trash2,
-  Search
-} from "lucide-react";
-import { ActiveTab, DocumentItem } from "../../types";
-import { getSubjectBadge } from "../common/MathView";
+import { Plus, Trash2, Upload, Camera, Compass, X } from "lucide-react";
+import { ActiveTab, DocumentItem, QuizQuestion, MistakeItem, Flashcard } from "../../types";
 
 export interface SidebarProps {
+  isMobileDrawerOpen: boolean;
+  setIsMobileDrawerOpen: (val: boolean) => void;
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
+  setIsAiPanelOpen: (val: boolean) => void;
   documents: DocumentItem[];
   activeDocId: string | null;
-  setActiveDocId: (id: string) => void;
-  onDeleteDocument: (id: string) => void;
-  onTriggerFileUpload: () => void;
-  onTriggerRawText: () => void;
-  mistakeCount: number;
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
+  loadDocument: (id: string) => void;
+  handleDeleteDocument: (id: string) => void;
+  quizQuestions: QuizQuestion[];
+  activeDocMistakes: MistakeItem[];
+  mistakes: MistakeItem[];
+  flashcards: Flashcard[];
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  cameraInputRef: React.RefObject<HTMLInputElement | null>;
+  isUploading: boolean;
+  handleStageFiles: (files: FileList | File[]) => void;
+  setIsTopicModalOpen: (val: boolean) => void;
+  setIsStagingModalOpen: (val: boolean) => void;
+  setIsRawTextModalOpen?: (val: boolean) => void;
 }
 
 export function Sidebar({
+  isMobileDrawerOpen,
+  setIsMobileDrawerOpen,
   activeTab,
   setActiveTab,
+  setIsAiPanelOpen,
   documents,
   activeDocId,
-  setActiveDocId,
-  onDeleteDocument,
-  onTriggerFileUpload,
-  onTriggerRawText,
-  mistakeCount,
-  searchQuery,
-  setSearchQuery
+  loadDocument,
+  handleDeleteDocument,
+  quizQuestions,
+  activeDocMistakes,
+  mistakes,
+  flashcards,
+  fileInputRef,
+  cameraInputRef,
+  isUploading,
+  handleStageFiles,
+  setIsTopicModalOpen,
+  setIsStagingModalOpen,
 }: SidebarProps) {
-  const filteredDocs = documents.filter((d) =>
-    (d.title || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const mainNavItems: Array<{ id: ActiveTab; label: string; icon: React.ReactNode; badge?: number }> = [
-    { id: "material", label: "Catatan Belajar", icon: <BookOpen size={16} /> },
-    { id: "quiz", label: "Latihan Soal (Kuis)", icon: <HelpCircle size={16} /> },
-    { id: "feynman", label: "Uji Feynman (Audio)", icon: <Mic size={16} /> },
-    { id: "flashcards", label: "Kartu Hafalan (Anki)", icon: <Layers size={16} /> },
-    { id: "summary", label: "Rangkuman AI", icon: <FileText size={16} /> },
-    { id: "mistakes", label: "Bank Kesalahan", icon: <AlertOctagon size={16} />, badge: mistakeCount },
-    { id: "cheatsheet", label: "Rumus Kunci", icon: <Hash size={16} /> }
-  ];
-
   return (
-    <aside
-      className="desktop-only"
-      style={{
-        width: 260,
-        backgroundColor: "#fbfcf9",
-        borderRight: "1px solid #dde1da",
-        display: "flex",
-        flexDirection: "column",
-        height: "calc(100vh - 56px)",
-        position: "sticky",
-        top: 56,
-        overflow: "hidden"
-      }}
-    >
-      {/* Action Buttons: Buat Materi & Unggah Berkas */}
-      <div style={{ padding: "14px 14px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
-        <button
-          type="button"
-          onClick={onTriggerFileUpload}
-          style={{
-            width: "100%",
-            height: 38,
-            borderRadius: 8,
-            backgroundColor: "#566b36",
-            color: "#ffffff",
-            border: "none",
-            fontSize: 12.5,
-            fontWeight: 800,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 7,
-            boxShadow: "0 2px 8px rgba(86, 107, 54, 0.2)"
-          }}
-        >
-          <UploadCloud size={16} />
-          <span>Unggah Berkas / Foto</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onTriggerRawText}
-          style={{
-            width: "100%",
-            height: 32,
-            borderRadius: 8,
-            backgroundColor: "#ffffff",
-            color: "#374151",
-            border: "1px solid #dce2da",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6
-          }}
-        >
-          <Plus size={14} />
-          <span>Tulis Catatan Manual</span>
-        </button>
-      </div>
-
-      {/* Main Tab Navigations */}
-      <div style={{ padding: "0 10px 10px", borderBottom: "1px solid #edf0eb" }}>
-        <div style={{ fontSize: 10, fontWeight: 800, color: "#8b948e", textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 8px" }}>
-          Mode Belajar
-        </div>
-        <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {mainNavItems.map((item) => {
-            const isActive = activeTab === item.id;
-            return (
+      <aside
+        className={`figma-sidebar ${isMobileDrawerOpen ? "sidebar-drawer open" : "desktop-only"}`}
+      >
+        {/* Brand Row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexShrink: 0 }}>
+            <div className="brand-box" style={{ padding: 0 }}>
+              <div className="brand-symbol-box">t</div>
+              <span>tanka.</span>
+            </div>
+            {isMobileDrawerOpen && (
               <button
-                key={item.id}
-                type="button"
-                onClick={() => setActiveTab(item.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 10px",
-                  borderRadius: 7,
-                  border: "none",
-                  backgroundColor: isActive ? "#edf4e3" : "transparent",
-                  color: isActive ? "#3f6212" : "#374151",
-                  fontSize: 12.5,
-                  fontWeight: isActive ? 800 : 500,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "background-color 0.15s ease"
-                }}
+                className="mobile-only"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                style={{ background: "none", border: "none", color: "#aeb9b4", cursor: "pointer", padding: 4 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                  <span style={{ color: isActive ? "#566b36" : "#6b7280" }}>{item.icon}</span>
-                  <span>{item.label}</span>
-                </div>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 800,
-                      color: "#991b1b",
-                      backgroundColor: "#fee2e2",
-                      border: "1px solid #fecaca",
-                      borderRadius: 999,
-                      padding: "1px 6px"
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
+                <X size={18} />
               </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Search Input for Materials */}
-      <div style={{ padding: "10px 14px 6px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            backgroundColor: "#f4f6f2",
-            border: "1px solid #dce2da",
-            borderRadius: 7,
-            padding: "5px 8px"
-          }}
-        >
-          <Search size={13} color="#9ca3af" />
-          <input
-            type="text"
-            placeholder="Cari materi..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              fontSize: 12,
-              color: "#18211e",
-              width: "100%"
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Material List */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "6px 10px 14px" }}>
-        <div style={{ fontSize: 10, fontWeight: 800, color: "#8b948e", textTransform: "uppercase", letterSpacing: "0.08em", padding: "4px 8px 6px" }}>
-          Materi Tersimpan ({filteredDocs.length})
-        </div>
-
-        {filteredDocs.length === 0 ? (
-          <div style={{ padding: "16px 8px", fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
-            Tidak ada materi
+            )}
           </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {filteredDocs.map((doc) => {
-              const isActive = activeDocId === doc.id;
-              const badge = getSubjectBadge(doc.title);
+
+          {/* Main Navigation Links with Side Mark Chips */}
+          <nav className="main-nav" style={{ marginBottom: 18 }}>
+            {[
+              { id: "home", label: "Beranda Hub", mark: "H" },
+              { id: "material", label: "Materi Saya", mark: "M" },
+              { id: "quiz", label: "Latihan Kuis", mark: "L", count: quizQuestions.length },
+              { id: "mistakes", label: "Bank Soal Salah", mark: "B", count: activeDocId ? activeDocMistakes.length : mistakes.length, highlight: (activeDocId ? activeDocMistakes.length : mistakes.length) > 0 },
+              { id: "flashcards", label: "Flashcards", mark: "K", count: flashcards.length },
+              { id: "feynman", label: "Uji Feynman", mark: "F" }
+            ].map((nav) => {
+              const isActive = activeTab === nav.id;
               return (
-                <div
-                  key={doc.id}
-                  onClick={() => setActiveDocId(doc.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "8px 10px",
-                    borderRadius: 7,
-                    backgroundColor: isActive ? "#ffffff" : "transparent",
-                    border: `1px solid ${isActive ? "#dce1da" : "transparent"}`,
-                    cursor: "pointer",
-                    boxShadow: isActive ? "0 2px 6px rgba(0,0,0,0.04)" : "none"
+                <button
+                  key={nav.id}
+                  className={`figma-nav-link ${isActive ? "active" : ""}`}
+                  onClick={() => {
+                    setActiveTab(nav.id as any);
+                    setIsMobileDrawerOpen(false);
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <div className="side-mark-box">{nav.mark}</div>
+                  <span style={{ flex: 1 }}>{nav.label}</span>
+                  {nav.count !== undefined && nav.count > 0 && (
                     <span
                       style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        backgroundColor: badge.color,
-                        flexShrink: 0
+                        fontSize: 10,
+                        fontFamily: "'DM Mono', monospace",
+                        fontWeight: 700,
+                        backgroundColor: nav.highlight ? "#ef4444" : "#25322e",
+                        color: nav.highlight ? "#ffffff" : "#c8f064",
+                        padding: "2px 6px",
+                        borderRadius: 999
                       }}
-                    />
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: isActive ? 700 : 500,
-                        color: isActive ? "#18211e" : "#4b5563",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis"
-                      }}
-                      title={doc.title}
                     >
-                      {doc.title}
+                      {nav.count}
                     </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteDocument(doc.id);
-                    }}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: "#9ca3af",
-                      cursor: "pointer",
-                      padding: 2,
-                      display: "flex",
-                      alignItems: "center"
-                    }}
-                    title="Hapus materi"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+                  )}
+                </button>
               );
             })}
+          </nav>
+
+          {/* Materi Tersimpan & Actions */}
+          <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, padding: "0 4px" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#86938e", fontFamily: "'DM Mono', monospace", letterSpacing: 1.2 }}>
+                MATERI TERSIMPAN ({documents.length})
+              </span>
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  handleCreateNewDoc();
+                }}
+                style={{
+                  backgroundColor: "#25322e",
+                  color: "#d6f58d",
+                  border: "1px solid #34413c",
+                  borderRadius: 6,
+                  padding: "2px 8px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 3
+                }}
+              >
+                <Plus size={11} /> Baru
+              </button>
+            </div>
+
+            {/* Document list */}
+            <div className="no-scrollbar" style={{ maxHeight: 200, overflowY: "auto", paddingRight: 2 }}>
+              {documents.length === 0 ? (
+                <div style={{ padding: "18px 8px", color: "#6e7c77", fontSize: 12.5, textAlign: "center" }}>
+                  Belum ada dokumen. Unggah atau buat modul baru.
+                </div>
+              ) : (
+                documents.map((doc) => {
+                  const isSelected = doc.id === activeDocId;
+                  return (
+                    <div
+                      key={doc.id}
+                      onClick={() => {
+                        loadDocument(doc.id);
+                        setIsMobileDrawerOpen(false);
+                      }}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: 8,
+                        marginBottom: 5,
+                        backgroundColor: isSelected ? "#25322e" : "transparent",
+                        border: isSelected ? "1px solid #34413c" : "1px solid transparent",
+                        cursor: "pointer",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginRight: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: isSelected ? 700 : 500, color: isSelected ? "#f5f8f3" : "#aeb9b4" }}>
+                          {doc.title}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#7a8a84", fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
+                          {doc.flashcard_count || 0} kartu
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => handleDeleteDocument(doc.id, e)}
+                        style={{ background: "none", border: "none", color: "#7a8a84", cursor: "pointer", padding: 4 }}
+                        title="Hapus dokumen"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 8, marginBottom: 6 }}>
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  fileInputRef.current?.click();
+                }}
+                disabled={isUploading}
+                style={{
+                  backgroundColor: "#212d29",
+                  border: "1px solid #34413c",
+                  color: "#d6f58d",
+                  borderRadius: 8,
+                  padding: "7px 6px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: isUploading ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4
+                }}
+              >
+                <Upload size={12} />
+                <span>Unggah</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  cameraInputRef.current?.click();
+                }}
+                disabled={isUploading}
+                style={{
+                  backgroundColor: "#212d29",
+                  border: "1px solid #34413c",
+                  color: "#c8f064",
+                  borderRadius: 8,
+                  padding: "7px 6px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: isUploading ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4
+                }}
+              >
+                <Camera size={12} />
+                <span>Foto Soal</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                setIsMobileDrawerOpen(false);
+                setIsTopicModalOpen(true);
+                setTopicStep(1);
+              }}
+              style={{
+                backgroundColor: "#212d29",
+                border: "1px dashed #657358",
+                color: "#c8f064",
+                borderRadius: 8,
+                padding: "7px 10px",
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 5,
+                marginBottom: 8
+              }}
+            >
+              <Compass size={13} />
+              <span>Cari / Buat Topik AI</span>
+            </button>
+
+            <input
+              type="file"
+              ref={cameraInputRef}
+              accept="image/*"
+              capture="environment"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleStageFiles(e.target.files);
+                  e.target.value = "";
+                }
+              }}
+            />
+            <input
+              type="file"
+              ref={fileInputRef}
+              multiple
+              accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp,.bmp,.txt,.md"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleStageFiles(e.target.files);
+                  e.target.value = "";
+                }
+              }}
+            />
           </div>
-        )}
-      </div>
-    </aside>
+
+        {/* Sidebar Bottom: Streak Widget & Profile Row */}
+        <div style={{ flexShrink: 0, marginTop: 8 }}>
+          <div className="streak-card-box" style={{ margin: "4px 0 10px" }}>
+            <div className="streak-top-row">
+              <span>Target mingguan</span>
+              <strong style={{ fontFamily: "'DM Mono', monospace" }}>4/5 hari</strong>
+            </div>
+            <div className="streak-days">
+              {["S", "S", "R", "K", "J"].map((day, idx) => (
+                <span className={idx < 4 ? "filled" : ""} key={`${day}-${idx}`}>
+                  {idx < 4 ? "✓" : day}
+                </span>
+              ))}
+            </div>
+            <p>Satu sesi lagi untuk mencapai target belajarmu.</p>
+          </div>
+
+          <button className="profile-row-box">
+            <div className="avatar-box">ER</div>
+            <span>
+              <strong>Eka Restu Syahputra</strong>
+              <small>Akun Belajar</small>
+            </span>
+            <span className="profile-more-dots">•••</span>
+          </button>
+        </div>
+      </aside>
   );
 }

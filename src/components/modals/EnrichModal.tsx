@@ -1,291 +1,294 @@
 import React from "react";
-import { Globe, Check, Sparkles, X } from "lucide-react";
-import { EnrichSuggestion } from "../../types";
+import { Globe, Sparkles, Check, X } from "lucide-react";
+import { AIProcessLoader } from "../common/AIProcessLoader";
 
 export interface EnrichModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  suggestions: EnrichSuggestion[];
-  selectedTitles: string[];
-  onToggleSelect: (title: string, focus: string) => void;
-  focusText: string;
-  setFocusText: (t: string) => void;
-  onApply: (focusText: string) => Promise<void> | void;
+  isEnrichModalOpen: boolean;
+  setIsEnrichModalOpen: (val: boolean) => void;
+  activeDocTitle: string;
   isEnriching: boolean;
-  isLoadingSuggestions?: boolean;
+  enrichSuggestions: Array<{ title: string; focus: string; reason: string }>;
+  isLoadingSuggestions: boolean;
+  selectedEnrichTitles: string[];
+  setSelectedEnrichTitles: React.Dispatch<React.SetStateAction<string[]>>;
+  enrichFocus: string;
+  setEnrichFocus: (val: string) => void;
+  handleEnrichDocument: () => void;
 }
 
 export function EnrichModal({
-  isOpen,
-  onClose,
-  suggestions,
-  selectedTitles,
-  onToggleSelect,
-  focusText,
-  setFocusText,
-  onApply,
+  isEnrichModalOpen,
+  setIsEnrichModalOpen,
+  activeDocTitle,
   isEnriching,
-  isLoadingSuggestions = false
+  enrichSuggestions,
+  isLoadingSuggestions,
+  selectedEnrichTitles,
+  setSelectedEnrichTitles,
+  enrichFocus,
+  setEnrichFocus,
+  handleEnrichDocument,
 }: EnrichModalProps) {
-  if (!isOpen) return null;
-
-  const defaultSuggestions: EnrichSuggestion[] = [
-    {
-      title: "Studi Kasus Konkret",
-      focus: "Berikan contoh kasus nyata terkini beserta analisis penerapannya",
-      reason: "Menghubungkan teori ke fenomena nyata agar tidak sekadar hafalan"
-    },
-    {
-      title: "Miskonsepsi Umum Ujian",
-      focus: "Jelaskan jebakan soal atau miskonsepsi yang sering mengecoh siswa pada materi ini",
-      reason: "Melatih kehati-hatian menghadapi tipe soal jebakan di ujian TKA"
-    },
-    {
-      title: "Analogi Bebas Jargon",
-      focus: "Jelaskan kembali dengan analogi sederhana yang intuitif dan mudah dipahami",
-      reason: "Membantu menancapkan mental model tanpa terbebani istilah kaku"
-    },
-    {
-      title: "Trik Cepat & Rumus Kunci",
-      focus: "Tampilkan intisari rumus KaTeX dan pola cepat penyelesaian masalah",
-      reason: "Bermanfaat untuk contekan persiapan ujian kilat"
-    }
-  ];
-
-  const activeSuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
+  if (!isEnrichModalOpen) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(15, 23, 42, 0.65)",
-        backdropFilter: "blur(5px)",
-        zIndex: 99990,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16
-      }}
-    >
-      <div
-        className="modal-scale-in"
-        style={{
-          backgroundColor: "#ffffff",
-          borderRadius: 16,
-          maxWidth: 680,
-          width: "100%",
-          maxHeight: "92vh",
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
-          overflow: "hidden"
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            padding: "18px 22px",
-            borderBottom: "1px solid #dde1da",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            backgroundColor: "#fbfcf9"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                backgroundColor: "#ecfdf5",
-                color: "#059669",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Globe size={18} />
-            </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#17201d" }}>
-                Perkaya Materi dari Web Ilmiah
-              </h3>
-              <p style={{ margin: 0, fontSize: 12, color: "#6f7975" }}>
-                Pilih satu atau beberapa dimensi pengayaan untuk memperdalam materi
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isEnriching}
-            style={{ background: "transparent", border: "none", color: "#9ca3af", cursor: isEnriching ? "not-allowed" : "pointer", padding: 4 }}
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Content Body */}
-        <div style={{ padding: "18px 22px", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 16 }}>
-          {/* Recommendation Cards Grid */}
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>
-                Rekomendasi Fokus Tambahan (Bisa Pilih Lebih dari Satu):
-              </span>
-              {selectedTitles.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFocusText("");
+                <div
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 9999,
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    backdropFilter: "blur(6px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 16
                   }}
-                  style={{ background: "transparent", border: "none", color: "#6b7280", fontSize: 11, cursor: "pointer" }}
+                  onClick={() => {
+                    if (!isEnriching) setIsEnrichModalOpen(false);
+                  }}
                 >
-                  Bersihkan Pilihan
-                </button>
-              )}
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {activeSuggestions.map((s, idx) => {
-                const isSelected = selectedTitles.includes(s.title);
-                return (
                   <div
-                    key={idx}
-                    onClick={() => onToggleSelect(s.title, s.focus)}
                     style={{
-                      padding: "12px 14px",
-                      borderRadius: 10,
-                      border: `1.5px solid ${isSelected ? "#566b36" : "#dce1da"}`,
-                      backgroundColor: isSelected ? "#f6f9f2" : "#fafbf8",
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between"
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #dde1da",
+                      borderRadius: 12,
+                      width: "100%",
+                      maxWidth: 480,
+                      padding: "24px 26px",
+                      boxShadow: "0 20px 40px rgba(0, 0, 0, 0.2)"
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "#2d4414" : "#17201d" }}>
-                          {s.title}
-                        </span>
-                        <div
-                          style={{
-                            width: 18,
-                            height: 18,
-                            borderRadius: 4,
-                            border: `1.5px solid ${isSelected ? "#566b36" : "#cdd5cb"}`,
-                            backgroundColor: isSelected ? "#566b36" : "#ffffff",
-                            color: "#ffffff",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center"
-                          }}
-                        >
-                          {isSelected && <Check size={12} strokeWidth={3} />}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Globe size={20} color="#4b6623" />
+                        <div>
+                          <h3 style={{ fontSize: 16, fontWeight: 800, color: "#17201d", margin: 0 }}>
+                            Perkaya Materi dari Internet
+                          </h3>
+                          <div style={{ fontSize: 11, color: "#6f7975", marginTop: 2 }}>
+                            {activeDocTitle}
+                          </div>
                         </div>
                       </div>
-
-                      <p style={{ margin: 0, fontSize: 11.5, color: "#5f6b66", lineHeight: 1.45 }}>
-                        {s.focus}
-                      </p>
+                      <button
+                        onClick={() => setIsEnrichModalOpen(false)}
+                        disabled={isEnriching}
+                        style={{ background: "none", border: "none", color: "#6f7975", cursor: "pointer", padding: 4 }}
+                      >
+                        <X size={18} />
+                      </button>
                     </div>
 
-                    {s.reason && (
-                      <div style={{ marginTop: 8, fontSize: 10.5, color: "#8a9691", fontStyle: "italic" }}>
-                        💡 {s.reason}
+                    {isEnriching ? (
+                      <div style={{ padding: "8px 0 16px" }}>
+                        <AIProcessLoader
+                          title="Sedang Memperkaya Materi dari Internet"
+                          subtitle="AI menganalisis kekosongan konsep, mencari referensi kurikulum, dan menyusun studi kasus kontekstual."
+                          badge="Riset Akademik"
+                          steps={[
+                            { label: "Menganalisis Titik Lemah Catatan", detail: `Memindai materi "${activeDocTitle}" untuk menemukan celah konsep.` },
+                            { label: "Mencari Referensi & Kasus Nyata", detail: "Meneliti artikel ensiklopedia, jurnal, dan modul akademik." },
+                            { label: "Menyaring Miskonsepsi & Analogi", detail: "Menyiapkan contoh kontekstual yang ramah pemahaman." },
+                            { label: "Menyisipkan Catatan Tambahan ke Dokumen", detail: "Merapikan rumus KaTeX dan glosarium istilah baru." }
+                          ]}
+                        />
                       </div>
+                    ) : (
+                      <>
+                        <p style={{ fontSize: 12.5, color: "#45544e", lineHeight: "1.5", marginBottom: 14 }}>
+                          AI menganalisis isi materi Anda dan memindai referensi akademik untuk melengkapi bagian yang belum mendalam. Pilih salah satu saran di bawah atau tulis fokus sendiri:
+                        </p>
+
+                        {/* AI Smart Contextual Recommendations */}
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
+                              <Sparkles size={13} color="#4b6623" />
+                              <span>Rekomendasi Cerdas AI</span>
+                            </span>
+                            {isLoadingSuggestions && (
+                              <span style={{ fontSize: 10, color: "#6f7975", fontFamily: "'DM Mono', monospace" }}>
+                                Menganalisis materi...
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                            {(() => {
+                              const activeSuggestions = enrichSuggestions.length > 0 ? enrichSuggestions : [
+                                {
+                                  title: "Studi Kasus Konkret",
+                                  focus: "Berikan contoh kasus nyata terkini di Indonesia beserta analisis penerapannya",
+                                  reason: "Menghubungkan teori ke fenomena nyata agar tidak sekadar hafalan"
+                                },
+                                {
+                                  title: "Miskonsepsi Umum Ujian",
+                                  focus: "Jelaskan jebakan soal atau miskonsepsi yang sering mengecoh siswa pada materi ini",
+                                  reason: "Melatih kepekaan terhadap pola soal ujian sekolah dan UTBK"
+                                },
+                                {
+                                  title: "Analogi Bebas Jargon",
+                                  focus: "Gambarkan konsep inti dengan analogi sederhana sehari-hari",
+                                  reason: "Mempermudah pemahaman intuitif bagi pemula"
+                                },
+                                {
+                                  title: "Trik Cepat & Rumus Kunci",
+                                  focus: "Rangkum kaidah esensial, jembatan keledai, atau batasan legal aturan",
+                                  reason: "Meringkas hafalan ke format padat dan mudah diingat"
+                                }
+                              ];
+
+                              return activeSuggestions.map((sug, idx) => {
+                                const isSelected = selectedEnrichTitles.includes(sug.title);
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => {
+                                      const nextTitles = isSelected
+                                        ? selectedEnrichTitles.filter((t) => t !== sug.title)
+                                        : [...selectedEnrichTitles, sug.title];
+                                      setSelectedEnrichTitles(nextTitles);
+                                      if (nextTitles.length === 0) {
+                                        setEnrichFocus("");
+                                      } else {
+                                        const selectedObjs = activeSuggestions.filter((s) => nextTitles.includes(s.title));
+                                        const merged = selectedObjs.map((s, i) => `${i + 1}. ${s.title}: ${s.focus}`).join("\n\n");
+                                        setEnrichFocus(merged);
+                                      }
+                                    }}
+                                    style={{
+                                      textAlign: "left",
+                                      backgroundColor: isSelected ? "#f0fdf4" : "#ffffff",
+                                      border: `1.5px solid ${isSelected ? "#566b36" : "#dce1da"}`,
+                                      borderRadius: 8,
+                                      padding: "9px 11px",
+                                      cursor: "pointer",
+                                      transition: "all 0.15s ease",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 3,
+                                      boxShadow: isSelected ? "0 2px 8px rgba(86, 107, 54, 0.12)" : "none"
+                                    }}
+                                  >
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                        <div
+                                          style={{
+                                            width: 14,
+                                            height: 14,
+                                            borderRadius: 3,
+                                            border: `1.5px solid ${isSelected ? "#566b36" : "#9ca3af"}`,
+                                            backgroundColor: isSelected ? "#566b36" : "#ffffff",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center"
+                                          }}
+                                        >
+                                          {isSelected && <Check size={10} color="#ffffff" strokeWidth={3} />}
+                                        </div>
+                                        <strong style={{ fontSize: 12, color: isSelected ? "#15803d" : "#17201d" }}>
+                                          {sug.title}
+                                        </strong>
+                                      </div>
+                                      {isSelected && (
+                                        <span style={{ fontSize: 9.5, backgroundColor: "#dcfce7", color: "#166534", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>
+                                          PILIH
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span style={{ fontSize: 10.5, color: "#6f7975", lineHeight: 1.3, marginTop: 2 }}>
+                                      {sug.reason}
+                                    </span>
+                                  </button>
+                                );
+                              });
+                            })()}
+                          </div>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                              Fokus Tambahan (Bisa Dibaca Lengkap & Diedit Bebas)
+                            </label>
+                            {enrichFocus && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEnrichFocus("");
+                                  setSelectedEnrichTitles([]);
+                                }}
+                                style={{ background: "none", border: "none", color: "#6f7975", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
+                              >
+                                Bersihkan teks
+                              </button>
+                            )}
+                          </div>
+                          <textarea
+                            rows={4}
+                            value={enrichFocus}
+                            onChange={(e) => setEnrichFocus(e.target.value)}
+                            placeholder="Klik salah satu rekomendasi di atas untuk mengisi otomatis, atau ketik sendiri penjelasan fokus materi yang ingin ditambah..."
+                            style={{
+                              width: "100%",
+                              backgroundColor: "#fafbf8",
+                              border: "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "10px 12px",
+                              fontSize: 13.5,
+                              lineHeight: "1.55",
+                              color: "#17201d",
+                              outline: "none",
+                              resize: "vertical"
+                            }}
+                          />
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                          <button
+                            onClick={() => setIsEnrichModalOpen(false)}
+                            disabled={isEnriching}
+                            style={{
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #dce1da",
+                              color: "#56615d",
+                              borderRadius: 8,
+                              padding: "8px 14px",
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              cursor: "pointer"
+                            }}
+                          >
+                            Batal
+                          </button>
+                          <button
+                            onClick={handleEnrichDocument}
+                            disabled={isEnriching}
+                            style={{
+                              backgroundColor: "#18221f",
+                              border: "none",
+                              color: "#c8f064",
+                              borderRadius: 8,
+                              padding: "8px 16px",
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              cursor: isEnriching ? "not-allowed" : "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                          >
+                            <Globe size={14} />
+                            <span>Tambahkan ke Materi Ini</span>
+                          </button>
+                        </div>
+                      </>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Combined Custom Focus Textarea */}
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
-              Fokus Pencarian & Pengayaan Gabungan (Dapat diedit bebas):
-            </label>
-            <textarea
-              rows={4}
-              value={focusText}
-              onChange={(e) => setFocusText(e.target.value)}
-              placeholder="Pilih kartu di atas atau ketik aspek spesifik yang ingin diperkaya dari sumber web ilmiah..."
-              disabled={isEnriching}
-              style={{
-                width: "100%",
-                backgroundColor: "#fafbf8",
-                border: "1px solid #dce1da",
-                borderRadius: 8,
-                padding: "10px 12px",
-                fontSize: 13,
-                lineHeight: "1.55",
-                color: "#17201d",
-                outline: "none",
-                resize: "vertical"
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Footer Actions */}
-        <div
-          style={{
-            padding: "14px 22px",
-            borderTop: "1px solid #dde1da",
-            backgroundColor: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: 10
-          }}
-        >
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isEnriching}
-            style={{
-              padding: "8px 16px",
-              borderRadius: 8,
-              backgroundColor: "#f4f6f2",
-              border: "1px solid #dce1da",
-              color: "#4b5563",
-              fontSize: 12.5,
-              fontWeight: 600,
-              cursor: isEnriching ? "not-allowed" : "pointer"
-            }}
-          >
-            Batal
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onApply(focusText)}
-            disabled={!focusText.trim() || isEnriching}
-            style={{
-              padding: "8px 20px",
-              borderRadius: 8,
-              backgroundColor: "#18221f",
-              color: "#c8f064",
-              border: "none",
-              fontSize: 12.5,
-              fontWeight: 700,
-              cursor: !focusText.trim() || isEnriching ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6
-            }}
-          >
-            <Sparkles size={14} />
-            <span>{isEnriching ? "Mencari & Menyusun..." : "Perkaya Materi Sekarang"}</span>
-          </button>
-        </div>
-      </div>
-    </div>
+                </div>
   );
 }

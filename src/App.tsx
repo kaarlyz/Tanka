@@ -540,7 +540,7 @@ export default function App() {
       />
 
       {/* Main View Area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", minWidth: 0 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", maxHeight: "100vh", overflow: "hidden", minWidth: 0 }}>
         <TopBar
           setIsMobileDrawerOpen={setIsMobileDrawerOpen}
           activeTab={activeTab}

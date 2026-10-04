@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { MessageSquare, Sparkles, Trash2, Send, BookOpen, Paperclip, FileText, X } from "lucide-react";
+import { MessageSquare, Sparkles, Trash2, Send, BookOpen, Camera, Image, FileText, X } from "lucide-react";
 import { DocumentItem, ChatMessage } from "../../types";
 import { StagedChatFile } from "../../hooks/useChat";
 import { MathView } from "../common/MathView";
@@ -29,7 +29,9 @@ export function ChatTab({
   handleAttachFile,
   handleClearAttachment,
 }: ChatTabProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
 
   const handlePaste = (e: React.ClipboardEvent) => {
     if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
@@ -226,12 +228,37 @@ export function ChatTab({
         </div>
       )}
 
-      {/* Hidden File Input for Attachment */}
+      {/* Hidden File Inputs */}
       <input
         type="file"
-        ref={fileInputRef}
+        ref={cameraInputRef}
         style={{ display: "none" }}
-        accept="image/png,image/jpeg,image/webp,.pdf,.docx,.pptx,.txt"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0] && handleAttachFile) {
+            handleAttachFile(e.target.files[0]);
+            e.target.value = "";
+          }
+        }}
+      />
+      <input
+        type="file"
+        ref={galleryInputRef}
+        style={{ display: "none" }}
+        accept="image/png,image/jpeg,image/webp,image/bmp"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0] && handleAttachFile) {
+            handleAttachFile(e.target.files[0]);
+            e.target.value = "";
+          }
+        }}
+      />
+      <input
+        type="file"
+        ref={docInputRef}
+        style={{ display: "none" }}
+        accept=".pdf,.docx,.pptx,.txt,.md"
         onChange={(e) => {
           if (e.target.files && e.target.files[0] && handleAttachFile) {
             handleAttachFile(e.target.files[0]);
@@ -241,26 +268,71 @@ export function ChatTab({
       />
 
       {/* Input Bar */}
-      <div style={{ display: "flex", gap: 8 }} onPaste={handlePaste}>
+      <div style={{ display: "flex", gap: 6 }} onPaste={handlePaste}>
+        {/* Option 1: Kamera */}
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => cameraInputRef.current?.click()}
           disabled={isChatSending}
           style={{
-            backgroundColor: stagedAttachment ? "#e2ebd9" : "#ffffff",
-            border: `1px solid ${stagedAttachment ? "#779f2f" : "#dce1da"}`,
-            color: stagedAttachment ? "#3a561c" : "#45544e",
+            backgroundColor: "#ffffff",
+            border: "1px solid #dce1da",
+            color: "#45544e",
             borderRadius: 8,
-            padding: "0 12px",
+            padding: "0 10px",
             fontSize: 13,
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center"
           }}
-          title="Lampirkan Gambar (Foto Soal) atau PDF / Dokumen"
+          title="Ambil Foto Soal / Catatan via Kamera"
         >
-          <Paperclip size={16} />
+          <Camera size={16} />
+        </button>
+
+        {/* Option 2: Galeri Foto */}
+        <button
+          type="button"
+          onClick={() => galleryInputRef.current?.click()}
+          disabled={isChatSending}
+          style={{
+            backgroundColor: stagedAttachment?.type === "image" ? "#e2ebd9" : "#ffffff",
+            border: `1px solid ${stagedAttachment?.type === "image" ? "#779f2f" : "#dce1da"}`,
+            color: stagedAttachment?.type === "image" ? "#3a561c" : "#45544e",
+            borderRadius: 8,
+            padding: "0 10px",
+            fontSize: 13,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          title="Unggah Foto / Gambar dari Galeri"
+        >
+          <Image size={16} />
+        </button>
+
+        {/* Option 3: Dokumen */}
+        <button
+          type="button"
+          onClick={() => docInputRef.current?.click()}
+          disabled={isChatSending}
+          style={{
+            backgroundColor: stagedAttachment?.type === "document" ? "#e2ebd9" : "#ffffff",
+            border: `1px solid ${stagedAttachment?.type === "document" ? "#779f2f" : "#dce1da"}`,
+            color: stagedAttachment?.type === "document" ? "#3a561c" : "#45544e",
+            borderRadius: 8,
+            padding: "0 10px",
+            fontSize: 13,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          title="Unggah Dokumen PDF / DOCX / PPTX / TXT"
+        >
+          <FileText size={16} />
         </button>
 
         <input

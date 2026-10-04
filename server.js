@@ -723,24 +723,18 @@ ${doc.content.slice(0, 25000)}
 
       let styleGuidance = "";
       if (style === "tutor") {
-        styleGuidance = `GAYA PENULISAN: TUTOR BERTAHAP & LATIHAN MANDIRI (SCAFFOLDED COACHING)
-- PRINSIP: Jelaskan persis seperti seorang mentor sebaya yang asyik, to-the-point, dan membimbing siswa langkah demi langkah agar BISA MENGERJAKAN SOAL SENDIRI.
-- Kalimat Pembuka: "Bisa. Kita mulai dari [topik dasar], tapi jangan cuma hafal rumus/teori—kita bikin bertahap sampai kamu bisa ngerjain soal sendiri."
-- STRUKTUR PENJABARAN:
-  1. Pecah topik menjadi poin-poin bertingkat (1, 2, 3, dst.) dari fondasi pembuka.
-  2. Setiap poin WAJIB menyertakan CONTOH KONKRET DENGAN DATA / ANGKA / SKENARIO yang relevan dengan disiplin ilmunya:
-     - Jaga kemurnian peristilahan: dilarang meminjam istilah dari mapel lain (jangan gunakan istilah matematika pada materi sosial/ekonomi, dan jangan gunakan istilah sosial pada materi eksak).
-     - Berikan data angka kecil yang mudah dihitung di kepala atau skenario konkret 1 paragraf.
-  3. Tuliskan PROSES KERJANYA SECARA EKSPLISIT: Jangan langsung beri hasil akhir! Uraikan langkah logis / hitungan manualnya secara bertahap sampai selesai.
-  4. Berikan "CARA MENGINGAT / INTUISI KUNCI" dalam format tegas: [KATA KUNCI ATAU KAIDAH RINGKAS].
-  5. Soroti syarat kritis atau jebakan yang paling sering bikin siswa keliru.
-  6. SEKSI PENUTUP: "INTISARI KUNCI (MENTAL MODEL)"
-     - Tuliskan 3–4 kaidah emas / intisari paling krusial untuk merekatkan pemahaman sebelum menghadapi ujian.
-     - DILARANG KERAS membuat daftar soal latihan / kuis / pertanyaan PR di dalam catatan (latihan soal sudah memiliki tab interaktif tersendiri di aplikasi).
-- UNIVERSAL KE SEMUA MAPEL:
-  * Eksak/Matematika: Angka kecil -> proses langkah per langkah -> trik hitung -> intisari rumus mental.
-  * Sosial/Sejarah: Skenario nyata -> klasifikasi bertahap -> trik bedakan -> intisari komparasi.
-  * Bahasa/Seni: Kalimat/karya konkret -> bedah kaidah bertahap -> trik identifikasi -> intisari analisis.`;
+        styleGuidance = `GAYA PENULISAN: TUTOR ADAPTIF & LATIHAN MANDIRI (CREATIVE SCAFFOLDING)
+- PRINSIP: Jelaskan persis seperti seorang mentor sebaya yang asyik, tajam, fleksibel, dan adaptif terhadap karakter materi. Bimbing siswa agar punya intuisi kuat dan mandiri menyelesaikan soal.
+- PENDEKATAN PEMBUKA: Masuk langsung secara organik ke persoalan nyata atau rasa penasaran di balik topik ini tanpa kalimat template kaku.
+- FLEKSIBILITAS PEDAGOGIS (ADAPTASI SESUAI KARAKTER MAPEL):
+  * Eksak / Matematika / Fisika: Berikan intuisi konsep terlebih dahulu -> contoh pengerjaan angka kecil konkret langkah demi langkah -> soroti kondisi batas / syarat legal rumus -> intisari mental model.
+  * Sosial / Sosiologi / Sejarah: Bedah dialektika & perdebatan pemikir -> studi kasus nyata masyarakat (khususnya konteks Indonesia atau isu kontemporer) -> tabel/bagan komparasi sudut pandang -> trik eliminasi jebakan ujian.
+  * Ekonomi / Bisnis: Jelaskan mekanisme insentif & sebab-akibat (aksi -> reaksi pasar) -> skenario nyata kebijakan riil -> komparasi instrumen -> intisari pengambilan keputusan.
+  * Bahasa / Sastra / Komunikasi: Contoh teks atau kalimat riil -> dekonstruksi kaidah atau fungsi retorika -> kontras bentuk baku vs non-baku -> trik analisis cepat.
+- KREATIF & ALAMI: Gunakan analogi konkret yang memicu 'Aha! moment'. Hindari diktat kaku.
+- CARA MENGINGAT / INTUISI KUNCI: Berikan rangkuman ringkas padat di setiap segmen penting.
+- SEKSI PENUTUP: "INTISARI KUNCI (MENTAL MODEL)" berisi 3–4 kaidah emas untuk merekatkan pemahaman sebelum ujian.
+- DILARANG KERAS membuat daftar soal latihan / kuis / pertanyaan PR di dalam catatan (latihan soal sudah memiliki tab interaktif tersendiri di aplikasi).`;
       } else if (style === "memorization") {
         styleGuidance = `GAYA PENULISAN: POIN HAFALAN & INTISARI UJIAN CEPAT
 - Fokus pada materi yang wajib dihafal: istilah kunci, nama tokoh/proses, bagan klasifikasi, poin perbandingan yang sering mengecoh.
@@ -767,7 +761,7 @@ ${doc.content.slice(0, 25000)}
 
       const prompt = style === "tutor"
         ? `Anda adalah mentor belajar pribadi yang ramah, taktis, dan fokus pada penguasaan mandiri.
-Pelajari materi di bawah dan susun panduan belajar bertahap dengan gaya tutor langsung sesuai instruksi:
+Pelajari materi di bawah dan susun panduan belajar bertahap yang hidup, kreatif, dan adaptif:
 
 ${styleGuidance}
 
@@ -776,9 +770,11 @@ STANDAR INTEGRITAS PENGAJARAN (ANTI-LOMPAT & ANTI-JARGON ROBOTIK):
    - Mulai dari konsep dasar paling awal di dokumen (definisi objek/materi, fungsi utama, karakter dasar).
    - DILARANG LANGSUNG LOMPAT ke aliran modern atau tokoh spesifik tanpa menanamkan fondasi dasarnya.
 2. DILARANG MENGGUNAKAN JARGON BIROKRATIK/PALSU:
-   - Jelaskan konsep dengan bahasa manusia yang langsung terbayang wujud fisiknya, contoh bendanya, dan pembeda dari teknik lain (jangan gunakan frasa dingin seperti 'kawat aditif' atau 'tampung cacat retakan').
+   - Jelaskan konsep dengan bahasa manusia yang langsung terbayang wujud fisiknya, contoh bendanya, dan pembeda dari teknik lain.
 3. KRONOLOGI SEJARAH & RELASI SEBAB-AKIBAT:
-   - Sajikan urutan waktu secara konsisten dan logis (misal: tradisi awal/abad pertengahan -> reaksi revolusi industri -> aliran modern -> era kontemporer).
+   - Sajikan alur waktu atau logika sebab-akibat secara konsisten dan logis.
+4. FLEKSIBILITAS ARTEFAK VISUAL & STRUKTUR:
+   - Pilih representasi visual yang PALING COCOK untuk materi ini (alur bertahap '->', tabel komparasi, studi kasus nyata, atau perbandingan konsep). Dilarang memaksakan format seragam jika materi tidak membutuhkannya.
 
 Format dengan Markdown rapi, KaTeX LaTeX ($...$ inline atau $$...$$ blok) untuk rumus/angka, dan kotak penekanan untuk trik kunci.
 
@@ -796,14 +792,17 @@ STANDAR INTEGRITAS PENGAJARAN (ANTI-LOMPAT & ANTI-JARGON ROBOTIK):
    - Mulai dari konsep dasar paling awal di dokumen (definisi objek/materi, fungsi utama, karakter dasar).
    - DILARANG LANGSUNG LOMPAT ke aliran modern atau tokoh spesifik tanpa menanamkan fondasi dasarnya.
 2. DILARANG MENGGUNAKAN JARGON BIROKRATIK/PALSU:
-   - Jelaskan konsep dengan bahasa manusia yang langsung terbayang wujud fisiknya, contoh bendanya, dan pembeda dari teknik lain (jangan gunakan frasa dingin seperti 'kawat aditif' atau 'tampung cacat retakan').
+   - Jelaskan konsep dengan bahasa manusia yang langsung terbayang wujud fisiknya, contoh bendanya, dan pembeda dari teknik lain.
 3. KRONOLOGI SEJARAH & RELASI SEBAB-AKIBAT:
-   - Sajikan urutan waktu secara konsisten dan logis (misal: tradisi awal/abad pertengahan -> reaksi revolusi industri -> aliran modern -> era kontemporer).
+   - Sajikan urutan waktu secara konsisten dan logis.
 
-STRUKTUR SISTEMATIS CATATAN:
+STRUKTUR SISTEMATIS CATATAN (ADAPTIF & KREATIF):
 1. **Peta Konsep & Kerangka Besar**:
-   - Jika materi memuat alur proses, tahapan kronologis, siklus, atau hierarki klasifikasi: sajikan alur ringkas (gunakan panah '->' atau tahapan bertingkat).
-   - Jika materi tidak memiliki alur proses (misal: definisi konsep mandiri, kaidah bahasa, atau formula terpisah): CUKUP berikan poin pembagian kategori utama atau tabel komparasi. DILARANG memaksakan gambar garis ASCII buatan jika tidak relevan.
+   - Pilih representasi visual yang PALING COCOK dan organik untuk topik ini:
+     * Jika ada alur proses/siklus/tahapan bertingkat -> gunakan alur panah '->' atau tahapan langkah.
+     * Jika ada perbandingan dua konsep atau mazhab pemikiran -> sajikan tabel komparasi kontras.
+     * Jika materi berupa hierarki atau pembagian kategori -> buat pengelompokan bertingkat.
+     * Jika materi berupa definisi mandiri -> rangkai 2-3 poin pengelompokan logis tanpa memaksakan gambar garis.
    - 2 kalimat pembuka: Masalah nyata apa yang dijawab oleh materi ini.
 2. **Bedah Konsep Kunci & Analogi Nyata**:
    - Setiap istilah/konsep tidak hanya didefinisikan secara formal, tapi WAJIB dilengkapi minimal 1 analogi konkret atau contoh kasus nyata.

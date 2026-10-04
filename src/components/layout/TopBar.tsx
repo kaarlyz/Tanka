@@ -156,7 +156,7 @@ export function TopBar({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              maxWidth: 150,
+              maxWidth: "clamp(150px, 35vw, 360px)",
               lineHeight: 1.2
             }}
           >

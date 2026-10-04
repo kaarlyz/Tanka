@@ -578,7 +578,7 @@ export default function App() {
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
           <section className="main-scroll-section" style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+            <div style={{ maxWidth: 1040, margin: "0 auto", width: "100%" }}>
               {activeTab === "home" && (
                 <HomeHubTab
                   activeTab={activeTab}
@@ -882,30 +882,7 @@ export default function App() {
         handleConfirmStagedUpload={handleConfirmStagedUpload}
       />
 
-      {/* Mobile FAB Tanya Nara */}
-      <button
-        className="mobile-only fab-bounce"
-        onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
-        style={{
-          position: "fixed",
-          bottom: "76px",
-          right: "20px",
-          width: "52px",
-          height: "52px",
-          borderRadius: "50%",
-          backgroundColor: "#18221f",
-          color: "#c8f064",
-          border: "2px solid #34413c",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 998,
-          cursor: "pointer"
-        }}
-      >
-        <MessageSquare size={22} />
-      </button>
+      {/* Mobile Bottom Navigation Bar (With integrated Tanya Nara center button, no floating FAB overlay) */}
 
       {/* Mobile Bottom Navigation Bar */}
       <MobileBottomNav

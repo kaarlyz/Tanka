@@ -389,17 +389,108 @@ export function InteractiveMindMap({
     };
   }, [tree, collapsedNodes]);
 
-  // Center the view on initial mount or topic change
+  // Auto-fit and center the view on mount, window resize, or topic change
   const handleResetView = useCallback(() => {
-    setZoom(0.85);
-    setPan({ x: 0, y: 0 });
-  }, []);
+    if (containerRef.current) {
+      const cw = containerRef.current.clientWidth || 360;
+      const ch = containerRef.current.clientHeight || 560;
+      const tw = Math.max(520, bounds.width + 80);
+      const th = Math.max(380, bounds.height + 80);
+      const scaleX = (cw - 32) / tw;
+      const scaleY = (ch - 32) / th;
+      const fitZoom = Math.min(1.0, Math.max(0.35, Math.min(scaleX, scaleY)));
+      setZoom(Number(fitZoom.toFixed(2)));
+      setPan({ x: 0, y: 0 });
+    } else {
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+      setZoom(isMobile ? 0.45 : 0.85);
+      setPan({ x: 0, y: 0 });
+    }
+  }, [bounds.width, bounds.height]);
 
   useEffect(() => {
     handleResetView();
   }, [title, handleResetView]);
 
-  // Pan interaction handlers
+  // Keep refs for touch event listeners
+  const panRef = useRef(pan);
+  panRef.current = pan;
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+
+  // Touch Gesture Listeners (Smooth 1-finger Pan & 2-finger Pinch-to-Zoom on Mobile)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pinchStartRef = useRef<{ dist: number; zoom: number } | null>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        touchStartRef.current = {
+          x: e.touches[0].clientX - panRef.current.x,
+          y: e.touches[0].clientY - panRef.current.y
+        };
+        pinchStartRef.current = null;
+        setIsDragging(true);
+      } else if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        pinchStartRef.current = { dist, zoom: zoomRef.current };
+        touchStartRef.current = null;
+        setIsDragging(true);
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1 && touchStartRef.current) {
+        e.preventDefault();
+        setPan({
+          x: e.touches[0].clientX - touchStartRef.current.x,
+          y: e.touches[0].clientY - touchStartRef.current.y
+        });
+      } else if (e.touches.length === 2 && pinchStartRef.current) {
+        e.preventDefault();
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const factor = dist / pinchStartRef.current.dist;
+        setZoom(Math.min(2.5, Math.max(0.28, pinchStartRef.current.zoom * factor)));
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        touchStartRef.current = null;
+        pinchStartRef.current = null;
+        setIsDragging(false);
+      } else if (e.touches.length === 1) {
+        touchStartRef.current = {
+          x: e.touches[0].clientX - panRef.current.x,
+          y: e.touches[0].clientY - panRef.current.y
+        };
+        pinchStartRef.current = null;
+      }
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    el.addEventListener("touchcancel", onTouchEnd);
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, []);
+
+  // Desktop Mouse Pan interaction handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -421,7 +512,7 @@ export function InteractiveMindMap({
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.08 : 0.92;
-    setZoom((prev) => Math.min(2.2, Math.max(0.4, prev * factor)));
+    setZoom((prev) => Math.min(2.2, Math.max(0.35, prev * factor)));
   };
 
   return (
@@ -438,6 +529,7 @@ export function InteractiveMindMap({
         border: "1px solid #dce2da",
         overflow: "hidden",
         userSelect: "none",
+        touchAction: "none",
         cursor: isDragging ? "grabbing" : "grab"
       }}
       onMouseDown={handleMouseDown}
@@ -581,109 +673,76 @@ export function InteractiveMindMap({
       <div
         style={{
           position: "absolute",
-          top: 14,
-          left: 16,
-          backgroundColor: "rgba(255, 255, 255, 0.9)",
+          top: 12,
+          left: 12,
+          backgroundColor: "rgba(255, 255, 255, 0.92)",
           backdropFilter: "blur(6px)",
           border: "1px solid #dce2da",
-          borderRadius: 10,
-          padding: "8px 14px",
+          borderRadius: 8,
+          padding: "5px 10px",
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          boxShadow: "0 2px 10px rgba(0,0,0,0.03)"
+          gap: 6,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+          zIndex: 10
         }}
       >
-        <div style={{ backgroundColor: "#eef8db", padding: 5, borderRadius: 6 }}>
-          <Layers size={14} color="#4b6623" />
-        </div>
-        <div>
-          <div style={{ fontSize: 11.5, fontWeight: 800, color: "#17201d" }}>
-            Mind Map Interaktif
-          </div>
-          <div style={{ fontSize: 9.5, color: "#6f7975" }}>
-            {nodes.length} simpul konsep · Klik simpul untuk detail
-          </div>
-        </div>
+        <Layers size={13} color="#4b6623" />
+        <span style={{ fontSize: 11, fontWeight: 800, color: "#17201d" }}>
+          Mind Map • {nodes.length} Simpul
+        </span>
       </div>
 
-      {/* Top Right: Zoom & Layout Action Controls */}
+      {/* Top Right: Layout Action Controls */}
       <div
         style={{
           position: "absolute",
-          top: 14,
-          right: 16,
-          backgroundColor: "rgba(255, 255, 255, 0.9)",
+          top: 12,
+          right: 12,
+          backgroundColor: "rgba(255, 255, 255, 0.92)",
           backdropFilter: "blur(6px)",
           border: "1px solid #dce2da",
-          borderRadius: 10,
-          padding: "4px",
+          borderRadius: 8,
+          padding: "3px 6px",
           display: "flex",
           alignItems: "center",
           gap: 4,
-          boxShadow: "0 2px 10px rgba(0,0,0,0.03)"
+          boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+          zIndex: 10
         }}
       >
         <button
-          onClick={() => setZoom((z) => Math.min(2.2, z * 1.15))}
-          title="Perbesar (Zoom In)"
-          style={{
-            background: "none",
-            border: "none",
-            padding: "6px 8px",
-            borderRadius: 6,
-            cursor: "pointer",
-            color: "#45544e",
-            display: "flex",
-            alignItems: "center"
-          }}
-        >
-          <ZoomIn size={14} />
-        </button>
-        <button
-          onClick={() => setZoom((z) => Math.max(0.4, z * 0.85))}
-          title="Perkecil (Zoom Out)"
-          style={{
-            background: "none",
-            border: "none",
-            padding: "6px 8px",
-            borderRadius: 6,
-            cursor: "pointer",
-            color: "#45544e",
-            display: "flex",
-            alignItems: "center"
-          }}
-        >
-          <ZoomOut size={14} />
-        </button>
-        <div style={{ width: 1, height: 16, backgroundColor: "#dce2da" }} />
-        <button
           onClick={handleResetView}
-          title="Reset Sudut Pandang"
+          title="Posisikan ke tengah layar (Fit View)"
           style={{
             background: "none",
             border: "none",
-            padding: "6px 8px",
-            borderRadius: 6,
+            padding: "5px 7px",
+            borderRadius: 5,
             cursor: "pointer",
-            color: "#45544e",
+            color: "#283912",
             display: "flex",
-            alignItems: "center"
+            alignItems: "center",
+            gap: 4,
+            fontSize: 11,
+            fontWeight: 700
           }}
         >
-          <RotateCcw size={14} />
+          <RotateCcw size={12} />
+          <span>Fit</span>
         </button>
+        <div style={{ width: 1, height: 14, backgroundColor: "#dce2da" }} />
         <button
           onClick={expandAll}
           title="Buka Semua Cabang"
           style={{
             background: "none",
             border: "none",
-            padding: "6px 8px",
-            borderRadius: 6,
+            padding: "5px 7px",
+            borderRadius: 5,
             cursor: "pointer",
             color: "#45544e",
-            fontSize: 10.5,
+            fontSize: 11,
             fontWeight: 700
           }}
         >
@@ -695,11 +754,11 @@ export function InteractiveMindMap({
           style={{
             background: "none",
             border: "none",
-            padding: "6px 8px",
-            borderRadius: 6,
+            padding: "5px 7px",
+            borderRadius: 5,
             cursor: "pointer",
             color: "#45544e",
-            fontSize: 10.5,
+            fontSize: 11,
             fontWeight: 700
           }}
         >
@@ -707,19 +766,88 @@ export function InteractiveMindMap({
         </button>
       </div>
 
-      {/* Bottom Hint */}
+      {/* Bottom Left: Touch & Mouse Gesture Hint */}
       <div
         style={{
           position: "absolute",
           bottom: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
+          left: 12,
           fontSize: 10,
-          color: "#8a9691",
-          pointerEvents: "none"
+          color: "#6b7a74",
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
+          backdropFilter: "blur(4px)",
+          padding: "4px 8px",
+          borderRadius: 6,
+          border: "1px solid #e2e8e0",
+          pointerEvents: "none",
+          zIndex: 10
         }}
       >
-        💡 Geser kanvas untuk navigasi · Scroll mouse untuk zoom
+        💡 Geser layar untuk geser · Cubit untuk zoom
+      </div>
+
+      {/* Bottom Right: Zoom Controls */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 12,
+          right: 12,
+          backgroundColor: "rgba(255, 255, 255, 0.92)",
+          backdropFilter: "blur(6px)",
+          border: "1px solid #dce2da",
+          borderRadius: 8,
+          padding: "3px 6px",
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          zIndex: 10
+        }}
+      >
+        <button
+          onClick={() => setZoom((z) => Math.max(0.28, z * 0.85))}
+          title="Perkecil (Zoom Out)"
+          style={{
+            background: "none",
+            border: "none",
+            padding: "5px 7px",
+            borderRadius: 5,
+            cursor: "pointer",
+            color: "#45544e",
+            display: "flex",
+            alignItems: "center"
+          }}
+        >
+          <ZoomOut size={13} />
+        </button>
+        <span
+          style={{
+            fontSize: 10.5,
+            fontWeight: 700,
+            fontFamily: "'DM Mono', monospace",
+            color: "#18221f",
+            minWidth: 34,
+            textAlign: "center"
+          }}
+        >
+          {Math.round(zoom * 100)}%
+        </span>
+        <button
+          onClick={() => setZoom((z) => Math.min(2.5, z * 1.15))}
+          title="Perbesar (Zoom In)"
+          style={{
+            background: "none",
+            border: "none",
+            padding: "5px 7px",
+            borderRadius: 5,
+            cursor: "pointer",
+            color: "#45544e",
+            display: "flex",
+            alignItems: "center"
+          }}
+        >
+          <ZoomIn size={13} />
+        </button>
       </div>
 
       {/* Node Detail Popup / Inspector Drawer */}

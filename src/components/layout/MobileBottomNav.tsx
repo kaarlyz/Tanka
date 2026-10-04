@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, BookOpen, Target, AlertTriangle, Brain } from "lucide-react";
+import { Home, BookOpen, Target, AlertTriangle, MessageSquare } from "lucide-react";
 import { ActiveTab, MistakeItem } from "../../types";
 
 export interface MobileBottomNavProps {
@@ -45,6 +45,35 @@ export function MobileBottomNav({
           <BookOpen size={18} />
           <span>Materi</span>
           {activeTab === "material" && !isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
+        </button>
+
+        <button
+          className={`mobile-bottom-btn ${isAiPanelOpen ? "active" : ""}`}
+          onClick={() => {
+            setIsAiPanelOpen(!isAiPanelOpen);
+            setIsMobileDrawerOpen(false);
+          }}
+          title="Tanya AI Nara"
+          style={{ position: "relative" }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 999,
+              backgroundColor: isAiPanelOpen ? "#18221f" : "#f0f4ea",
+              color: isAiPanelOpen ? "#c8f064" : "#4b6623",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto",
+              border: isAiPanelOpen ? "1px solid #18221f" : "1px solid #dce2d6"
+            }}
+          >
+            <MessageSquare size={15} />
+          </div>
+          <span style={{ fontWeight: 800, color: isAiPanelOpen ? "#18221f" : "#4b6623", fontSize: 9.5 }}>Nara AI</span>
+          {isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
         </button>
 
         <button

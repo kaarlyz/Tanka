@@ -225,7 +225,25 @@ export function MaterialTab({
       if (isAsciiDiagramText(pText)) {
         return renderVisualDiagramOrPre(children);
       }
-      return <p style={{ marginBottom: 12, color: "#374540", lineHeight: 1.65 }}>{children}</p>;
+      if (/⚠️|peringatan salah kaprah|pitfall/i.test(pText)) {
+        return (
+          <div
+            style={{
+              backgroundColor: "#fffbeb",
+              border: "1px solid #fde68a",
+              borderLeft: "4px solid #f59e0b",
+              borderRadius: "0 10px 10px 0",
+              padding: "14px 18px",
+              margin: "18px 0",
+              color: "#92400e",
+              lineHeight: 1.75
+            }}
+          >
+            {children}
+          </div>
+        );
+      }
+      return <p style={{ marginBottom: 14, color: "#23332c", lineHeight: 1.8 }}>{children}</p>;
     },
     ul: ({ children }: any) => (
       <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
@@ -239,10 +257,41 @@ export function MaterialTab({
     strong: ({ children }: any) => (
       <strong style={{ color: "#17201d", fontWeight: 700 }}>{children}</strong>
     ),
-    blockquote: ({ children }: any) => (
-      <blockquote style={{ borderLeft: "3px solid #8dbd42", backgroundColor: "#eef8db", padding: "10px 14px", borderRadius: "0 8px 8px 0", margin: "12px 0", color: "#22370c" }}>
-        {children}
-      </blockquote>
+    blockquote: ({ children }: any) => {
+      const text = extractTextFromNode(children);
+      const isPitfall = /⚠️|salah kaprah|pitfall/i.test(text);
+      const isDefinisi = /📖|definisi baku|definisi/i.test(text);
+      const isInsight = /💡|insight|analogi/i.test(text);
+
+      if (isPitfall) {
+        return (
+          <blockquote style={{ borderLeft: "4px solid #f59e0b", backgroundColor: "#fffbeb", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#92400e", lineHeight: 1.75 }}>
+            {children}
+          </blockquote>
+        );
+      }
+      if (isDefinisi) {
+        return (
+          <blockquote style={{ borderLeft: "4px solid #10b981", backgroundColor: "#ecfdf5", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#065f46", lineHeight: 1.75 }}>
+            {children}
+          </blockquote>
+        );
+      }
+      if (isInsight) {
+        return (
+          <blockquote style={{ borderLeft: "4px solid #3b82f6", backgroundColor: "#eff6ff", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#1e40af", lineHeight: 1.75 }}>
+            {children}
+          </blockquote>
+        );
+      }
+      return (
+        <blockquote style={{ borderLeft: "3.5px solid #4b6623", backgroundColor: "#f7f9f4", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#21322a", lineHeight: 1.75 }}>
+          {children}
+        </blockquote>
+      );
+    },
+    hr: () => (
+      <hr style={{ border: "none", borderTop: "1px solid #e5ebe2", margin: "24px 0" }} />
     ),
     pre: ({ children }: any) => renderVisualDiagramOrPre(children),
     code: ({ children }: any) => (
@@ -435,8 +484,8 @@ export function MaterialTab({
                       </div>
                     )}
 
-                    {/* Stats Metrics Bento Grid (Shown only in Full Document Mode to avoid crowding Chapter Reader) */}
-                    {materialViewMode !== "chapters" && (
+                    {/* Stats Metrics Bento Grid (Shown only in Full Document Mode to avoid crowding Chapter Reader and Mind Map) */}
+                    {materialViewMode === "full" && (
                       <div className="metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 }}>
                         <div style={{ padding: "12px 14px", backgroundColor: "#f8f9f5", borderRadius: 10, border: "1px solid #dde1da" }}>
                           <div style={{ fontSize: 10, color: "#727d78", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.08em", fontFamily: "'DM Mono', monospace" }}>Total Kosakata</div>

@@ -110,6 +110,35 @@ export function MaterialTab({
   const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full">("chapters");
   const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
+  const [isRestructuring, setIsRestructuring] = React.useState(false);
+  const [restructureNotice, setRestructureNotice] = React.useState<string | null>(null);
+
+  const handleRestructureCurriculum = async () => {
+    if (!activeDocId) return;
+    setIsRestructuring(true);
+    setRestructureNotice("AI sedang membedah dan menyusun materi menjadi bab-bab terstruktur...");
+    try {
+      const res = await fetch(`/api/documents/${activeDocId}/restructure`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (data.success && data.content) {
+        setActiveDocContent(data.content);
+        setRestructureNotice("Modul materi berhasil disusun ulang menjadi bab-bab terstruktur!");
+        setTimeout(() => setRestructureNotice(null), 3500);
+      } else {
+        setRestructureNotice(data.error || "Gagal menyusun ulang materi");
+        setTimeout(() => setRestructureNotice(null), 3500);
+      }
+    } catch {
+      setRestructureNotice("Terjadi kesalahan jaringan saat menyusun modul");
+      setTimeout(() => setRestructureNotice(null), 3500);
+    } finally {
+      setIsRestructuring(false);
+    }
+  };
 
   // Partition document into bite-sized chapters by ## headings
   const chapters = React.useMemo(() => {
@@ -314,6 +343,28 @@ export function MaterialTab({
                         </button>
 
                         <button
+                          onClick={handleRestructureCurriculum}
+                          disabled={isRestructuring}
+                          style={{
+                            backgroundColor: "#f4fbeb",
+                            border: "1px solid #c2e28f",
+                            color: "#273f15",
+                            borderRadius: 8,
+                            padding: "6px 12px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: isRestructuring ? "wait" : "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                          title="Susun ulang materi ini menjadi kurikulum bab demi bab terpadu dengan AI"
+                        >
+                          <Sparkles size={14} color="#4b6623" />
+                          <span>{isRestructuring ? "Menyusun Kurikulum..." : "Susun Bab Terpadu (AI)"}</span>
+                        </button>
+
+                        <button
                           onClick={() => copyToClipboard(activeDocContent, "Isi Modul", "docContent")}
                           style={{
                             backgroundColor: copiedId === "docContent" ? "#ecfdf5" : "#ffffff",
@@ -354,6 +405,13 @@ export function MaterialTab({
                         </button>
                       </div>
                     </div>
+
+                    {restructureNotice && (
+                      <div style={{ padding: "10px 16px", backgroundColor: "#eef8db", border: "1px solid #c2e28f", borderRadius: 8, fontSize: 12.5, color: "#22370c", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                        <Sparkles size={16} color="#4b6623" />
+                        <span>{restructureNotice}</span>
+                      </div>
+                    )}
 
                     {/* Stats Metrics Bento Grid (Responsive 1-col mobile, 3-col desktop) */}
                     <div className="metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 20 }}>

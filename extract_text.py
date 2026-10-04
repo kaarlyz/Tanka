@@ -48,8 +48,29 @@ def extract_pptx(file_path):
             if cur:
                 slides_text.append(f"--- Slide {idx} ---\n" + "\n".join(cur))
         return "\n\n".join(slides_text)
-    except Exception as e:
-        return f"[Error ekstrak PPTX: {e}]"
+    except Exception:
+        # Fallback stdlib zipfile + XML extraction (no pptx pip module needed)
+        try:
+            with zipfile.ZipFile(file_path) as z:
+                slide_names = sorted(
+                    [n for n in z.namelist() if n.startswith("ppt/slides/slide") and n.endswith(".xml")],
+                    key=lambda x: int("".join(filter(str.isdigit, x)) or 0)
+                )
+                slides_text = []
+                for idx, sname in enumerate(slide_names, 1):
+                    xml_content = z.read(sname)
+                    tree = ET.fromstring(xml_content)
+                    texts = []
+                    for node in tree.iter():
+                        if node.tag.endswith("}t") and node.text and node.text.strip():
+                            texts.append(node.text.strip())
+                    if texts:
+                        slides_text.append(f"--- Slide {idx} ---\n" + "\n".join(texts))
+                if slides_text:
+                    return "\n\n".join(slides_text)
+            return "[PPTX kosong / tidak ditemukan teks slide]"
+        except Exception as fallback_err:
+            return f"[Error ekstrak PPTX: {fallback_err}]"
 
 def extract_image(file_path):
     try:

@@ -123,6 +123,69 @@ KEMBALIKAN HANYA FORMAT JSON VALID:
   }
 }
 
+// Universal AI Course Synthesizer: Transforms raw slides/pages/notes into a coherent chapter-by-chapter curriculum
+async function synthesizeCourseCurriculum(rawText, title, instruction = "", model = "ag/gemini-3.8-flash-low") {
+  const customClause = instruction ? `\nCatatan Khusus dari Siswa: "${instruction}"\n` : "";
+  const prompt = `Anda adalah seorang desainer kurikulum dan pendidik ahli senior untuk platform studi akademik modern (seperti Pelajarin.ai).
+Pengguna mengunggah materi mentah (berupa rangkuman slide presentasi PPT/PPTX, dokumen PDF, atau catatan tangan) berjudul: "${title}".
+${customClause}
+
+TEKS SUMBER MENTAH DARI BERKAS:
+"""
+${rawText.slice(0, 18000)}
+"""
+
+MASALAH YANG HARUS DISELESAIKAN:
+Teks sumber di atas seringkali berupa potongan slide lepas, bullet point mentah, atau catatan yang terputus-putus. Pengguna TIDAK INGIN membaca potongan teks mentah atau tulisan "--- Slide X ---". Pengguna menginginkan SATU MODUL BELAJAR TERPADU yang disusun secara pedagogis dan saling menyambung bab demi bab.
+
+TUGAS ANDA:
+Rombak dan susun ulang seluruh materi mentah di atas menjadi SATU MODUL PEMBELAJARAN LENGKAP & RUNTUT dengan pembagian 4 hingga 6 BAB (Chapters) terstruktur.
+
+ATURAN STRUKTUR MODUL WAJIB (FORMAT MARKDOWN):
+
+# ${title}
+
+> [1-2 kalimat orientasi / pengantar ringkas tentang esensi materi ini dan gambaran besar apa yang akan dipelajari siswa].
+
+## Bab 1: [Judul Bab Fondasi & Latar Belakang Konsep]
+- Jelaskan konsep dasar secara mengalir dan ramah pemahaman.
+- Gunakan sub-heading '### [Nama Sub-konsep]' untuk memecah poin-poin utama agar mind map dapat mengenali strukturnya dengan jelas.
+- Jelaskan istilah-istilah kunci dan analogi konkret.
+
+## Bab 2: [Judul Bab Karakteristik / Ragam Wilayah / Inti Materi]
+- Bedah pembagian wilayah, karakteristik karya, atau tahapan-tahapan penting secara komprehensif.
+- Gunakan sub-heading '### [Nama Sub-konsep]' dan sajikan poin-poin analisis yang mendalam.
+- Buatkan tabel perbandingan yang rapi jika ada komparasi antar kategori/wilayah.
+
+## Bab 3: [Judul Bab Transformasi / Modernisasi / Analisis Mendalam]
+- Jelaskan proses perubahan, tokoh-tokoh penting, revolusi teknik, atau kausalitas dampaknya.
+- Sambungkan benang merah dari bab sebelumnya (misal dari era klasik/tradisi menuju era modern/kontemporer).
+
+## Bab 4: [Judul Bab Sintesis, Tokoh Kunci & Relevansi Kontemporer]
+- Bahas tokoh-tokoh pelopor, gerakan seni/desain, atau penerapan mutakhir.
+- Jelaskan bagaimana inovasi tersebut mengubah paradigma dan cara pandang masyarakat.
+
+## Bab 5: [Judul Bab Rantai Kausalitas & Jebakan Ujian (Exam Mastery)]
+- **Rantai Kausalitas 1 Baris:** Sajikan alur ringkas menggunakan panah (misal: A ➔ B ➔ C ➔ D).
+- **Kancing Memori Soal:** Pasangkan kata kunci pertanyaan ujian yang sering keluar dengan jawaban analisisnya.
+- **Poin Kritis yang Sering Mengecoh:** Bedah salah kaprah siswa dalam memahami materi ini.
+
+PANDUAN GAYA PENULISAN:
+1. Hubungkan antar-bab secara mulus. Jangan ada format slide mentah ("--- Slide 1 ---", "LKONSEP DASAR", dsb).
+2. Tuliskan teks secara utuh, kaya wawasan, dan tidak setengah-setengah.
+3. Gunakan heading tingkat 2 ('## Bab ...') untuk setiap bab utama dan heading tingkat 3 ('### ...') untuk setiap sub-topik agar otomatis terpetakan menjadi Mind Map dan Chapter Reader yang sempurna.`;
+
+  try {
+    const result = await callRouter([{ role: "user", content: prompt }], model, 0.2);
+    if (result && result.trim().length > 300) {
+      return result.trim();
+    }
+  } catch (err) {
+    console.warn("[tanka] Curriculum synthesis error:", err.message);
+  }
+  return null;
+}
+
 async function handleDocumentsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
@@ -226,29 +289,23 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     const examResult = await processExamQuestionsIfDetected(id, mergedText, cleanTitle, db, body.goal, body.instruction);
     let finalContent = examResult.newContent || mergedText;
 
-    // Tailored study notes synthesis if requested
-    if (!examResult.isExamSheet && (body.instruction || (body.goal && body.goal !== "theory"))) {
+    // If not an exam sheet, ALWAYS synthesize into a cohesive chapter-by-chapter course curriculum
+    if (!examResult.isExamSheet) {
       try {
-        const synthesisPrompt = `Pengguna mengunggah catatan belajar berjudul "${cleanTitle}".
-Arahan / Keinginan Khusus Pengguna: "${body.instruction || body.goal}".
-
-Isi Catatan Belajar:
-"""
-${mergedText.slice(0, 12000)}
-"""
-
-Tugas Anda: Susun modul materi terstruktur yang secara langsung menjawab kebutuhan pengguna tersebut:
-- Jelaskan konsep yang ditanyakan secara gamblang dan mudah dipahami
-- Gunakan rumus KaTeX rapi jika berkaitan dengan matematika/eksak
-- Tuliskan langkah penyelesaian konkret step-by-step
-Format dalam markdown rapi.`;
-        const tailoredNotes = await callRouter([{ role: "user", content: synthesisPrompt }], "ag/gemini-3.8-flash-low", 0.2);
-        if (tailoredNotes) {
-          finalContent = `${tailoredNotes.trim()}\n\n---\n\n### 📄 Catatan Asli dari Berkas\n\n${mergedText}`;
+        console.log(`[Curriculum Synthesis] Menyusun kurikulum bab terstruktur untuk: "${cleanTitle}"...`);
+        const structuredCurriculum = await synthesizeCourseCurriculum(
+          mergedText,
+          cleanTitle,
+          body.instruction || (body.goal !== "theory" ? body.goal : ""),
+          body.model || "ag/gemini-3.8-flash-low"
+        );
+        if (structuredCurriculum) {
+          finalContent = structuredCurriculum;
           db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(finalContent, id);
+          console.log(`[Curriculum Synthesis] Sukses menyusun kurikulum (${finalContent.length} karakter).`);
         }
       } catch (e) {
-        console.warn("[tanka] Tailored notes synthesis error:", e.message);
+        console.warn("[tanka] Curriculum synthesis error:", e.message);
       }
     }
 
@@ -263,6 +320,33 @@ Format dalam markdown rapi.`;
       isExamSheet: examResult.isExamSheet || false,
       questionCount: examResult.questionCount || 0,
       detectedQuestions: examResult.questions || []
+    });
+  }
+
+  // 2b. POST /api/documents/:id/restructure - re-synthesize document into chapter-by-chapter curriculum
+  const restructureMatch = pathname.match(/^\/api\/documents\/([^/]+)\/restructure$/);
+  if (req.method === "POST" && restructureMatch) {
+    const docId = restructureMatch[1];
+    const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
+    if (!doc) {
+      return sendJSON(res, { error: "Dokumen tidak ditemukan" }, 404);
+    }
+    const body = await getBody(req);
+    const model = body.model || "ag/gemini-3.8-flash-low";
+    const instruction = body.instruction || "";
+
+    console.log(`[Curriculum Synthesis] Restructuring doc ${docId} ("${doc.title}")...`);
+    const structuredCurriculum = await synthesizeCourseCurriculum(doc.content, doc.title, instruction, model);
+    if (!structuredCurriculum) {
+      return sendJSON(res, { error: "Gagal menyusun ulang kurikulum materi" }, 500);
+    }
+
+    db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(structuredCurriculum, docId);
+    return sendJSON(res, {
+      success: true,
+      id: docId,
+      title: doc.title,
+      content: structuredCurriculum
     });
   }
 

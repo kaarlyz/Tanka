@@ -125,7 +125,7 @@ STANDAR KUALITAS SOAL:
 5. KUALITAS PEMBAHASAN STEP-BY-STEP: 
    - WAJIB JABARKAN KONSEP DASAR / RUMUS UMUM DULU SEBELUM PENGERJAAN! Jika hitungan, tuliskan bentuk baku rumusnya. Jika non-hitungan (teori/sejarah/biologi), tuliskan definisi atau dalil utamanya secara eksplisit.
    - Langkah 1: Identifikasi Fakta/Variabel & Tulis Teori Dasar.
-   - Langkah 2: Eksekusi Kasus / Substitusi Angka.
+   - Langkah 2: Eksekusi Kasus / Substitusi Angka. JANGAN gunakan tanda titik dua (:) untuk menunjukkan hasil substitusi karena membingungkan (misal salah: "T = (2,3) : x'=x+2"). Gunakan tanda panah (\\rightarrow) atau kata penghubung yang jelas (misal: "maka", "sehingga", "dipetakan menjadi").
    - Langkah 3: Kesimpulan Singkat & Analisis Kenapa Pengecoh Salah.
 
 ${weaknessContext}

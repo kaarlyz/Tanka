@@ -69,6 +69,27 @@ export function TanyaNaraPanel({
                   <RotateCw size={12} />
                 </button>
               )}
+              {/* Fullscreen Toggle (Mobile) */}
+              <button
+                className="mobile-only"
+                onClick={() => {
+                  const el = document.querySelector('.ai-panel-box');
+                  if (el) el.classList.toggle('fullscreen');
+                }}
+                title="Toggle Fullscreen"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#8a9691",
+                  cursor: "pointer",
+                  padding: "3px 4px",
+                  borderRadius: 4,
+                  display: "flex",
+                  alignItems: "center"
+                }}
+              >
+                <div style={{ width: 12, height: 12, border: "2px solid currentColor", borderRadius: 2 }} />
+              </button>
               <button
                 onClick={() => setIsAiPanelOpen(false)}
                 title="Tutup panel Tanya Nara"

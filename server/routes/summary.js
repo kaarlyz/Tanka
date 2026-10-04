@@ -19,7 +19,7 @@ async function handleSummaryRoutes(req, res, pathname, helpers) {
 - ATURAN PENJELASAN WAJIB:
   1. TULISKAN RUMUS UMUM / TEOREMA DULU: Sebelum memasukkan angka apa pun, tuliskan rumus baku atau teorema dasarnya. (Contoh SALAH: "Kita substitusi x' = x - 3". Contoh BENAR: "Rumus umum translasi T(a,b) adalah x' = x + a. Karena T = (-3, 2), maka...").
   2. JELASKAN ASAL USULNYA: Berikan kalimat pengantar logis dari mana rumus umum itu berasal agar bukan sekadar hafalan buta. (Contoh: "Kenapa x' = x + a? Karena titik bergeser sejauh a pada sumbu X...").
-  3. SUBSTITUSI PERLAHAN: Tunjukkan proses memasukkan angka ke rumus langkah demi langkah tanpa loncatan aljabar.
+  3. SUBSTITUSI PERLAHAN: Tunjukkan proses memasukkan angka ke rumus langkah demi langkah. JANGAN gunakan tanda titik dua (:) untuk arti "menghasilkan" (misal salah: "T = (2,3) : x'=x+2"). Gunakan tanda panah $\\rightarrow$ atau kata "maka".
   4. BEDAH JEBAKAN (PITFALLS): Tunjukkan di mana siswa biasanya salah hitung atau salah konsep.
 - SEKSI PENUTUP: Berikan "Intisari Kunci" untuk menyimpulkan materi.`;
     } else if (style === "memorization") {

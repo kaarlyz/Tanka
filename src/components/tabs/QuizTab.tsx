@@ -1396,7 +1396,7 @@ export function QuizTab({
                           <Sparkles size={14} color="#166534" /> 
                           Sesuaikan Kuis dengan AI
                         </h3>
-                        <div style={{ display: "flex", gap: 8 }}>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <input 
                             type="text"
                             value={tailorInput}
@@ -1404,8 +1404,8 @@ export function QuizTab({
                             onKeyDown={(e) => {
                               if (e.key === "Enter") handleTailor();
                             }}
-                            placeholder="Contoh: Buat soalnya lebih susah (HOTS), fokuskan ke topik X..."
-                            style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #bbf7d0", backgroundColor: "#fff", color: "#166534", fontSize: 13, outline: "none" }}
+                            placeholder="Contoh: Buat soalnya lebih susah (HOTS)..."
+                            style={{ flex: "1 1 200px", minWidth: 0, padding: "10px 14px", borderRadius: 8, border: "1px solid #bbf7d0", backgroundColor: "#fff", color: "#166534", fontSize: 13, outline: "none" }}
                             disabled={isTailoring}
                           />
                           <button 

@@ -1244,9 +1244,12 @@
         }
         .ai-panel-box.open {
           position: fixed !important;
-          inset: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          top: auto !important;
           width: 100vw !important;
-          height: 100dvh !important;
+          height: 60dvh !important;
           max-height: 100dvh !important;
           z-index: 3500 !important;
           background: #ffffff !important;
@@ -1254,6 +1257,14 @@
           flex-direction: column !important;
           animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
           border-left: none !important;
+          border-radius: 20px 20px 0 0 !important;
+          box-shadow: 0 -10px 40px rgba(0,0,0,0.15) !important;
+          transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .ai-panel-box.open.fullscreen {
+          height: 100dvh !important;
+          border-radius: 0 !important;
         }
         .ai-panel-inner {
           height: 100% !important;

@@ -416,14 +416,14 @@ export function SummaryTab({
                         <Sparkles size={14} color="#166534" /> 
                         Sesuaikan Rangkuman dengan AI
                       </h3>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <input 
                           type="text"
                           value={tailorInput}
                           onChange={(e) => setTailorInput(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && handleTailor()}
-                          placeholder="Contoh: Buat lebih singkat, tambahkan analogi mobil, gunakan bahasa santai..."
-                          style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #bbf7d0", backgroundColor: "#fff", color: "#166534", fontSize: 13, outline: "none" }}
+                          placeholder="Contoh: Buat lebih singkat..."
+                          style={{ flex: "1 1 200px", minWidth: 0, padding: "10px 14px", borderRadius: 8, border: "1px solid #bbf7d0", backgroundColor: "#fff", color: "#166534", fontSize: 13, outline: "none" }}
                           disabled={isTailoring}
                         />
                         <button 

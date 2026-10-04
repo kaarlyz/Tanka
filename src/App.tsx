@@ -978,6 +978,256 @@ function WebSearchProgressView({
   );
 }
 
+// 💫 REUSABLE LIVE AI PROCESS VISUALIZER WITH STEPS, PROGRESS, AND STUDY TIPS
+interface AIProcessStep {
+  label: string;
+  detail: string;
+}
+
+interface AIProcessLoaderProps {
+  title: string;
+  subtitle: string;
+  badge?: string;
+  steps: AIProcessStep[];
+  tips?: string[];
+  accentColor?: string;
+}
+
+function AIProcessLoader({
+  title,
+  subtitle,
+  badge = "Tanka AI Engine",
+  steps,
+  tips = [
+    "Teknik active recall menguatkan koneksi sinapsis otak hingga 2x lipat dibanding sekadar membaca ulang.",
+    "Jeda 10 menit setelah 10 menit fokus menjaga konsentrasi tetap tajam tanpa rasa jenuh atau lelah.",
+    "Menjelaskan materi dengan bahasa sendiri (Metode Feynman) adalah cara tercepat menguji pemahaman sejati.",
+    "Miskonsepsi yang langsung diperbaiki saat latihan soal menghasilkan retensi memori jangka panjang."
+  ],
+  accentColor = "#4b6623"
+}: AIProcessLoaderProps) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [progress, setProgress] = useState(18);
+  const [tipIndex, setTipIndex] = useState(0);
+
+  useEffect(() => {
+    const stepInterval = setInterval(() => {
+      setCurrentStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
+    }, 2400);
+
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 94) return 94;
+        const diff = 95 - prev;
+        return prev + Math.max(1, Math.floor(diff / 5));
+      });
+    }, 400);
+
+    const tipInterval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tips.length);
+    }, 3800);
+
+    return () => {
+      clearInterval(stepInterval);
+      clearInterval(progressInterval);
+      clearInterval(tipInterval);
+    };
+  }, [steps.length, tips.length]);
+
+  return (
+    <div
+      className="ai-process-container modal-scale-in"
+      style={{
+        backgroundColor: "#ffffff",
+        border: "1px solid #dce2da",
+        borderRadius: 14,
+        padding: "24px 20px",
+        boxShadow: "0 10px 30px rgba(24, 34, 31, 0.06)",
+        maxWidth: 560,
+        margin: "16px auto",
+        width: "100%"
+      }}
+    >
+      {/* Header with animated orb */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            backgroundColor: "#f4f8ed",
+            border: "1.5px solid #c8e6a0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+            flexShrink: 0
+          }}
+        >
+          <Sparkles size={22} color={accentColor} style={{ animation: "spinSlow 12s linear infinite" }} />
+          <span
+            style={{
+              position: "absolute",
+              top: -3,
+              right: -3,
+              width: 9,
+              height: 9,
+              borderRadius: "50%",
+              backgroundColor: "#779f2f",
+              boxShadow: "0 0 8px #779f2f"
+            }}
+          />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                color: "#3f6212",
+                backgroundColor: "#ecfccb",
+                padding: "2px 7px",
+                borderRadius: 4,
+                letterSpacing: "0.06em",
+                fontFamily: "'DM Mono', monospace"
+              }}
+            >
+              {badge.toUpperCase()}
+            </span>
+            <span style={{ fontSize: 11, color: "#78857f", fontFamily: "'DM Mono', monospace" }}>
+              {progress}% SELESAI
+            </span>
+          </div>
+          <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 800, color: "#17201d", letterSpacing: "-0.02em" }}>
+            {title}
+          </h3>
+          <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6f7975" }}>
+            {subtitle}
+          </p>
+        </div>
+      </div>
+
+      {/* Animated Linear Progress Bar */}
+      <div style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            width: "100%",
+            height: 6,
+            backgroundColor: "#eef2eb",
+            borderRadius: 999,
+            overflow: "hidden",
+            position: "relative"
+          }}
+        >
+          <div
+            style={{
+              width: `${progress}%`,
+              height: "100%",
+              backgroundColor: "#566b36",
+              borderRadius: 999,
+              transition: "width 0.35s ease",
+              position: "relative",
+              overflow: "hidden"
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "linear-gradient(90deg, transparent, rgba(200, 240, 100, 0.75), transparent)",
+                animation: "shimmerSweep 1.6s infinite"
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Steps Timeline */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+        {steps.map((st, idx) => {
+          const isDone = idx < currentStep;
+          const isCurrent = idx === currentStep;
+
+          return (
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 12,
+                padding: "8px 12px",
+                borderRadius: 8,
+                backgroundColor: isCurrent ? "#f6faf0" : isDone ? "#fafbf9" : "transparent",
+                border: `1px solid ${isCurrent ? "#c8e6a0" : isDone ? "#e2e8df" : "#edf0eb"}`,
+                transition: "all 0.25s ease",
+                opacity: isDone || isCurrent ? 1 : 0.4
+              }}
+            >
+              <div
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: isDone ? "#566b36" : isCurrent ? "#ffffff" : "#e5eae2",
+                  border: `2px solid ${isDone ? "#566b36" : isCurrent ? "#566b36" : "#cbd5cb"}`,
+                  color: isDone ? "#ffffff" : "#566b36",
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  flexShrink: 0,
+                  marginTop: 1
+                }}
+              >
+                {isDone ? (
+                  <Check size={11} strokeWidth={3} />
+                ) : isCurrent ? (
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#566b36", animation: "pulse 1s infinite" }} />
+                ) : (
+                  <span>{idx + 1}</span>
+                )}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: isCurrent ? 800 : 600, color: isCurrent ? "#1f3810" : "#2d3833", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>{st.label}</span>
+                  {isCurrent && (
+                    <span style={{ fontSize: 9, padding: "1px 5px", backgroundColor: "#dcfce7", color: "#166534", borderRadius: 4, fontWeight: 700, letterSpacing: "0.04em" }}>
+                      PROSES
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: "#6f7975", marginTop: 2, lineHeight: 1.35 }}>
+                  {st.detail}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Rotating Study Tip Banner */}
+      <div
+        style={{
+          padding: "10px 12px",
+          backgroundColor: "#f7f9f5",
+          border: "1px dashed #d5ded1",
+          borderRadius: 8,
+          display: "flex",
+          alignItems: "center",
+          gap: 9
+        }}
+      >
+        <div style={{ fontSize: 14 }}>💡</div>
+        <div style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: "#4f5e57", lineHeight: 1.4 }}>
+          <strong style={{ color: "#24322c" }}>Tahukah Anda? </strong>
+          {tips[tipIndex]}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
@@ -2876,7 +3126,7 @@ export default function App() {
           <div className="main-content-area" style={{ flex: 1, overflowY: "auto", padding: 24 }}>
             {/* TAB 0: BERANDA / STUDY HUB (CLEAN DESKTOP UTILITY DASHBOARD) */}
             {activeTab === "home" && (
-              <div style={{ maxWidth: 1160, margin: "0 auto", paddingBottom: 48 }}>
+              <div className="tab-pane-animate" style={{ maxWidth: 1160, margin: "0 auto", paddingBottom: 48 }}>
                 {/* 1. TOP ACTION & SEARCH CARD */}
                 <div
                   style={{
@@ -3458,7 +3708,7 @@ export default function App() {
 
             {/* TAB 1: MATERIAL & INGESTION (CLEAN OVERVIEW CARD) */}
             {activeTab === "material" && (
-              <div style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 48 }}>
+              <div className="tab-pane-animate" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 48 }}>
                 {activeDocId ? (
                   <div
                     style={{
@@ -4140,7 +4390,7 @@ export default function App() {
 
             {/* TAB 2: MULTIPLE CHOICE QUIZ DRILL (LATIHAN SOAL PILIHAN GANDA) */}
             {activeTab === "quiz" && (
-              <div style={{ maxWidth: 940, margin: "0 auto" }}>
+              <div className="tab-pane-animate" style={{ maxWidth: 940, margin: "0 auto" }}>
                 {/* Quiz Question Count Selector (Shown only when quiz questions already exist) */}
                 {quizQuestions.length > 0 && (
                   <div
@@ -4347,7 +4597,19 @@ export default function App() {
                   </div>
                 )}
 
-                {quizQuestions.length === 0 ? (
+                {isGeneratingQuiz ? (
+                  <AIProcessLoader
+                    title="Menyusun Paket Latihan Soal HOTS"
+                    subtitle="AI menganalisis konsep kunci dan menyusun soal penalaran bertingkat."
+                    badge="Pembuat Soal AI"
+                    steps={[
+                      { label: "Membaca Fakta Kunci & Teori", detail: "Mengekstrak konsep esensial, tanggal, rumus, dan hubungan sebab-akibat." },
+                      { label: "Merancang Skenario Soal Kasus", detail: "Menyusun stimulus kontekstual dan pertanyaan bertingkat HOTS." },
+                      { label: "Membuat Opsi Pengecoh Cerdas", detail: "Menguji penalaran siswa agar tidak terjebak hafalan buta." },
+                      { label: "Memverifikasi Kunci & Pembahasan KaTeX", detail: "Menyiapkan penjelasan langkah demi langkah dan rumus KaTeX." }
+                    ]}
+                  />
+                ) : quizQuestions.length === 0 ? (
                   /* Unified Quiz Setup Screen (No Redundancy) */
                   <div
                     style={{
@@ -5674,7 +5936,7 @@ export default function App() {
 
             {/* TAB 3: ACTIVE RECALL FEYNMAN EVALUATOR */}
             {activeTab === "feynman" && (
-              <div style={{ maxWidth: 960, margin: "0 auto" }}>
+              <div className="tab-pane-animate" style={{ maxWidth: 960, margin: "0 auto" }}>
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <Brain size={20} color="#4b6623" />
@@ -5798,6 +6060,21 @@ export default function App() {
                   </button>
                 </div>
 
+                {/* Feynman Evaluation Live Progress Loader */}
+                {isEvaluatingFeynman && (
+                  <AIProcessLoader
+                    title="Mengevaluasi Penjelasan Feynman"
+                    subtitle="AI menganalisis gaya bahasa, memeriksa keakuratan materi, dan mendeteksi istilah rumit (jargon)."
+                    badge="Evaluasi Pemahaman"
+                    steps={[
+                      { label: "Menganalisis Gaya Bahasa & Kesederhanaan", detail: "Mengecek apakah konsep dijelaskan dengan bahasa sendiri yang lugas." },
+                      { label: "Memverifikasi Kebenaran Fakta", detail: "Mencocokkan penjelasan dengan konsep kunci pada modul belajar." },
+                      { label: "Mendeteksi Miskonsepsi & Jargon", detail: "Menandai istilah hafalan yang belum diurai secara sederhana." },
+                      { label: "Menghitung Skor & Analogi Perbaikan", detail: "Menyiapkan rekomendasi perbaikan dan analogi baru untuk mengunci pemahaman." }
+                    ]}
+                  />
+                )}
+
                 {/* Feynman Evaluation Feedback Card */}
                 {feynmanResult && (
                   <div
@@ -5912,7 +6189,7 @@ export default function App() {
 
             {/* TAB 4: 3D INTERACTIVE FLASHCARDS */}
             {activeTab === "flashcards" && (
-              <div style={{ maxWidth: 860, margin: "0 auto" }}>
+              <div className="tab-pane-animate" style={{ maxWidth: 860, margin: "0 auto" }}>
                 {/* Flashcard Header Controls */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
                   <div>
@@ -5946,7 +6223,19 @@ export default function App() {
                 </div>
 
                 {/* Empty State */}
-                {flashcards.length === 0 ? (
+                {isGeneratingCards ? (
+                  <AIProcessLoader
+                    title="Menyusun Kartu Flashcard Atomik"
+                    subtitle="AI membedah materi menjadi kartu pengingat fakta kunci (1 kartu 1 konsep)."
+                    badge="Active Recall"
+                    steps={[
+                      { label: "Mengekstrak Konsep & Definisi Kunci", detail: "Memilah fakta penting dan kaidah utama dari bahan bacaan." },
+                      { label: "Membuat Pertanyaan Pemicu Ingatan", detail: "Merumuskan petunjuk hafalan tanpa membocorkan jawaban." },
+                      { label: "Mengunci Jawaban Padat Bebas Distraksi", detail: "Menyusun jawaban ringkas dan tegas untuk retensi memori." },
+                      { label: "Menata Urutan Spaced Repetition", detail: "Menyiapkan deck untuk review harian bertahap." }
+                    ]}
+                  />
+                ) : flashcards.length === 0 ? (
                   <div
                     style={{
                       backgroundColor: "#ffffff",
@@ -6228,7 +6517,7 @@ export default function App() {
 
             {/* TAB 5: BEAUTIFULLY PARSED MARKDOWN SUMMARY + AUDIO TTS */}
             {activeTab === "summary" && (
-              <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+              <div className="tab-pane-animate" style={{ maxWidth: 1040, margin: "0 auto" }}>
                 {/* Summary Style Selection Pills */}
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14, flexWrap: "wrap", backgroundColor: "#fafbf8", padding: "8px 12px", borderRadius: 8, border: "1px solid #dde1da" }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.06em", marginRight: 4 }}>
@@ -6382,7 +6671,18 @@ export default function App() {
                   </div>
                 </div>
 
-                {!activeDocSummary ? (
+                {isGeneratingSummary ? (
+                  <AIProcessLoader
+                    title="Menyusun Rangkuman Komprehensif"
+                    subtitle="AI merangkum materi secara sistematis tanpa menghilangkan rumus KaTeX dan fakta esensial."
+                    badge="Intisari Belajar"
+                    steps={[
+                      { label: "Memetakan Intisari Materi", detail: "Mengelompokkan ide utama vs detail pendukung." },
+                      { label: "Menata Hierarki Konsep Terstruktur", detail: "Menyusun poin-poin penjelasan logis dan glosarium istilah." },
+                      { label: "Mengekstrak Kaidah & Rumus Kunci", detail: "Menyorot formula esensial dan pola jebakan soal ujian." }
+                    ]}
+                  />
+                ) : !activeDocSummary ? (
                   <div
                     style={{
                       backgroundColor: "#ffffff",
@@ -7593,161 +7893,170 @@ export default function App() {
                       </button>
                     </div>
 
-                    <p style={{ fontSize: 12.5, color: "#45544e", lineHeight: "1.5", marginBottom: 14 }}>
-                      AI menganalisis isi materi Anda dan memindai referensi akademik untuk melengkapi bagian yang belum mendalam. Pilih salah satu saran di bawah atau tulis fokus sendiri:
-                    </p>
-
-                    {/* AI Smart Contextual Recommendations */}
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
-                          <Sparkles size={13} color="#4b6623" />
-                          <span>Rekomendasi Cerdas AI</span>
-                        </span>
-                        {isLoadingSuggestions && (
-                          <span style={{ fontSize: 10, color: "#6f7975", fontFamily: "'DM Mono', monospace" }}>
-                            Menganalisis materi...
-                          </span>
-                        )}
+                    {isEnriching ? (
+                      <div style={{ padding: "8px 0 16px" }}>
+                        <AIProcessLoader
+                          title="Sedang Memperkaya Materi dari Internet"
+                          subtitle="AI menganalisis kekosongan konsep, mencari referensi kurikulum, dan menyusun studi kasus kontekstual."
+                          badge="Riset Akademik"
+                          steps={[
+                            { label: "Menganalisis Titik Lemah Catatan", detail: `Memindai materi "${activeDocTitle}" untuk menemukan celah konsep.` },
+                            { label: "Mencari Referensi & Kasus Nyata", detail: "Meneliti artikel ensiklopedia, jurnal, dan modul akademik." },
+                            { label: "Menyaring Miskonsepsi & Analogi", detail: "Menyiapkan contoh kontekstual yang ramah pemahaman." },
+                            { label: "Menyisipkan Catatan Tambahan ke Dokumen", detail: "Merapikan rumus KaTeX dan glosarium istilah baru." }
+                          ]}
+                        />
                       </div>
+                    ) : (
+                      <>
+                        <p style={{ fontSize: 12.5, color: "#45544e", lineHeight: "1.5", marginBottom: 14 }}>
+                          AI menganalisis isi materi Anda dan memindai referensi akademik untuk melengkapi bagian yang belum mendalam. Pilih salah satu saran di bawah atau tulis fokus sendiri:
+                        </p>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                        {(enrichSuggestions.length > 0 ? enrichSuggestions : [
-                          {
-                            title: "Studi Kasus Konkret",
-                            focus: "Berikan contoh kasus nyata terkini di Indonesia beserta analisis penerapannya",
-                            reason: "Menghubungkan teori ke fenomena nyata agar tidak sekadar hafalan"
-                          },
-                          {
-                            title: "Miskonsepsi Umum Ujian",
-                            focus: "Jelaskan jebakan soal atau miskonsepsi yang sering mengecoh siswa pada materi ini",
-                            reason: "Melatih kepekaan terhadap pola soal ujian sekolah dan UTBK"
-                          },
-                          {
-                            title: "Analogi Bebas Jargon",
-                            focus: "Gambarkan konsep inti dengan analogi sederhana sehari-hari",
-                            reason: "Mempermudah pemahaman intuitif bagi pemula"
-                          },
-                          {
-                            title: "Trik Cepat & Rumus Kunci",
-                            focus: "Rangkum kaidah esensial, jembatan keledai, atau batasan legal aturan",
-                            reason: "Meringkas hafalan ke format padat dan mudah diingat"
-                          }
-                        ]).map((sug, idx) => {
-                          const isSelected = enrichFocus === sug.focus;
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => setEnrichFocus(sug.focus)}
-                              style={{
-                                textAlign: "left",
-                                backgroundColor: isSelected ? "#f4f8ed" : "#ffffff",
-                                border: `1px solid ${isSelected ? "#779f2f" : "#dce1da"}`,
-                                borderRadius: 8,
-                                padding: "9px 11px",
-                                cursor: "pointer",
-                                transition: "all 0.15s ease",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 3
-                              }}
-                            >
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                                <strong style={{ fontSize: 12, color: isSelected ? "#2a4212" : "#17201d" }}>
-                                  {sug.title}
-                                </strong>
-                                {isSelected && <Check size={12} color="#4b6623" />}
-                              </div>
-                              <span style={{ fontSize: 10.5, color: "#6f7975", lineHeight: 1.3 }}>
-                                {sug.reason}
+                        {/* AI Smart Contextual Recommendations */}
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
+                              <Sparkles size={13} color="#4b6623" />
+                              <span>Rekomendasi Cerdas AI</span>
+                            </span>
+                            {isLoadingSuggestions && (
+                              <span style={{ fontSize: 10, color: "#6f7975", fontFamily: "'DM Mono', monospace" }}>
+                                Menganalisis materi...
                               </span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                            )}
+                          </div>
 
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                          Fokus Tambahan (Bisa Dibaca Lengkap & Diedit Bebas)
-                        </label>
-                        {enrichFocus && (
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                            {(enrichSuggestions.length > 0 ? enrichSuggestions : [
+                              {
+                                title: "Studi Kasus Konkret",
+                                focus: "Berikan contoh kasus nyata terkini di Indonesia beserta analisis penerapannya",
+                                reason: "Menghubungkan teori ke fenomena nyata agar tidak sekadar hafalan"
+                              },
+                              {
+                                title: "Miskonsepsi Umum Ujian",
+                                focus: "Jelaskan jebakan soal atau miskonsepsi yang sering mengecoh siswa pada materi ini",
+                                reason: "Melatih kepekaan terhadap pola soal ujian sekolah dan UTBK"
+                              },
+                              {
+                                title: "Analogi Bebas Jargon",
+                                focus: "Gambarkan konsep inti dengan analogi sederhana sehari-hari",
+                                reason: "Mempermudah pemahaman intuitif bagi pemula"
+                              },
+                              {
+                                title: "Trik Cepat & Rumus Kunci",
+                                focus: "Rangkum kaidah esensial, jembatan keledai, atau batasan legal aturan",
+                                reason: "Meringkas hafalan ke format padat dan mudah diingat"
+                              }
+                            ]).map((sug, idx) => {
+                              const isSelected = enrichFocus === sug.focus;
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setEnrichFocus(sug.focus)}
+                                  style={{
+                                    textAlign: "left",
+                                    backgroundColor: isSelected ? "#f4f8ed" : "#ffffff",
+                                    border: `1px solid ${isSelected ? "#779f2f" : "#dce1da"}`,
+                                    borderRadius: 8,
+                                    padding: "9px 11px",
+                                    cursor: "pointer",
+                                    transition: "all 0.15s ease",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 3
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                                    <strong style={{ fontSize: 12, color: isSelected ? "#2a4212" : "#17201d" }}>
+                                      {sug.title}
+                                    </strong>
+                                    {isSelected && <Check size={12} color="#4b6623" />}
+                                  </div>
+                                  <span style={{ fontSize: 10.5, color: "#6f7975", lineHeight: 1.3 }}>
+                                    {sug.reason}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                              Fokus Tambahan (Bisa Dibaca Lengkap & Diedit Bebas)
+                            </label>
+                            {enrichFocus && (
+                              <button
+                                type="button"
+                                onClick={() => setEnrichFocus("")}
+                                style={{ background: "none", border: "none", color: "#6f7975", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
+                              >
+                                Bersihkan teks
+                              </button>
+                            )}
+                          </div>
+                          <textarea
+                            rows={4}
+                            value={enrichFocus}
+                            onChange={(e) => setEnrichFocus(e.target.value)}
+                            placeholder="Klik salah satu rekomendasi di atas untuk mengisi otomatis, atau ketik sendiri penjelasan fokus materi yang ingin ditambah..."
+                            style={{
+                              width: "100%",
+                              backgroundColor: "#fafbf8",
+                              border: "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "10px 12px",
+                              fontSize: 13.5,
+                              lineHeight: "1.55",
+                              color: "#17201d",
+                              outline: "none",
+                              resize: "vertical"
+                            }}
+                          />
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
                           <button
-                            type="button"
-                            onClick={() => setEnrichFocus("")}
-                            style={{ background: "none", border: "none", color: "#6f7975", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
+                            onClick={() => setIsEnrichModalOpen(false)}
+                            disabled={isEnriching}
+                            style={{
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #dce1da",
+                              color: "#56615d",
+                              borderRadius: 8,
+                              padding: "8px 14px",
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              cursor: "pointer"
+                            }}
                           >
-                            Bersihkan teks
+                            Batal
                           </button>
-                        )}
-                      </div>
-                      <textarea
-                        rows={4}
-                        value={enrichFocus}
-                        onChange={(e) => setEnrichFocus(e.target.value)}
-                        placeholder="Klik salah satu rekomendasi di atas untuk mengisi otomatis, atau ketik sendiri penjelasan fokus materi yang ingin ditambah..."
-                        style={{
-                          width: "100%",
-                          backgroundColor: "#fafbf8",
-                          border: "1px solid #dce1da",
-                          borderRadius: 8,
-                          padding: "10px 12px",
-                          fontSize: 13.5,
-                          lineHeight: "1.55",
-                          color: "#17201d",
-                          outline: "none",
-                          resize: "vertical"
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                      <button
-                        onClick={() => setIsEnrichModalOpen(false)}
-                        disabled={isEnriching}
-                        style={{
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #dce1da",
-                          color: "#56615d",
-                          borderRadius: 8,
-                          padding: "8px 14px",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer"
-                        }}
-                      >
-                        Batal
-                      </button>
-                      <button
-                        onClick={handleEnrichDocument}
-                        disabled={isEnriching}
-                        style={{
-                          backgroundColor: "#18221f",
-                          border: "none",
-                          color: "#c8f064",
-                          borderRadius: 8,
-                          padding: "8px 16px",
-                          fontSize: 12.5,
-                          fontWeight: 700,
-                          cursor: isEnriching ? "not-allowed" : "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6
-                        }}
-                      >
-                        {isEnriching ? (
-                          <>
-                            <Sparkles size={14} />
-                            <span>Sedang Membaca & Menambahkan...</span>
-                          </>
-                        ) : (
-                          <>
+                          <button
+                            onClick={handleEnrichDocument}
+                            disabled={isEnriching}
+                            style={{
+                              backgroundColor: "#18221f",
+                              border: "none",
+                              color: "#c8f064",
+                              borderRadius: 8,
+                              padding: "8px 16px",
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              cursor: isEnriching ? "not-allowed" : "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                          >
                             <Globe size={14} />
                             <span>Tambahkan ke Materi Ini</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -7807,149 +8116,161 @@ export default function App() {
 
             {/* Scrollable Items Tray */}
             <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-              {/* Staged Items Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: stagedFiles.length === 1 ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
-                {stagedFiles.map((item) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      backgroundColor: "#fafbf8",
-                      border: "1px solid #dce1da",
-                      borderRadius: 10,
-                      padding: 10,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      position: "relative"
-                    }}
-                  >
-                    {/* Thumbnail or Badge */}
-                    {item.previewUrl ? (
-                      <img
-                        src={item.previewUrl}
-                        alt={item.name}
-                        style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0, border: "1px solid #dce1da" }}
-                      />
-                    ) : (
+              {isUploading ? (
+                <div style={{ padding: "8px 0" }}>
+                  <AIProcessLoader
+                    title="Membaca Berkas & Foto Catatan"
+                    subtitle="AI memindai dokumen dan tulisan tangan untuk menyusun modul belajar mandiri."
+                    badge="Vision Multimodal"
+                    steps={[
+                      { label: "Membaca Berkas & Gambar", detail: `Mengurai ${stagedFiles.length} berkas yang Anda pilih...` },
+                      { label: "Transkripsi Multimodal Vision", detail: "Mengenali tulisan tangan, rumus matematika KaTeX, diagram, dan tabel." },
+                      { label: "Menata Format Pembelajaran Baku", detail: "Menyusun catatan belajar terstruktur dan materi siap dipelajari." }
+                    ]}
+                  />
+                </div>
+              ) : (
+                <>
+                  {/* Staged Items Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: stagedFiles.length === 1 ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                    {stagedFiles.map((item) => (
                       <div
+                        key={item.id}
                         style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 6,
-                          backgroundColor: item.ext === "pdf" ? "#faece8" : "#edf4fc",
-                          color: item.ext === "pdf" ? "#c2410c" : "#0284c7",
+                          backgroundColor: "#fafbf8",
+                          border: "1px solid #dce1da",
+                          borderRadius: 10,
+                          padding: 10,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 800,
-                          fontSize: 11,
-                          textTransform: "uppercase",
-                          flexShrink: 0,
-                          fontFamily: "'DM Mono', monospace"
+                          gap: 10,
+                          position: "relative"
                         }}
                       >
-                        {item.ext || "DOC"}
-                      </div>
-                    )}
+                        {/* Thumbnail or Badge */}
+                        {item.previewUrl ? (
+                          <img
+                            src={item.previewUrl}
+                            alt={item.name}
+                            style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0, border: "1px solid #dce1da" }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 6,
+                              backgroundColor: item.ext === "pdf" ? "#faece8" : "#edf4fc",
+                              color: item.ext === "pdf" ? "#c2410c" : "#0284c7",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 800,
+                              fontSize: 11,
+                              textTransform: "uppercase",
+                              flexShrink: 0,
+                              fontFamily: "'DM Mono', monospace"
+                            }}
+                          >
+                            {item.ext || "DOC"}
+                          </div>
+                        )}
 
-                    {/* File Details */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: "#17201d", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {item.name}
-                      </div>
-                      <div style={{ fontSize: 10.5, color: "#78857f", fontFamily: "'DM Mono', monospace", marginTop: 2 }}>
-                        {(item.size / 1024).toFixed(1)} KB · {item.ext.toUpperCase()}
-                      </div>
-                    </div>
+                        {/* File Details */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#17201d", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {item.name}
+                          </div>
+                          <div style={{ fontSize: 10.5, color: "#78857f", fontFamily: "'DM Mono', monospace", marginTop: 2 }}>
+                            {(item.size / 1024).toFixed(1)} KB · {item.ext.toUpperCase()}
+                          </div>
+                        </div>
 
-                    {/* Delete button */}
-                    {!isUploading && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveStagedFile(item.id)}
-                        title="Hapus berkas ini"
-                        style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", padding: 4 }}
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
+                        {/* Delete button */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveStagedFile(item.id)}
+                          title="Hapus berkas ini"
+                          style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", padding: 4 }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* Add More Buttons */}
-              {!isUploading && (
-                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#f4f6f1",
-                      border: "1px dashed #779f2f",
-                      color: "#3f6212",
-                      borderRadius: 8,
-                      padding: "8px 12px",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6
-                    }}
-                  >
-                    <Upload size={13} />
-                    <span>+ Tambah Berkas / PDF</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => cameraInputRef.current?.click()}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#f4f6f1",
-                      border: "1px dashed #779f2f",
-                      color: "#3f6212",
-                      borderRadius: 8,
-                      padding: "8px 12px",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6
-                    }}
-                  >
-                    <Camera size={13} />
-                    <span>+ Tambah Foto Catatan</span>
-                  </button>
-                </div>
+                  {/* Add More Buttons */}
+                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{
+                        flex: 1,
+                        backgroundColor: "#f4f6f1",
+                        border: "1px dashed #779f2f",
+                        color: "#3f6212",
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6
+                      }}
+                    >
+                      <Upload size={13} />
+                      <span>+ Tambah Berkas / PDF</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => cameraInputRef.current?.click()}
+                      style={{
+                        flex: 1,
+                        backgroundColor: "#f4f6f1",
+                        border: "1px dashed #779f2f",
+                        color: "#3f6212",
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6
+                      }}
+                    >
+                      <Camera size={13} />
+                      <span>+ Tambah Foto Catatan</span>
+                    </button>
+                  </div>
+
+                  {/* Title field */}
+                  <div style={{ marginTop: 8 }}>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#45544e", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+                      Judul Materi (Bisa Disesuaikan)
+                    </label>
+                    <input
+                      type="text"
+                      value={stagedDocTitle}
+                      onChange={(e) => setStagedDocTitle(e.target.value)}
+                      placeholder="Beri judul modul..."
+                      style={{
+                        width: "100%",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #dce1da",
+                        borderRadius: 8,
+                        padding: "9px 12px",
+                        fontSize: 13,
+                        color: "#17201d",
+                        outline: "none"
+                      }}
+                    />
+                  </div>
+                </>
               )}
-
-              {/* Title field */}
-              <div style={{ marginTop: 8 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#45544e", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
-                  Judul Materi (Bisa Disesuaikan)
-                </label>
-                <input
-                  type="text"
-                  value={stagedDocTitle}
-                  onChange={(e) => setStagedDocTitle(e.target.value)}
-                  disabled={isUploading}
-                  placeholder="Beri judul modul..."
-                  style={{
-                    width: "100%",
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #dce1da",
-                    borderRadius: 8,
-                    padding: "9px 12px",
-                    fontSize: 13,
-                    color: "#17201d",
-                    outline: "none"
-                  }}
-                />
-              </div>
 
               {uploadError && (
                 <div style={{ padding: "8px 12px", backgroundColor: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 12 }}>
@@ -7959,55 +8280,47 @@ export default function App() {
             </div>
 
             {/* Footer Action Bar */}
-            <div style={{ padding: "14px 20px", borderTop: "1px solid #dce2da", display: "flex", justifyContent: "flex-end", gap: 8, backgroundColor: "#fafbf8" }}>
-              <button
-                type="button"
-                onClick={handleCancelStaging}
-                disabled={isUploading}
-                style={{
-                  backgroundColor: "#ffffff",
-                  border: "1px solid #dce1da",
-                  color: "#56615d",
-                  borderRadius: 8,
-                  padding: "9px 16px",
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  cursor: isUploading ? "not-allowed" : "pointer"
-                }}
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmStagedUpload}
-                disabled={isUploading || stagedFiles.length === 0}
-                style={{
-                  backgroundColor: isUploading ? "#45544e" : "#18221f",
-                  color: "#c8f064",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "9px 18px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: isUploading || stagedFiles.length === 0 ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6
-                }}
-              >
-                {isUploading ? (
-                  <>
-                    <Sparkles size={14} />
-                    <span>Membaca Berkas...</span>
-                  </>
-                ) : (
-                  <>
-                    <Check size={14} />
-                    <span>Simpan & Buat Materi</span>
-                  </>
-                )}
-              </button>
-            </div>
+            {!isUploading && (
+              <div style={{ padding: "14px 20px", borderTop: "1px solid #dce2da", display: "flex", justifyContent: "flex-end", gap: 8, backgroundColor: "#fafbf8" }}>
+                <button
+                  type="button"
+                  onClick={handleCancelStaging}
+                  style={{
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #dce1da",
+                    color: "#56615d",
+                    borderRadius: 8,
+                    padding: "9px 16px",
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmStagedUpload}
+                  disabled={stagedFiles.length === 0}
+                  style={{
+                    backgroundColor: "#18221f",
+                    color: "#c8f064",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "9px 18px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: stagedFiles.length === 0 ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                  }}
+                >
+                  <Check size={14} />
+                  <span>Simpan & Buat Materi</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -264,27 +264,49 @@ async function multiSourceAcademicSearch(topic, subject = "") {
   } catch (err) {}
 
   let bundle = "";
+  const sourceItems = [];
+
   if (findings.ruangguru.length) {
     bundle += "### 🎒 REFERENSI PEDAGOGIS & POLA AJAR RUANGGURU (Kurikulum Sekolah):\n" +
       findings.ruangguru.map((r, i) => `${i + 1}. **${r.title}**: ${r.snippet}`).join("\n\n") + "\n\n";
+    findings.ruangguru.forEach(r => {
+      sourceItems.push({ title: r.title, url: r.url, sourceType: "ruangguru", text: r.snippet });
+    });
   }
   if (findings.encyclopedia.length) {
     bundle += "### 📚 KONSEP & DEFINISI ENSIKLOPEDIS RESMI (Wikipedia ID):\n" +
       findings.encyclopedia.slice(0, 4).map((e, i) => `${i + 1}. **${e.title}**: ${e.snippet}`).join("\n\n") + "\n\n";
+    findings.encyclopedia.slice(0, 4).forEach(e => {
+      sourceItems.push({ title: e.title, url: `https://id.wikipedia.org/wiki/${encodeURIComponent(e.title)}`, sourceType: "wikipedia", text: e.snippet });
+    });
   }
   if (findings.textbook.length) {
     bundle += "### 📖 MODUL & BUKU TEKS TERBUKA (Wikibuku ID):\n" +
       findings.textbook.slice(0, 2).map((t, i) => `${i + 1}. **${t.title}**: ${t.snippet}`).join("\n\n") + "\n\n";
+    findings.textbook.slice(0, 2).forEach(t => {
+      sourceItems.push({ title: t.title, url: `https://id.wikibooks.org/wiki/${encodeURIComponent(t.title)}`, sourceType: "wikibooks", text: t.snippet });
+    });
   }
   if (findings.curriculumLiterature.length) {
     bundle += "### 🎓 LITERATUR KURIKULUM & KAJIAN BUKU AJAR (CrossRef):\n" +
       findings.curriculumLiterature.slice(0, 3).map((c, i) => `${i + 1}. **${c.title}**${c.snippet ? ": " + c.snippet : ""}`).join("\n\n") + "\n\n";
+    findings.curriculumLiterature.slice(0, 3).forEach(c => {
+      sourceItems.push({ title: c.title, url: "", sourceType: "crossref", text: c.snippet || c.title });
+    });
   }
   if (findings.web.length) {
     bundle += "### 🌐 HASIL PENCARIAN WEB RESMI:\n" + findings.web.join("\n\n") + "\n\n";
+    findings.web.forEach((w, idx) => {
+      sourceItems.push({ title: `Web Search Reference ${idx + 1}`, url: "", sourceType: "web", text: w });
+    });
   }
 
-  return bundle.trim();
+  const trimmedBundle = bundle.trim();
+  return {
+    bundle: trimmedBundle,
+    sources: sourceItems,
+    toString: () => trimmedBundle
+  };
 }
 
 function detectRealMath(content) {

@@ -802,7 +802,8 @@ STANDAR INTEGRITAS PENGAJARAN (ANTI-LOMPAT & ANTI-JARGON ROBOTIK):
 
 STRUKTUR SISTEMATIS CATATAN:
 1. **Peta Konsep & Kerangka Besar**:
-   - Diagram hierarki topik (ASCII tree) yang memperlihatkan alur logika dari dasar ke lanjutan.
+   - Jika materi memuat alur proses, tahapan kronologis, siklus, atau hierarki klasifikasi: sajikan alur ringkas (gunakan panah '->' atau tahapan bertingkat).
+   - Jika materi tidak memiliki alur proses (misal: definisi konsep mandiri, kaidah bahasa, atau formula terpisah): CUKUP berikan poin pembagian kategori utama atau tabel komparasi. DILARANG memaksakan gambar garis ASCII buatan jika tidak relevan.
    - 2 kalimat pembuka: Masalah nyata apa yang dijawab oleh materi ini.
 2. **Bedah Konsep Kunci & Analogi Nyata**:
    - Setiap istilah/konsep tidak hanya didefinisikan secara formal, tapi WAJIB dilengkapi minimal 1 analogi konkret atau contoh kasus nyata.

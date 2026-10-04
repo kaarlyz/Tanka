@@ -623,6 +623,359 @@ function renderVisualDiagramOrPre(children: any) {
   );
 }
 
+// Interactive Web Search Progress Visualizer with Site Logos, Actions, and Dynamic Animation
+function WebSearchProgressView({
+  topic,
+  subject,
+  subtitle
+}: {
+  topic: string;
+  subject?: string;
+  subtitle?: string;
+}) {
+  const [activeStep, setActiveStep] = useState(0);
+  const [progress, setProgress] = useState(18);
+
+  const sources = useMemo(
+    () => [
+      {
+        id: "wikipedia",
+        name: "Wikipedia Indonesia",
+        domain: "id.wikipedia.org",
+        category: "Ensiklopedi Bebas",
+        action: "Mencari definisi baku, taksonomi teori, dan konteks sejarah",
+        color: "#2b4c7e",
+        bg: "#edf4fc",
+        badge: "Konsep Baku",
+        icon: (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect width="24" height="24" rx="6" fill="#2b4c7e" />
+            <path d="M6 16.5L9.2 7.5H10.8L12.5 12L14.2 7.5H15.8L18 16.5H16.4L15 11L13.5 15.5H12L10.5 11L9.1 16.5H6Z" fill="#ffffff" />
+          </svg>
+        )
+      },
+      {
+        id: "ruangguru",
+        name: "Ruangguru Silabus",
+        domain: "ruangguru.com/blog",
+        category: "Kurikulum Sekolah & SMA",
+        action: "Membedah kurikulum ajar, analogi ramah siswa, dan contoh kasus riil",
+        color: "#0284c7",
+        bg: "#e0f2fe",
+        badge: "Silabus Resmi",
+        icon: (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect width="24" height="24" rx="6" fill="#0284c7" />
+            <path d="M12 5L4 9L12 13L20 9L12 5Z" stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M6 11V16C6 17.5 8.7 19 12 19C15.3 19 18 17.5 18 16V11" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        )
+      },
+      {
+        id: "wikibooks",
+        name: "Wikibuku Indonesia",
+        domain: "id.wikibooks.org",
+        category: "Buku Teks Terbuka",
+        action: "Mengambil struktur bab ajar, taksonomi materi, dan kaidah esensial",
+        color: "#166534",
+        bg: "#f0fdf4",
+        badge: "Buku Teks",
+        icon: (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect width="24" height="24" rx="6" fill="#166534" />
+            <path d="M6 6.5C6 5.67 6.67 5 7.5 5H11V19H7.5C6.67 19 6 18.33 6 17.5V6.5Z" fill="#ffffff" fillOpacity="0.85" />
+            <path d="M18 6.5C18 5.67 17.33 5 16.5 5H13V19H16.5C17.33 19 18 18.33 18 17.5V6.5Z" fill="#ffffff" />
+          </svg>
+        )
+      },
+      {
+        id: "crossref",
+        name: "CrossRef Academic Research",
+        domain: "api.crossref.org",
+        category: "Jurnal Riset Kurikulum",
+        action: "Memvalidasi referensi akademik resmi dan metodologi pembelajaran",
+        color: "#92400e",
+        bg: "#fef3c7",
+        badge: "Jurnal Riset",
+        icon: (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect width="24" height="24" rx="6" fill="#92400e" />
+            <circle cx="12" cy="12" r="5.5" stroke="#ffffff" strokeWidth="2" strokeDasharray="2 2" />
+            <path d="M12 9V15M9 12H15" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        )
+      },
+      {
+        id: "synthesis",
+        name: "Tanka Anti-Slop Engine",
+        domain: "tanka.local / 9router",
+        category: "Sintesis Modul Mandiri",
+        action: "Menyusun peta konsep atomik, rumus KaTeX murni, dan bank latihan HOTS",
+        color: "#3f6212",
+        bg: "#f7fee7",
+        badge: "Penyusunan Modul",
+        icon: (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect width="24" height="24" rx="6" fill="#18221f" />
+            <path d="M7 12L10.5 15.5L17 8.5" stroke="#c8f064" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )
+      }
+    ],
+    []
+  );
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep((prev) => {
+        if (prev < sources.length - 1) {
+          const next = prev + 1;
+          setProgress(Math.min(94, 20 + next * 18));
+          return next;
+        }
+        return prev;
+      });
+    }, 1500);
+    return () => clearInterval(timer);
+  }, [sources.length]);
+
+  const currentSource = sources[activeStep] || sources[0];
+
+  return (
+    <div
+      style={{
+        backgroundColor: "#fbfbfa",
+        border: "1px solid #dce2da",
+        borderRadius: 14,
+        padding: "20px 18px",
+        margin: "8px 0"
+      }}
+    >
+      {/* Header with animated radar and topic */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              backgroundColor: "#edf4e3",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px solid #d7e5c5"
+            }}
+          >
+            <Globe size={15} color="#4b6623" style={{ animation: "spinSlow 12s linear infinite" }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace" }}>
+              PENELUSURAN REFERENSI LIVE
+            </div>
+            <div style={{ fontSize: 14.5, fontWeight: 800, color: "#18211e" }}>
+              {topic}
+            </div>
+          </div>
+        </div>
+        {subject && (
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              backgroundColor: "#ffffff",
+              border: "1px solid #dce1da",
+              color: "#4b6623",
+              padding: "2px 8px",
+              borderRadius: 6,
+              fontFamily: "'DM Mono', monospace"
+            }}
+          >
+            {subject}
+          </span>
+        )}
+      </div>
+
+      {/* Dynamic Action Highlight Banner */}
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          border: "1px solid #c2e28f",
+          borderRadius: 10,
+          padding: "10px 12px",
+          marginBottom: 14,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          boxShadow: "0 2px 8px rgba(119, 159, 47, 0.08)"
+        }}
+      >
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            backgroundColor: "#779f2f",
+            flexShrink: 0,
+            boxShadow: "0 0 0 3px rgba(119, 159, 47, 0.25)"
+          }}
+        />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#22370c", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span>Sedang Memindai:</span>
+            <span style={{ color: currentSource.color, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              {currentSource.name} ({currentSource.domain})
+            </span>
+          </div>
+          <div style={{ fontSize: 12, color: "#45544e", marginTop: 2, lineHeight: 1.35 }}>
+            {currentSource.action}
+          </div>
+        </div>
+      </div>
+
+      {/* Target Sources Cards List */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 14 }}>
+        {sources.map((s, idx) => {
+          const isActive = idx === activeStep;
+          const isDone = idx < activeStep;
+          const isPending = idx > activeStep;
+
+          return (
+            <div
+              key={s.id}
+              className={`search-source-card ${isActive ? "active" : ""}`}
+              style={{
+                backgroundColor: isActive ? "#ffffff" : isDone ? "#fafcf8" : "#f4f6f1",
+                border: `1px solid ${isActive ? "#779f2f" : isDone ? "#d7e5c5" : "#e4e8e1"}`,
+                borderRadius: 9,
+                padding: "8px 12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                opacity: isPending ? 0.65 : 1
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                <div style={{ flexShrink: 0 }}>{s.icon}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <strong style={{ fontSize: 12.5, color: "#18211e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {s.name}
+                    </strong>
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        backgroundColor: s.bg,
+                        color: s.color,
+                        padding: "1px 5px",
+                        borderRadius: 4,
+                        fontFamily: "'DM Mono', monospace"
+                      }}
+                    >
+                      {s.badge}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#78857f", fontFamily: "'DM Mono', monospace" }}>
+                    {s.domain}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div style={{ flexShrink: 0 }}>
+                {isDone ? (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: "#4b6623",
+                      backgroundColor: "#edf4e3",
+                      border: "1px solid #d7e5c5",
+                      padding: "3px 7px",
+                      borderRadius: 999
+                    }}
+                  >
+                    <CheckCircle2 size={11} color="#4b6623" />
+                    <span>Terhubung</span>
+                  </span>
+                ) : isActive ? (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: "#18221f",
+                      backgroundColor: "#c8f064",
+                      padding: "3px 8px",
+                      borderRadius: 999,
+                      boxShadow: "0 0 8px rgba(200, 240, 100, 0.4)"
+                    }}
+                  >
+                    <Sparkles size={10} style={{ animation: "spin 1.5s linear infinite" }} />
+                    <span>Memindai...</span>
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 10, color: "#8a9691", fontFamily: "'DM Mono', monospace" }}>
+                    Menunggu
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Live Terminal Log Line */}
+      <div
+        style={{
+          backgroundColor: "#18221f",
+          color: "#c8f064",
+          borderRadius: 8,
+          padding: "7px 11px",
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 10.5,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap"
+        }}
+      >
+        <span style={{ color: "#779f2f" }}>&gt;</span>
+        <span>
+          [FETCH] {currentSource.domain} &rarr; {currentSource.category}
+        </span>
+      </div>
+
+      {/* Animated Linear Progress Bar */}
+      <div style={{ marginTop: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#6f7975", marginBottom: 4, fontFamily: "'DM Mono', monospace" }}>
+          <span>PROGRES RISET & SINTESIS</span>
+          <span>{progress}%</span>
+        </div>
+        <div style={{ width: "100%", height: 5, backgroundColor: "#e2e6de", borderRadius: 999, overflow: "hidden" }}>
+          <div
+            style={{
+              width: `${progress}%`,
+              height: "100%",
+              backgroundColor: "#779f2f",
+              borderRadius: 999,
+              transition: "width 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
@@ -1853,9 +2206,8 @@ export default function App() {
       <aside
         className={`figma-sidebar ${isMobileDrawerOpen ? "sidebar-drawer open" : "desktop-only"}`}
       >
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-          {/* Brand Row */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        {/* Brand Row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexShrink: 0 }}>
             <div className="brand-box" style={{ padding: 0 }}>
               <div className="brand-symbol-box">t</div>
               <span>tanka.</span>
@@ -1914,7 +2266,7 @@ export default function App() {
           </nav>
 
           {/* Materi Tersimpan & Actions */}
-          <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, padding: "0 4px" }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: "#86938e", fontFamily: "'DM Mono', monospace", letterSpacing: 1.2 }}>
                 MATERI TERSIMPAN ({documents.length})
@@ -1940,7 +2292,7 @@ export default function App() {
             </div>
 
             {/* Document list */}
-            <div className="no-scrollbar" style={{ flex: 1, minHeight: 160, maxHeight: 360, overflowY: "auto", paddingRight: 2 }}>
+            <div className="no-scrollbar" style={{ maxHeight: 200, overflowY: "auto", paddingRight: 2 }}>
               {documents.length === 0 ? (
                 <div style={{ padding: "18px 8px", color: "#6e7c77", fontSize: 12.5, textAlign: "center" }}>
                   Belum ada dokumen. Unggah atau buat modul baru.
@@ -2085,11 +2437,10 @@ export default function App() {
               }}
             />
           </div>
-        </div>
 
         {/* Sidebar Bottom: Streak Widget & Profile Row */}
-        <div>
-          <div className="streak-card-box">
+        <div style={{ flexShrink: 0, marginTop: 8 }}>
+          <div className="streak-card-box" style={{ margin: "4px 0 10px" }}>
             <div className="streak-top-row">
               <span>Target mingguan</span>
               <strong style={{ fontFamily: "'DM Mono', monospace" }}>4/5 hari</strong>
@@ -6681,98 +7032,98 @@ export default function App() {
               {/* STEP 1: Input Topic */}
               {topicStep === 1 && (
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#17201d", marginBottom: 8 }}>
-                    Apa materi atau topik yang ingin Anda kuasai hari ini?
-                  </label>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                    <input
-                      type="text"
-                      value={topicInput}
-                      onChange={(e) => setTopicInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleStartTopicClarify();
-                      }}
-                      placeholder="Contoh: Matriks Transformasi, Teori Elastisitas, Konflik Sosial..."
-                      style={{
-                        flex: 1,
-                        backgroundColor: "#fafbf8",
-                        border: "1px solid #dce1da",
-                        borderRadius: 8,
-                        padding: "10px 14px",
-                        fontSize: 13,
-                        color: "#17201d",
-                        outline: "none"
-                      }}
-                      autoFocus
+                  {isClarifyingTopic ? (
+                    <WebSearchProgressView
+                      topic={topicInput}
+                      subtitle="Menganalisis relevansi kurikulum & mendeteksi sub-topik..."
                     />
-                    <button
-                      onClick={() => handleStartTopicClarify()}
-                      disabled={isClarifyingTopic || !topicInput.trim()}
-                      style={{
-                        backgroundColor: "#18221f",
-                        color: "#c8f064",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: "0 18px",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: isClarifyingTopic || !topicInput.trim() ? "not-allowed" : "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6
-                      }}
-                    >
-                      {isClarifyingTopic ? (
-                        <>
-                          <Sparkles size={14} style={{ animation: "spin 1.5s linear infinite" }} />
-                          <span>Menganalisis...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Lanjut</span>
-                          <ChevronRight size={15} />
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Quick suggestion pills */}
-                  <div style={{ marginTop: 14 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                      Pilih Cepat Topik Ujian & Studi Populer:
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                      {[
-                        "Matriks Transformasi Geometri 2x2",
-                        "Persamaan & Fungsi Kuadrat",
-                        "Barisan & Deret Aritmetika",
-                        "Teori Permintaan & Penawaran Pasar",
-                        "Struktur Sosial & Mobilitas Sosial",
-                        "Ide Pokok & Kalimat Efektif Teks",
-                        "The Unseen Reading Passage (B. Inggris)"
-                      ].map((sug, sIdx) => (
-                        <button
-                          key={sIdx}
-                          onClick={() => {
-                            setTopicInput(sug);
-                            handleStartTopicClarify(sug);
+                  ) : (
+                    <div>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#17201d", marginBottom: 8 }}>
+                        Apa materi atau topik yang ingin Anda kuasai hari ini?
+                      </label>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                        <input
+                          type="text"
+                          value={topicInput}
+                          onChange={(e) => setTopicInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleStartTopicClarify();
                           }}
+                          placeholder="Contoh: Matriks Transformasi, Teori Elastisitas, Konflik Sosial..."
                           style={{
+                            flex: 1,
                             backgroundColor: "#fafbf8",
                             border: "1px solid #dce1da",
-                            color: "#45544e",
-                            borderRadius: 999,
-                            padding: "6px 12px",
-                            fontSize: 11.5,
-                            cursor: "pointer",
-                            textAlign: "left"
+                            borderRadius: 8,
+                            padding: "10px 14px",
+                            fontSize: 13,
+                            color: "#17201d",
+                            outline: "none"
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => handleStartTopicClarify()}
+                          disabled={isClarifyingTopic || !topicInput.trim()}
+                          style={{
+                            backgroundColor: "#18221f",
+                            color: "#c8f064",
+                            border: "none",
+                            borderRadius: 8,
+                            padding: "0 18px",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: isClarifyingTopic || !topicInput.trim() ? "not-allowed" : "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6
                           }}
                         >
-                          {sug}
+                          <span>Lanjut</span>
+                          <ChevronRight size={15} />
                         </button>
-                      ))}
+                      </div>
+
+                      {/* Quick suggestion pills */}
+                      <div style={{ marginTop: 14 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                          Pilih Cepat Topik Ujian & Studi Populer:
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                          {[
+                            "Matriks Transformasi Geometri 2x2",
+                            "Persamaan & Fungsi Kuadrat",
+                            "Barisan & Deret Aritmetika",
+                            "Teori Permintaan & Penawaran Pasar",
+                            "Struktur Sosial & Mobilitas Sosial",
+                            "Ide Pokok & Kalimat Efektif Teks",
+                            "The Unseen Reading Passage (B. Inggris)"
+                          ].map((sug, sIdx) => (
+                            <button
+                              key={sIdx}
+                              onClick={() => {
+                                setTopicInput(sug);
+                                handleStartTopicClarify(sug);
+                              }}
+                              style={{
+                                backgroundColor: "#fafbf8",
+                                border: "1px solid #dce1da",
+                                color: "#45544e",
+                                borderRadius: 999,
+                                padding: "6px 12px",
+                                fontSize: 11.5,
+                                cursor: "pointer",
+                                textAlign: "left"
+                              }}
+                            >
+                              {sug}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 

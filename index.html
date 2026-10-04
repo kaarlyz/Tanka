@@ -321,8 +321,9 @@
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        padding: 18px 16px 16px;
+        justify-content: flex-start;
+        gap: 14px;
+        padding: 18px 16px 28px;
         color: #eff5ec;
         background: #18221f;
         border-right: 1px solid rgba(255, 255, 255, 0.06);
@@ -1106,6 +1107,13 @@
           transform: translateX(-100%);
           transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
           overflow-y: auto !important;
+          overflow-x: hidden !important;
+          -webkit-overflow-scrolling: touch !important;
+          padding: 16px 14px 60px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: flex-start !important;
+          gap: 12px !important;
         }
         .figma-sidebar.open, .sidebar-drawer.open {
           transform: translateX(0) !important;
@@ -1370,6 +1378,53 @@
       @keyframes slideUp {
         from { transform: translateY(100%); }
         to { transform: translateY(0); }
+      }
+
+      @keyframes searchPulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(119, 159, 47, 0.45);
+          border-color: #779f2f;
+        }
+        70% {
+          box-shadow: 0 0 0 7px rgba(119, 159, 47, 0);
+          border-color: #779f2f;
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(119, 159, 47, 0);
+          border-color: #dce1da;
+        }
+      }
+
+      @keyframes shimmerSweep {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(200%); }
+      }
+
+      @keyframes spinSlow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      .search-source-card {
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      .search-source-card.active {
+        animation: searchPulse 2s infinite;
+        background-color: #ffffff !important;
+        border-color: #779f2f !important;
+        transform: translateY(-1px);
+      }
+      .search-source-card.active::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #779f2f, #c8f064, #779f2f);
+        animation: shimmerSweep 1.8s infinite;
       }
 
       .print-only {

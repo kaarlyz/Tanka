@@ -29,7 +29,7 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
     } else {
       const id = "mistake_" + now + "_" + Math.random().toString(36).slice(2, 6);
       db.prepare("INSERT INTO mistake_notebook (id, doc_id, doc_title, question, options, correct_index, user_answer_index, formula, steps, explanation, pitfall, resolved, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)")
-        .run(id, docId || "", docTitle, JSON.stringify(options), correctIndex, userAnswerIndex, formula, JSON.stringify(steps), explanation, pitfall, now, now);
+        .run(id, docId || "", docTitle, question, JSON.stringify(options), correctIndex, userAnswerIndex, formula, JSON.stringify(steps), explanation, pitfall, now, now);
       return sendJSON(res, { success: true, id, created: true });
     }
   }

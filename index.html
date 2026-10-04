@@ -11,13 +11,27 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
     <style>
       :root {
-        --figma-bg: #eef1eb;
-        --figma-sidebar: #18221f;
+        --ink: #18211e;
+        --ink-soft: #5f6b66;
+        --muted: #89938f;
+        --line: #dce2da;
+        --paper: #f8f9f5;
+        --canvas: #edf1ea;
+        --white: #ffffff;
+        --dark: #19231f;
+        --dark-2: #24302c;
+        --lime: #c8f064;
+        --lime-soft: #eef8d9;
+        --green: #779f2f;
+        --red: #b45d50;
+
+        --figma-bg: #edf1ea;
+        --figma-sidebar: #19231f;
         --figma-card: #ffffff;
         --figma-lime: #c8f064;
-        --figma-border: #dde1da;
-        --figma-text: #17201d;
-        --figma-muted: #6f7975;
+        --figma-border: #dce2da;
+        --figma-text: #18211e;
+        --figma-muted: #5f6b66;
       }
       * {
         box-sizing: border-box;
@@ -67,27 +81,202 @@
         height: 100%;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
-        border-radius: 12px;
+        border-radius: 16px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         padding: 32px 28px;
         box-sizing: border-box;
         border: 1px solid #dde1da;
-        box-shadow: 0 10px 35px rgba(27, 39, 35, 0.08);
+        box-shadow: 0 25px 50px rgba(27, 38, 33, 0.12);
         overflow-y: auto;
       }
       .flashcard-front {
-        background: #ffffff;
-        color: #17201d;
+        background: linear-gradient(145deg, #24312c, #18221e);
+        color: #f0f4f1;
+        border: 1px solid #33403b;
         transform: rotateY(0deg);
       }
       .flashcard-back {
-        background: #18221f;
-        color: #eff5ec;
-        border-color: #34413c;
-        box-shadow: 0 10px 35px rgba(27, 39, 35, 0.15);
+        background: linear-gradient(145deg, #d5f58a, #bfe45f);
+        color: #26301e;
+        border: 1px solid #b7de5c;
+        box-shadow: 0 25px 50px rgba(27, 38, 33, 0.15);
         transform: rotateY(180deg);
+      }
+
+      /* Figma Make Core Design System Components */
+      .section-kicker {
+        display: block;
+        margin-bottom: 8px;
+        color: #7b914e;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        font-family: 'DM Mono', monospace;
+      }
+
+      .difficulty, .card-count {
+        flex: 0 0 auto;
+        padding: 5px 11px;
+        color: #566b36;
+        background: #edf4e3;
+        border: 1px solid #d7e5c5;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .concept-card {
+        padding: 26px 28px;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 12px 35px rgba(29, 40, 35, 0.04);
+      }
+
+      .hero-formula {
+        margin-top: 18px;
+        padding: 20px;
+        text-align: center;
+        background: var(--dark);
+        border-radius: 10px;
+        color: #eef4ef;
+      }
+      .hero-formula .katex {
+        color: #eef4ef;
+        font-size: 1.45em;
+      }
+
+      .formula-note {
+        margin-top: 14px;
+        padding: 12px 14px;
+        color: #3f5b17;
+        text-align: center;
+        background: #f0f6e4;
+        border-radius: 8px;
+      }
+      .formula-note.warn {
+        color: #78564e;
+        background: #f8eeeb;
+      }
+
+      /* Figma Make Mistakes Notebook */
+      .mistakes-view {
+        width: min(100%, 960px);
+        margin: 0 auto;
+      }
+
+      .mistake-card {
+        padding: 24px 26px;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 12px 35px rgba(29, 40, 35, 0.04);
+        margin-bottom: 16px;
+      }
+
+      .mistake-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #88938d;
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 1px;
+      }
+
+      .mistake-card-top strong {
+        padding: 4px 10px;
+        color: #a2574a;
+        background: #faece8;
+        border: 1px solid #f2d5ce;
+        border-radius: 20px;
+        font-size: 11px;
+        letter-spacing: 0;
+      }
+
+      .mistake-card > h2 {
+        margin: 14px 0 12px;
+        font-size: 15.5px;
+        color: var(--ink);
+        line-height: 1.55;
+      }
+
+      .mistake-formula {
+        padding: 16px 20px;
+        color: #eef4ef;
+        background: var(--dark);
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 14px;
+      }
+
+      .mistake-diagnosis {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .mistake-diagnosis > div {
+        padding: 13px 15px;
+        background: #f4f6f2;
+        border: 1px solid #e1e7de;
+        border-radius: 9px;
+      }
+
+      .mistake-diagnosis span {
+        color: #7b914e;
+        font-size: 9.5px;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        font-family: 'DM Mono', monospace;
+      }
+
+      .mistake-diagnosis p {
+        margin: 6px 0 0;
+        color: #55625c;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .mistakes-empty {
+        display: grid;
+        justify-items: center;
+        padding: 55px 25px;
+        text-align: center;
+        background: var(--white);
+        border: 1.5px dashed #cfd6cc;
+        border-radius: 14px;
+      }
+
+      .mistakes-empty > span {
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        color: #789c38;
+        background: #edf3e3;
+        border-radius: 50%;
+        font-family: "DM Mono", monospace;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .mistakes-empty h2 {
+        margin: 16px 0 6px;
+        font-size: 16.5px;
+        color: var(--ink);
+      }
+
+      .mistakes-empty p {
+        margin: 0;
+        color: #7b8580;
+        font-size: 13px;
       }
 
       /* Scrollbars */

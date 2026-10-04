@@ -245,27 +245,27 @@ function MathView({ text, style, className }: { text?: string; style?: React.CSS
 function getSubjectBadge(title: string) {
   const t = (title || "").toLowerCase();
   if (t.includes("sosiologi") || t.includes("sosial") || t.includes("masyarakat") || t.includes("konflik") || t.includes("perubahan")) {
-    return { label: "Sosiologi", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe" };
+    return { label: "Sosiologi", color: "#566b36", bg: "#edf4e3", border: "#d7e5c5" };
   }
   if (t.includes("ekonomi") || t.includes("pasar") || t.includes("harga") || t.includes("uang") || t.includes("permintaan") || t.includes("elastisitas") || t.includes("perdagangan")) {
-    return { label: "Ekonomi", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" };
+    return { label: "Ekonomi", color: "#7c5545", bg: "#f7eee8", border: "#ebd7cd" };
   }
   if (t.includes("matematika") || t.includes("aljabar") || t.includes("matriks") || t.includes("hitung") || t.includes("fungsi") || t.includes("persamaan") || t.includes("trigonometri") || t.includes("kalkulus")) {
-    return { label: "Matematika", color: "#d97706", bg: "#fffbeb", border: "#fde68a" };
+    return { label: "Matematika", color: "#284439", bg: "#e6f0eb", border: "#c9ded3" };
   }
   if (t.includes("indo") || t.includes("bahasa") || t.includes("teks") || t.includes("paragraf") || t.includes("puisi") || t.includes("kalimat") || t.includes("sastra")) {
-    return { label: "B. Indonesia", color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" };
+    return { label: "B. Indonesia", color: "#455668", bg: "#edf2f7", border: "#cfdae5" };
   }
   if (t.includes("inggris") || t.includes("english") || t.includes("grammar") || t.includes("reading") || t.includes("vocabulary")) {
-    return { label: "B. Inggris", color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc" };
+    return { label: "B. Inggris", color: "#3e5b66", bg: "#eaf3f7", border: "#cbe0ea" };
   }
   if (t.includes("fisika") || t.includes("kimia") || t.includes("biologi") || t.includes("sains")) {
-    return { label: "Sains", color: "#db2777", bg: "#fdf2f8", border: "#fbcfe8" };
+    return { label: "Sains", color: "#2d604e", bg: "#e5f4ee", border: "#c2e6d9" };
   }
   if (t.includes("sejarah") || t.includes("perang") || t.includes("kemerdekaan")) {
-    return { label: "Sejarah", color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe" };
+    return { label: "Sejarah", color: "#6e563b", bg: "#f6f0e7", border: "#e8dcce" };
   }
-  return { label: "Modul Belajar", color: "#4b6623", bg: "#f2f8e8", border: "#d7e8be" };
+  return { label: "Modul Belajar", color: "#566b36", bg: "#edf4e3", border: "#d7e5c5" };
 }
 
 // Interactive Visual Diagram & Flow Renderer for Academic Summaries
@@ -2068,23 +2068,23 @@ export default function App() {
           <section className="lesson-panel-box no-scrollbar" style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
           {/* Sub Navigation Tabs (Segmented Control Bar) */}
           <div
-            className="tab-bar-container no-scrollbar"
+            className="tab-bar-container no-scrollbar mode-tabs"
             style={{
-              height: 48,
-              borderBottom: "1px solid #dce1da",
-              backgroundColor: "#ffffff",
+              height: 52,
+              borderBottom: "1px solid #dce2da",
+              backgroundColor: "#f4f6f1",
               display: activeTab === "home" ? "none" : "flex",
               alignItems: "center",
-              padding: "0 18px",
-              gap: 6,
+              padding: "0 24px",
+              gap: 4,
               overflowX: "auto",
               flexShrink: 0
             }}
           >
             {[
-              { id: "material", label: "Materi & Status", icon: BookOpen },
+              { id: "material", label: "Materi", icon: BookOpen },
               { id: "quiz", label: "Latihan Soal", count: quizQuestions.length, icon: Target },
-              { id: "mistakes", label: "Bank Soal Salah", count: activeDocMistakes.length, icon: AlertTriangle, highlight: activeDocMistakes.length > 0 },
+              { id: "mistakes", label: "Bank Kesalahan", count: activeDocMistakes.length, icon: AlertTriangle, highlight: activeDocMistakes.length > 0 },
               { id: "feynman", label: "Uji Feynman", icon: Brain },
               { id: "flashcards", label: "Flashcards 3D", count: flashcards.length, icon: Layers },
               { id: "summary", label: "Rangkuman AI", icon: Sparkles }
@@ -2095,40 +2095,45 @@ export default function App() {
               return (
                 <button
                   key={tab.id}
-                  className="tab-btn"
                   onClick={() => setActiveTab(tab.id as any)}
                   style={{
-                    backgroundColor: isActive ? (isHighlight ? "#fef2f2" : "#18221f") : "transparent",
-                    color: isActive ? (isHighlight ? "#ef4444" : "#c8f064") : (isHighlight ? "#b45309" : "#6f7975"),
-                    border: isActive ? (isHighlight ? "1px solid #fecaca" : "1px solid #18221f") : "1px solid transparent",
-                    borderRadius: 8,
-                    padding: "5px 12px",
-                    fontSize: 12.5,
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: "pointer",
+                    height: "100%",
                     display: "flex",
                     alignItems: "center",
-                    gap: 6,
+                    gap: 8,
+                    padding: "0 15px",
+                    color: isActive ? "#18211e" : (isHighlight ? "#a2574a" : "#78827e"),
+                    backgroundColor: "transparent",
+                    border: "none",
+                    borderBottom: isActive ? "2.5px solid #779f2f" : "2.5px solid transparent",
+                    fontSize: 13.5,
+                    fontWeight: isActive ? 800 : 600,
+                    cursor: "pointer",
                     whiteSpace: "nowrap",
                     flexShrink: 0,
-                    transition: "all 0.15s ease"
+                    transition: "color 0.15s ease, border-color 0.15s ease"
                   }}
                 >
-                  <Icon size={13} color={isActive ? (isHighlight ? "#ef4444" : "#c8f064") : (isHighlight ? "#b45309" : "#6f7975")} />
+                  <Icon size={14} color={isActive ? "#18211e" : (isHighlight ? "#a2574a" : "#78827e")} />
                   <span>{tab.label}</span>
                   {tab.count !== undefined && (
-                    <span
+                    <small
                       style={{
-                        fontSize: 10,
+                        padding: "2px 6px",
+                        borderRadius: 5,
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 10.5,
                         fontWeight: 700,
-                        padding: "1px 6px",
-                        borderRadius: 999,
-                        backgroundColor: isActive ? (isHighlight ? "#fee2e2" : "#25322e") : (isHighlight ? "#fef3c7" : "#e5e7eb"),
-                        color: isActive ? (isHighlight ? "#ef4444" : "#c8f064") : (isHighlight ? "#b45309" : "#4b5563")
+                        backgroundColor: isActive
+                          ? (isHighlight ? "#faece8" : "#e4f1c8")
+                          : (isHighlight ? "#faece8" : "#e4e9e1"),
+                        color: isActive
+                          ? (isHighlight ? "#a2574a" : "#41541d")
+                          : (isHighlight ? "#a2574a" : "#8e9893")
                       }}
                     >
                       {tab.count}
-                    </span>
+                    </small>
                   )}
                 </button>
               );
@@ -2327,39 +2332,39 @@ export default function App() {
                         Fakta siap recall
                       </div>
                     </div>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Layers size={18} color="#3b82f6" />
+                    <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "#e6f0eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Layers size={18} color="#284439" />
                     </div>
                   </div>
 
                   <div
                     onClick={() => setActiveTab("mistakes")}
                     style={{
-                      backgroundColor: mistakes.length > 0 ? "#fffaf5" : "#ffffff",
-                      borderRadius: 12,
-                      padding: "16px 20px",
-                      border: mistakes.length > 0 ? "1px solid #fed7aa" : "1px solid #dce1da",
+                      backgroundColor: mistakes.length > 0 ? "#faece8" : "#ffffff",
+                      borderRadius: 14,
+                      padding: "18px 22px",
+                      border: mistakes.length > 0 ? "1px solid #f2d5ce" : "1px solid #dce2da",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(27, 39, 35, 0.02)",
+                      boxShadow: "0 12px 35px rgba(29, 40, 35, 0.04)",
                       transition: "all 0.15s ease"
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 11.5, color: mistakes.length > 0 ? "#ea580c" : "#6f7975", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                        Bank Soal Salah
+                      <div style={{ fontSize: 11, color: mistakes.length > 0 ? "#a2574a" : "#7b914e", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'DM Mono', monospace" }}>
+                        Bank Kesalahan
                       </div>
-                      <div style={{ fontSize: 26, fontWeight: 800, color: mistakes.length > 0 ? "#c2410c" : "#17201d", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>
+                      <div style={{ fontSize: 26, fontWeight: 800, color: mistakes.length > 0 ? "#a2574a" : "#18211e", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>
                         {mistakes.length}
                       </div>
-                      <div style={{ fontSize: 12, color: mistakes.length > 0 ? "#ea580c" : "#8a9691", marginTop: 2 }}>
-                        {mistakes.length > 0 ? "Klik untuk review kesalahan" : "Belum ada catatan salah"}
+                      <div style={{ fontSize: 12, color: mistakes.length > 0 ? "#a2574a" : "#89938f", marginTop: 2 }}>
+                        {mistakes.length > 0 ? "Klik untuk drill kesalahan" : "Belum ada catatan salah"}
                       </div>
                     </div>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: mistakes.length > 0 ? "#ffedd5" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <AlertTriangle size={18} color={mistakes.length > 0 ? "#ea580c" : "#f59e0b"} />
+                    <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: mistakes.length > 0 ? "#faece8" : "#edf4e3", display: "flex", alignItems: "center", justifyContent: "center", border: mistakes.length > 0 ? "1px solid #f2d5ce" : "1px solid #d7e5c5" }}>
+                      <AlertTriangle size={18} color={mistakes.length > 0 ? "#a2574a" : "#566b36"} />
                     </div>
                   </div>
                 </div>
@@ -4597,51 +4602,49 @@ export default function App() {
               </div>
             )}
 
-            {/* TAB: BANK SOAL SALAH (MISTAKE NOTEBOOK) */}
+            {/* TAB: BANK SOAL SALAH (MISTAKE NOTEBOOK - FIGMA MAKE DESIGN) */}
             {activeTab === "mistakes" && (
-              <div style={{ maxWidth: 960, margin: "0 auto" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <div className="mistakes-view">
+                <div className="view-heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 24, flexWrap: "wrap" }}>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <AlertTriangle size={20} color="#b45309" />
-                      <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
-                        Buku Dosa & Bank Soal Salah ({displayedMistakes.length})
-                      </h2>
-                    </div>
-                    <p style={{ fontSize: 12.5, color: "#6f7975", marginTop: 4 }}>
-                      Daftar soal yang pernah Anda jawab keliru. Latih ulang secara terarah hingga konsep 100% tuntas dikuasai.
+                    <span className="section-kicker">ULANGI · PAHAMI · TUNTASKAN</span>
+                    <h1 style={{ margin: "4px 0 8px", fontSize: "clamp(24px, 2.5vw, 32px)", fontWeight: 800, letterSpacing: "-0.03em", color: "#18211e" }}>
+                      Bank Kesalahan
+                    </h1>
+                    <p style={{ margin: 0, color: "#6f7a74", fontSize: 13.5, lineHeight: 1.6, maxWidth: 580 }}>
+                      Kumpulan butir soal yang pernah menjebakmu, lengkap dengan diagnosis penyebab dan jalur latihan ulang sampai tuntas.
                     </p>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                     {/* Scope Filter Buttons: Modul Ini vs Semua Modul */}
                     {activeDocId && (
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: 3, backgroundColor: "#fafbf8", padding: 2, borderRadius: 6, border: "1px solid #dce1da" }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 3, backgroundColor: "#ffffff", padding: 3, borderRadius: 8, border: "1px solid #dce2da" }}>
                         <button
                           onClick={() => setMistakeFilterScope("current")}
                           style={{
-                            backgroundColor: mistakeFilterScope === "current" ? "#18221f" : "transparent",
-                            color: mistakeFilterScope === "current" ? "#c8f064" : "#56615d",
-                            border: mistakeFilterScope === "current" ? "1px solid #18221f" : "1px solid transparent",
-                            borderRadius: 5,
-                            padding: "4px 10px",
+                            backgroundColor: mistakeFilterScope === "current" ? "#19231f" : "transparent",
+                            color: mistakeFilterScope === "current" ? "#c8f064" : "#5f6b66",
+                            border: "none",
+                            borderRadius: 6,
+                            padding: "6px 12px",
                             fontSize: 11.5,
                             fontWeight: 700,
                             cursor: "pointer",
                             transition: "0.15s ease"
                           }}
-                          title="Tampilkan hanya soal salah dari materi aktif"
+                          title="Tampilkan hanya soal salah dari modul aktif"
                         >
                           Modul Ini ({activeDocMistakes.length})
                         </button>
                         <button
                           onClick={() => setMistakeFilterScope("all")}
                           style={{
-                            backgroundColor: mistakeFilterScope === "all" ? "#18221f" : "transparent",
-                            color: mistakeFilterScope === "all" ? "#c8f064" : "#56615d",
-                            border: mistakeFilterScope === "all" ? "1px solid #18221f" : "1px solid transparent",
-                            borderRadius: 5,
-                            padding: "4px 10px",
+                            backgroundColor: mistakeFilterScope === "all" ? "#19231f" : "transparent",
+                            color: mistakeFilterScope === "all" ? "#c8f064" : "#5f6b66",
+                            border: "none",
+                            borderRadius: 6,
+                            padding: "6px 12px",
                             fontSize: 11.5,
                             fontWeight: 700,
                             cursor: "pointer",
@@ -4654,266 +4657,270 @@ export default function App() {
                       </div>
                     )}
 
+                    <span className="card-count">
+                      {displayedMistakes.length > 0 ? `${displayedMistakes.length} butir soal` : "Kosong"}
+                    </span>
+
                     {displayedMistakes.length > 0 && (
                       <button
                         onClick={startMistakeDrill}
                         style={{
-                          backgroundColor: "#18221f",
-                          color: "#c8f064",
+                          backgroundColor: "#c8f064",
+                          color: "#18211e",
                           border: "none",
                           borderRadius: 8,
-                          padding: "9px 16px",
-                          fontSize: 13,
-                          fontWeight: 700,
+                          padding: "8px 16px",
+                          fontSize: 12.5,
+                          fontWeight: 800,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
                           gap: 6,
-                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)"
+                          boxShadow: "0 4px 14px rgba(200, 240, 100, 0.25)"
                         }}
                       >
                         <Target size={14} />
-                        <span>Drill {mistakeFilterScope === "current" && activeDocId ? "Soal Modul Ini" : "Semua Soal"} ({displayedMistakes.length})</span>
+                        <span>Drill {mistakeFilterScope === "current" && activeDocId ? "Modul Ini" : "Semua"} ({displayedMistakes.length}) →</span>
                       </button>
                     )}
                   </div>
                 </div>
 
                 {displayedMistakes.length === 0 ? (
-                  <div
-                    style={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #dde1da",
-                      borderRadius: 12,
-                      padding: "48px 24px",
-                      textAlign: "center",
-                      boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
-                    }}
-                  >
-                    <Check size={36} color="#4b6623" style={{ margin: "0 auto 12px" }} />
-                    <h3 style={{ fontSize: 18, fontWeight: 800, color: "#17201d" }}>
-                      {mistakeFilterScope === "current" && activeDocId
-                        ? `Buku Dosa Bersih untuk "${activeDocTitle || "Modul Ini"}"!`
-                        : "Buku Dosa Bersih!"}
-                    </h3>
-                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 440, margin: "6px auto 16px" }}>
+                  <div className="mistakes-empty">
+                    <span>00</span>
+                    <h2>Belum ada catatan kesalahan</h2>
+                    <p>
                       {mistakeFilterScope === "current" && activeDocId && mistakes.length > 0
-                        ? `Tidak ada soal yang salah pada modul ini. (Terdapat ${mistakes.length} catatan soal salah di modul lain).`
-                        : "Belum ada catatan soal yang keliru, atau semua soal salah telah berhasil Anda kuasai. Lanjutkan latihan mandiri dengan paket soal baru!"}
+                        ? `Seluruh soal pada modul ini berhasil dikuasai! Terdapat ${mistakes.length} catatan pada modul lain.`
+                        : "Jawaban keliru dari Latihan Soal akan otomatis muncul di sini untuk dilatih ulang."}
                     </p>
                     <button
+                      className="check-answer"
+                      style={{ width: "auto", margin: "20px auto 0", padding: "10px 22px", borderRadius: 8 }}
                       onClick={() => setActiveTab("quiz")}
-                      style={{
-                        backgroundColor: "#18221f",
-                        color: "#c8f064",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: "9px 16px",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: "pointer"
-                      }}
                     >
-                      Buka Latihan Soal
+                      Mulai Latihan Soal <span>→</span>
                     </button>
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                    {displayedMistakes.map((m, idx) => (
-                      <div
-                        key={m.id}
-                        style={{
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #dde1da",
-                          borderRadius: 12,
-                          padding: "22px 26px",
-                          boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                          <span
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 800,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.08em",
-                              color: "#b45309",
-                              backgroundColor: "#fef3c7",
-                              border: "1px solid #fde68a",
-                              padding: "3px 8px",
-                              borderRadius: 4,
-                              fontFamily: "'DM Mono', monospace"
-                            }}
-                          >
-                            {m.docTitle || "Latihan Mandiri"} • Nomor {idx + 1}
-                          </span>
-                          <span style={{ fontSize: 11, color: "#8a9691", fontFamily: "'DM Mono', monospace" }}>
-                            Dicatat {new Date(m.createdAt).toLocaleDateString("id-ID")}
-                          </span>
-                        </div>
-
-                        <div style={{ fontSize: 15.5, fontWeight: 600, color: "#17201d", lineHeight: "1.6", marginBottom: 14 }}>
-                          <MathView text={m.question} />
-                        </div>
-
-                        {/* User answer vs Key comparison */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                          <div
-                            style={{
-                              backgroundColor: "#fdf2f2",
-                              border: "1px solid #fecaca",
-                              borderRadius: 8,
-                              padding: "10px 12px"
-                            }}
-                          >
-                            <div style={{ fontSize: 11, fontWeight: 700, color: "#991b1b", textTransform: "uppercase", marginBottom: 4 }}>
-                              Jawaban Anda (Keliru)
-                            </div>
-                            <div style={{ fontSize: 13, color: "#b91c1c" }}>
-                              {m.options && m.options[m.userAnswerIndex] ? (
-                                <MathView text={m.options[m.userAnswerIndex]} />
-                              ) : (
-                                "Tidak terjawab"
-                              )}
-                            </div>
-                          </div>
-
-                          <div
-                            style={{
-                              backgroundColor: "#eef8db",
-                              border: "1px solid #c2e28f",
-                              borderRadius: 8,
-                              padding: "10px 12px"
-                            }}
-                          >
-                            <div style={{ fontSize: 11, fontWeight: 700, color: "#22370c", textTransform: "uppercase", marginBottom: 4 }}>
-                              Kunci Jawaban Benar
-                            </div>
-                            <div style={{ fontSize: 13, color: "#273f15" }}>
-                              {m.options && m.options[m.correctIndex] ? (
-                                <MathView text={m.options[m.correctIndex]} />
-                              ) : (
-                                "Opsi Benar"
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Formula Box if present */}
-                        {m.formula && (
-                          <div
-                            style={{
-                              backgroundColor: "#1d2824",
-                              border: "1px solid #34413c",
-                              borderRadius: 10,
-                              padding: "10px 14px",
-                              marginBottom: 12
-                            }}
-                          >
-                            <div style={{ fontSize: 10.5, fontWeight: 700, color: "#c8f064", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4, fontFamily: "'DM Mono', monospace" }}>
-                              Rumus Utama
-                            </div>
-                            <div style={{ textAlign: "center", fontSize: 14, color: "#e8eee9" }}>
-                              <MathView text={m.formula} />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Steps if present */}
-                        {m.steps && m.steps.length > 0 ? (
-                          <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                            {m.steps.map((st, sIdx) => (
-                              <div
-                                key={sIdx}
+                    {displayedMistakes.map((m, idx) => {
+                      const badge = getSubjectBadge(m.docTitle || activeDocTitle || "Modul");
+                      return (
+                        <article key={m.id} className="mistake-card">
+                          <div className="mistake-card-top">
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span
                                 style={{
-                                  backgroundColor: "#f8f9f5",
-                                  border: "1px solid #dde1da",
-                                  borderRadius: 8,
-                                  padding: "8px 12px",
-                                  fontSize: 12.5,
-                                  color: "#17201d",
-                                  display: "flex",
-                                  gap: 8
+                                  backgroundColor: badge.bg,
+                                  color: badge.color,
+                                  border: `1px solid ${badge.border}`,
+                                  padding: "3px 9px",
+                                  borderRadius: 6,
+                                  fontSize: 10.5,
+                                  fontWeight: 800,
+                                  letterSpacing: "0.5px",
+                                  textTransform: "uppercase"
                                 }}
                               >
-                                <span style={{ fontWeight: 800, color: "#22370c", fontFamily: "'DM Mono', monospace" }}>{st.step || (sIdx + 1)}.</span>
-                                <div>
-                                  {st.title && <strong style={{ color: "#17201d" }}>{st.title}: </strong>}
-                                  <MathView text={st.desc} />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          m.explanation && (
-                            <div style={{ fontSize: 12.5, color: "#45544e", backgroundColor: "#f8f9f5", border: "1px solid #dde1da", padding: "10px 12px", borderRadius: 8, marginBottom: 12 }}>
-                              <strong style={{ color: "#17201d" }}>Pembahasan: </strong>
-                              <MathView text={m.explanation} />
+                                {badge.label}
+                              </span>
+                              <span style={{ fontSize: 11, color: "#89938f", fontFamily: "'DM Mono', monospace" }}>
+                                {m.docTitle || "Latihan Mandiri"} · Soal {idx + 1}
+                              </span>
                             </div>
-                          )
-                        )}
+                            <strong>Belum tuntas</strong>
+                          </div>
 
-                        {/* Pitfall callout */}
-                        {m.pitfall && (
-                          <div
-                            style={{
-                              fontSize: 12,
-                              color: "#92400e",
-                              backgroundColor: "#fffbeb",
-                              border: "1px solid #fde68a",
-                              borderRadius: 8,
-                              padding: "8px 12px",
-                              marginBottom: 14,
-                              display: "flex",
-                              gap: 6
-                            }}
-                          >
-                            <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1, color: "#b45309" }} />
+                          <h2>
+                            <MathView text={m.question} />
+                          </h2>
+
+                          {/* Hero formula box if present */}
+                          {m.formula && (
+                            <div className="mistake-formula">
+                              <MathView text={m.formula} />
+                            </div>
+                          )}
+
+                          {/* Diagnosis Grid */}
+                          <div className="mistake-diagnosis">
                             <div>
-                              <strong>Penyebab Kesalahan: </strong>
-                              <MathView text={m.pitfall} />
+                              <span>PENYEBAB KESALAHAN</span>
+                              <p>
+                                <MathView text={m.pitfall || "Terjebak distractor atau keliru menerapkan rumus saat analisis opsi."} />
+                              </p>
+                            </div>
+                            <div>
+                              <span>KONSEP YANG DIULANG</span>
+                              <p>
+                                <MathView text={m.concept || m.explanation || "Review kembali kaidah pembeda konsep dan langkah eliminasi biner."} />
+                              </p>
                             </div>
                           </div>
-                        )}
 
-                        {/* Action buttons */}
-                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                          <button
-                            onClick={() => deleteMistake(m.id)}
-                            style={{
-                              backgroundColor: "#ffffff",
-                              border: "1px solid #dce1da",
-                              color: "#6f7975",
-                              borderRadius: 6,
-                              padding: "6px 12px",
-                              fontSize: 12,
-                              cursor: "pointer"
-                            }}
-                          >
-                            Hapus
-                          </button>
-                          <button
-                            onClick={() => resolveMistake(m.id)}
-                            style={{
-                              backgroundColor: "#eef8db",
-                              border: "1px solid #c2e28f",
-                              color: "#22370c",
-                              borderRadius: 6,
-                              padding: "6px 12px",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 5
-                            }}
-                          >
-                            <Check size={12} />
-                            <span>Tandai Sudah Paham & Hapus</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                          {/* User answer vs Key comparison */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
+                            <div
+                              style={{
+                                backgroundColor: "#fdf4f2",
+                                border: "1px solid #f8dcd6",
+                                borderRadius: 9,
+                                padding: "12px 14px"
+                              }}
+                            >
+                              <div style={{ fontSize: 10, fontWeight: 800, color: "#a2574a", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>
+                                Jawaban Anda (Keliru)
+                              </div>
+                              <div style={{ fontSize: 13, color: "#8a4437" }}>
+                                {m.options && m.options[m.userAnswerIndex] ? (
+                                  <MathView text={m.options[m.userAnswerIndex]} />
+                                ) : (
+                                  "Tidak terjawab"
+                                )}
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                backgroundColor: "#f2f8eb",
+                                border: "1px solid #dbe8cb",
+                                borderRadius: 9,
+                                padding: "12px 14px"
+                              }}
+                            >
+                              <div style={{ fontSize: 10, fontWeight: 800, color: "#566b36", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>
+                                Kunci Jawaban Benar
+                              </div>
+                              <div style={{ fontSize: 13, color: "#364a1e" }}>
+                                {m.options && m.options[m.correctIndex] ? (
+                                  <MathView text={m.options[m.correctIndex]} />
+                                ) : (
+                                  "Opsi Benar"
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Steps breakdown if present */}
+                          {m.steps && m.steps.length > 0 && (
+                            <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
+                              <div style={{ fontSize: 10, fontWeight: 800, color: "#7b914e", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "'DM Mono', monospace", marginBottom: 2 }}>
+                                Langkah Pembahasan Terstruktur
+                              </div>
+                              {m.steps.map((st, sIdx) => (
+                                <div
+                                  key={sIdx}
+                                  style={{
+                                    backgroundColor: "#f8f9f5",
+                                    border: "1px solid #dce2da",
+                                    borderRadius: 8,
+                                    padding: "9px 13px",
+                                    fontSize: 12.5,
+                                    color: "#18211e",
+                                    display: "flex",
+                                    gap: 8
+                                  }}
+                                >
+                                  <span style={{ fontWeight: 800, color: "#566b36", fontFamily: "'DM Mono', monospace" }}>
+                                    {st.step || (sIdx + 1)}.
+                                  </span>
+                                  <div>
+                                    {st.title && <strong style={{ color: "#18211e" }}>{st.title}: </strong>}
+                                    <MathView text={st.desc} />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Action footer */}
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid #f0f2ee", flexWrap: "wrap" }}>
+                            <div style={{ fontSize: 11, color: "#89938f", fontFamily: "'DM Mono', monospace" }}>
+                              Dicatat {new Date(m.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <button
+                                onClick={() => deleteMistake(m.id)}
+                                title="Hapus soal ini dari Bank Kesalahan"
+                                style={{
+                                  backgroundColor: "transparent",
+                                  border: "1px solid #dce2da",
+                                  color: "#7b8580",
+                                  borderRadius: 7,
+                                  padding: "7px 12px",
+                                  fontSize: 11.5,
+                                  fontWeight: 600,
+                                  cursor: "pointer"
+                                }}
+                              >
+                                Hapus
+                              </button>
+
+                              <button
+                                onClick={() => resolveMistake(m.id)}
+                                style={{
+                                  backgroundColor: "#edf4e3",
+                                  border: "1px solid #d7e5c5",
+                                  color: "#465f33",
+                                  borderRadius: 7,
+                                  padding: "7px 14px",
+                                  fontSize: 11.5,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 5
+                                }}
+                              >
+                                <Check size={12} />
+                                <span>Tandai Sudah Dikuasai</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  if (m.docId && m.docId !== activeDocId) {
+                                    loadDocument(m.docId);
+                                  }
+                                  // Setup single drill question
+                                  setQuizQuestions([{
+                                    id: "mistake_single_" + m.id,
+                                    question: m.question,
+                                    options: m.options || ["A", "B", "C", "D"],
+                                    correctAnswer: m.correctIndex,
+                                    explanation: m.explanation || m.concept || "Ulangi penalaran konsep.",
+                                    formula: m.formula || "",
+                                    steps: m.steps || []
+                                  }]);
+                                  setUserAnswers({});
+                                  setSubmitted(false);
+                                  setCurrentQuestionIndex(0);
+                                  setActiveTab("quiz");
+                                }}
+                                style={{
+                                  backgroundColor: "#19231f",
+                                  color: "#c8f064",
+                                  border: "none",
+                                  borderRadius: 7,
+                                  padding: "7px 14px",
+                                  fontSize: 11.5,
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 5
+                                }}
+                              >
+                                <span>Latih Ulang Soal Ini</span>
+                                <span>→</span>
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -5030,36 +5037,49 @@ export default function App() {
                             fontSize: 10,
                             fontWeight: 800,
                             textTransform: "uppercase",
-                            letterSpacing: "0.08em",
-                            color: "#22370c",
-                            backgroundColor: "#eef8db",
-                            border: "1px solid #c2e28f",
-                            padding: "3px 8px",
-                            borderRadius: 4,
+                            letterSpacing: "1.2px",
+                            color: "#566b36",
+                            backgroundColor: "#edf4e3",
+                            border: "1px solid #d7e5c5",
+                            padding: "4px 10px",
+                            borderRadius: 20,
                             fontFamily: "'DM Mono', monospace"
                           }}
                         >
                           {feynmanResult.verdict}
                         </span>
-                        <h3 style={{ fontSize: 17, fontWeight: 800, color: "#17201d", marginTop: 6 }}>
+                        <h3 style={{ fontSize: 17, fontWeight: 800, color: "#18211e", marginTop: 8 }}>
                           Analisis Retensi Memori Aktif
                         </h3>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 28, fontWeight: 800, color: "#22370c", fontFamily: "'DM Mono', monospace" }}>
-                          {feynmanResult.score}%
+                      <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
+                        <div
+                          style={{
+                            width: 60,
+                            height: 60,
+                            borderRadius: "50%",
+                            backgroundColor: "#c8f064",
+                            color: "#18211e",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 20,
+                            fontWeight: 800
+                          }}
+                        >
+                          {feynmanResult.score}
                         </div>
-                        <div style={{ fontSize: 10, color: "#727d78" }}>Tingkat Akurasi</div>
                       </div>
                     </div>
 
                     {/* Accurate Points */}
                     {feynmanResult.accuratePoints?.length > 0 && (
-                      <div style={{ marginBottom: 14 }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#22370c", textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                          <CheckCircle2 size={14} color="#4b6623" /> Poin yang Dipahami dengan Tepat
+                      <div style={{ marginBottom: 14, padding: "14px 16px", backgroundColor: "#e6eedc", border: "1px solid #c9dec2", borderRadius: 9 }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#364a1e", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "flex", alignItems: "center", gap: 6, fontFamily: "'DM Mono', monospace" }}>
+                          <CheckCircle2 size={14} color="#566b36" /> Poin yang Dipahami dengan Tepat
                         </div>
-                        <ul style={{ paddingLeft: 18, fontSize: 13, color: "#17201d", lineHeight: "1.6" }}>
+                        <ul style={{ paddingLeft: 18, fontSize: 13, color: "#18211e", lineHeight: "1.6" }}>
                           {feynmanResult.accuratePoints.map((pt, i) => (
                             <li key={i}><MathView text={pt} /></li>
                           ))}
@@ -5069,11 +5089,11 @@ export default function App() {
 
                     {/* Missed Nuances */}
                     {feynmanResult.missedOrFlawedPoints?.length > 0 && (
-                      <div style={{ marginBottom: 14 }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#b45309", textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                          <AlertTriangle size={14} color="#f59e0b" /> Bagian yang Kurang Presisi / Terlewat
+                      <div style={{ marginBottom: 14, padding: "14px 16px", backgroundColor: "#faece8", border: "1px solid #f2d5ce", borderRadius: 9 }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#a2574a", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "flex", alignItems: "center", gap: 6, fontFamily: "'DM Mono', monospace" }}>
+                          <AlertTriangle size={14} color="#a2574a" /> Bagian yang Kurang Presisi / Perlu Diperdalam
                         </div>
-                        <ul style={{ paddingLeft: 18, fontSize: 13, color: "#45544e", lineHeight: "1.6" }}>
+                        <ul style={{ paddingLeft: 18, fontSize: 13, color: "#55625c", lineHeight: "1.6" }}>
                           {feynmanResult.missedOrFlawedPoints.map((pt, i) => (
                             <li key={i}><MathView text={pt} /></li>
                           ))}
@@ -5085,25 +5105,25 @@ export default function App() {
                     {feynmanResult.perfectAnalogy && (
                       <div
                         style={{
-                          backgroundColor: "#eef8db",
-                          border: "1px solid #c2e28f",
-                          borderRadius: 8,
-                          padding: "12px 14px",
+                          backgroundColor: "#f4f6f1",
+                          border: "1px solid #dce2da",
+                          borderRadius: 9,
+                          padding: "14px 16px",
                           marginBottom: 14
                         }}
                       >
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#22370c", display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                          <Lightbulb size={15} color="#4b6623" /> Analogi Pengunci Memori
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#566b36", display: "flex", alignItems: "center", gap: 6, marginBottom: 4, letterSpacing: "0.8px", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>
+                          <Lightbulb size={15} color="#566b36" /> Analogi Pengunci Memori
                         </div>
-                        <div style={{ fontSize: 13, color: "#273f15", lineHeight: "1.55" }}>
+                        <div style={{ fontSize: 13, color: "#18211e", lineHeight: "1.6" }}>
                           <MathView text={feynmanResult.perfectAnalogy} />
                         </div>
                       </div>
                     )}
 
                     {/* Overall Coach Feedback */}
-                    <div style={{ fontSize: 13, color: "#45544e", lineHeight: "1.6", borderTop: "1px solid #dde1da", paddingTop: 12 }}>
-                      <strong style={{ color: "#17201d" }}>Catatan Mentor: </strong>
+                    <div style={{ fontSize: 13, color: "#55625c", lineHeight: "1.6", borderTop: "1px solid #dce2da", paddingTop: 12 }}>
+                      <strong style={{ color: "#18211e" }}>Catatan Nara: </strong>
                       <MathView text={feynmanResult.feedback} />
                     </div>
                   </div>
@@ -5230,28 +5250,24 @@ export default function App() {
                                 fontSize: 10,
                                 fontWeight: 800,
                                 textTransform: "uppercase",
-                                letterSpacing: "0.08em",
-                                color: "#22370c",
-                                backgroundColor: "#eef8db",
-                                border: "1px solid #c2e28f",
-                                padding: "3px 8px",
-                                borderRadius: 4,
+                                letterSpacing: "1.2px",
+                                color: "#c8f064",
                                 fontFamily: "'DM Mono', monospace"
                               }}
                             >
                               Konsep / Istilah Kunci
                             </span>
-                            <span style={{ fontSize: 11, color: "#4b5563", display: "flex", alignItems: "center", gap: 4 }}>
-                              <RotateCw size={12} />
-                              Sentuh untuk balik
+                            <span style={{ fontSize: 10.5, color: "#89938f", display: "flex", alignItems: "center", gap: 5, letterSpacing: "0.5px" }}>
+                              <RotateCw size={11} />
+                              KLIK UNTUK BALIK
                             </span>
                           </div>
 
-                          <div className="card-q" style={{ fontSize: 18, fontWeight: 700, lineHeight: "1.45", color: "#17201d", margin: "20px 0" }}>
+                          <div className="card-q" style={{ fontSize: 20, fontWeight: 700, lineHeight: "1.45", color: "#f0f4f1", margin: "24px 0", letterSpacing: "-0.4px" }}>
                             <MathView text={currentCard?.front} />
                           </div>
 
-                          <div style={{ fontSize: 11, color: "#4b5563", fontFamily: "'DM Mono', monospace" }}>
+                          <div style={{ fontSize: 11, color: "#89938f", fontFamily: "'DM Mono', monospace" }}>
                             Status penguasaan: {currentCard?.difficulty || "Baru"}
                           </div>
                         </div>
@@ -5264,29 +5280,25 @@ export default function App() {
                                 fontSize: 10,
                                 fontWeight: 800,
                                 textTransform: "uppercase",
-                                letterSpacing: "0.08em",
-                                color: "#c8f064",
-                                backgroundColor: "rgba(200, 240, 100, 0.15)",
-                                border: "1px solid #34413c",
-                                padding: "3px 8px",
-                                borderRadius: 4,
+                                letterSpacing: "1.2px",
+                                color: "#4b681d",
                                 fontFamily: "'DM Mono', monospace"
                               }}
                             >
-                              Definisi & Kaidah Inti
+                              JAWABAN & DEFINISI
                             </span>
-                            <span style={{ fontSize: 11, color: "#c8f064", display: "flex", alignItems: "center", gap: 4 }}>
-                              <RotateCw size={12} />
-                              Sentuh kembali
+                            <span style={{ fontSize: 10.5, color: "#566b36", display: "flex", alignItems: "center", gap: 5, letterSpacing: "0.5px" }}>
+                              <RotateCw size={11} />
+                              SENTUH KEMBALI
                             </span>
                           </div>
 
-                          <div style={{ fontSize: 15, fontWeight: 500, lineHeight: "1.6", color: "#eff5ec", margin: "20px 0" }}>
+                          <div style={{ fontSize: 16, fontWeight: 600, lineHeight: "1.65", color: "#26301e", margin: "22px 0" }}>
                             <MathView text={currentCard?.back} />
                           </div>
 
-                          <div style={{ fontSize: 11, color: "#c8f064", fontFamily: "'DM Mono', monospace" }}>
-                            Beri nilai penguasaan di bawah
+                          <div style={{ fontSize: 11, color: "#4b681d", fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>
+                            Beri nilai pemahaman di bawah
                           </div>
                         </div>
                       </div>
@@ -5371,9 +5383,9 @@ export default function App() {
                         <button
                           onClick={() => handleReviewCard("again")}
                           style={{
-                            backgroundColor: "#fdf2f2",
-                            border: "1px solid #fecaca",
-                            color: "#991b1b",
+                            backgroundColor: "#faece8",
+                            border: "1px solid #f2d5ce",
+                            color: "#a2574a",
                             borderRadius: 8,
                             padding: "10px 0",
                             fontSize: 12,
@@ -5381,7 +5393,7 @@ export default function App() {
                             cursor: "pointer"
                           }}
                         >
-                          Ulangi
+                          Ulangi Segera
                         </button>
                         <button
                           onClick={() => handleReviewCard("hard")}
@@ -5396,14 +5408,14 @@ export default function App() {
                             cursor: "pointer"
                           }}
                         >
-                          Sulit
+                          Sulit (1 hari)
                         </button>
                         <button
                           onClick={() => handleReviewCard("good")}
                           style={{
-                            backgroundColor: "#eef8db",
-                            border: "1px solid #c2e28f",
-                            color: "#22370c",
+                            backgroundColor: "#edf4e3",
+                            border: "1px solid #d7e5c5",
+                            color: "#566b36",
                             borderRadius: 8,
                             padding: "10px 0",
                             fontSize: 12,
@@ -5411,12 +5423,12 @@ export default function App() {
                             cursor: "pointer"
                           }}
                         >
-                          Baik
+                          Paham (3 hari)
                         </button>
                         <button
                           onClick={() => handleReviewCard("easy")}
                           style={{
-                            backgroundColor: "#f0fdf4",
+                            backgroundColor: "#dcfce7",
                             border: "1px solid #bbf7d0",
                             color: "#166534",
                             borderRadius: 8,
@@ -5426,7 +5438,7 @@ export default function App() {
                             cursor: "pointer"
                           }}
                         >
-                          Mudah
+                          Kuasai (7 hari)
                         </button>
                       </div>
                     </div>

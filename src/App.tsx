@@ -6156,7 +6156,7 @@ export default function App() {
         </section>
 
           {/* Right Column: Figma Make "Tanya Nara" AI Panel (Collapsible) */}
-          <aside className="ai-panel-box desktop-only" style={{ display: (activeTab !== "home" && isAiPanelOpen) ? "flex" : "none", width: 360, flexShrink: 0 }}>
+          <aside className="ai-panel-box" style={{ display: (activeTab !== "home" && isAiPanelOpen) ? "flex" : "none", flexShrink: 0 }}>
             <div className="ai-panel-inner">
               <div>
                 <div className="ai-heading-box">
@@ -7071,6 +7071,90 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+      {/* Mobile Bottom Navigation Bar (Fixed on <= 768px) */}
+      <nav className="mobile-only mobile-bottom-nav" aria-label="Navigasi Bawah Ponsel">
+        <button
+          className={`mobile-bottom-btn ${activeTab === "home" && !isAiPanelOpen ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("home");
+            setIsAiPanelOpen(false);
+          }}
+        >
+          <Home size={18} />
+          <span>Beranda</span>
+          {activeTab === "home" && !isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
+        </button>
+
+        <button
+          className={`mobile-bottom-btn ${activeTab === "material" && !isAiPanelOpen ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("material");
+            setIsAiPanelOpen(false);
+          }}
+        >
+          <BookOpen size={18} />
+          <span>Materi</span>
+          {activeTab === "material" && !isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
+        </button>
+
+        <button
+          className={`mobile-bottom-btn ${activeTab === "quiz" && !isAiPanelOpen ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("quiz");
+            setIsAiPanelOpen(false);
+          }}
+        >
+          <Target size={18} />
+          <span>Latihan</span>
+          {activeTab === "quiz" && !isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
+        </button>
+
+        <button
+          className={`mobile-bottom-btn ${activeTab === "mistakes" && !isAiPanelOpen ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("mistakes");
+            setIsAiPanelOpen(false);
+          }}
+          style={{ position: "relative" }}
+        >
+          <AlertTriangle size={18} />
+          <span>Bank Salah</span>
+          {mistakes.length > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: 4,
+                right: "22%",
+                backgroundColor: "#ef4444",
+                color: "#ffffff",
+                fontSize: 9,
+                fontWeight: 800,
+                width: 14,
+                height: 14,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: 1
+              }}
+            >
+              {mistakes.length > 9 ? "9+" : mistakes.length}
+            </span>
+          )}
+          {activeTab === "mistakes" && !isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
+        </button>
+
+        <button
+          className={`mobile-bottom-btn ${isAiPanelOpen ? "active" : ""}`}
+          onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+          style={{ color: isAiPanelOpen ? "#4b6623" : "#78827e" }}
+        >
+          <Brain size={18} color={isAiPanelOpen ? "#4b6623" : "currentColor"} />
+          <span>Tanya Nara</span>
+          {isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
+        </button>
+      </nav>
     </div>
   );
 }

@@ -318,34 +318,14 @@ export function TopicModal({
                 </div>
               )}
 
-              {/* STEP 3: Generation in Progress */}
+              {/* STEP 3: Generation in Progress with Live Multi-Source Search Visualizer */}
               {topicStep === 3 && (
-                <div style={{ textAlign: "center", padding: "40px 10px" }}>
-                  <div
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 999,
-                      backgroundColor: "#eef8db",
-                      border: "2px solid #8dbd42",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      margin: "0 auto 16px",
-                      animation: "spin 2s linear infinite"
-                    }}
-                  >
-                    <Sparkles size={22} color="#4b6623" />
-                  </div>
-                  <h4 style={{ fontSize: 16, fontWeight: 800, color: "#17201d", marginBottom: 6 }}>
-                    Menyusun Kurikulum & Modul Mandiri
-                  </h4>
-                  <p style={{ fontSize: 12.5, color: "#6f7975", maxWidth: 380, margin: "0 auto 12px", lineHeight: "1.5" }}>
-                    AI sedang menyusun peta konsep, rumus KaTeX horizontal murni, contoh soal bertingkat, dan analisis jebakan...
-                  </p>
-                  <div style={{ fontSize: 11, color: "#8a9691", fontFamily: "'DM Mono', monospace" }}>
-                    Target: {topicClarificationData?.formalTitle || topicInput}
-                  </div>
+                <div style={{ padding: "8px 0" }}>
+                  <WebSearchProgressView
+                    topic={topicClarificationData?.formalTitle || topicInput}
+                    subject={topicClarificationData?.subject || "Kurikulum Nasional"}
+                    subtitle="Meneliti referensi kurikulum merdeka, memverifikasi konsep kanonikal & menyusun modul Nara..."
+                  />
                 </div>
               )}
               </div>

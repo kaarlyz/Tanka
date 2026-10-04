@@ -1,6 +1,7 @@
 import React from "react";
 import { Globe, Sparkles, Check, X } from "lucide-react";
 import { AIProcessLoader } from "../common/AIProcessLoader";
+import { WebSearchProgressView } from "../common/DiagramRenderer";
 
 export interface EnrichModalProps {
   isEnrichModalOpen: boolean;
@@ -86,16 +87,10 @@ export function EnrichModal({
 
                     {isEnriching ? (
                       <div style={{ padding: "8px 0 16px" }}>
-                        <AIProcessLoader
-                          title="Sedang Memperkaya Materi dari Internet"
-                          subtitle="AI menganalisis kekosongan konsep, mencari referensi kurikulum, dan menyusun studi kasus kontekstual."
-                          badge="Riset Akademik"
-                          steps={[
-                            { label: "Menganalisis Titik Lemah Catatan", detail: `Memindai materi "${activeDocTitle}" untuk menemukan celah konsep.` },
-                            { label: "Mencari Referensi & Kasus Nyata", detail: "Meneliti artikel ensiklopedia, jurnal, dan modul akademik." },
-                            { label: "Menyaring Miskonsepsi & Analogi", detail: "Menyiapkan contoh kontekstual yang ramah pemahaman." },
-                            { label: "Menyisipkan Catatan Tambahan ke Dokumen", detail: "Merapikan rumus KaTeX dan glosarium istilah baru." }
-                          ]}
+                        <WebSearchProgressView
+                          topic={activeDocTitle}
+                          subject="Pengayaan Kurikulum & Riset Multi-Sumber"
+                          subtitle="Memindai celah konsep materi, mengambil referensi kurikulum merdeka, dan melengkapi modul..."
                         />
                       </div>
                     ) : (

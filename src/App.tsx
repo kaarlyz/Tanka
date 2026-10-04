@@ -2182,6 +2182,7 @@ export default function App() {
 
             <button
               onClick={fetchOrExtractFormulas}
+              className="desktop-only"
               style={{
                 backgroundColor: "#ffffff",
                 border: "1px solid #dce1da",
@@ -2197,12 +2198,13 @@ export default function App() {
               }}
             >
               <Calculator size={13} color="#4b6623" />
-              <span className="desktop-only">Lembar Rumus</span>
+              <span>Lembar Rumus</span>
             </button>
 
-            {/* Tanya Nara AI Drawer Toggle */}
+            {/* Tanya Nara AI Drawer Toggle (Desktop only in topbar; mobile uses sticky bottom nav) */}
             <button
               onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+              className="desktop-only"
               style={{
                 backgroundColor: isAiPanelOpen ? "#18221f" : "#ffffff",
                 border: `1px solid ${isAiPanelOpen ? "#18221f" : "#dce1da"}`,
@@ -2414,7 +2416,7 @@ export default function App() {
                       type="text"
                       value={homeSearchQuery}
                       onChange={(e) => setHomeSearchQuery(e.target.value)}
-                      placeholder="Cari materi atau masukkan topik baru (misal: Teori Perubahan Sosial, Elastisitas Permintaan, Fungsi Kuadrat)..."
+                      placeholder="Cari materi atau topik baru..."
                       style={{
                         flex: 1,
                         minWidth: 0,
@@ -2434,7 +2436,7 @@ export default function App() {
                         color: homeSearchQuery.trim() ? "#c8f064" : "#9ca3af",
                         border: "none",
                         borderRadius: 6,
-                        padding: "8px 16px",
+                        padding: "8px 14px",
                         fontSize: 13,
                         fontWeight: 700,
                         cursor: homeSearchQuery.trim() ? "pointer" : "default",
@@ -2444,7 +2446,7 @@ export default function App() {
                         flexShrink: 0
                       }}
                     >
-                      <span>Cari / Buat</span>
+                      <span className="desktop-only">Cari / Buat</span>
                       <ArrowRight size={14} />
                     </button>
                   </form>
@@ -2452,6 +2454,7 @@ export default function App() {
 
                 {/* 2. THREE BENTO STATUS COUNTERS */}
                 <div
+                  className="bento-grid"
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(3, 1fr)",
@@ -2592,27 +2595,30 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", width: "100%", marginTop: 4 }}>
                         <button
                           onClick={() => {
                             loadDocument(targetDoc.id);
                             setActiveTab("material");
                           }}
                           style={{
+                            flex: "1 1 auto",
+                            minWidth: 95,
                             backgroundColor: "#18221f",
                             color: "#c8f064",
                             border: "none",
                             borderRadius: 7,
-                            padding: "8px 14px",
-                            fontSize: 12.5,
+                            padding: "8px 12px",
+                            fontSize: 12,
                             fontWeight: 700,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
+                            justifyContent: "center",
                             gap: 6
                           }}
                         >
-                          <BookOpen size={14} />
+                          <BookOpen size={13} />
                           <span>Baca Materi</span>
                         </button>
 
@@ -2622,20 +2628,23 @@ export default function App() {
                             setActiveTab("quiz");
                           }}
                           style={{
+                            flex: "1 1 auto",
+                            minWidth: 95,
                             backgroundColor: "#f8f9f5",
                             color: "#17201d",
                             border: "1px solid #dce1da",
                             borderRadius: 7,
-                            padding: "8px 14px",
-                            fontSize: 12.5,
+                            padding: "8px 12px",
+                            fontSize: 12,
                             fontWeight: 600,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
+                            justifyContent: "center",
                             gap: 5
                           }}
                         >
-                          <Target size={14} color="#72a728" />
+                          <Target size={13} color="#72a728" />
                           <span>Latihan Soal</span>
                         </button>
 
@@ -2645,20 +2654,23 @@ export default function App() {
                             setActiveTab("flashcards");
                           }}
                           style={{
+                            flex: "1 1 auto",
+                            minWidth: 95,
                             backgroundColor: "#f8f9f5",
                             color: "#17201d",
                             border: "1px solid #dce1da",
                             borderRadius: 7,
-                            padding: "8px 14px",
-                            fontSize: 12.5,
+                            padding: "8px 12px",
+                            fontSize: 12,
                             fontWeight: 600,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
+                            justifyContent: "center",
                             gap: 5
                           }}
                         >
-                          <Layers size={14} color="#3b82f6" />
+                          <Layers size={13} color="#3b82f6" />
                           <span>Flashcards</span>
                         </button>
                       </div>

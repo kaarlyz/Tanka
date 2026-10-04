@@ -1241,13 +1241,12 @@
         .mistake-diagnosis,
         .quiz-mode-switch,
         .metrics-grid,
-        .bento-grid {
+        .bento-grid,
+        div[style*="repeat(3, 1fr)"],
+        div[style*="gridTemplateColumns: 1fr 1fr"],
+        div[style*="1fr 1fr"] {
           grid-template-columns: 1fr !important;
           gap: 10px !important;
-        }
-        div[style*="gridTemplateColumns: 1fr 1fr"],
-                div[style*="1fr 1fr"] {
-          grid-template-columns: 1fr !important;
         }
 
         /* 8. Cards & Typography Adaptations */

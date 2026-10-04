@@ -33,6 +33,7 @@ const ROUTER_URL = process.env.ROUTER_URL || "http://127.0.0.1:20128/v1";
 
 // Helper for JSON response
 function sendJSON(res, data, statusCode = 200) {
+  if (res.headersSent) return;
   res.writeHead(statusCode, {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",

@@ -95,14 +95,36 @@ function scoreAcademicRelevance(title, topic, subject = "") {
   const topLower = (topic || "").toLowerCase().trim();
   const subLower = (subject || "").toLowerCase().trim();
 
+  // Reject completely off-topic subjects if searching academic sciences/math/social
+  const crossContaminationWords = [
+    "teks tanggapan", "teks pidato", "cerpen", "puisi", "pantun", "teks eksplanasi", 
+    "teks prosedur", "teks observasi", "surat lamaran", "novel", "drama", "majas"
+  ];
+  if (!topLower.includes("teks") && !topLower.includes("bahasa") && !topLower.includes("sastra")) {
+    for (const bad of crossContaminationWords) {
+      if (tLower.includes(bad)) return 0;
+    }
+  }
+
   const stopWords = new Set(["dan", "yang", "di", "ke", "dari", "untuk", "pada", "adalah", "ini", "itu", "tentang", "kelas", "sma", "smp", "sd"]);
   const keywords = topLower.split(/[^a-zA-Z0-9]+/).filter(w => w.length > 2 && !stopWords.has(w));
 
   let score = 0;
+  let matchedKwCount = 0;
+
   for (const kw of keywords) {
-    if (tLower.includes(kw)) score += 10;
+    if (tLower.includes(kw)) {
+      score += 15;
+      matchedKwCount++;
+    }
   }
-  if (tLower.includes(topLower)) score += 30;
+
+  // Reject false positives that only match 1 single generic word when topic has 2+ keywords
+  if (keywords.length >= 2 && matchedKwCount < 2 && !tLower.includes(topLower)) {
+    return 0;
+  }
+
+  if (tLower.includes(topLower)) score += 35;
 
   if (subLower) {
     if (tLower.includes(subLower)) score += 25;

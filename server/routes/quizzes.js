@@ -177,27 +177,37 @@ ${factsContext}
       if (s.startsWith("```json")) s = s.slice(7);
       else if (s.startsWith("```")) s = s.slice(3);
       if (s.endsWith("```")) s = s.slice(0, -3);
-      s = s.trim().replace(/,\s*([\]}])/g, "$1");
+      s = s.trim();
 
+      // 1. Direct parse first (preserves math decimals like $2{,}0$)
       try {
         return JSON.parse(s);
-      } catch {
+      } catch {}
+
+      // 2. Escape LaTeX backslashes (\frac, \sum)
+      try {
+        const repaired = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+        return JSON.parse(repaired);
+      } catch {}
+
+      // 3. Strip trailing commas outside quotes only
+      try {
+        const noTrailing = s.replace(/,\s*([\]\}])(?=(?:[^"]*"[^"]*")*[^"]*$)/g, "$1");
+        const repaired = noTrailing.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+        return JSON.parse(repaired);
+      } catch {}
+
+      // 4. Fallback extract array
+      const match = s.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (match) {
         try {
-          const repaired = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-          return JSON.parse(repaired);
+          return JSON.parse(match[0]);
         } catch {
-          const match = s.match(/\[\s*\{[\s\S]*\}\s*\]/);
-          if (match) {
-            try {
-              return JSON.parse(match[0].replace(/,\s*([\]}])/g, "$1"));
-            } catch {
-              const matchRepaired = match[0].replace(/,\s*([\]}])/g, "$1").replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-              return JSON.parse(matchRepaired);
-            }
-          }
-          throw new Error("Invalid JSON structure");
+          const matchRepaired = match[0].replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+          return JSON.parse(matchRepaired);
         }
       }
+      throw new Error("Invalid JSON structure");
     }
 
     let questions = [];
@@ -207,9 +217,15 @@ ${factsContext}
       return sendJSON(res, { error: "Format JSON soal tidak valid dari model AI", raw: reply }, 500);
     }
 
-    // Fisher-Yates shuffle using crypto.randomInt (Zero LLM option bias)
+    // Uniform option distribution across quiz set (prevents clustering on E or C)
+    const targetPermutation = [0, 1, 2, 3, 4];
+    for (let i = targetPermutation.length - 1; i > 0; i--) {
+      const j = crypto.randomInt(0, i + 1);
+      [targetPermutation[i], targetPermutation[j]] = [targetPermutation[j], targetPermutation[i]];
+    }
+
     const letters = ["A", "B", "C", "D", "E"];
-    questions.forEach((q) => {
+    questions.forEach((q, qIdx) => {
       if (Array.isArray(q.options) && q.options.length >= 2) {
         // Strip any hardcoded "A. ", "B. ", "C) " prefix from LLM options
         q.options = q.options.map(opt => typeof opt === "string" ? opt.replace(/^[A-Ea-e][\.\)]\s*/, "").trim() : opt);
@@ -218,17 +234,31 @@ ${factsContext}
         const originalCorrect = q.options[oldCorrectIdx];
         const oldLetter = letters[oldCorrectIdx] || "A";
 
+        // Shuffle options
         for (let i = q.options.length - 1; i > 0; i--) {
           const j = crypto.randomInt(0, i + 1);
           [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
         }
-        q.correctIndex = q.options.indexOf(originalCorrect);
+
+        // Place correct answer at the uniform target slot for this question
+        const targetSlot = targetPermutation[qIdx % targetPermutation.length];
+        const currPos = q.options.indexOf(originalCorrect);
+        if (currPos !== -1 && targetSlot < q.options.length) {
+          [q.options[currPos], q.options[targetSlot]] = [q.options[targetSlot], q.options[currPos]];
+          q.correctIndex = targetSlot;
+        } else {
+          q.correctIndex = q.options.indexOf(originalCorrect);
+        }
+
         const newLetter = letters[q.correctIndex] || "A";
 
         if (q.explanation) {
+          // Clean any internal AI monologue from explanation
           q.explanation = q.explanation
+            .replace(/(?:Koreksi data|Mari sesuaikan data|Q2 harus|Kita ubah agar)[^.]*\./gi, "")
             .replace(new RegExp(`(Pilihan|Opsi)\\s+${oldLetter}\\b`, "gi"), `$1 ${newLetter}`)
-            .replace(/(Pilihan|Opsi)\s+[A-E]\s+(benar|tepat)/gi, `$1 ${newLetter} $2`);
+            .replace(/(Pilihan|Opsi)\s+[A-E]\s+(benar|tepat)/gi, `$1 ${newLetter} $2`)
+            .trim();
         }
 
         if (Array.isArray(q.steps)) {

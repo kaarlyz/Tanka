@@ -60,27 +60,33 @@ ${factsContext}
       if (s.startsWith("```json")) s = s.slice(7);
       else if (s.startsWith("```")) s = s.slice(3);
       if (s.endsWith("```")) s = s.slice(0, -3);
-      s = s.trim().replace(/,\s*([\]}])/g, "$1");
+      s = s.trim();
 
       try {
         return JSON.parse(s);
-      } catch {
+      } catch {}
+
+      try {
+        const repaired = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+        return JSON.parse(repaired);
+      } catch {}
+
+      try {
+        const noTrailing = s.replace(/,\s*([\]\}])(?=(?:[^"]*"[^"]*")*[^"]*$)/g, "$1");
+        const repaired = noTrailing.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+        return JSON.parse(repaired);
+      } catch {}
+
+      const match = s.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (match) {
         try {
-          const repaired = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-          return JSON.parse(repaired);
+          return JSON.parse(match[0]);
         } catch {
-          const match = s.match(/\[\s*\{[\s\S]*\}\s*\]/);
-          if (match) {
-            try {
-              return JSON.parse(match[0].replace(/,\s*([\]}])/g, "$1"));
-            } catch {
-              const matchRepaired = match[0].replace(/,\s*([\]}])/g, "$1").replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-              return JSON.parse(matchRepaired);
-            }
-          }
-          throw new Error("Invalid JSON structure");
+          const matchRepaired = match[0].replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+          return JSON.parse(matchRepaired);
         }
       }
+      throw new Error("Invalid JSON structure");
     }
 
     let parsedCards = [];

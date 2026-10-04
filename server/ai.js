@@ -106,7 +106,10 @@ function scoreAcademicRelevance(title, topic, subject = "") {
     }
   }
 
-  const stopWords = new Set(["dan", "yang", "di", "ke", "dari", "untuk", "pada", "adalah", "ini", "itu", "tentang", "kelas", "sma", "smp", "sd"]);
+  const stopWords = new Set([
+    "dan", "yang", "di", "ke", "dari", "untuk", "pada", "adalah", "ini", "itu", "tentang", "kelas", "sma", "smp", "sd",
+    "aku", "saya", "kamu", "ingin", "mau", "pengen", "belajar", "tahu", "paham", "tolong", "bikin", "buat", "materi", "soal", "pelajaran"
+  ]);
   const keywords = topLower.split(/[^a-zA-Z0-9]+/).filter(w => w.length > 2 && !stopWords.has(w));
 
   let score = 0;

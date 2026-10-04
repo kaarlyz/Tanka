@@ -2,6 +2,16 @@ const { db } = require("../db");
 const { callRouter, multiSourceAcademicSearch } = require("../ai");
 const { NARA_GLOBAL_PERSONA } = require("../prompts/nara");
 
+function normalizeTopicQuery(raw) {
+  let s = (raw || "").trim();
+  s = s.replace(/^(?:aku|saya|gue|gw|kami|kita)\s+(?:ingin|mau|pengen|butuh|harap)\s+(?:belajar|tahu|paham|memahami|kuasai|menguasai)\s+/i, "");
+  s = s.replace(/^(?:tolong|coba)\s+(?:ajarkan|jelaskan|buatkan|bikinkan|terangkan)\s+(?:saya|aku|kami)?\s*(?:tentang|materi|soal)?\s+/i, "");
+  s = s.replace(/^(?:ajarkan|jelaskan|buatkan|bikinkan|terangkan|bahas)\s+(?:saya|aku|kami)?\s*(?:tentang|materi|soal)?\s+/i, "");
+  s = s.replace(/^(?:materi|modul|bab|pelajaran|topik)\s+(?:tentang)?\s+/i, "");
+  s = s.replace(/^(?:apa\s+itu|pengertian|definisi|konsep\s+dasar)\s+/i, "");
+  return s.trim() || raw.trim();
+}
+
 async function handleTopicsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
@@ -82,7 +92,7 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
     if (!topic) return sendJSON(res, { error: "Topic required" }, 400);
 
     const docId = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
-    const title = (formalTitle || topic).trim();
+    const title = (formalTitle || normalizeTopicQuery(topic)).trim();
 
     // 1. INGESTION: Multi-Source Web Search across Curricular & Academic Sources
     let webRes = null;

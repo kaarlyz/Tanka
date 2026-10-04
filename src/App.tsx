@@ -268,70 +268,147 @@ function getSubjectBadge(title: string) {
   return { label: "Modul Belajar", color: "#566b36", bg: "#edf4e3", border: "#d7e5c5" };
 }
 
+function extractTextFromNode(node: any): string {
+  if (!node) return "";
+  if (typeof node === "string") return node;
+  if (typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractTextFromNode).join("");
+  if (node.props?.children) return extractTextFromNode(node.props.children);
+  return "";
+}
+
+function isAsciiDiagramText(text: string): boolean {
+  if (!text) return false;
+  const upper = text.toUpperCase();
+  if (upper.includes("ARAH PERUBAHAN") || upper.includes("PETA SUMBU")) return true;
+  if ((upper.includes("SIKLUS") || upper.includes("CYCLICAL")) && (upper.includes("LINIER") || upper.includes("LINEAR"))) return true;
+  if ((upper.includes("LAHIR") || upper.includes("BANGKIT") || upper.includes("FASE 1")) && (upper.includes("KEMUNDURAN") || upper.includes("RUNTUH") || upper.includes("PUNCAK") || upper.includes("TUMBUH"))) return true;
+  if (upper.includes("POHON ELIMINASI") || upper.includes("POHON KEPUTUSAN")) return true;
+  if (upper.includes("CULTURAL LAG") || (upper.includes("BUDAYA MATERIAL") && upper.includes("BUDAYA IMATERIAL"))) return true;
+  if (/[┌└├│─┬┴┼]|\+[-=]{2,}|\/\\|\\\/|\[Lahir/.test(text)) return true;
+  return false;
+}
+
+function normalizeDiagramsInMarkdown(md: string): string {
+  if (!md) return "";
+  const lines = md.split("\n");
+  const result: string[] = [];
+  let inCode = false;
+  let inAsciiBlock = false;
+  let asciiBuffer: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim().startsWith("```")) {
+      if (inAsciiBlock) {
+        result.push("```");
+        result.push(...asciiBuffer);
+        result.push("```");
+        asciiBuffer = [];
+        inAsciiBlock = false;
+      }
+      inCode = !inCode;
+      result.push(line);
+      continue;
+    }
+
+    if (inCode) {
+      result.push(line);
+      continue;
+    }
+
+    const isDiagramLine = /[┌└├│─┬┴┼]|\+[-=]{2,}|\/\\|\\\/|\[Lahir|ARAH PERUBAHAN|PENGGERAK SISTEM/.test(line);
+    if (isDiagramLine) {
+      inAsciiBlock = true;
+      asciiBuffer.push(line);
+    } else {
+      if (inAsciiBlock) {
+        if (line.trim() === "" && i + 1 < lines.length && (/[┌└├│─┬┴┼]|\+[-=]{2,}/.test(lines[i + 1]) || lines[i + 1].includes("SIKLUS"))) {
+          asciiBuffer.push(line);
+        } else {
+          result.push("```");
+          result.push(...asciiBuffer);
+          result.push("```");
+          asciiBuffer = [];
+          inAsciiBlock = false;
+          result.push(line);
+        }
+      } else {
+        result.push(line);
+      }
+    }
+  }
+
+  if (inAsciiBlock) {
+    result.push("```");
+    result.push(...asciiBuffer);
+    result.push("```");
+  }
+
+  return result.join("\n");
+}
+
 // Interactive Visual Diagram & Flow Renderer for Academic Summaries
 function renderVisualDiagramOrPre(children: any) {
-  let text = "";
-  const extractText = (node: any): string => {
-    if (!node) return "";
-    if (typeof node === "string") return node;
-    if (Array.isArray(node)) return node.map(extractText).join("");
-    if (node.props?.children) return extractText(node.props.children);
-    return "";
-  };
-  text = extractText(children).trim();
+  const text = extractTextFromNode(children).trim();
+  const upper = text.toUpperCase();
 
   // Pattern 1: Peta Sumbu Teori (Siklus vs Linier & Konflik vs Fungsional)
-  if ((text.includes("ARAH PERUBAHAN") || text.includes("TEORI PERUBAHAN SOSIAL")) && text.includes("SIKLUS") && text.includes("LINIER")) {
+  if (
+    (upper.includes("ARAH PERUBAHAN") || upper.includes("TEORI PERUBAHAN") || upper.includes("PETA") || upper.includes("SUMBU") || upper.includes("PENGGERAK SISTEM")) &&
+    upper.includes("SIKLUS") &&
+    (upper.includes("LINIER") || upper.includes("LINEAR"))
+  ) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "18px 20px", backgroundColor: "#f8faf6", border: "1px solid #d4ded2", borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.03)" }}>
-        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1.2px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+      <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "20px 22px", backgroundColor: "#f8faf6", border: "1px solid #d4ded2", borderRadius: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
+        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1.2px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
           <span>🗺️ Peta Dua Sumbu Utama Teori Perubahan Sosial</span>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
           {/* Sumbu 1: Arah Gerak */}
-          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 10, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
+          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 12, padding: "16px" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "'DM Mono', monospace" }}>
               Sumbu 1: Pola Arah Gerak
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", backgroundColor: "#fbf6e8", border: "1px solid #fae8b8", borderRadius: 9 }}>
                 <span style={{ fontSize: 18, lineHeight: 1 }}>↻</span>
                 <div>
                   <strong style={{ fontSize: 13, color: "#92400e", display: "block" }}>1. Teori Siklus (Cyclical)</strong>
-                  <span style={{ fontSize: 11.5, color: "#78350f", lineHeight: 1.4, display: "block", marginTop: 2 }}>Pola melingkar berulang tanpa akhir; tolak kemajuan mutlak (Spengler, Toynbee, Sorokin).</span>
+                  <span style={{ fontSize: 11.5, color: "#78350f", lineHeight: 1.45, display: "block", marginTop: 2 }}>Pola melingkar berulang tanpa ujung pangkal mutlak; menolak kemajuan mutlak (Spengler, Toynbee, Sorokin).</span>
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 8 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", backgroundColor: "#edf7ed", border: "1px solid #c8e6c9", borderRadius: 9 }}>
                 <span style={{ fontSize: 18, lineHeight: 1 }}>➔</span>
                 <div>
-                  <strong style={{ fontSize: 13, color: "#065f46", display: "block" }}>2. Teori Linier / Evolusi</strong>
-                  <span style={{ fontSize: 11.5, color: "#047857", lineHeight: 1.4, display: "block", marginTop: 2 }}>Gerak maju satu arah secara kumulatif & permanen dari primitif ke modern (Comte, Spencer).</span>
+                  <strong style={{ fontSize: 13, color: "#1b5e20", display: "block" }}>2. Teori Linier / Evolusi</strong>
+                  <span style={{ fontSize: 11.5, color: "#2e7d32", lineHeight: 1.45, display: "block", marginTop: 2 }}>Gerak maju satu arah secara kumulatif & permanen dari primitif ke modern (Comte, Spencer).</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Sumbu 2: Penggerak Sistem */}
-          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 10, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
+          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 12, padding: "16px" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "'DM Mono', monospace" }}>
               Sumbu 2: Mekanisme Penggerak
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", backgroundColor: "#fdf2f2", border: "1px solid #fecaca", borderRadius: 9 }}>
                 <span style={{ fontSize: 18, lineHeight: 1 }}>⚔️</span>
                 <div>
                   <strong style={{ fontSize: 13, color: "#991b1b", display: "block" }}>3. Teori Konflik</strong>
-                  <span style={{ fontSize: 11.5, color: "#7f1d1d", lineHeight: 1.4, display: "block", marginTop: 2 }}>Bentrokan kepentingan dua kelompok (alat modal Marx vs wewenang hierarki Dahrendorf).</span>
+                  <span style={{ fontSize: 11.5, color: "#7f1d1d", lineHeight: 1.45, display: "block", marginTop: 2 }}>Bentrokan kepentingan struktural (alat modal Marx vs wewenang hierarki Dahrendorf).</span>
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", backgroundColor: "#f1f8e9", border: "1px solid #dcedc8", borderRadius: 9 }}>
                 <span style={{ fontSize: 18, lineHeight: 1 }}>⚖️</span>
                 <div>
-                  <strong style={{ fontSize: 13, color: "#166534", display: "block" }}>4. Teori Fungsionalis</strong>
-                  <span style={{ fontSize: 11.5, color: "#14532d", lineHeight: 1.4, display: "block", marginTop: 2 }}>Organisme terpadu menjaga keseimbangan dinamis / ekuilibrium; adaptasi gradual (Parsons, Ogburn, Merton).</span>
+                  <strong style={{ fontSize: 13, color: "#33691e", display: "block" }}>4. Teori Fungsionalis</strong>
+                  <span style={{ fontSize: 11.5, color: "#33691e", lineHeight: 1.45, display: "block", marginTop: 2 }}>Organisme terpadu menjaga keseimbangan dinamis / ekuilibrium; adaptasi gradual (Parsons, Ogburn, Merton).</span>
                 </div>
               </div>
             </div>
@@ -342,13 +419,16 @@ function renderVisualDiagramOrPre(children: any) {
   }
 
   // Pattern 2: Flow Siklus 4 Fase (Cycle Step Flow)
-  if (text.includes("Lahir") && (text.includes("Kemunduran") || text.includes("Kejayaan") || text.includes("Puncak"))) {
+  if (
+    (upper.includes("LAHIR") || upper.includes("BANGKIT") || upper.includes("FASE 1") || upper.includes("[LAHIR")) &&
+    (upper.includes("KEMUNDURAN") || upper.includes("KEJAYAAN") || upper.includes("PUNCAK") || upper.includes("RUNTUH") || upper.includes("TUMBUH"))
+  ) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 20px", backgroundColor: "#fffdf5", border: "1px solid #fde68a", borderRadius: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#b45309", fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>
+      <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#fffdf5", border: "1px solid #fde68a", borderRadius: 14, boxShadow: "0 4px 18px rgba(0,0,0,0.03)" }}>
+        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#b45309", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
           🔄 Alur Melingkar Teori Siklus (Tanpa Garis Akhir Mutlak)
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
           {[
             { step: "Fase 1", title: "Lahir / Bangkit", sub: "Kekuatan perintis baru", bg: "#fef3c7", border: "#fde68a", color: "#92400e" },
             { step: "Fase 2", title: "Tumbuh / Puncak", sub: "Ekspansi & kematangan", bg: "#dcfce7", border: "#bbf7d0", color: "#166534" },
@@ -356,16 +436,16 @@ function renderVisualDiagramOrPre(children: any) {
             { step: "Fase 4", title: "Kemunduran / Runtuh", sub: "Elit gagal adaptasi", bg: "#fee2e2", border: "#fecaca", color: "#991b1b" }
           ].map((item, idx) => (
             <React.Fragment key={idx}>
-              <div style={{ flex: "1 1 120px", padding: "10px 12px", backgroundColor: item.bg, border: `1px solid ${item.border}`, borderRadius: 8, textAlign: "center" }}>
+              <div style={{ flex: "1 1 125px", padding: "11px 14px", backgroundColor: item.bg, border: `1px solid ${item.border}`, borderRadius: 10, textAlign: "center" }}>
                 <div style={{ fontSize: 9.5, fontWeight: 800, textTransform: "uppercase", color: item.color, opacity: 0.8, fontFamily: "'DM Mono', monospace" }}>{item.step}</div>
-                <strong style={{ fontSize: 12.5, color: item.color, display: "block", marginTop: 2 }}>{item.title}</strong>
-                <span style={{ fontSize: 10.5, color: item.color, opacity: 0.85, display: "block", marginTop: 2 }}>{item.sub}</span>
+                <strong style={{ fontSize: 13, color: item.color, display: "block", marginTop: 3 }}>{item.title}</strong>
+                <span style={{ fontSize: 11, color: item.color, opacity: 0.85, display: "block", marginTop: 2 }}>{item.sub}</span>
               </div>
-              {idx < 3 && <span style={{ fontSize: 14, color: "#b45309", fontWeight: 800, padding: "0 2px" }}>➔</span>}
+              {idx < 3 && <span style={{ fontSize: 16, color: "#b45309", fontWeight: 800, padding: "0 2px" }}>➔</span>}
             </React.Fragment>
           ))}
         </div>
-        <div style={{ textAlign: "center", marginTop: 10, fontSize: 11, color: "#92400e", fontWeight: 600 }}>
+        <div style={{ textAlign: "center", marginTop: 12, fontSize: 11.5, color: "#92400e", fontWeight: 600 }}>
           ↺ Keruntuhan fase 4 menjadi bibit kebangkitan fase 1 baru bagi peradaban berikutnya.
         </div>
       </div>
@@ -373,10 +453,10 @@ function renderVisualDiagramOrPre(children: any) {
   }
 
   // Pattern 3: Pohon Keputusan Ujian (Decision Tree)
-  if (text.includes("[Membaca Teks Soal]") || (text.includes("kembali ke masa lampau") && text.includes("SIKLUS"))) {
+  if (upper.includes("ELIMINASI") || upper.includes("POHON KEPUTUSAN") || (upper.includes("KATA KUNCI") && (upper.includes("SIKLUS") || upper.includes("LINIER")))) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "18px 20px", backgroundColor: "#f8f9fa", border: "1px solid #dde1da", borderRadius: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#18221f", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
+      <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#f8f9fa", border: "1px solid #dde1da", borderRadius: 14 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#18221f", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
           ⚡ Pohon Eliminasi Cepat Soal Ujian
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -405,35 +485,64 @@ function renderVisualDiagramOrPre(children: any) {
   }
 
   // Pattern 4: Cultural Lag Flow
-  if (text.includes("Budaya Material") && text.includes("Budaya Imaterial")) {
+  if (upper.includes("BUDAYA MATERIAL") && (upper.includes("BUDAYA IMATERIAL") || upper.includes("CULTURAL LAG"))) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 20px", backgroundColor: "#fbfcf9", border: "1px solid #dce1da", borderRadius: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>
+      <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#fbfcf9", border: "1px solid #dce1da", borderRadius: 14 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
           ⚡ Dinamika Cultural Lag (William F. Ogburn)
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "center" }}>
-          <div style={{ padding: "12px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8 }}>
+          <div style={{ padding: "14px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase" }}>Budaya Material</div>
-            <strong style={{ fontSize: 13, color: "#1e40af", display: "block", marginTop: 2 }}>Inovasi Teknologi Fisik</strong>
-            <span style={{ fontSize: 11, color: "#2563eb", display: "block", marginTop: 4 }}>🚀 Melaju Kilat & Cepat (Fintech, Gawai, AI)</span>
+            <strong style={{ fontSize: 13.5, color: "#1e40af", display: "block", marginTop: 2 }}>Inovasi Teknologi Fisik</strong>
+            <span style={{ fontSize: 11.5, color: "#2563eb", display: "block", marginTop: 4 }}>🚀 Melaju Kilat & Cepat (Fintech, Gawai, AI)</span>
           </div>
 
           <div style={{ textAlign: "center", padding: "0 8px" }}>
-            <span style={{ fontSize: 20 }}>⚡</span>
+            <span style={{ fontSize: 22 }}>⚡</span>
             <div style={{ fontSize: 9.5, fontWeight: 800, color: "#dc2626", textTransform: "uppercase", marginTop: 2 }}>Kesenjangan</div>
           </div>
 
-          <div style={{ padding: "12px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8 }}>
+          <div style={{ padding: "14px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: "#b45309", textTransform: "uppercase" }}>Budaya Imaterial</div>
-            <strong style={{ fontSize: 13, color: "#92400e", display: "block", marginTop: 2 }}>Regulasi & Norma Sosial</strong>
-            <span style={{ fontSize: 11, color: "#b45309", display: "block", marginTop: 4 }}>🐢 Tertinggal / Adaptasi Lambat</span>
+            <strong style={{ fontSize: 13.5, color: "#92400e", display: "block", marginTop: 2 }}>Regulasi & Norma Sosial</strong>
+            <span style={{ fontSize: 11.5, color: "#b45309", display: "block", marginTop: 4 }}>🐢 Tertinggal / Adaptasi Lambat</span>
           </div>
         </div>
-        <div style={{ marginTop: 10, padding: "8px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, fontSize: 11.5, color: "#991b1b" }}>
-          <strong>Akibat:</strong> Menimbulkan <em>Cultural Lag</em> berupa disorganisasi sosial, kejahatan digital baru, dan anomi sebelum regulasi resmi terbit.
+        <div style={{ marginTop: 12, padding: "10px 14px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 9, fontSize: 12, color: "#991b1b" }}>
+          <strong>Akibat:</strong> Menimbulkan <em>Cultural Lag</em> berupa disorganisasi sosial, kejahatan siber baru, dan anomi sebelum regulasi resmi terbit.
         </div>
       </div>
     );
+  }
+
+  // Pattern 5: Generic Hierarchical Diagram / ASCII Flow Nodes
+  const hasBoxChars = /[┌└├│─┬┴┼]|\+[-=]{2,}|-->|==>/.test(text);
+  if (hasBoxChars) {
+    const rawLines = text.split("\n");
+    const cleanNodes = rawLines
+      .map(l => l.replace(/[┌└├│─┬┴┼+|=]+/g, " ").trim())
+      .filter(l => l.length > 1);
+
+    if (cleanNodes.length > 0) {
+      return (
+        <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#f8f9f6", border: "1px solid #dce2da", borderRadius: 14, boxShadow: "0 4px 18px rgba(0,0,0,0.03)" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+            <span>🗺️ Bagan Alur & Peta Hubungan Konsep</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {cleanNodes.map((nodeText, nIdx) => (
+              <div key={nIdx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", backgroundColor: "#ffffff", border: "1px solid #e1e7de", borderRadius: 9, fontSize: 13, color: "#18211e" }}>
+                <span style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: "#edf4e3", color: "#465f33", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800, fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>
+                  {nIdx + 1}
+                </span>
+                <span style={{ fontWeight: 600 }}>{nodeText}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
   }
 
   // Default Monospace pre fallback
@@ -1366,8 +1475,12 @@ export default function App() {
   }
 
   // Quiz Drill Generation (with dynamic count)
-  async function handleGenerateQuiz(customCount?: number) {
-    const targetCount = customCount || quizQuestionCount || 5;
+  async function handleGenerateQuiz(customCount?: number | unknown) {
+    const targetCount =
+      typeof customCount === "number" && !isNaN(customCount) && customCount > 0
+        ? customCount
+        : (quizQuestionCount || 5);
+
     if (!activeDocId) {
       showNotice("Pilih atau simpan materi terlebih dahulu");
       return;
@@ -1384,16 +1497,17 @@ export default function App() {
           quizType
         })
       });
-      const data = await res.json();
-      if (data.success && data.questions) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success && Array.isArray(data.questions) && data.questions.length > 0) {
         setQuizQuestions(data.questions);
         resetQuizState();
         showNotice(`Paket latihan ${data.questions.length} soal berhasil dibuat`);
       } else {
         showNotice(data.error || "Gagal membuat soal latihan");
       }
-    } catch {
-      showNotice("Koneksi ke 9Router gagal");
+    } catch (err: any) {
+      console.error("Quiz generation error:", err);
+      showNotice(err?.message ? `Gagal terhubung ke 9Router: ${err.message}` : "Koneksi ke 9Router gagal");
     } finally {
       setIsGeneratingQuiz(false);
     }
@@ -1631,8 +1745,17 @@ export default function App() {
   const timerSecs = timerSeconds % 60;
   const timerDisplay = `${timerMins.toString().padStart(2, "0")}:${timerSecs.toString().padStart(2, "0")}`;
 
-  // Clean raw LaTeX arrows for markdown rendering
-  const formattedSummary = activeDocSummary ? activeDocSummary.replace(/\$\\rightarrow\$/g, "→") : "";
+  // Clean raw LaTeX arrows and normalize ASCII diagrams for markdown rendering
+  const formattedSummary = useMemo(() => {
+    if (!activeDocSummary) return "";
+    const cleaned = activeDocSummary.replace(/\$\\rightarrow\$/g, "→");
+    return normalizeDiagramsInMarkdown(cleaned);
+  }, [activeDocSummary]);
+
+  const formattedContent = useMemo(() => {
+    if (!activeDocContent) return "";
+    return normalizeDiagramsInMarkdown(activeDocContent);
+  }, [activeDocContent]);
 
   return (
     <div className="app-shell" style={{ display: "flex", height: "100dvh", backgroundColor: "#eef1eb", color: "#17201d", overflow: "hidden" }}>
@@ -3025,9 +3148,13 @@ export default function App() {
                                 {children}
                               </h3>
                             ),
-                            p: ({ children }) => (
-                              <p style={{ marginBottom: 12, color: "#374540" }}>{children}</p>
-                            ),
+                            p: ({ children }) => {
+                              const pText = extractTextFromNode(children);
+                              if (isAsciiDiagramText(pText)) {
+                                return renderVisualDiagramOrPre(children);
+                              }
+                              return <p style={{ marginBottom: 12, color: "#374540", lineHeight: 1.65 }}>{children}</p>;
+                            },
                             ul: ({ children }) => (
                               <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
                             ),
@@ -3060,7 +3187,7 @@ export default function App() {
                             )
                           }}
                         >
-                          {activeDocContent}
+                          {formattedContent}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -3866,7 +3993,7 @@ export default function App() {
                       )}
 
                       <button
-                        onClick={handleGenerateQuiz}
+                        onClick={() => handleGenerateQuiz()}
                         style={{
                           backgroundColor: "#18221f",
                           border: "none",
@@ -5581,7 +5708,7 @@ export default function App() {
                     )}
 
                     <button
-                      onClick={handleGenerateSummary}
+                      onClick={() => handleGenerateSummary()}
                       disabled={isGeneratingSummary}
                       style={{
                         backgroundColor: "#18221f",
@@ -5622,7 +5749,7 @@ export default function App() {
                       Klik tombol di atas untuk menghasilkan ringkasan poin inti materi dan daftar jebakan soal.
                     </p>
                     <button
-                      onClick={handleGenerateSummary}
+                      onClick={() => handleGenerateSummary()}
                       disabled={isGeneratingSummary}
                       style={{
                         backgroundColor: "#18221f",
@@ -5697,9 +5824,13 @@ export default function App() {
                             {children}
                           </h3>
                         ),
-                        p: ({ children }) => (
-                          <p style={{ marginBottom: 10, color: "#45544e" }}>{children}</p>
-                        ),
+                        p: ({ children }) => {
+                          const pText = extractTextFromNode(children);
+                          if (isAsciiDiagramText(pText)) {
+                            return renderVisualDiagramOrPre(children);
+                          }
+                          return <p style={{ marginBottom: 10, color: "#45544e", lineHeight: 1.65 }}>{children}</p>;
+                        },
                         ul: ({ children }) => (
                           <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
                         ),

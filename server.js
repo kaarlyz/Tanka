@@ -117,27 +117,51 @@ function getBody(req) {
 // Helper to call 9router
 async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperature = 0.3) {
   const url = `${ROUTER_URL}/chat/completions`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${ROUTER_KEY}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature,
-      stream: false,
-    }),
-  });
+  const primaryModel = model || "ag/gemini-3.8-flash-low";
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`9Router error (${res.status}): ${errText}`);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const curModel = attempt === 0 ? primaryModel : "ag/gemini-3.8-flash-low";
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 45000); // 45s timeout
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${ROUTER_KEY}`,
+        },
+        body: JSON.stringify({
+          model: curModel,
+          messages,
+          temperature,
+          stream: false,
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+
+      if (!res.ok) {
+        const errText = await res.text();
+        if (attempt === 0) {
+          console.warn(`callRouter attempt 1 failed with ${curModel}, retrying... ${errText.slice(0, 100)}`);
+          await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+        throw new Error(`9Router error (${res.status}): ${errText}`);
+      }
+
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || "";
+    } catch (err) {
+      if (attempt === 0) {
+        console.warn(`callRouter attempt 1 threw error with ${curModel}, retrying...`, err.message);
+        await new Promise(r => setTimeout(r, 1000));
+        continue;
+      }
+      throw err;
+    }
   }
-
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
 }
 
 // Helper to query 9router web search (/v1/search)
@@ -857,7 +881,8 @@ ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat,
     // 9. POST /api/ai/generate-quiz - generate custom count multiple choice questions with explanations & pitfalls
     if (req.method === "POST" && pathname === "/api/ai/generate-quiz") {
       const { docId, model = "ag/gemini-3.8-flash-low", count = 5, quizType = "conceptual" } = await getBody(req);
-      const finalCount = Math.max(1, Math.min(30, parseInt(count || "5", 10)));
+      const parsedCount = parseInt(count, 10);
+      const finalCount = Number.isFinite(parsedCount) ? Math.max(1, Math.min(30, parsedCount)) : 5;
       const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
       if (!doc) return sendJSON(res, { error: "Document not found" }, 404);
 

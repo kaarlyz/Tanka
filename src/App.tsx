@@ -711,11 +711,11 @@ function WebSearchProgressView({
         id: "synthesis",
         name: "Tanka Anti-Slop Engine",
         domain: "tanka.local / 9router",
-        category: "Sintesis Modul Mandiri",
-        action: "Menyusun peta konsep atomik, rumus KaTeX murni, dan bank latihan HOTS",
+        category: "Penyusunan Catatan Belajar",
+        action: "Merapikan catatan konsep, rumus penting, dan latihan soal",
         color: "#3f6212",
         bg: "#f7fee7",
-        badge: "Penyusunan Modul",
+        badge: "Catatan Siap",
         icon: (
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <rect width="24" height="24" rx="6" fill="#18221f" />
@@ -952,14 +952,14 @@ function WebSearchProgressView({
       >
         <span style={{ color: "#779f2f" }}>&gt;</span>
         <span>
-          [FETCH] {currentSource.domain} &rarr; {currentSource.category}
+          [CARI] {currentSource.name} &rarr; {currentSource.category}
         </span>
       </div>
 
       {/* Animated Linear Progress Bar */}
       <div style={{ marginTop: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#6f7975", marginBottom: 4, fontFamily: "'DM Mono', monospace" }}>
-          <span>PROGRES RISET & SINTESIS</span>
+          <span>PROGRES PENGUMPULAN MATERI</span>
           <span>{progress}%</span>
         </div>
         <div style={{ width: "100%", height: 5, backgroundColor: "#e2e6de", borderRadius: 999, overflow: "hidden" }}>
@@ -1010,6 +1010,7 @@ export default function App() {
         setIsFormulaDrawerOpen(false);
         setIsTopicModalOpen(false);
         setIsEnrichModalOpen(false);
+        setIsStagingModalOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -1136,6 +1137,11 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Staging Tray for uploaded files/photos before processing
+  const [stagedFiles, setStagedFiles] = useState<Array<{ id: string; file: File; name: string; size: number; ext: string; previewUrl?: string }>>([]);
+  const [isStagingModalOpen, setIsStagingModalOpen] = useState(false);
+  const [stagedDocTitle, setStagedDocTitle] = useState("");
 
   // Status notification toast
   const [statusNotice, setStatusNotice] = useState("");
@@ -1749,27 +1755,79 @@ export default function App() {
     }
   }
 
-  // Upload handler for single or multiple PDF, PPTX, DOCX, MD, TXT, images
-  async function handleFilesUpload(filesInput: FileList | File[] | File) {
+  // Staging handler for uploaded files and photos before processing
+  function handleStageFiles(filesInput: FileList | File[] | File) {
     let files: File[] = [];
     if (filesInput instanceof File) files = [filesInput];
     else files = Array.from(filesInput);
 
     if (files.length === 0) return;
+
+    const newItems = files.map((f) => {
+      const ext = (f.name.split(".").pop() || "").toLowerCase();
+      const isImg = ["png", "jpg", "jpeg", "webp", "bmp"].includes(ext);
+      return {
+        id: "staged_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        file: f,
+        name: f.name,
+        size: f.size,
+        ext,
+        previewUrl: isImg ? URL.createObjectURL(f) : undefined
+      };
+    });
+
+    setStagedFiles((prev) => {
+      const combined = [...prev, ...newItems];
+      if (!stagedDocTitle && combined.length > 0) {
+        const cleanName = combined[0].name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ").trim();
+        setStagedDocTitle(cleanName);
+      }
+      return combined;
+    });
+
+    setIsStagingModalOpen(true);
+  }
+
+  function handleRemoveStagedFile(id: string) {
+    setStagedFiles((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      const remaining = prev.filter((item) => item.id !== id);
+      if (remaining.length === 0) {
+        setIsStagingModalOpen(false);
+        setStagedDocTitle("");
+      }
+      return remaining;
+    });
+  }
+
+  function handleCancelStaging() {
+    stagedFiles.forEach((item) => {
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    });
+    setStagedFiles([]);
+    setIsStagingModalOpen(false);
+    setStagedDocTitle("");
+    setUploadError("");
+  }
+
+  // Confirm and upload all staged files together
+  async function handleConfirmStagedUpload() {
+    if (stagedFiles.length === 0) return;
     setIsUploading(true);
     setUploadError("");
 
     try {
       const filesPayload = await Promise.all(
-        files.map((file) => {
+        stagedFiles.map((item) => {
           return new Promise<{ fileName: string; fileData: string }>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => {
               const base64Data = (reader.result as string).split(",")[1];
-              resolve({ fileName: file.name, fileData: base64Data });
+              resolve({ fileName: item.name, fileData: base64Data });
             };
-            reader.onerror = () => reject(new Error(`Gagal membaca ${file.name}`));
-            reader.readAsDataURL(file);
+            reader.onerror = () => reject(new Error(`Gagal membaca ${item.name}`));
+            reader.readAsDataURL(item.file);
           });
         })
       );
@@ -1777,11 +1835,15 @@ export default function App() {
       const res = await fetch("/api/documents/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ files: filesPayload })
+        body: JSON.stringify({
+          title: stagedDocTitle.trim() || undefined,
+          files: filesPayload
+        })
       });
       const data = await res.json();
       if (data.success) {
-        showNotice(`Berhasil memproses ${data.fileCount || 1} berkas: "${data.title}" (${data.wordCount} kata)`);
+        showNotice(`Materi "${data.title}" berhasil dibuat dan siap dipelajari!`);
+        handleCancelStaging();
         await fetchDocuments();
         loadDocument(data.id);
         setActiveTab("material");
@@ -1800,7 +1862,7 @@ export default function App() {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFilesUpload(e.dataTransfer.files);
+      handleStageFiles(e.dataTransfer.files);
     }
   }
 
@@ -2557,7 +2619,8 @@ export default function App() {
               style={{ display: "none" }}
               onChange={(e) => {
                 if (e.target.files && e.target.files.length > 0) {
-                  handleFilesUpload(e.target.files);
+                  handleStageFiles(e.target.files);
+                  e.target.value = "";
                 }
               }}
             />
@@ -2569,7 +2632,8 @@ export default function App() {
               style={{ display: "none" }}
               onChange={(e) => {
                 if (e.target.files && e.target.files.length > 0) {
-                  handleFilesUpload(e.target.files);
+                  handleStageFiles(e.target.files);
+                  e.target.value = "";
                 }
               }}
             />
@@ -3423,7 +3487,7 @@ export default function App() {
                               fontFamily: "'DM Mono', monospace"
                             }}
                           >
-                            Modul Terindeks
+                            Catatan Belajar Aktif
                           </span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
@@ -4204,7 +4268,7 @@ export default function App() {
                       }}
                     >
                       <Sparkles size={13} />
-                      {isGeneratingQuiz ? "Menyusun Soal..." : `Generate Baru`}
+                      {isGeneratingQuiz ? "Menyusun Soal..." : `Buat Soal Baru`}
                     </button>
                   </div>
                 )}
@@ -4458,7 +4522,7 @@ export default function App() {
                         }}
                       >
                         <Sparkles size={16} />
-                        <span>{isGeneratingQuiz ? "Sedang Menyusun Soal..." : `Generate ${quizQuestionCount} Soal Sekarang`}</span>
+                        <span>{isGeneratingQuiz ? "Sedang Menyusun Soal..." : `Susun ${quizQuestionCount} Soal Sekarang`}</span>
                       </button>
                     </div>
                   </div>
@@ -6350,7 +6414,7 @@ export default function App() {
                         cursor: "pointer"
                       }}
                     >
-                      Generate Rangkuman
+                      Buat Rangkuman AI
                     </button>
                   </div>
                 ) : (
@@ -7603,23 +7667,36 @@ export default function App() {
                         })}
                       </div>
 
-                      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
-                        Fokus Tambahan (Bisa Diedit / Kustom)
-                      </label>
-                      <input
-                        type="text"
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <label style={{ fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                          Fokus Tambahan (Bisa Dibaca Lengkap & Diedit Bebas)
+                        </label>
+                        {enrichFocus && (
+                          <button
+                            type="button"
+                            onClick={() => setEnrichFocus("")}
+                            style={{ background: "none", border: "none", color: "#6f7975", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
+                          >
+                            Bersihkan teks
+                          </button>
+                        )}
+                      </div>
+                      <textarea
+                        rows={4}
                         value={enrichFocus}
                         onChange={(e) => setEnrichFocus(e.target.value)}
-                        placeholder="Pilih saran di atas atau tulis sendiri (contoh: contoh soal HOTS, rumus cepat...)"
+                        placeholder="Klik salah satu rekomendasi di atas untuk mengisi otomatis, atau ketik sendiri penjelasan fokus materi yang ingin ditambah..."
                         style={{
                           width: "100%",
                           backgroundColor: "#fafbf8",
                           border: "1px solid #dce1da",
                           borderRadius: 8,
                           padding: "10px 12px",
-                          fontSize: 13,
+                          fontSize: 13.5,
+                          lineHeight: "1.55",
                           color: "#17201d",
-                          outline: "none"
+                          outline: "none",
+                          resize: "vertical"
                         }}
                       />
                     </div>
@@ -7661,12 +7738,12 @@ export default function App() {
                         {isEnriching ? (
                           <>
                             <Sparkles size={14} />
-                            <span>Mencari & Menyusun...</span>
+                            <span>Sedang Membaca & Menambahkan...</span>
                           </>
                         ) : (
                           <>
                             <Globe size={14} />
-                            <span>Mulai Riset Tambahan</span>
+                            <span>Tambahkan ke Materi Ini</span>
                           </>
                         )}
                       </button>
@@ -7674,6 +7751,266 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+      {/* 📥 WHATSAPP/TELEGRAM-STYLE UPLOAD & PHOTO STAGING PREVIEW TRAY */}
+      {isStagingModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            backgroundColor: "rgba(18, 26, 23, 0.65)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isUploading) handleCancelStaging();
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: 14,
+              width: "100%",
+              maxWidth: 520,
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.28)",
+              border: "1px solid #dde1da"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #dce2da", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#17201d" }}>
+                  Pratinjau Berkas ({stagedFiles.length} item)
+                </h3>
+                <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "#6f7975" }}>
+                  Periksa atau tambah berkas lain sebelum materi dibuat
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCancelStaging}
+                disabled={isUploading}
+                style={{ background: "none", border: "none", color: "#6f7975", cursor: isUploading ? "not-allowed" : "pointer", padding: 4 }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Scrollable Items Tray */}
+            <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Staged Items Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: stagedFiles.length === 1 ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                {stagedFiles.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      backgroundColor: "#fafbf8",
+                      border: "1px solid #dce1da",
+                      borderRadius: 10,
+                      padding: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      position: "relative"
+                    }}
+                  >
+                    {/* Thumbnail or Badge */}
+                    {item.previewUrl ? (
+                      <img
+                        src={item.previewUrl}
+                        alt={item.name}
+                        style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0, border: "1px solid #dce1da" }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 6,
+                          backgroundColor: item.ext === "pdf" ? "#faece8" : "#edf4fc",
+                          color: item.ext === "pdf" ? "#c2410c" : "#0284c7",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 800,
+                          fontSize: 11,
+                          textTransform: "uppercase",
+                          flexShrink: 0,
+                          fontFamily: "'DM Mono', monospace"
+                        }}
+                      >
+                        {item.ext || "DOC"}
+                      </div>
+                    )}
+
+                    {/* File Details */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: "#17201d", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {item.name}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: "#78857f", fontFamily: "'DM Mono', monospace", marginTop: 2 }}>
+                        {(item.size / 1024).toFixed(1)} KB · {item.ext.toUpperCase()}
+                      </div>
+                    </div>
+
+                    {/* Delete button */}
+                    {!isUploading && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveStagedFile(item.id)}
+                        title="Hapus berkas ini"
+                        style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", padding: 4 }}
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Add More Buttons */}
+              {!isUploading && (
+                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      flex: 1,
+                      backgroundColor: "#f4f6f1",
+                      border: "1px dashed #779f2f",
+                      color: "#3f6212",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Upload size={13} />
+                    <span>+ Tambah Berkas / PDF</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    style={{
+                      flex: 1,
+                      backgroundColor: "#f4f6f1",
+                      border: "1px dashed #779f2f",
+                      color: "#3f6212",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Camera size={13} />
+                    <span>+ Tambah Foto Catatan</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Title field */}
+              <div style={{ marginTop: 8 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#45544e", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+                  Judul Materi (Bisa Disesuaikan)
+                </label>
+                <input
+                  type="text"
+                  value={stagedDocTitle}
+                  onChange={(e) => setStagedDocTitle(e.target.value)}
+                  disabled={isUploading}
+                  placeholder="Beri judul modul..."
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #dce1da",
+                    borderRadius: 8,
+                    padding: "9px 12px",
+                    fontSize: 13,
+                    color: "#17201d",
+                    outline: "none"
+                  }}
+                />
+              </div>
+
+              {uploadError && (
+                <div style={{ padding: "8px 12px", backgroundColor: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 12 }}>
+                  {uploadError}
+                </div>
+              )}
+            </div>
+
+            {/* Footer Action Bar */}
+            <div style={{ padding: "14px 20px", borderTop: "1px solid #dce2da", display: "flex", justifyContent: "flex-end", gap: 8, backgroundColor: "#fafbf8" }}>
+              <button
+                type="button"
+                onClick={handleCancelStaging}
+                disabled={isUploading}
+                style={{
+                  backgroundColor: "#ffffff",
+                  border: "1px solid #dce1da",
+                  color: "#56615d",
+                  borderRadius: 8,
+                  padding: "9px 16px",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: isUploading ? "not-allowed" : "pointer"
+                }}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmStagedUpload}
+                disabled={isUploading || stagedFiles.length === 0}
+                style={{
+                  backgroundColor: isUploading ? "#45544e" : "#18221f",
+                  color: "#c8f064",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "9px 18px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: isUploading || stagedFiles.length === 0 ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6
+                }}
+              >
+                {isUploading ? (
+                  <>
+                    <Sparkles size={14} />
+                    <span>Membaca Berkas...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} />
+                    <span>Simpan & Buat Materi</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Bottom Navigation Bar (Fixed on <= 768px) */}
       <nav className="mobile-only mobile-bottom-nav" aria-label="Navigasi Bawah Ponsel">

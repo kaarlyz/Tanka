@@ -569,8 +569,8 @@ Aturan:
         mergedText = extractedParts.map((p, i) => `=== Berkas ${i + 1}: ${p.name} ===\n\n${p.text}`).join("\n\n---\n\n");
       }
 
-      const rawTitle = fileNames.join(" & ") || "Modul Materi";
-      const cleanTitle = await detectDocumentTitle(mergedText, rawTitle);
+      const rawTitle = (body.title && body.title.trim()) || fileNames.join(" & ") || "Modul Materi";
+      const cleanTitle = (body.title && body.title.trim()) || await detectDocumentTitle(mergedText, rawTitle);
       const id = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
       const createdAt = Date.now();
       const insert = db.prepare("INSERT INTO documents (id, title, content, created_at) VALUES (?, ?, ?, ?)");

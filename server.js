@@ -34,13 +34,22 @@ const ROUTER_URL = process.env.ROUTER_URL || "http://127.0.0.1:20128/v1";
 // Helper for JSON response
 function sendJSON(res, data, statusCode = 200) {
   if (res.headersSent) return;
+  const isSuccess = statusCode >= 200 && statusCode < 300;
+  let payload = data;
+  if (typeof data === "object" && data !== null && !Array.isArray(data)) {
+    payload = {
+      ok: data.ok !== undefined ? data.ok : (data.success !== undefined ? data.success : isSuccess),
+      success: data.success !== undefined ? data.success : (data.ok !== undefined ? data.ok : isSuccess),
+      ...data,
+    };
+  }
   res.writeHead(statusCode, {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   });
-  res.end(JSON.stringify(data));
+  res.end(JSON.stringify(payload));
 }
 
 // Helper to parse JSON body

@@ -10,14 +10,16 @@ async function handleModelsRoutes(req, res, pathname, helpers) {
         headers: { Authorization: `Bearer ${ROUTER_KEY}` },
       });
       const data = await resp.json();
-      return sendJSON(res, { models: data.data || [] });
+      const raw = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+      const models = raw.map(m => typeof m === "string" ? m : (m && m.id ? m.id : "")).filter(Boolean);
+      return sendJSON(res, { models: models.length > 0 ? models : ["ag/gemini-3.8-flash-low", "ag/gemini-3.8-flash-mid", "ag/gemini-3.8-flash-high"] });
     } catch (err) {
       console.warn("9Router /models error, fallback to default list:", err.message);
       return sendJSON(res, {
         models: [
-          { id: "ag/gemini-3.8-flash-low" },
-          { id: "ag/gemini-3.8-flash-mid" },
-          { id: "ag/gemini-3.8-flash-high" }
+          "ag/gemini-3.8-flash-low",
+          "ag/gemini-3.8-flash-mid",
+          "ag/gemini-3.8-flash-high"
         ]
       });
     }

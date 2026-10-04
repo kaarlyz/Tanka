@@ -254,11 +254,15 @@ export function Navbar({
               outline: "none"
             }}
           >
-            {models.map((m) => (
-              <option key={m} value={m}>
-                {m.replace("ag/", "")}
-              </option>
-            ))}
+            {(models || []).map((m: any, idx: number) => {
+              const modelId = typeof m === "string" ? m : (m && m.id ? String(m.id) : `model-${idx}`);
+              const modelLabel = modelId.replace("ag/", "");
+              return (
+                <option key={modelId} value={modelId}>
+                  {modelLabel}
+                </option>
+              );
+            })}
           </select>
         )}
 

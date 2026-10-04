@@ -75,11 +75,14 @@ export function useStudyModules(
     try {
       const res = await fetch(`/api/documents/${id}/quizzes`);
       const data = await res.json();
-      if (data.ok && Array.isArray(data.quizzes)) {
-        setQuizzes(data.quizzes);
-      } else {
-        setQuizzes([]);
-      }
+      const list = Array.isArray(data.quizzes)
+        ? data.quizzes
+        : Array.isArray(data.questions)
+        ? data.questions
+        : data.quiz && Array.isArray(data.quiz.questions)
+        ? data.quiz.questions
+        : [];
+      setQuizzes(list);
     } catch {}
   };
 
@@ -87,11 +90,12 @@ export function useStudyModules(
     try {
       const res = await fetch(`/api/documents/${id}/cards`);
       const data = await res.json();
-      if (data.ok && Array.isArray(data.cards)) {
-        setFlashcards(data.cards);
-      } else {
-        setFlashcards([]);
-      }
+      const list = Array.isArray(data.cards)
+        ? data.cards
+        : Array.isArray(data.flashcards)
+        ? data.flashcards
+        : [];
+      setFlashcards(list);
     } catch {}
   };
 
@@ -99,11 +103,12 @@ export function useStudyModules(
     try {
       const res = await fetch(`/api/documents/${id}/cheatsheet`);
       const data = await res.json();
-      if (data.ok && Array.isArray(data.cheatsheet)) {
-        setCheatsheet(data.cheatsheet);
-      } else {
-        setCheatsheet([]);
-      }
+      const list = Array.isArray(data.cheatsheet)
+        ? data.cheatsheet
+        : Array.isArray(data.formulas)
+        ? data.formulas
+        : [];
+      setCheatsheet(list);
     } catch {}
   };
 

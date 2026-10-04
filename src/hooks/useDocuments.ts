@@ -26,11 +26,10 @@ export function useDocuments(showNotice: (msg: string) => void) {
     try {
       const res = await fetch("/api/documents");
       const data = await res.json();
-      if (data.ok && Array.isArray(data.documents)) {
-        setDocuments(data.documents);
-        if (data.documents.length > 0 && !activeDocId) {
-          setActiveDocId(data.documents[0].id);
-        }
+      const docs = Array.isArray(data.documents) ? data.documents : (Array.isArray(data) ? data : []);
+      setDocuments(docs);
+      if (docs.length > 0 && !activeDocId) {
+        setActiveDocId(docs[0].id);
       }
     } catch (err) {
       console.error("fetchDocuments error:", err);
@@ -41,8 +40,9 @@ export function useDocuments(showNotice: (msg: string) => void) {
     try {
       const res = await fetch("/api/models");
       const data = await res.json();
-      if (data.ok && Array.isArray(data.models)) {
-        setModels(data.models);
+      const list = Array.isArray(data.models) ? data.models : (Array.isArray(data) ? data : []);
+      if (list.length > 0) {
+        setModels(list);
       }
     } catch {}
   };
@@ -51,9 +51,10 @@ export function useDocuments(showNotice: (msg: string) => void) {
     try {
       const res = await fetch(`/api/documents/${id}`);
       const data = await res.json();
-      if (data.ok && data.document) {
-        setActiveDocContent(data.document.content || "");
-        setActiveDocSummary(data.document.summary || "");
+      const doc = data.document || (data.id ? data : null);
+      if (doc) {
+        setActiveDocContent(doc.content || "");
+        setActiveDocSummary(doc.summary || "");
       }
     } catch {}
   };

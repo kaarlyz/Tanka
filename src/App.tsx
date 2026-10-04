@@ -995,6 +995,25 @@ export default function App() {
   // Mobile drawer state
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
+  // Auto-close mobile drawer on tab or document change
+  useEffect(() => {
+    setIsMobileDrawerOpen(false);
+  }, [activeTab, activeDocId]);
+
+  // Global escape key handler to dismiss all drawers & overlays
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMobileDrawerOpen(false);
+        setIsFormulaDrawerOpen(false);
+        setIsTopicModalOpen(false);
+        setIsEnrichModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Material state
   const [showRawText, setShowRawText] = useState(false);
 
@@ -2199,6 +2218,7 @@ export default function App() {
         <div
           className="drawer-overlay"
           onClick={() => setIsMobileDrawerOpen(false)}
+          onTouchStart={() => setIsMobileDrawerOpen(false)}
         />
       )}
 
@@ -2272,7 +2292,10 @@ export default function App() {
                 MATERI TERSIMPAN ({documents.length})
               </span>
               <button
-                onClick={handleCreateNewDoc}
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  handleCreateNewDoc();
+                }}
                 style={{
                   backgroundColor: "#25322e",
                   color: "#d6f58d",
@@ -2344,7 +2367,10 @@ export default function App() {
             {/* Quick Action Buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 8, marginBottom: 6 }}>
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  fileInputRef.current?.click();
+                }}
                 disabled={isUploading}
                 style={{
                   backgroundColor: "#212d29",
@@ -2365,7 +2391,10 @@ export default function App() {
                 <span>Unggah</span>
               </button>
               <button
-                onClick={() => cameraInputRef.current?.click()}
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  cameraInputRef.current?.click();
+                }}
                 disabled={isUploading}
                 style={{
                   backgroundColor: "#212d29",
@@ -2389,6 +2418,7 @@ export default function App() {
 
             <button
               onClick={() => {
+                setIsMobileDrawerOpen(false);
                 setIsTopicModalOpen(true);
                 setTopicStep(1);
               }}
@@ -7442,6 +7472,7 @@ export default function App() {
           onClick={() => {
             setActiveTab("home");
             setIsAiPanelOpen(false);
+            setIsMobileDrawerOpen(false);
           }}
         >
           <Home size={18} />
@@ -7454,6 +7485,7 @@ export default function App() {
           onClick={() => {
             setActiveTab("material");
             setIsAiPanelOpen(false);
+            setIsMobileDrawerOpen(false);
           }}
         >
           <BookOpen size={18} />
@@ -7466,6 +7498,7 @@ export default function App() {
           onClick={() => {
             setActiveTab("quiz");
             setIsAiPanelOpen(false);
+            setIsMobileDrawerOpen(false);
           }}
         >
           <Target size={18} />
@@ -7478,6 +7511,7 @@ export default function App() {
           onClick={() => {
             setActiveTab("mistakes");
             setIsAiPanelOpen(false);
+            setIsMobileDrawerOpen(false);
           }}
           style={{ position: "relative" }}
         >
@@ -7510,7 +7544,10 @@ export default function App() {
 
         <button
           className={`mobile-bottom-btn ${isAiPanelOpen ? "active" : ""}`}
-          onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+          onClick={() => {
+            setIsAiPanelOpen(!isAiPanelOpen);
+            setIsMobileDrawerOpen(false);
+          }}
           style={{ color: isAiPanelOpen ? "#4b6623" : "#78827e" }}
         >
           <Brain size={18} color={isAiPanelOpen ? "#4b6623" : "currentColor"} />

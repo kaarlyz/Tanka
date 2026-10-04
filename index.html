@@ -1103,9 +1103,11 @@
           max-height: 100dvh !important;
           z-index: 3000 !important;
           background: #18221f !important;
-          box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5) !important;
+          box-shadow: none !important;
           transform: translateX(-100%);
-          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
           overflow-y: auto !important;
           overflow-x: hidden !important;
           -webkit-overflow-scrolling: touch !important;
@@ -1117,14 +1119,19 @@
         }
         .figma-sidebar.open, .sidebar-drawer.open {
           transform: translateX(0) !important;
+          box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5) !important;
+          visibility: visible !important;
+          pointer-events: auto !important;
         }
         .drawer-overlay {
           position: fixed !important;
           inset: 0 !important;
-          background: rgba(18, 26, 23, 0.65) !important;
-          backdrop-filter: blur(5px) !important;
+          background: rgba(18, 26, 23, 0.6) !important;
+          backdrop-filter: blur(4px) !important;
           z-index: 2999 !important;
-          animation: fadeIn 0.2s ease !important;
+          animation: fadeIn 0.15s ease !important;
+          cursor: pointer !important;
+          -webkit-tap-highlight-color: transparent !important;
         }
 
         /* 3. Topbar: Clean, Compact, Never Overflows */

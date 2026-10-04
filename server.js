@@ -517,7 +517,7 @@ Aturan:
     }
 
     // Intelligent Exam Sheet Processor: extracts questions to quizzes & synthesizes theory study guide
-    async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance) {
+    async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance, goal = "", instruction = "") {
       if (!detectQuestionPatterns(rawText)) {
         return { isExamSheet: false };
       }
@@ -525,10 +525,24 @@ Aturan:
       console.log(`[Exam Detection] Terdeteksi lembar soal / kisi-kisi pada: "${title}". Mengekstrak butir soal & menyusun teori penguasaan...`);
 
       try {
+        let goalGuidance = "";
+        if (goal === "clone") {
+          goalGuidance = "\nPERMINTAAN KHUSUS SISWA: Buat 3-5 variasi soal latihan kloning (tipe dan pola sama dengan angka berbeda) agar siswa bisa berlatih mandiri.\n";
+        } else if (goal === "solve") {
+          goalGuidance = "\nPERMINTAAN KHUSUS SISWA: Berikan kunci jawaban dan langkah pengerjaan tuntas setiap nomor tanpa terlewat.\n";
+        } else if (goal === "hots") {
+          goalGuidance = "\nPERMINTAAN KHUSUS SISWA: Fokuskan pada variasi soal penalaran tingkat tinggi (HOTS) dan pola jebakan ujian.\n";
+        } else if (goal === "summary") {
+          goalGuidance = "\nPERMINTAAN KHUSUS SISWA: Rangkum intisari rumus kunci dan tabel ringkas materi tanpa bertele-tele.\n";
+        }
+
+        const customClause = instruction ? `\nCATATAN / ARAHAN TAMBAHAN DARI SISWA: "${instruction}"\n` : "";
+
         const prompt = `Anda adalah asisten kurikulum akademik dan pakar bedah kisi-kisi ujian.
 Teks berikut terdeteksi sebagai lembar soal latihan / kisi-kisi ujian.
 
 JUDUL / TOPIK: "${title}"
+${goalGuidance}${customClause}
 TEKS SUMBER SOAL:
 """
 ${rawText.slice(0, 16000)}
@@ -700,8 +714,34 @@ KEMBALIKAN HANYA FORMAT JSON VALID:
       insert.run(id, cleanTitle, mergedText, createdAt);
 
       // Intelligent exam sheet & kisi-kisi question detection
-      const examResult = await processExamQuestionsIfDetected(id, mergedText, cleanTitle, db);
-      const finalContent = examResult.newContent || mergedText;
+      const examResult = await processExamQuestionsIfDetected(id, mergedText, cleanTitle, db, body.goal, body.instruction);
+      let finalContent = examResult.newContent || mergedText;
+
+      // If not an exam sheet but student provided special goals/instructions, synthesize tailored study notes
+      if (!examResult.isExamSheet && (body.instruction || (body.goal && body.goal !== "theory"))) {
+        try {
+          const synthesisPrompt = `Pengguna mengunggah catatan belajar berjudul "${cleanTitle}".
+Arahan / Keinginan Khusus Pengguna: "${body.instruction || body.goal}".
+
+Isi Catatan Belajar:
+"""
+${mergedText.slice(0, 12000)}
+"""
+
+Tugas Anda: Susun modul materi terstruktur yang secara langsung menjawab kebutuhan pengguna tersebut:
+- Jelaskan konsep yang ditanyakan secara gamblang dan mudah dipahami
+- Gunakan rumus KaTeX rapi jika berkaitan dengan matematika/eksak
+- Tuliskan langkah penyelesaian konkret step-by-step
+Format dalam markdown rapi.`;
+          const tailoredNotes = await callRouter([{ role: "user", content: synthesisPrompt }], "ag/gemini-3.8-flash-low", 0.2);
+          if (tailoredNotes) {
+            finalContent = `${tailoredNotes.trim()}\n\n---\n\n### 📄 Catatan Asli dari Berkas\n\n${mergedText}`;
+            db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(finalContent, id);
+          }
+        } catch (e) {
+          console.warn("[tanka] Tailored notes synthesis error:", e.message);
+        }
+      }
 
       return sendJSON(res, {
         success: true,

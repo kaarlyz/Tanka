@@ -1416,10 +1416,15 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Document Enrichment Multi-select state
+  const [selectedEnrichTitles, setSelectedEnrichTitles] = useState<string[]>([]);
+
   // Staging Tray for uploaded files/photos before processing
   const [stagedFiles, setStagedFiles] = useState<Array<{ id: string; file: File; name: string; size: number; ext: string; previewUrl?: string }>>([]);
   const [isStagingModalOpen, setIsStagingModalOpen] = useState(false);
   const [stagedDocTitle, setStagedDocTitle] = useState("");
+  const [stagedGoal, setStagedGoal] = useState<string>("theory");
+  const [stagedCustomInstruction, setStagedCustomInstruction] = useState<string>("");
 
   // Status notification toast
   const [statusNotice, setStatusNotice] = useState("");
@@ -2194,7 +2199,9 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: stagedDocTitle.trim() || undefined,
-          files: filesPayload
+          files: filesPayload,
+          goal: stagedGoal,
+          instruction: stagedCustomInstruction.trim() || undefined
         })
       });
       const data = await res.json();
@@ -8438,59 +8445,96 @@ export default function App() {
                           </div>
 
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                            {(enrichSuggestions.length > 0 ? enrichSuggestions : [
-                              {
-                                title: "Studi Kasus Konkret",
-                                focus: "Berikan contoh kasus nyata terkini di Indonesia beserta analisis penerapannya",
-                                reason: "Menghubungkan teori ke fenomena nyata agar tidak sekadar hafalan"
-                              },
-                              {
-                                title: "Miskonsepsi Umum Ujian",
-                                focus: "Jelaskan jebakan soal atau miskonsepsi yang sering mengecoh siswa pada materi ini",
-                                reason: "Melatih kepekaan terhadap pola soal ujian sekolah dan UTBK"
-                              },
-                              {
-                                title: "Analogi Bebas Jargon",
-                                focus: "Gambarkan konsep inti dengan analogi sederhana sehari-hari",
-                                reason: "Mempermudah pemahaman intuitif bagi pemula"
-                              },
-                              {
-                                title: "Trik Cepat & Rumus Kunci",
-                                focus: "Rangkum kaidah esensial, jembatan keledai, atau batasan legal aturan",
-                                reason: "Meringkas hafalan ke format padat dan mudah diingat"
-                              }
-                            ]).map((sug, idx) => {
-                              const isSelected = enrichFocus === sug.focus;
-                              return (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => setEnrichFocus(sug.focus)}
-                                  style={{
-                                    textAlign: "left",
-                                    backgroundColor: isSelected ? "#f4f8ed" : "#ffffff",
-                                    border: `1px solid ${isSelected ? "#779f2f" : "#dce1da"}`,
-                                    borderRadius: 8,
-                                    padding: "9px 11px",
-                                    cursor: "pointer",
-                                    transition: "all 0.15s ease",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: 3
-                                  }}
-                                >
-                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                                    <strong style={{ fontSize: 12, color: isSelected ? "#2a4212" : "#17201d" }}>
-                                      {sug.title}
-                                    </strong>
-                                    {isSelected && <Check size={12} color="#4b6623" />}
-                                  </div>
-                                  <span style={{ fontSize: 10.5, color: "#6f7975", lineHeight: 1.3 }}>
-                                    {sug.reason}
-                                  </span>
-                                </button>
-                              );
-                            })}
+                            {(() => {
+                              const activeSuggestions = enrichSuggestions.length > 0 ? enrichSuggestions : [
+                                {
+                                  title: "Studi Kasus Konkret",
+                                  focus: "Berikan contoh kasus nyata terkini di Indonesia beserta analisis penerapannya",
+                                  reason: "Menghubungkan teori ke fenomena nyata agar tidak sekadar hafalan"
+                                },
+                                {
+                                  title: "Miskonsepsi Umum Ujian",
+                                  focus: "Jelaskan jebakan soal atau miskonsepsi yang sering mengecoh siswa pada materi ini",
+                                  reason: "Melatih kepekaan terhadap pola soal ujian sekolah dan UTBK"
+                                },
+                                {
+                                  title: "Analogi Bebas Jargon",
+                                  focus: "Gambarkan konsep inti dengan analogi sederhana sehari-hari",
+                                  reason: "Mempermudah pemahaman intuitif bagi pemula"
+                                },
+                                {
+                                  title: "Trik Cepat & Rumus Kunci",
+                                  focus: "Rangkum kaidah esensial, jembatan keledai, atau batasan legal aturan",
+                                  reason: "Meringkas hafalan ke format padat dan mudah diingat"
+                                }
+                              ];
+
+                              return activeSuggestions.map((sug, idx) => {
+                                const isSelected = selectedEnrichTitles.includes(sug.title);
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => {
+                                      const nextTitles = isSelected
+                                        ? selectedEnrichTitles.filter((t) => t !== sug.title)
+                                        : [...selectedEnrichTitles, sug.title];
+                                      setSelectedEnrichTitles(nextTitles);
+                                      if (nextTitles.length === 0) {
+                                        setEnrichFocus("");
+                                      } else {
+                                        const selectedObjs = activeSuggestions.filter((s) => nextTitles.includes(s.title));
+                                        const merged = selectedObjs.map((s, i) => `${i + 1}. ${s.title}: ${s.focus}`).join("\n\n");
+                                        setEnrichFocus(merged);
+                                      }
+                                    }}
+                                    style={{
+                                      textAlign: "left",
+                                      backgroundColor: isSelected ? "#f0fdf4" : "#ffffff",
+                                      border: `1.5px solid ${isSelected ? "#566b36" : "#dce1da"}`,
+                                      borderRadius: 8,
+                                      padding: "9px 11px",
+                                      cursor: "pointer",
+                                      transition: "all 0.15s ease",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 3,
+                                      boxShadow: isSelected ? "0 2px 8px rgba(86, 107, 54, 0.12)" : "none"
+                                    }}
+                                  >
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                        <div
+                                          style={{
+                                            width: 14,
+                                            height: 14,
+                                            borderRadius: 3,
+                                            border: `1.5px solid ${isSelected ? "#566b36" : "#9ca3af"}`,
+                                            backgroundColor: isSelected ? "#566b36" : "#ffffff",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center"
+                                          }}
+                                        >
+                                          {isSelected && <Check size={10} color="#ffffff" strokeWidth={3} />}
+                                        </div>
+                                        <strong style={{ fontSize: 12, color: isSelected ? "#15803d" : "#17201d" }}>
+                                          {sug.title}
+                                        </strong>
+                                      </div>
+                                      {isSelected && (
+                                        <span style={{ fontSize: 9.5, backgroundColor: "#dcfce7", color: "#166534", padding: "1px 5px", borderRadius: 4, fontWeight: 700 }}>
+                                          PILIH
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span style={{ fontSize: 10.5, color: "#6f7975", lineHeight: 1.3, marginTop: 2 }}>
+                                      {sug.reason}
+                                    </span>
+                                  </button>
+                                );
+                              });
+                            })()}
                           </div>
 
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -8500,7 +8544,10 @@ export default function App() {
                             {enrichFocus && (
                               <button
                                 type="button"
-                                onClick={() => setEnrichFocus("")}
+                                onClick={() => {
+                                  setEnrichFocus("");
+                                  setSelectedEnrichTitles([]);
+                                }}
                                 style={{ background: "none", border: "none", color: "#6f7975", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
                               >
                                 Bersihkan teks
@@ -8776,6 +8823,74 @@ export default function App() {
                         fontSize: 13,
                         color: "#17201d",
                         outline: "none"
+                      }}
+                    />
+                  </div>
+
+                  {/* Goal & Custom Intent Suggestion Chips */}
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#45544e", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                      Tujuan / Mau Diapakan Berkas Ini?
+                    </label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                      {[
+                        { id: "theory", label: "📖 Pelajari Teori & Konsep", prompt: "Susun modul penjelasan teori konsep dasar secara mendalam." },
+                        { id: "solve", label: "✍️ Bahas Tuntas & Kunci Soal", prompt: "Bahas tuntas setiap langkah pengerjaan soal dan berikan kunci jawabannya." },
+                        { id: "clone", label: "🔄 Buat Latihan Soal Mirip", prompt: "Buatkan variasi latihan soal kloning (tipe serupa angka beda) untuk uji pemahaman." },
+                        { id: "hots", label: "🎯 Bedah Kisi-Kisi / Tantangan HOTS", prompt: "Analisis sebagai kisi-kisi ujian, ekstrak soal, dan siapkan variasi tantangan HOTS." },
+                        { id: "summary", label: "⚡ Rangkum Rumus & Intisari", prompt: "Rangkum rumus kunci KaTeX dan poin esensial ringkas tanpa bertele-tele." }
+                      ].map((g) => {
+                        const isSelected = stagedGoal === g.id;
+                        return (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => {
+                              if (stagedGoal === g.id) {
+                                setStagedGoal("");
+                                setStagedCustomInstruction("");
+                              } else {
+                                setStagedGoal(g.id);
+                                setStagedCustomInstruction(g.prompt);
+                              }
+                            }}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: 7,
+                              border: `1.5px solid ${isSelected ? "#566b36" : "#dce2da"}`,
+                              backgroundColor: isSelected ? "#f0fdf4" : "#ffffff",
+                              color: isSelected ? "#166534" : "#374151",
+                              fontSize: 11.5,
+                              fontWeight: isSelected ? 800 : 500,
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 5
+                            }}
+                          >
+                            {isSelected && <Check size={11} strokeWidth={3} />}
+                            <span>{g.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={stagedCustomInstruction}
+                      onChange={(e) => setStagedCustomInstruction(e.target.value)}
+                      placeholder="Catatan tambahan (opsional): misal 'fokus ke cara substitusi kuadrat aljabar', 'jelaskan sifat bayangan'..."
+                      style={{
+                        width: "100%",
+                        backgroundColor: "#fafbf8",
+                        border: "1px solid #dce1da",
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                        fontSize: 12,
+                        color: "#17201d",
+                        resize: "vertical",
+                        outline: "none",
+                        lineHeight: 1.45
                       }}
                     />
                   </div>

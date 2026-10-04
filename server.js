@@ -87,6 +87,17 @@ db.exec(`
 
 console.log("[tanka-server] Database initialized at:", dbPath);
 
+// Clean up any orphaned records from previously deleted documents
+try {
+  db.prepare("DELETE FROM mistake_notebook WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+  db.prepare("DELETE FROM flashcards WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+  db.prepare("DELETE FROM quizzes WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+  db.prepare("DELETE FROM chat_messages WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+  db.prepare("DELETE FROM formula_cheatsheets WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+} catch (e) {
+  console.warn("[tanka-server] Orphan cleanup notice:", e.message);
+}
+
 // Helper for JSON response
 function sendJSON(res, data, statusCode = 200) {
   res.writeHead(statusCode, {
@@ -746,7 +757,10 @@ Saran harus adaptif:
 
       if (req.method === "DELETE") {
         db.prepare("DELETE FROM flashcards WHERE doc_id = ?").run(docId);
+        db.prepare("DELETE FROM mistake_notebook WHERE doc_id = ?").run(docId);
+        db.prepare("DELETE FROM quizzes WHERE doc_id = ?").run(docId);
         db.prepare("DELETE FROM chat_messages WHERE doc_id = ?").run(docId);
+        db.prepare("DELETE FROM formula_cheatsheets WHERE doc_id = ?").run(docId);
         db.prepare("DELETE FROM documents WHERE id = ?").run(docId);
         return sendJSON(res, { success: true });
       }
@@ -1402,6 +1416,18 @@ Format output WAJIB HANYA berupa JSON valid tanpa teks tambahan:
       const mistakeId = pathname.split("/")[3];
       db.prepare("DELETE FROM mistake_notebook WHERE id = ?").run(mistakeId);
       return sendJSON(res, { success: true, id: mistakeId });
+    }
+
+    // 12.b Clear all mistakes or clear mistakes by docId
+    if ((req.method === "POST" && pathname === "/api/mistakes/clear") || (req.method === "DELETE" && pathname === "/api/mistakes")) {
+      const urlObj = new URL(req.url, "http://localhost");
+      const docId = urlObj.searchParams.get("docId");
+      if (docId) {
+        db.prepare("DELETE FROM mistake_notebook WHERE doc_id = ?").run(docId);
+      } else {
+        db.prepare("DELETE FROM mistake_notebook").run();
+      }
+      return sendJSON(res, { success: true });
     }
 
     // 16. POST /api/ai/extract-formulas - extract cheat sheet formulas from document

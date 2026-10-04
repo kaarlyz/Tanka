@@ -135,100 +135,121 @@ interface FormulaItem {
   category?: string;
 }
 
-// Publication-grade KaTeX Math Renderer (renders horizontal fractions, roots, sigmas, matrices)
+// High-performance KaTeX Math Renderer with fast-path token bypass and memory cache
+const mathRenderCache = new Map<string, string>();
+
 function MathView({ text, style, className }: { text?: string; style?: React.CSSProperties; className?: string }) {
   if (!text) return null;
 
+  // Ultra-fast path: If string contains zero math tokens, bypass regexes entirely
+  const hasMathTokens = /[\$\\^√∑_±]|\([^)]+\)\s*\//.test(text);
+  if (!hasMathTokens) {
+    return <span style={style} className={className}>{text}</span>;
+  }
+
   const renderedHTML = React.useMemo(() => {
+    if (mathRenderCache.has(text)) {
+      return mathRenderCache.get(text)!;
+    }
+
     try {
       let str = text;
 
-      // 0. Pre-normalize fractions with slash: (A)/(B) or (A) / (B) -> $\frac{A}{B}$
-      str = str.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
-      str = str.replace(/\(([^()]+)\)\s*\/\s*([a-zA-Z0-9]+)\b/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
-      str = str.replace(/\b([a-zA-Z0-9]+)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
-      str = str.replace(/\b([a-zA-Z0-9]{1,3})\/([a-zA-Z0-9]{1,3})\b/g, (match, a, b) => {
-        if (a === "dan" || a === "atau" || a === "and" || a === "or" || match === "10/10") return match;
-        return `$\\frac{${a}}{${b}}$`;
-      });
+      // 0. Pre-normalize fractions with slash: (A)/(B) -> $\frac{A}{B}$
+      if (str.includes("/")) {
+        str = str.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
+        str = str.replace(/\(([^()]+)\)\s*\/\s*([a-zA-Z0-9]+)\b/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
+        str = str.replace(/\b([a-zA-Z0-9]+)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
+        str = str.replace(/\b([a-zA-Z0-9]{1,3})\/([a-zA-Z0-9]{1,3})\b/g, (match, a, b) => {
+          if (a === "dan" || a === "atau" || a === "and" || a === "or" || match === "10/10") return match;
+          return `$\\frac{${a}}{${b}}$`;
+        });
+      }
 
       // 0b. Pre-normalize Unicode roots: √(expr) -> $\sqrt{expr}$
-      str = str.replace(/√\(([^)]+)\)/g, (_, r) => `$\\sqrt{${r}}$`);
-      str = str.replace(/√([a-zA-Z0-9]+)/g, (_, r) => `$\\sqrt{${r}}$`);
+      if (str.includes("√")) {
+        str = str.replace(/√\(([^)]+)\)/g, (_, r) => `$\\sqrt{${r}}$`);
+        str = str.replace(/√([a-zA-Z0-9]+)/g, (_, r) => `$\\sqrt{${r}}$`);
+      }
 
       // 0c. Pre-normalize Unicode sigma: ∑_{i=1}^{n} -> $\sum_{i=1}^{n}$
-      str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}\s*([a-zA-Z0-9_]+)/g, (_, sub, sup, term) => `$\\sum_{${sub}}^{${sup}} ${term}$`);
-      str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}/g, (_, sub, sup) => `$\\sum_{${sub}}^{${sup}}$`);
+      if (str.includes("∑")) {
+        str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}\s*([a-zA-Z0-9_]+)/g, (_, sub, sup, term) => `$\\sum_{${sub}}^{${sup}} ${term}$`);
+        str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}/g, (_, sub, sup) => `$\\sum_{${sub}}^{${sup}}$`);
+      }
 
       // 1. Process block math $$...$$
-      str = str.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
-        try {
-          let cleanMath = math
-            .replace(/±/g, "\\pm ")
-            .replace(/≤/g, "\\le ")
-            .replace(/≥/g, "\\ge ")
-            .replace(/≠/g, "\\neq ")
-            .replace(/\\ddot\{a\}/g, "ä")
-            .replace(/\\ddot\{o\}/g, "ö")
-            .replace(/\\ddot\{u\}/g, "ü")
-            .replace(/\\ddot\{A\}/g, "Ä")
-            .replace(/\\ddot\{O\}/g, "Ö")
-            .replace(/\\ddot\{U\}/g, "Ü");
-          return `<div class="katex-block-wrapper" style="margin: 10px 0; overflow-x: auto; text-align: center;">${katex.renderToString(cleanMath.trim(), { displayMode: true, throwOnError: false })}</div>`;
-        } catch {
-          return `$$${math}$$`;
-        }
-      });
+      if (str.includes("$$")) {
+        str = str.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+          try {
+            let cleanMath = math
+              .replace(/±/g, "\\pm ")
+              .replace(/≤/g, "\\le ")
+              .replace(/≥/g, "\\ge ")
+              .replace(/≠/g, "\\neq ");
+            return `<div class="katex-block-wrapper" style="margin: 10px 0; overflow-x: auto; text-align: center;">${katex.renderToString(cleanMath.trim(), { displayMode: true, throwOnError: false })}</div>`;
+          } catch {
+            return `$$${math}$$`;
+          }
+        });
+      }
 
       // 2. Process inline math $...$
-      str = str.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
-        try {
-          let cleanMath = math
-            .replace(/±/g, "\\pm ")
-            .replace(/≤/g, "\\le ")
-            .replace(/≥/g, "\\ge ")
-            .replace(/≠/g, "\\neq ");
-          return katex.renderToString(cleanMath.trim(), { displayMode: false, throwOnError: false });
-        } catch {
-          return `$${math}$`;
-        }
-      });
+      if (str.includes("$")) {
+        str = str.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
+          try {
+            let cleanMath = math
+              .replace(/±/g, "\\pm ")
+              .replace(/≤/g, "\\le ")
+              .replace(/≥/g, "\\ge ")
+              .replace(/≠/g, "\\neq ");
+            return katex.renderToString(cleanMath.trim(), { displayMode: false, throwOnError: false });
+          } catch {
+            return `$${math}$`;
+          }
+        });
+      }
 
       // 3. Process naked LaTeX commands like \frac{...}{...}, \sqrt{...}, \sum_{...}^{...}
-      str = str.replace(/(\\frac\{[^{}]+\}\{[^{}]+\}|\\sqrt\{[^{}]+\}|\\sum_\{[^{}]+\}\^\{[^{}]+\})/g, (math) => {
-        try {
-          return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
-        } catch {
-          return math;
-        }
-      });
+      if (str.includes("\\")) {
+        str = str.replace(/(\\frac\{[^{}]+\}\{[^{}]+\}|\\sqrt\{[^{}]+\}|\\sum_\{[^{}]+\}\^\{[^{}]+\})/g, (math) => {
+          try {
+            return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+          } catch {
+            return math;
+          }
+        });
+      }
 
-      // 4. Process standalone algebraic equations containing ^ (e.g. ax^2 + bx + c = 0, D = b^2 - 4ac, x^2 - 4x + 7)
-      str = str.replace(/\b([a-zA-Z0-9()+\-*/\s]*[a-zA-Z0-9()]\^[a-zA-Z0-9()]+[a-zA-Z0-9()+\-*/=\s]*)\b/g, (match) => {
-        if (match.includes("<") || match.includes(">") || match.length < 3) return match;
-        try {
-          return katex.renderToString(match.trim(), { displayMode: false, throwOnError: false });
-        } catch {
-          return match;
-        }
-      });
+      // 4. Process simple algebraic powers (e.g. x^2, y^3) without catastrophic backtracking
+      if (str.includes("^")) {
+        str = str.replace(/\b([a-zA-Z0-9()]+)\^([a-zA-Z0-9()]+)\b/g, (match, base, exp) => {
+          try {
+            return katex.renderToString(`${base}^{${exp}}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return match;
+          }
+        });
 
-      // 5. Ultimate fallback for any remaining carets: x^2 -> x² or <sup>...</sup>
-      str = str
-        .replace(/\^2\b/g, "²")
-        .replace(/\^3\b/g, "³")
-        .replace(/\^4\b/g, "⁴")
-        .replace(/\^5\b/g, "⁵")
-        .replace(/\^6\b/g, "⁶")
-        .replace(/\^7\b/g, "⁷")
-        .replace(/\^8\b/g, "⁸")
-        .replace(/\^9\b/g, "⁹")
-        .replace(/\^0\b/g, "⁰")
-        .replace(/\^n\b/g, "ⁿ")
-        .replace(/\^x\b/g, "ˣ")
-        .replace(/\^\{([^}]+)\}/g, "<sup>$1</sup>")
-        .replace(/\^([0-9a-zA-Z]+)/g, "<sup>$1</sup>");
+        // 5. Fallback for carets
+        str = str
+          .replace(/\^2\b/g, "²")
+          .replace(/\^3\b/g, "³")
+          .replace(/\^4\b/g, "⁴")
+          .replace(/\^5\b/g, "⁵")
+          .replace(/\^6\b/g, "⁶")
+          .replace(/\^7\b/g, "⁷")
+          .replace(/\^8\b/g, "⁸")
+          .replace(/\^9\b/g, "⁹")
+          .replace(/\^0\b/g, "⁰")
+          .replace(/\^n\b/g, "ⁿ")
+          .replace(/\^x\b/g, "ˣ")
+          .replace(/\^\{([^}]+)\}/g, "<sup>$1</sup>")
+          .replace(/\^([0-9a-zA-Z]+)/g, "<sup>$1</sup>");
+      }
 
+      if (mathRenderCache.size > 2000) mathRenderCache.clear();
+      mathRenderCache.set(text, str);
       return str;
     } catch {
       return text;
@@ -1703,6 +1724,27 @@ export default function App() {
     }
   }
 
+  async function handleClearMistakes() {
+    const isCurrent = mistakeFilterScope === "current" && activeDocId;
+    const confirmMsg = isCurrent
+      ? `Kosongkan semua catatan salah pada modul "${activeDocTitle}"?`
+      : "Kosongkan seluruh catatan di Bank Kesalahan?";
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const url = isCurrent ? `/api/mistakes/clear?docId=${activeDocId}` : "/api/mistakes/clear";
+      await fetch(url, { method: "POST" });
+      if (isCurrent) {
+        setMistakes((prev) => prev.filter((m) => m.docId !== activeDocId));
+      } else {
+        setMistakes([]);
+      }
+      showNotice("Bank kesalahan berhasil dibersihkan");
+    } catch {
+      showNotice("Gagal mengosongkan bank kesalahan");
+    }
+  }
+
   function startMistakeDrill() {
     const targetList = mistakeFilterScope === "current" && activeDocId ? activeDocMistakes : mistakes;
     if (targetList.length === 0) return;
@@ -1991,7 +2033,7 @@ export default function App() {
 
     try {
       await fetch(`/api/documents/${id}`, { method: "DELETE" });
-      showNotice("Materi berhasil dihapus");
+      showNotice("Materi dan seluruh catatan terkait berhasil dihapus");
       if (activeDocId === id) {
         setActiveDocId(null);
         setActiveDocTitle("");
@@ -1999,7 +2041,9 @@ export default function App() {
         setFlashcards([]);
         setQuizQuestions([]);
       }
+      setMistakes((prev) => prev.filter((m) => m.docId !== id));
       fetchDocuments();
+      fetchMistakes();
     } catch {
       showNotice("Gagal menghapus dokumen");
     }
@@ -5689,6 +5733,29 @@ export default function App() {
                       >
                         <Target size={14} />
                         <span>Drill {mistakeFilterScope === "current" && activeDocId ? "Modul Ini" : "Semua"} ({displayedMistakes.length}) →</span>
+                      </button>
+                    )}
+
+                    {displayedMistakes.length > 0 && (
+                      <button
+                        onClick={handleClearMistakes}
+                        style={{
+                          backgroundColor: "#fafbf8",
+                          color: "#991b1b",
+                          border: "1px solid #fecaca",
+                          borderRadius: 8,
+                          padding: "8px 12px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5
+                        }}
+                        title="Kosongkan catatan kesalahan"
+                      >
+                        <Trash2 size={13} />
+                        <span>Bersihkan</span>
                       </button>
                     )}
                   </div>

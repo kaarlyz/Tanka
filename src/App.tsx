@@ -47,7 +47,10 @@ import {
   Download,
   Printer,
   Copy,
-  Globe
+  Globe,
+  Home,
+  Search,
+  ArrowRight
 } from "lucide-react";
 
 // Tasteskill Dials: VARIANCE: 6 | MOTION: 6 | DENSITY: 4
@@ -239,6 +242,29 @@ function MathView({ text, style, className }: { text?: string; style?: React.CSS
   );
 }
 
+function getSubjectBadge(title: string) {
+  const t = (title || "").toLowerCase();
+  if (t.includes("sosiologi") || t.includes("sosial") || t.includes("masyarakat") || t.includes("konflik")) {
+    return { label: "Sosiologi", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe" };
+  }
+  if (t.includes("ekonomi") || t.includes("pasar") || t.includes("harga") || t.includes("uang") || t.includes("permintaan") || t.includes("elastisitas") || t.includes("perdagangan")) {
+    return { label: "Ekonomi", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" };
+  }
+  if (t.includes("matematika") || t.includes("aljabar") || t.includes("matriks") || t.includes("hitung") || t.includes("fungsi") || t.includes("persamaan") || t.includes("trigonometri")) {
+    return { label: "Matematika", color: "#d97706", bg: "#fffbeb", border: "#fde68a" };
+  }
+  if (t.includes("sejarah") || t.includes("perang") || t.includes("kemerdekaan") || t.includes("revolusi")) {
+    return { label: "Sejarah", color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" };
+  }
+  if (t.includes("geografi") || t.includes("bumi") || t.includes("wilayah") || t.includes("lingkungan")) {
+    return { label: "Geografi", color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc" };
+  }
+  if (t.includes("fisika") || t.includes("kimia") || t.includes("biologi")) {
+    return { label: "Sains", color: "#db2777", bg: "#fdf2f8", border: "#fbcfe8" };
+  }
+  return { label: "Kurikulum Merdeka", color: "#4b6623", bg: "#f2f8e8", border: "#d7e8be" };
+}
+
 export default function App() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
@@ -247,7 +273,9 @@ export default function App() {
   const [activeDocSummary, setActiveDocSummary] = useState("");
   const activeDoc = documents.find((d) => d.id === activeDocId) || null;
 
-  const [activeTab, setActiveTab] = useState<"material" | "flashcards" | "quiz" | "feynman" | "summary" | "chat" | "mistakes">("material");
+  const [activeTab, setActiveTab] = useState<"home" | "material" | "flashcards" | "quiz" | "feynman" | "summary" | "chat" | "mistakes">("home");
+  const [homeSearchQuery, setHomeSearchQuery] = useState("");
+  const [homeSubjectFilter, setHomeSubjectFilter] = useState("Semua");
 
   // Mobile drawer state
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -1470,6 +1498,7 @@ export default function App() {
           {/* Main Navigation Links with Side Mark Chips */}
           <nav className="main-nav" style={{ marginBottom: 18 }}>
             {[
+              { id: "home", label: "Beranda Hub", mark: "H" },
               { id: "material", label: "Materi Saya", mark: "M" },
               { id: "quiz", label: "Latihan Kuis", mark: "L", count: quizQuestions.length },
               { id: "mistakes", label: "Bank Soal Salah", mark: "B", count: activeDocId ? activeDocMistakes.length : mistakes.length, highlight: (activeDocId ? activeDocMistakes.length : mistakes.length) > 0 },
@@ -1808,7 +1837,7 @@ export default function App() {
         </header>
 
         {/* 2-Column Split: Main Study Panel + AI Tutor Panel */}
-        <div className="figma-grid">
+        <div className="figma-grid" style={activeTab === "home" ? { gridTemplateColumns: "1fr" } : undefined}>
           <section className="lesson-panel-box no-scrollbar" style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
           {/* Sub Navigation Tabs (Segmented Control Bar) */}
           <div
@@ -1817,7 +1846,7 @@ export default function App() {
               height: 48,
               borderBottom: "1px solid #dce1da",
               backgroundColor: "#ffffff",
-              display: "flex",
+              display: activeTab === "home" ? "none" : "flex",
               alignItems: "center",
               padding: "0 18px",
               gap: 6,
@@ -1881,6 +1910,624 @@ export default function App() {
 
           {/* Workspace Tab Panels */}
           <div className="main-content-area" style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+            {/* TAB 0: BERANDA / STUDY HUB */}
+            {activeTab === "home" && (
+              <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 48 }}>
+                {/* 1. HERO STUDY OMNIBAR */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, #18221f 0%, #111816 100%)",
+                    borderRadius: 14,
+                    padding: "24px 26px",
+                    color: "#ffffff",
+                    boxShadow: "0 10px 30px rgba(17, 24, 22, 0.06)",
+                    marginBottom: 20,
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                >
+                  <div style={{ position: "relative", zIndex: 2, maxWidth: 720 }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, backgroundColor: "rgba(200, 240, 100, 0.12)", border: "1px solid rgba(200, 240, 100, 0.25)", color: "#c8f064", padding: "3px 9px", borderRadius: 999, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 10 }}>
+                      <Sparkles size={11} />
+                      <span>Tanka Autonomous Study Hub</span>
+                    </div>
+                    <h1 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 5px 0", letterSpacing: "-0.02em", color: "#f8f9f5", lineHeight: 1.25 }}>
+                      Mau kuasai materi apa hari ini?
+                    </h1>
+                    <p style={{ fontSize: 12.5, color: "#aeb9b4", margin: "0 0 16px 0", lineHeight: 1.45, fontWeight: 400 }}>
+                      Ketik topik spesifik ujian atau konsep baru. AI akan mencari silabus resmi sekolah dan menyusun materi atomik bebas hafalan buta.
+                    </p>
+
+                    {/* Omnibar Input */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (homeSearchQuery.trim()) {
+                          setTopicInput(homeSearchQuery.trim());
+                          setIsTopicModalOpen(true);
+                          handleStartTopicClarify(homeSearchQuery.trim());
+                        }
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        backgroundColor: "#ffffff",
+                        borderRadius: 10,
+                        padding: "4px 5px 4px 14px",
+                        boxShadow: "0 6px 25px rgba(0, 0, 0, 0.15)",
+                        gap: 10,
+                        width: "100%",
+                        boxSizing: "border-box"
+                      }}
+                    >
+                      <Search size={17} color="#6f7975" style={{ flexShrink: 0 }} />
+                      <input
+                        type="text"
+                        value={homeSearchQuery}
+                        onChange={(e) => setHomeSearchQuery(e.target.value)}
+                        placeholder="Ketik topik materi (misal: Sosiologi Teori Perubahan Sosial, Elastisitas Permintaan)..."
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          border: "none",
+                          outline: "none",
+                          fontSize: 13,
+                          color: "#17201d",
+                          padding: "8px 0",
+                          backgroundColor: "transparent"
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!homeSearchQuery.trim()}
+                        style={{
+                          backgroundColor: homeSearchQuery.trim() ? "#c8f064" : "#e5e7eb",
+                          color: homeSearchQuery.trim() ? "#18221f" : "#9ca3af",
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "8px 14px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: homeSearchQuery.trim() ? "pointer" : "default",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                          flexShrink: 0,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        <span>Telusuri & Buat</span>
+                        <ArrowRight size={13} />
+                      </button>
+                    </form>
+
+                    {/* Quick Action Chips */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          backgroundColor: "rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(255, 255, 255, 0.14)",
+                          color: "#dde1da",
+                          borderRadius: 999,
+                          padding: "5px 12px",
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5
+                        }}
+                      >
+                        <Upload size={12} color="#c8f064" />
+                        <span>Unggah Berkas (PDF/Word/Foto)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsTopicModalOpen(true);
+                        }}
+                        style={{
+                          backgroundColor: "rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(255, 255, 255, 0.14)",
+                          color: "#dde1da",
+                          borderRadius: 999,
+                          padding: "5px 12px",
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5
+                        }}
+                      >
+                        <Sparkle size={12} color="#c8f064" />
+                        <span>Buat Kurikulum Mandiri</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("mistakes")}
+                        style={{
+                          backgroundColor: mistakes.length > 0 ? "rgba(239, 68, 68, 0.18)" : "rgba(255, 255, 255, 0.08)",
+                          border: mistakes.length > 0 ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid rgba(255, 255, 255, 0.14)",
+                          color: mistakes.length > 0 ? "#fca5a5" : "#dde1da",
+                          borderRadius: 999,
+                          padding: "5px 12px",
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5
+                        }}
+                      >
+                        <AlertTriangle size={12} color={mistakes.length > 0 ? "#ef4444" : "#c8f064"} />
+                        <span>Bank Soal Salah ({mistakes.length})</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. RECENT STUDY SPOTLIGHT (JUMP BACK IN) */}
+                {(activeDoc || (documents && documents[0])) && (() => {
+                  const targetDoc = activeDoc || documents[0];
+                  const badge = getSubjectBadge(targetDoc.title);
+                  return (
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                          <Compass size={14} color="#4b6623" />
+                          <h2 style={{ fontSize: 13, fontWeight: 700, margin: 0, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                            Lanjutkan Belajar Terakhir
+                          </h2>
+                        </div>
+                        <span style={{ fontSize: 11, color: "#6f7975" }}>
+                          Modul Aktif
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #dce1da",
+                          borderRadius: 14,
+                          padding: "20px 22px",
+                          boxShadow: "0 4px 20px rgba(27, 39, 35, 0.03)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: 16
+                        }}
+                      >
+                        <div style={{ flex: "1 1 360px", minWidth: 260 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                            <span
+                              style={{
+                                backgroundColor: badge.bg,
+                                color: badge.color,
+                                border: `1px solid ${badge.border}`,
+                                padding: "2px 8px",
+                                borderRadius: 6,
+                                fontSize: 11,
+                                fontWeight: 700
+                              }}
+                            >
+                              {badge.label}
+                            </span>
+                            <span style={{ fontSize: 11, color: "#8a9691", fontFamily: "'DM Mono', monospace" }}>
+                              {new Date(targetDoc.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                            </span>
+                          </div>
+                          <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 8px 0", color: "#17201d", letterSpacing: "-0.01em" }}>
+                            {targetDoc.title}
+                          </h3>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#56645e" }}>
+                              <Layers size={13} color="#4b6623" />
+                              <span>{targetDoc.flashcard_count || flashcards.length} Flashcard</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#56645e" }}>
+                              <Target size={13} color="#4b6623" />
+                              <span>{quizQuestions.length > 0 ? `${quizQuestions.length} Soal CBT` : "Kuis Adaptif"}</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#56645e" }}>
+                              <Sparkles size={13} color="#4b6623" />
+                              <span>{activeDocSummary ? "Rangkuman Siap" : "Materi Terstruktur"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Quick Navigation Buttons */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <button
+                            onClick={() => {
+                              loadDocument(targetDoc.id);
+                              setActiveTab("material");
+                            }}
+                            style={{
+                              backgroundColor: "#18221f",
+                              color: "#c8f064",
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "8px 15px",
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                          >
+                            <BookOpen size={14} />
+                            <span>Baca Materi</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              loadDocument(targetDoc.id);
+                              setActiveTab("quiz");
+                            }}
+                            style={{
+                              backgroundColor: "#ffffff",
+                              color: "#17201d",
+                              border: "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "8px 13px",
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                          >
+                            <Target size={14} color="#72a728" />
+                            <span>Latihan Soal</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              loadDocument(targetDoc.id);
+                              setActiveTab("flashcards");
+                            }}
+                            style={{
+                              backgroundColor: "#ffffff",
+                              color: "#17201d",
+                              border: "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "8px 13px",
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                          >
+                            <Layers size={14} color="#3b82f6" />
+                            <span>Flashcards</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 3. BENTO METRICS */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: 12,
+                    marginBottom: 26
+                  }}
+                >
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      borderRadius: 12,
+                      padding: "16px 18px",
+                      border: "1px solid #dce1da",
+                      boxShadow: "0 4px 15px rgba(27, 39, 35, 0.02)"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.03em" }}>Total Modul</span>
+                      <div style={{ width: 26, height: 26, borderRadius: 6, backgroundColor: "#f2f8e8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <BookOpen size={13} color="#72a728" />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: "#17201d", fontFamily: "'DM Mono', monospace" }}>
+                      {documents.length}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#8a9691", marginTop: 2 }}>
+                      Materi aktif di perpustakaan
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      borderRadius: 12,
+                      padding: "16px 18px",
+                      border: "1px solid #dce1da",
+                      boxShadow: "0 4px 15px rgba(27, 39, 35, 0.02)"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.03em" }}>Kartu Flashcard</span>
+                      <div style={{ width: 26, height: 26, borderRadius: 6, backgroundColor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Layers size={13} color="#3b82f6" />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: "#17201d", fontFamily: "'DM Mono', monospace" }}>
+                      {documents.reduce((acc, d) => acc + (d.flashcard_count || 0), 0) || flashcards.length}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#8a9691", marginTop: 2 }}>
+                      Fakta atomik siap recall
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setActiveTab("mistakes")}
+                    style={{
+                      backgroundColor: mistakes.length > 0 ? "#fffaf5" : "#ffffff",
+                      borderRadius: 12,
+                      padding: "16px 18px",
+                      border: mistakes.length > 0 ? "1px solid #fed7aa" : "1px solid #dce1da",
+                      boxShadow: "0 4px 15px rgba(27, 39, 35, 0.02)",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: mistakes.length > 0 ? "#ea580c" : "#6f7975", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                        Bank Soal Salah
+                      </span>
+                      <div style={{ width: 26, height: 26, borderRadius: 6, backgroundColor: mistakes.length > 0 ? "#ffedd5" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <AlertTriangle size={13} color={mistakes.length > 0 ? "#ea580c" : "#f59e0b"} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: mistakes.length > 0 ? "#c2410c" : "#17201d", fontFamily: "'DM Mono', monospace" }}>
+                      {mistakes.length}
+                    </div>
+                    <div style={{ fontSize: 11, color: mistakes.length > 0 ? "#ea580c" : "#8a9691", marginTop: 2 }}>
+                      {mistakes.length > 0 ? "Klik untuk review kesalahan" : "Belum ada catatan soal salah"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. RAK DOKUMEN & MATERI SAYA */}
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <BookOpen size={15} color="#4b6623" />
+                      <h2 style={{ fontSize: 14, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.01em" }}>
+                        Koleksi Materi & Modul Belajar
+                      </h2>
+                      <span style={{ fontSize: 11, color: "#6f7975", fontFamily: "'DM Mono', monospace" }}>
+                        ({documents.length})
+                      </span>
+                    </div>
+
+                    {/* Filter Badges */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      {["Semua", "Sosiologi", "Ekonomi", "Matematika"].map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => setHomeSubjectFilter(cat)}
+                          style={{
+                            backgroundColor: homeSubjectFilter === cat ? "#18221f" : "#ffffff",
+                            color: homeSubjectFilter === cat ? "#c8f064" : "#6f7975",
+                            border: homeSubjectFilter === cat ? "1px solid #18221f" : "1px solid #dce1da",
+                            padding: "3px 9px",
+                            borderRadius: 999,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Grid of Documents */}
+                  {(() => {
+                    const filteredDocs = documents.filter((doc) => {
+                      if (homeSubjectFilter === "Semua") return true;
+                      return doc.title.toLowerCase().includes(homeSubjectFilter.toLowerCase());
+                    });
+
+                    if (filteredDocs.length === 0) {
+                      return (
+                        <div
+                          style={{
+                            backgroundColor: "#ffffff",
+                            border: "1px dashed #dce1da",
+                            borderRadius: 12,
+                            padding: "32px 20px",
+                            textAlign: "center"
+                          }}
+                        >
+                          <BookOpen size={22} color="#8a9691" style={{ margin: "0 auto 6px" }} />
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#17201d" }}>
+                            Tidak ada modul pada kategori ini
+                          </div>
+                          <div style={{ fontSize: 11.5, color: "#6f7975", marginTop: 3 }}>
+                            Gunakan kotak pencarian di atas untuk membuat topik baru atau unggah modul PDF.
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
+                          gap: 12
+                        }}
+                      >
+                        {filteredDocs.map((doc) => {
+                          const badge = getSubjectBadge(doc.title);
+                          const isCurrent = doc.id === activeDocId;
+                          return (
+                            <div
+                              key={doc.id}
+                              style={{
+                                backgroundColor: "#ffffff",
+                                border: isCurrent ? "1.5px solid #72a728" : "1px solid #dce1da",
+                                borderRadius: 12,
+                                padding: "15px 16px",
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "space-between",
+                                boxShadow: "0 2px 10px rgba(27, 39, 35, 0.02)",
+                                transition: "all 0.15s ease",
+                                position: "relative"
+                              }}
+                            >
+                              <div>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                                  <span
+                                    style={{
+                                      backgroundColor: badge.bg,
+                                      color: badge.color,
+                                      border: `1px solid ${badge.border}`,
+                                      padding: "2px 7px",
+                                      borderRadius: 6,
+                                      fontSize: 10,
+                                      fontWeight: 700
+                                    }}
+                                  >
+                                    {badge.label}
+                                  </span>
+                                  <button
+                                    onClick={(e) => handleDeleteDocument(doc.id, e)}
+                                    title="Hapus modul"
+                                    style={{ background: "none", border: "none", color: "#aeb9b4", cursor: "pointer", padding: 2 }}
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+
+                                <h4
+                                  onClick={() => {
+                                    loadDocument(doc.id);
+                                    setActiveTab("material");
+                                  }}
+                                  style={{
+                                    fontSize: 13.5,
+                                    fontWeight: 700,
+                                    margin: "0 0 8px 0",
+                                    color: "#17201d",
+                                    lineHeight: 1.4,
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  {doc.title}
+                                </h4>
+
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#8a9691", marginBottom: 12 }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                    <Layers size={11} color="#6f7975" />
+                                    <span>{doc.flashcard_count || 0} Flashcard</span>
+                                  </div>
+                                  <span>•</span>
+                                  <span>{new Date(doc.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}</span>
+                                </div>
+                              </div>
+
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, borderTop: "1px solid #f0f2ee", paddingTop: 9 }}>
+                                <button
+                                  onClick={() => {
+                                    loadDocument(doc.id);
+                                    setActiveTab("material");
+                                  }}
+                                  style={{
+                                    flex: 1,
+                                    backgroundColor: "#18221f",
+                                    color: "#c8f064",
+                                    border: "none",
+                                    borderRadius: 6,
+                                    padding: "6px 9px",
+                                    fontSize: 11.5,
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 5
+                                  }}
+                                >
+                                  <BookOpen size={12} />
+                                  <span>Buka Modul</span>
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    loadDocument(doc.id);
+                                    setActiveTab("quiz");
+                                  }}
+                                  title="Latihan Soal"
+                                  style={{
+                                    backgroundColor: "#f8f9f5",
+                                    color: "#17201d",
+                                    border: "1px solid #dce1da",
+                                    borderRadius: 6,
+                                    padding: "6px 9px",
+                                    fontSize: 11.5,
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 4
+                                  }}
+                                >
+                                  <Target size={12} color="#72a728" />
+                                  <span>Kuis</span>
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    loadDocument(doc.id);
+                                    setActiveTab("flashcards");
+                                  }}
+                                  title="Flashcards 3D"
+                                  style={{
+                                    backgroundColor: "#f8f9f5",
+                                    color: "#17201d",
+                                    border: "1px solid #dce1da",
+                                    borderRadius: 6,
+                                    padding: "6px 9px",
+                                    fontSize: 11.5,
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 4
+                                  }}
+                                >
+                                  <Layers size={12} color="#3b82f6" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
             {/* TAB 1: MATERIAL & INGESTION (CLEAN OVERVIEW CARD) */}
             {activeTab === "material" && (
               <div style={{ maxWidth: 880, margin: "0 auto" }}>
@@ -4850,7 +5497,7 @@ export default function App() {
         </section>
 
           {/* Right Column: Figma Make "Tanya Nara" AI Panel */}
-          <aside className="ai-panel-box desktop-only">
+          <aside className="ai-panel-box desktop-only" style={{ display: activeTab === "home" ? "none" : undefined }}>
             <div className="ai-panel-inner">
               <div>
                 <div className="ai-heading-box">
@@ -4998,6 +5645,7 @@ export default function App() {
 
         {/* Lesson Footer Bar */}
         {(() => {
+          if (activeTab === "home") return null;
           const hasContent = activeDocContent.length > 0 ? 1 : 0;
           const hasFlashcards = flashcards.length > 0 ? 1 : 0;
           const hasQuiz = quizQuestions.length > 0 ? 1 : 0;

@@ -9,6 +9,89 @@ import { MathView } from "../common/MathView";
 import { AIProcessLoader } from "../common/AIProcessLoader";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText } from "../common/DiagramRenderer";
 
+function TailorSummaryBox({ 
+  activeDocId, 
+  activeDocSummary, 
+  selectedModel, 
+  setActiveDocSummary, 
+  isTailoring, 
+  setIsTailoring 
+}: { 
+  activeDocId?: string | null, 
+  activeDocSummary: string, 
+  selectedModel?: string, 
+  setActiveDocSummary?: (val: string) => void,
+  isTailoring: boolean,
+  setIsTailoring: (val: boolean) => void
+}) {
+  const [tailorInput, setTailorInput] = React.useState("");
+
+  const handleTailor = async () => {
+    if (!tailorInput.trim() || !activeDocId || !activeDocSummary || !setActiveDocSummary) return;
+    setIsTailoring(true);
+    try {
+      const res = await fetch("/api/ai/tailor-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          docId: activeDocId,
+          currentSummary: activeDocSummary,
+          tailorPrompt: tailorInput,
+          model: selectedModel || "ag/gemini-3.8-flash-low"
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.summary) {
+        setActiveDocSummary(data.summary);
+        setTailorInput("");
+      } else {
+        alert("Gagal menyesuaikan rangkuman: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Error: " + err);
+    } finally {
+      setIsTailoring(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 24, padding: "16px", backgroundColor: "#f0fdf4", borderRadius: 12, border: "1px solid #dcfce7" }} className="print-hidden">
+      <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 10px", color: "#166534", display: "flex", alignItems: "center", gap: 6 }}>
+        <Sparkles size={14} color="#166534" /> 
+        Sesuaikan Rangkuman dengan AI
+      </h3>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <input 
+          type="text"
+          value={tailorInput}
+          onChange={(e) => setTailorInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleTailor()}
+          placeholder="Contoh: Buat lebih singkat..."
+          style={{ flex: "1 1 200px", minWidth: 0, padding: "10px 14px", borderRadius: 8, border: "1px solid #bbf7d0", backgroundColor: "#fff", color: "#166534", fontSize: 13, outline: "none" }}
+          disabled={isTailoring}
+        />
+        <button 
+          onClick={handleTailor}
+          disabled={isTailoring || !tailorInput.trim()}
+          style={{ 
+            backgroundColor: isTailoring || !tailorInput.trim() ? "#dcfce7" : "#22c55e", 
+            color: isTailoring || !tailorInput.trim() ? "#166534" : "#fff", 
+            border: "none", 
+            padding: "0 18px", 
+            borderRadius: 8, 
+            fontWeight: 700, 
+            fontSize: 13,
+            cursor: isTailoring || !tailorInput.trim() ? "not-allowed" : "pointer",
+            transition: "all 0.2s"
+          }}
+        >
+          {isTailoring ? "Menyusun..." : "Sesuaikan"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export interface SummaryTabProps {
   activeDoc: DocumentItem | null | undefined;
   activeDocTitle: string;
@@ -50,36 +133,8 @@ export function SummaryTab({
   selectedModel,
   setActiveDocSummary
 }: SummaryTabProps) {
-  const [tailorInput, setTailorInput] = React.useState("");
   const [isTailoring, setIsTailoring] = React.useState(false);
 
-  const handleTailor = async () => {
-    if (!tailorInput.trim() || !activeDocId || !activeDocSummary || !setActiveDocSummary) return;
-    setIsTailoring(true);
-    try {
-      const res = await fetch("/api/ai/tailor-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          docId: activeDocId,
-          currentSummary: activeDocSummary,
-          tailorPrompt: tailorInput,
-          model: selectedModel || "ag/gemini-3.8-flash-low"
-        })
-      });
-      const data = await res.json();
-      if (data.success && data.summary) {
-        setActiveDocSummary(data.summary);
-        setTailorInput("");
-      } else {
-        alert("Gagal menyesuaikan rangkuman: " + (data.error || "Unknown error"));
-      }
-    } catch (err) {
-      alert("Error: " + err);
-    } finally {
-      setIsTailoring(false);
-    }
-  };
   return (
               <div className="tab-pane-animate" style={{ maxWidth: 1040, margin: "0 auto" }}>
                 {/* Summary Style Selection Pills */}
@@ -411,40 +466,14 @@ export function SummaryTab({
                     </ReactMarkdown>
 
                     {/* AI Tailoring Input */}
-                    <div style={{ marginTop: 24, padding: "16px", backgroundColor: "#f0fdf4", borderRadius: 12, border: "1px solid #dcfce7" }} className="print-hidden">
-                      <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 10px", color: "#166534", display: "flex", alignItems: "center", gap: 6 }}>
-                        <Sparkles size={14} color="#166534" /> 
-                        Sesuaikan Rangkuman dengan AI
-                      </h3>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <input 
-                          type="text"
-                          value={tailorInput}
-                          onChange={(e) => setTailorInput(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && handleTailor()}
-                          placeholder="Contoh: Buat lebih singkat..."
-                          style={{ flex: "1 1 200px", minWidth: 0, padding: "10px 14px", borderRadius: 8, border: "1px solid #bbf7d0", backgroundColor: "#fff", color: "#166534", fontSize: 13, outline: "none" }}
-                          disabled={isTailoring}
-                        />
-                        <button 
-                          onClick={handleTailor}
-                          disabled={isTailoring || !tailorInput.trim()}
-                          style={{ 
-                            backgroundColor: isTailoring || !tailorInput.trim() ? "#dcfce7" : "#22c55e", 
-                            color: isTailoring || !tailorInput.trim() ? "#166534" : "#fff", 
-                            border: "none", 
-                            padding: "0 18px", 
-                            borderRadius: 8, 
-                            fontWeight: 700, 
-                            fontSize: 13,
-                            cursor: isTailoring || !tailorInput.trim() ? "not-allowed" : "pointer",
-                            transition: "all 0.2s"
-                          }}
-                        >
-                          {isTailoring ? "Menyusun..." : "Sesuaikan"}
-                        </button>
-                      </div>
-                    </div>
+                    <TailorSummaryBox
+                      activeDocId={activeDocId}
+                      activeDocSummary={activeDocSummary}
+                      selectedModel={selectedModel}
+                      setActiveDocSummary={setActiveDocSummary}
+                      isTailoring={isTailoring}
+                      setIsTailoring={setIsTailoring}
+                    />
 
                     {/* Print Appendix 1: Flashcards / Glosarium Konsep Kunci */}
                     {flashcards && flashcards.length > 0 && (

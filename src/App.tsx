@@ -33,6 +33,8 @@ import {
   Play,
   Pause,
   Brain,
+  Mic,
+  MicOff,
   Volume2,
   VolumeX,
   Lightbulb,
@@ -1092,6 +1094,12 @@ export default function App() {
   const [isEvaluatingFeynman, setIsEvaluatingFeynman] = useState(false);
   const [feynmanResult, setFeynmanResult] = useState<FeynmanResult | null>(null);
 
+  // Feynman Voice Recording state
+  const [isRecordingFeynman, setIsRecordingFeynman] = useState(false);
+  const [feynmanRecordingSeconds, setFeynmanRecordingSeconds] = useState(0);
+  const feynmanRecognitionRef = useRef<any>(null);
+  const feynmanMediaStreamRef = useRef<MediaStream | null>(null);
+
   // 10/10 Micro-burst focus timer state
   const [timerSeconds, setTimerSeconds] = useState(600); // 10 minutes default
   const [timerMode, setTimerMode] = useState<"focus" | "break">("focus");
@@ -1119,6 +1127,8 @@ export default function App() {
   const [isEnriching, setIsEnriching] = useState(false);
   const [isEnrichModalOpen, setIsEnrichModalOpen] = useState(false);
   const [enrichFocus, setEnrichFocus] = useState("");
+  const [enrichSuggestions, setEnrichSuggestions] = useState<Array<{ title: string; focus: string; reason: string }>>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
@@ -2058,6 +2068,103 @@ export default function App() {
     }
   }
 
+  // Feynman Voice Recording handler
+  const handleToggleFeynmanRecording = async () => {
+    if (isRecordingFeynman) {
+      if (feynmanRecognitionRef.current) {
+        try {
+          feynmanRecognitionRef.current.stop();
+        } catch {}
+      }
+      if (feynmanMediaStreamRef.current) {
+        feynmanMediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        feynmanMediaStreamRef.current = null;
+      }
+      setIsRecordingFeynman(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      feynmanMediaStreamRef.current = stream;
+
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = "id-ID";
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        const baseText = feynmanExplanation.trim();
+
+        recognition.onresult = (event: any) => {
+          let currentSessionText = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            currentSessionText += event.results[i][0].transcript + " ";
+          }
+          const fullText = (baseText ? baseText + " " : "") + currentSessionText.trim();
+          setFeynmanExplanation(fullText);
+        };
+
+        recognition.onerror = (event: any) => {
+          console.warn("Speech recognition warning:", event.error);
+        };
+
+        recognition.start();
+        feynmanRecognitionRef.current = recognition;
+      } else {
+        showNotice("Browser tidak mendukung transkripsi langsung, mikrofon aktif.");
+      }
+
+      setIsRecordingFeynman(true);
+      setFeynmanRecordingSeconds(0);
+    } catch (err: any) {
+      console.error("Gagal akses mikrofon:", err);
+      showNotice("Izin mikrofon diperlukan untuk merekam penjelasan.");
+    }
+  };
+
+  // Timer effect for voice recording
+  useEffect(() => {
+    let interval: any = null;
+    if (isRecordingFeynman) {
+      interval = setInterval(() => {
+        setFeynmanRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setFeynmanRecordingSeconds(0);
+    }
+    return () => clearInterval(interval);
+  }, [isRecordingFeynman]);
+
+  // Fetch AI smart suggestions when Enrich Modal opens
+  useEffect(() => {
+    if (isEnrichModalOpen && activeDocContent) {
+      setIsLoadingSuggestions(true);
+      fetch("/api/documents/enrich-suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: activeDocTitle,
+          content: activeDocContent.slice(0, 3500)
+        })
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.suggestions && data.suggestions.length > 0) {
+            setEnrichSuggestions(data.suggestions);
+          }
+        })
+        .catch((err) => {
+          console.error("Gagal muat saran pengayaan:", err);
+        })
+        .finally(() => {
+          setIsLoadingSuggestions(false);
+        });
+    }
+  }, [isEnrichModalOpen, activeDocId]);
+
   // Feynman Active Recall Evaluation
   async function handleEvaluateFeynman() {
     if (!feynmanExplanation.trim() || !activeDocId) {
@@ -2250,7 +2357,7 @@ export default function App() {
               { id: "material", label: "Materi Saya", mark: "M" },
               { id: "quiz", label: "Latihan Kuis", mark: "L", count: quizQuestions.length },
               { id: "mistakes", label: "Bank Soal Salah", mark: "B", count: activeDocId ? activeDocMistakes.length : mistakes.length, highlight: (activeDocId ? activeDocMistakes.length : mistakes.length) > 0 },
-              { id: "flashcards", label: "Flashcard 3D", mark: "K", count: flashcards.length },
+              { id: "flashcards", label: "Flashcards", mark: "K", count: flashcards.length },
               { id: "feynman", label: "Uji Feynman", mark: "F" }
             ].map((nav) => {
               const isActive = activeTab === nav.id;
@@ -2647,7 +2754,7 @@ export default function App() {
               { id: "quiz", label: "Latihan Soal", count: quizQuestions.length, icon: Target },
               { id: "mistakes", label: "Bank Kesalahan", count: activeDocMistakes.length, icon: AlertTriangle, highlight: activeDocMistakes.length > 0 },
               { id: "feynman", label: "Uji Feynman", icon: Brain },
-              { id: "flashcards", label: "Flashcards 3D", count: flashcards.length, icon: Layers },
+              { id: "flashcards", label: "Flashcards", count: flashcards.length, icon: Layers },
               { id: "summary", label: "Rangkuman AI", icon: Sparkles }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -3257,7 +3364,7 @@ export default function App() {
                                     loadDocument(doc.id);
                                     setActiveTab("flashcards");
                                   }}
-                                  title="Flashcards 3D"
+                                  title="Flashcards"
                                   style={{
                                     backgroundColor: "#f8f9f5",
                                     color: "#17201d",
@@ -3447,7 +3554,7 @@ export default function App() {
                         <div style={{ fontSize: 22, fontWeight: 800, color: "#22370c", marginTop: 4, letterSpacing: "-0.02em" }}>
                           {flashcards.length} <span style={{ fontSize: 12, fontWeight: 500, color: "#4b6623" }}>kartu</span>
                         </div>
-                        <div style={{ fontSize: 11, color: "#8a9691", marginTop: 3 }}>Spaced repetition 3D</div>
+                        <div style={{ fontSize: 11, color: "#8a9691", marginTop: 3 }}>Review Spaced Repetition</div>
                       </div>
 
                       <div style={{ padding: "14px 16px", backgroundColor: "#f8f9f5", borderRadius: 10, border: "1px solid #dde1da" }}>
@@ -3528,7 +3635,7 @@ export default function App() {
                         }}
                       >
                         <Layers size={15} color="#4b6623" />
-                        Buka Flashcards 3D
+                        Buka Flashcards
                       </button>
 
                       <button
@@ -5549,25 +5656,58 @@ export default function App() {
                   </div>
 
                   <div style={{ marginBottom: 14 }}>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
-                      Penjelasan Anda (Gunakan bahasa sendiri)
-                    </label>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>
+                        Penjelasan Anda (Gunakan bahasa sendiri atau rekam suara)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleToggleFeynmanRecording}
+                        style={{
+                          backgroundColor: isRecordingFeynman ? "#fee2e2" : "#f1f5eb",
+                          border: `1px solid ${isRecordingFeynman ? "#fca5a5" : "#cddfc0"}`,
+                          color: isRecordingFeynman ? "#b91c1c" : "#3b581e",
+                          borderRadius: 6,
+                          padding: "4px 10px",
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {isRecordingFeynman ? (
+                          <>
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#ef4444" }} />
+                            <span>Merekam ({Math.floor(feynmanRecordingSeconds / 60)}:{String(feynmanRecordingSeconds % 60).padStart(2, "0")}) · Klik Selesai</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic size={13} color="#4b6623" />
+                            <span>Rekam Suara</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <textarea
                       rows={5}
                       value={feynmanExplanation}
                       onChange={(e) => setFeynmanExplanation(e.target.value)}
-                      placeholder="Tuliskan pemahaman Anda di sini seperti menjelaskan ke teman..."
+                      placeholder={isRecordingFeynman ? "Mendengarkan ucapan Anda... Teruslah berbicara..." : "Tuliskan pemahaman Anda di sini atau gunakan 'Rekam Suara' untuk menjelaskan lisan..."}
                       style={{
                         width: "100%",
-                        backgroundColor: "#fafbf8",
-                        border: "1px solid #dce1da",
+                        backgroundColor: isRecordingFeynman ? "#fafdf5" : "#fafbf8",
+                        border: `1px solid ${isRecordingFeynman ? "#779f2f" : "#dce1da"}`,
                         borderRadius: 8,
                         padding: "12px 14px",
                         fontSize: 14,
                         lineHeight: "1.6",
                         color: "#17201d",
                         outline: "none",
-                        resize: "vertical"
+                        resize: "vertical",
+                        transition: "border-color 0.2s ease"
                       }}
                     />
                   </div>
@@ -5713,10 +5853,10 @@ export default function App() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
                   <div>
                     <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
-                      Review Spaced Repetition 3D
+                      Flashcards: Latihan Ingatan Aktif
                     </h2>
                     <p style={{ fontSize: 12, color: "#6f7975", marginTop: 2 }}>
-                      Sentuh kartu untuk membalik sisi pertanyaan dan jawaban.
+                      1 konsep per kartu untuk memperkuat retensi memori jangka panjang (Spaced Repetition).
                     </p>
                   </div>
                   <button
@@ -5757,8 +5897,8 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: 700, color: "#17201d" }}>
                       Belum Ada Flashcards
                     </div>
-                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 400, margin: "6px auto 16px" }}>
-                      Gunakan tombol di atas agar AI membaca materi dan menyusun kartu pertanyaan dengan animasi 3D.
+                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 440, margin: "6px auto 16px", lineHeight: "1.5" }}>
+                      Belum ada flashcards untuk materi ini. Klik tombol di bawah agar AI membedah fakta kunci menjadi kartu hafalan atomik.
                     </p>
                     <button
                       onClick={handleGenerateFlashcards}
@@ -5774,7 +5914,7 @@ export default function App() {
                         cursor: "pointer"
                       }}
                     >
-                      Ekstrak Kartu Sekarang
+                      Susun Flashcards Sekarang
                     </button>
                   </div>
                 ) : (
@@ -7389,30 +7529,100 @@ export default function App() {
                       </button>
                     </div>
 
-                    <p style={{ fontSize: 12.5, color: "#45544e", lineHeight: "1.5", marginBottom: 16 }}>
-                      AI akan meneliti internet (9Router Search) untuk menemukan referensi pendukung, studi kasus dunia nyata, glosarium istilah, dan menyempurnakan bagian materi yang masih dangkal.
+                    <p style={{ fontSize: 12.5, color: "#45544e", lineHeight: "1.5", marginBottom: 14 }}>
+                      AI menganalisis isi materi Anda dan memindai referensi akademik untuk melengkapi bagian yang belum mendalam. Pilih salah satu saran di bawah atau tulis fokus sendiri:
                     </p>
 
-                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
-                      Fokus Tambahan (Opsional)
-                    </label>
-                    <input
-                      type="text"
-                      value={enrichFocus}
-                      onChange={(e) => setEnrichFocus(e.target.value)}
-                      placeholder="Contoh: berikan contoh kasus nyata, materi hafalan penting..."
-                      style={{
-                        width: "100%",
-                        backgroundColor: "#fafbf8",
-                        border: "1px solid #dce1da",
-                        borderRadius: 8,
-                        padding: "10px 12px",
-                        fontSize: 13,
-                        color: "#17201d",
-                        marginBottom: 16,
-                        outline: "none"
-                      }}
-                    />
+                    {/* AI Smart Contextual Recommendations */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 5 }}>
+                          <Sparkles size={13} color="#4b6623" />
+                          <span>Rekomendasi Cerdas AI</span>
+                        </span>
+                        {isLoadingSuggestions && (
+                          <span style={{ fontSize: 10, color: "#6f7975", fontFamily: "'DM Mono', monospace" }}>
+                            Menganalisis materi...
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                        {(enrichSuggestions.length > 0 ? enrichSuggestions : [
+                          {
+                            title: "Studi Kasus Konkret",
+                            focus: "Berikan contoh kasus nyata terkini di Indonesia beserta analisis penerapannya",
+                            reason: "Menghubungkan teori ke fenomena nyata agar tidak sekadar hafalan"
+                          },
+                          {
+                            title: "Miskonsepsi Umum Ujian",
+                            focus: "Jelaskan jebakan soal atau miskonsepsi yang sering mengecoh siswa pada materi ini",
+                            reason: "Melatih kepekaan terhadap pola soal ujian sekolah dan UTBK"
+                          },
+                          {
+                            title: "Analogi Bebas Jargon",
+                            focus: "Gambarkan konsep inti dengan analogi sederhana sehari-hari",
+                            reason: "Mempermudah pemahaman intuitif bagi pemula"
+                          },
+                          {
+                            title: "Trik Cepat & Rumus Kunci",
+                            focus: "Rangkum kaidah esensial, jembatan keledai, atau batasan legal aturan",
+                            reason: "Meringkas hafalan ke format padat dan mudah diingat"
+                          }
+                        ]).map((sug, idx) => {
+                          const isSelected = enrichFocus === sug.focus;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setEnrichFocus(sug.focus)}
+                              style={{
+                                textAlign: "left",
+                                backgroundColor: isSelected ? "#f4f8ed" : "#ffffff",
+                                border: `1px solid ${isSelected ? "#779f2f" : "#dce1da"}`,
+                                borderRadius: 8,
+                                padding: "9px 11px",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 3
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                                <strong style={{ fontSize: 12, color: isSelected ? "#2a4212" : "#17201d" }}>
+                                  {sug.title}
+                                </strong>
+                                {isSelected && <Check size={12} color="#4b6623" />}
+                              </div>
+                              <span style={{ fontSize: 10.5, color: "#6f7975", lineHeight: 1.3 }}>
+                                {sug.reason}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#17201d", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                        Fokus Tambahan (Bisa Diedit / Kustom)
+                      </label>
+                      <input
+                        type="text"
+                        value={enrichFocus}
+                        onChange={(e) => setEnrichFocus(e.target.value)}
+                        placeholder="Pilih saran di atas atau tulis sendiri (contoh: contoh soal HOTS, rumus cepat...)"
+                        style={{
+                          width: "100%",
+                          backgroundColor: "#fafbf8",
+                          border: "1px solid #dce1da",
+                          borderRadius: 8,
+                          padding: "10px 12px",
+                          fontSize: 13,
+                          color: "#17201d",
+                          outline: "none"
+                        }}
+                      />
+                    </div>
 
                     <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
                       <button

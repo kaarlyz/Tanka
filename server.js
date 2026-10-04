@@ -453,6 +453,45 @@ const server = http.createServer(async (req, res) => {
       return sendJSON(res, { documents: docs });
     }
 
+    // Multimodal AI Vision for handwritten notes, equations, formulas, diagrams, and photos
+    async function extractTextFromImageAI(base64Data, mimeType = "image/jpeg") {
+      const prompt = `Anda adalah asisten OCR & transkripsi akademik cerdas untuk aplikasi belajar Tanka.
+Tugas Anda: Baca dan transkripsikan SELURUH konten pada gambar ini dengan sangat teliti dan akurat.
+Gambar ini bisa berupa:
+- Tulisan tangan (catatan buku, coretan rumus, ringkasan belajar)
+- Teks cetak buku pelajaran, lembar soal, atau modul
+- Rumus matematika atau lambang eksak (WAJIB gunakan notasi LaTeX/KaTeX rapi seperti $x^2$, $\\frac{a}{b}$, $\\sqrt{x}$)
+- Diagram, bagan alur, atau mindmap (transkripsikan dalam bentuk teks hierarkis/poin berurutan)
+
+Aturan:
+1. Jika tulisan tangan agak miring atau sulit dibaca, gunakan konteks kalimat akademik untuk mengenali kata yang paling tepat. Jangan halusinasi.
+2. Jika ada soal latihan, transkripsikan pertanyaan beserta semua pilihan gandanya (A, B, C, D, E) jika ada.
+3. HANYA berikan teks transkripsi materi yang terbaca. Jangan tambahkan kata pengantar seperti "Berikut adalah hasil transkripsi" atau kalimat penutup.`;
+
+      const messages = [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:${mimeType};base64,${base64Data}`
+              }
+            }
+          ]
+        }
+      ];
+
+      try {
+        const result = await callRouter(messages, "ag/gemini-3.8-flash-low", 0.1);
+        return result ? result.trim() : "";
+      } catch (err) {
+        console.error("AI Vision extraction failed:", err.message);
+        return "";
+      }
+    }
+
     // 2.b POST /api/documents/upload - handle single or multiple PDF, PPTX, DOCX, and image uploads
     if (req.method === "POST" && pathname === "/api/documents/upload") {
       const body = await getBody(req);
@@ -475,23 +514,47 @@ const server = http.createServer(async (req, res) => {
       for (const f of incomingFiles) {
         if (!f.fileName || !f.fileData) continue;
         const ext = path.extname(f.fileName).toLowerCase() || ".txt";
-        const tmpFilePath = path.join(scratchDir, `upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
-        try {
-          fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
-          const text = execFileSync(scriptPath, [tmpFilePath], {
-            encoding: "utf8",
-            maxBuffer: 25 * 1024 * 1024
-          }).trim();
-          if (text) {
-            extractedParts.push({ name: f.fileName, text });
-            fileNames.push(path.basename(f.fileName, ext).replace(/[_-]/g, " ").trim());
+        let text = "";
+        const isImage = [".png", ".jpg", ".jpeg", ".webp", ".bmp"].includes(ext);
+
+        if (isImage) {
+          const mimeMap = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".bmp": "image/bmp"
+          };
+          const mimeType = mimeMap[ext] || "image/jpeg";
+          try {
+            console.log(`[Upload] Menjalankan AI Vision Multimodal OCR untuk gambar: ${f.fileName}...`);
+            text = await extractTextFromImageAI(f.fileData, mimeType);
+          } catch (aiErr) {
+            console.warn("AI vision extraction failed, fallback to script:", aiErr.message);
           }
-        } catch (err) {
-          console.error(`Gagal ekstrak ${f.fileName}:`, err.message);
-        } finally {
-          if (fs.existsSync(tmpFilePath)) {
-            try { fs.unlinkSync(tmpFilePath); } catch {}
+        }
+
+        // If not image or AI vision returned empty, fallback to local extract_text.py
+        if (!text) {
+          const tmpFilePath = path.join(scratchDir, `upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
+          try {
+            fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
+            text = execFileSync(scriptPath, [tmpFilePath], {
+              encoding: "utf8",
+              maxBuffer: 25 * 1024 * 1024
+            }).trim();
+          } catch (err) {
+            console.error(`Gagal ekstrak ${f.fileName}:`, err.message);
+          } finally {
+            if (fs.existsSync(tmpFilePath)) {
+              try { fs.unlinkSync(tmpFilePath); } catch {}
+            }
           }
+        }
+
+        if (text && !text.startsWith("[Error OCR Gambar:")) {
+          extractedParts.push({ name: f.fileName, text });
+          fileNames.push(path.basename(f.fileName, ext).replace(/[_-]/g, " ").trim());
         }
       }
 
@@ -570,6 +633,71 @@ Tulis dalam Bahasa Indonesia yang lugas, padat, dan terstruktur rapi dengan Mark
         totalLength: updatedContent.length,
         content: updatedContent
       });
+    }
+
+    // 2.d POST /api/documents/enrich-suggestions - smart AI recommendations based on document context
+    if (req.method === "POST" && pathname === "/api/documents/enrich-suggestions") {
+      const body = await getBody(req);
+      const { title, content } = body;
+      if (!content || !content.trim()) {
+        return sendJSON(res, { suggestions: [] });
+      }
+
+      const prompt = `Anda adalah konsultan kurikulum & pedagogi cerdas Tanka.
+Tugas Anda: Baca materi belajar berikut dan berikan TEPAT 4 rekomendasi fokus pengayaan materi bernilai tinggi yang paling dibutuhkan oleh materi ini agar siswa menguasai konsep secara utuh tanpa kebingungan.
+
+Judul Modul: "${title || "Materi Belajar"}"
+Kutipan materi saat ini:
+"""
+${content.slice(0, 3000)}
+"""
+
+Format keluaran WAJIB berupa JSON array valid MURNI tanpa markdown wrapping (tanpa \`\`\`json):
+[
+  {
+    "title": "Nama Fokus (Maks 3-4 kata)",
+    "focus": "Instruksi pencarian pengayaan spesifik untuk memperdalam materi ini",
+    "reason": "Mengapa materi ini butuh tambahan ini (1 kalimat pendek)"
+  }
+]
+
+Saran harus adaptif:
+- Jika materi eksak/rumus: tawarkan pembuktian intuitif, variasi soal jebakan, atau batasan legal aturan.
+- Jika materi humaniora/sosial: tawarkan studi kasus konkret Indonesia terkini, komparasi pemikiran tokoh, atau dampak sosial.
+- Jika materi hafalan: tawarkan jembatan keledai murni atau analogi sehari-hari bebas jargon.`;
+
+      try {
+        const aiResponse = await callRouter([{ role: "user", content: prompt }], "ag/gemini-3.8-flash-low", 0.3);
+        const cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+        const suggestions = JSON.parse(cleanJson);
+        return sendJSON(res, { suggestions });
+      } catch (err) {
+        console.error("Gagal generate enrich suggestions:", err.message);
+        return sendJSON(res, {
+          suggestions: [
+            {
+              title: "Studi Kasus Konkret",
+              focus: "Berikan contoh kasus nyata terkini di Indonesia beserta analisis penerapannya",
+              reason: "Menghubungkan teori ke fenomena nyata agar tidak sekadar hafalan"
+            },
+            {
+              title: "Miskonsepsi Umum Ujian",
+              focus: "Jelaskan jebakan soal atau miskonsepsi yang sering mengecoh siswa pada materi ini",
+              reason: "Melatih kepekaan terhadap pola soal ujian sekolah dan UTBK"
+            },
+            {
+              title: "Analogi Bebas Jargon",
+              focus: "Gambarkan konsep inti dengan analogi sederhana sehari-hari",
+              reason: "Mempermudah pemahaman intuitif bagi pemula"
+            },
+            {
+              title: "Trik Cepat & Rumus Kunci",
+              focus: "Rangkum kaidah esensial, jembatan keledai, atau batasan legal aturan",
+              reason: "Meringkas hafalan ke format padat dan mudah diingat"
+            }
+          ]
+        });
+      }
     }
 
     // 2.d POST /api/documents/:id/detect-title - auto-detect title from content

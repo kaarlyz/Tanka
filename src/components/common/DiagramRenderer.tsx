@@ -18,6 +18,8 @@ export function isAsciiDiagramText(text: string): boolean {
   if ((upper.includes("LAHIR") || upper.includes("BANGKIT") || upper.includes("FASE 1")) && (upper.includes("KEMUNDURAN") || upper.includes("RUNTUH") || upper.includes("PUNCAK") || upper.includes("TUMBUH"))) return true;
   if (upper.includes("POHON ELIMINASI") || upper.includes("POHON KEPUTUSAN")) return true;
   if (upper.includes("CULTURAL LAG") || (upper.includes("BUDAYA MATERIAL") && upper.includes("BUDAYA IMATERIAL"))) return true;
+  if (upper.includes("ROGERS") || (upper.includes("INNOVATOR") && upper.includes("EARLY ADOPTER") && upper.includes("LAGGARD"))) return true;
+  if ((upper.includes("MEMANCAR") && upper.includes("MENJALAR") && upper.includes("MEMUSAT")) || (upper.includes("OGBURN") && (upper.includes("POLA") || upper.includes("SEBARAN")))) return true;
   if (/[┌└├│─┬┴┼]|\+[-=]{2,}|\/\\|\\\/|\[Lahir/.test(text)) return true;
   return false;
 }
@@ -319,6 +321,169 @@ export function renderVisualDiagramOrPre(children: any) {
         </div>
         <div style={{ marginTop: 12, padding: "10px 14px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 9, fontSize: 12, color: "#991b1b" }}>
           <strong>Akibat:</strong> Menimbulkan <em>Cultural Lag</em> berupa disorganisasi sosial, kejahatan siber baru, dan anomi sebelum regulasi resmi terbit.
+        </div>
+      </div>
+    );
+  }
+
+  // Pattern 4b: Kurva Difusi Inovasi Everett M. Rogers
+  if (
+    (upper.includes("ROGERS") || upper.includes("DIFUSI INOVASI") || upper.includes("KURVA ADOPSI")) &&
+    (upper.includes("INNOVATOR") || upper.includes("EARLY ADOPTER") || upper.includes("LAGGARD") || upper.includes("DISTRIBUSI NORMAL") || upper.includes("34%"))
+  ) {
+    return (
+      <div className="visual-diagram-card" style={{ margin: "20px 0", padding: "20px 22px", backgroundColor: "#fbfcf9", border: "1px solid #dce2da", borderRadius: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+            📊 Kurva Distribusi Normal Adopsi Inovasi (Everett M. Rogers)
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: "#e2ecdc", color: "#364d18", padding: "3px 8px", borderRadius: 6 }}>
+            Total N = 100%
+          </span>
+        </div>
+
+        {/* Visual SVG Gaussian Bell Curve */}
+        <div style={{ width: "100%", height: 130, marginBottom: 14, position: "relative" }}>
+          <svg viewBox="0 0 500 130" style={{ width: "100%", height: "100%", overflow: "visible" }}>
+            <defs>
+              <linearGradient id="rogersCurveGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#4b6623" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#4b6623" stopOpacity="0.02" />
+              </linearGradient>
+            </defs>
+
+            {/* Bell Curve Area Fill */}
+            <path
+              d="M 10 120 Q 80 120 150 70 Q 250 10 350 70 Q 420 120 490 120 Z"
+              fill="url(#rogersCurveGradient)"
+            />
+            {/* Bell Curve Stroke */}
+            <path
+              d="M 10 120 Q 80 120 150 70 Q 250 10 350 70 Q 420 120 490 120"
+              fill="none"
+              stroke="#4b6623"
+              strokeWidth="2.5"
+            />
+
+            {/* Segment Vertical Separators */}
+            <line x1="85" y1="100" x2="85" y2="120" stroke="#cbd5e1" strokeDasharray="3 3" strokeWidth="1.5" />
+            <line x1="165" y1="65" x2="165" y2="120" stroke="#dc2626" strokeDasharray="4 3" strokeWidth="2" />
+            <line x1="250" y1="10" x2="250" y2="120" stroke="#94a3b8" strokeDasharray="3 3" strokeWidth="1.5" />
+            <line x1="415" y1="100" x2="415" y2="120" stroke="#cbd5e1" strokeDasharray="3 3" strokeWidth="1.5" />
+
+            {/* Labels on SVG */}
+            <text x="45" y="115" fontSize="9" fontWeight="bold" fill="#64748b" textAnchor="middle">2,5%</text>
+            <text x="125" y="105" fontSize="9" fontWeight="bold" fill="#2563eb" textAnchor="middle">13,5%</text>
+            <text x="210" y="80" fontSize="9" fontWeight="bold" fill="#059669" textAnchor="middle">34%</text>
+            <text x="330" y="80" fontSize="9" fontWeight="bold" fill="#d97706" textAnchor="middle">34%</text>
+            <text x="455" y="115" fontSize="9" fontWeight="bold" fill="#dc2626" textAnchor="middle">16%</text>
+
+            {/* Takeoff Badge on SVG */}
+            <g transform="translate(165, 40)">
+              <rect x="-48" y="-14" width="96" height="18" rx="4" fill="#dc2626" />
+              <text x="0" y="-1" fontSize="8" fontWeight="bold" fill="#ffffff" textAnchor="middle">Take-off (16%)</text>
+            </g>
+          </svg>
+        </div>
+
+        {/* 5-Column Segmented Bento Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
+          <div style={{ padding: "10px 12px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, textAlign: "center" }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#64748b", fontFamily: "'DM Mono', monospace" }}>2,5%</span>
+            <strong style={{ fontSize: 12, color: "#1e293b", display: "block", marginTop: 2 }}>Innovators</strong>
+            <span style={{ fontSize: 10, color: "#64748b", display: "block", marginTop: 2 }}>Pemberani, siap risiko rugi</span>
+          </div>
+
+          <div style={{ padding: "10px 12px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, textAlign: "center" }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#2563eb", fontFamily: "'DM Mono', monospace" }}>13,5%</span>
+            <strong style={{ fontSize: 12, color: "#1e40af", display: "block", marginTop: 2 }}>Early Adopters</strong>
+            <span style={{ fontSize: 10, color: "#2563eb", display: "block", marginTop: 2 }}>Opinion leader, panutan</span>
+          </div>
+
+          <div style={{ padding: "10px 12px", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 10, textAlign: "center" }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#059669", fontFamily: "'DM Mono', monospace" }}>34,0%</span>
+            <strong style={{ fontSize: 12, color: "#065f46", display: "block", marginTop: 2 }}>Early Majority</strong>
+            <span style={{ fontSize: 10, color: "#059669", display: "block", marginTop: 2 }}>Pragmatis, adopsi aman</span>
+          </div>
+
+          <div style={{ padding: "10px 12px", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, textAlign: "center" }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#d97706", fontFamily: "'DM Mono', monospace" }}>34,0%</span>
+            <strong style={{ fontSize: 12, color: "#92400e", display: "block", marginTop: 2 }}>Late Majority</strong>
+            <span style={{ fontSize: 10, color: "#b45309", display: "block", marginTop: 2 }}>Skeptis, adopsi terpaksa</span>
+          </div>
+
+          <div style={{ padding: "10px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, textAlign: "center" }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#dc2626", fontFamily: "'DM Mono', monospace" }}>16,0%</span>
+            <strong style={{ fontSize: 12, color: "#991b1b", display: "block", marginTop: 2 }}>Laggards</strong>
+            <span style={{ fontSize: 10, color: "#dc2626", display: "block", marginTop: 2 }}>Tradisional, resisten</span>
+          </div>
+        </div>
+
+        {/* Takeaway Box */}
+        <div style={{ marginTop: 12, padding: "10px 14px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 9, fontSize: 11.5, color: "#166534", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16 }}>🎯</span>
+          <span><strong>Titik Kritis (Chasm):</strong> Melewati kumulatif <strong>16%</strong> (Innovators + Early Adopters) menentukan apakah inovasi meledak ke publik luas atau mati gagal di awal.</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Pattern 4c: Pola Sebaran Dampak William F. Ogburn (Memancar, Menjalar, Memusat)
+  if (
+    (upper.includes("MEMANCAR") && upper.includes("MENJALAR") && upper.includes("MEMUSAT")) ||
+    (upper.includes("OGBURN") && (upper.includes("POLA") || upper.includes("SEBARAN")))
+  ) {
+    return (
+      <div className="visual-diagram-card" style={{ margin: "20px 0", padding: "20px 22px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 14 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 14 }}>
+          ⚡ 3 Pola Sebaran Dampak Penemuan Baru (William F. Ogburn)
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+          {/* 1. Memancar */}
+          <div style={{ padding: "14px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#2563eb", fontFamily: "'DM Mono', monospace", textTransform: "uppercase" }}>Pola 01</span>
+              <span style={{ fontSize: 16 }}>🌟</span>
+            </div>
+            <strong style={{ fontSize: 13.5, color: "#1e293b", display: "block" }}>Memancar (Konsentris)</strong>
+            <div style={{ margin: "6px 0", padding: "6px 10px", backgroundColor: "#eff6ff", borderRadius: 6, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#1d4ed8" }}>
+              1 Alat (X) ➜ Multi Dampak (A, B, C)
+            </div>
+            <p style={{ fontSize: 11, color: "#64748b", margin: 0, lineHeight: 1.45 }}>
+              Satu penemuan primer memicu perubahan simultan di berbagai bidang yang berdiri sendiri (misal: Ponsel pintar).
+            </p>
+          </div>
+
+          {/* 2. Menjalar */}
+          <div style={{ padding: "14px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#059669", fontFamily: "'DM Mono', monospace", textTransform: "uppercase" }}>Pola 02</span>
+              <span style={{ fontSize: 16 }}>⛓️</span>
+            </div>
+            <strong style={{ fontSize: 13.5, color: "#1e293b", display: "block" }}>Menjalar (Siklis/Rantai)</strong>
+            <div style={{ margin: "6px 0", padding: "6px 10px", backgroundColor: "#ecfdf5", borderRadius: 6, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#065f46" }}>
+              X ➜ Y ➜ Z (Estafet Berantai)
+            </div>
+            <p style={{ fontSize: 11, color: "#64748b", margin: 0, lineHeight: 1.45 }}>
+              Sebab-akibat bertahap: penemuan memicu perubahan baru, lalu memicu perubahan berikutnya (misal: Mesin uap).
+            </p>
+          </div>
+
+          {/* 3. Memusat */}
+          <div style={{ padding: "14px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#d97706", fontFamily: "'DM Mono', monospace", textTransform: "uppercase" }}>Pola 03</span>
+              <span style={{ fontSize: 16 }}>🎯</span>
+            </div>
+            <strong style={{ fontSize: 13.5, color: "#1e293b", display: "block" }}>Memusat (Konvergen)</strong>
+            <div style={{ margin: "6px 0", padding: "6px 10px", backgroundColor: "#fffbeb", borderRadius: 6, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#92400e" }}>
+              (A + B + C) ➜ 1 Sistem Baru (X)
+            </div>
+            <p style={{ fontSize: 11, color: "#64748b", margin: 0, lineHeight: 1.45 }}>
+              Banyak penemuan yang mulanya terpisah bergabung menciptakan satu ekosistem sosial terpadu (misal: Ojek daring).
+            </p>
+          </div>
         </div>
       </div>
     );

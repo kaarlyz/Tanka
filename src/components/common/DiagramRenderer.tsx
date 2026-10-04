@@ -545,7 +545,7 @@ export function renderVisualDiagramOrPre(children: any) {
   }
 
   // Pattern 7: Generic Hierarchical Diagram / ASCII Flow Nodes (Applies to ALL subjects)
-  const hasBoxChars = /[┌└├│─┬┴┼]|\+[-=]{2,}|-->|==>/.test(text);
+  const hasBoxChars = /[┌└├│─┬┴┼]|\+[-=]{2,}|-->|==>|->|◄|►|▼|▲|⇄|⇌|↔/.test(text);
   if (hasBoxChars) {
     const rawLines = text.split("\n");
     const cleanNodes = rawLines
@@ -558,15 +558,36 @@ export function renderVisualDiagramOrPre(children: any) {
           <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
             <span>🗺️ Bagan Alur & Peta Hubungan Konsep</span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {cleanNodes.map((nodeText, nIdx) => (
-              <div key={nIdx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", backgroundColor: "#ffffff", border: "1px solid #e1e7de", borderRadius: 9, fontSize: 13, color: "#18211e" }}>
-                <span style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: "#edf4e3", color: "#465f33", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800, fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>
-                  {nIdx + 1}
-                </span>
-                <span style={{ fontWeight: 600 }}>{nodeText}</span>
-              </div>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {cleanNodes.map((nodeText, nIdx) => {
+              // Parse arrow transitions e.g. [A] -> [B] or A ◄ Diakselerasi B
+              const parts = nodeText.split(/\s*(?:->|-->|==>|◄|►|⇄|⇌|↔)\s*/).filter(p => p.trim().length > 0);
+              const isMultiStep = parts.length > 1;
+
+              return (
+                <div key={nIdx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", backgroundColor: "#ffffff", border: "1px solid #e1e7de", borderRadius: 9, fontSize: 13, color: "#18211e", flexWrap: "wrap" }}>
+                  <span style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: "#edf4e3", color: "#465f33", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800, fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>
+                    {nIdx + 1}
+                  </span>
+                  {isMultiStep ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", flex: 1 }}>
+                      {parts.map((p, pIdx) => (
+                        <React.Fragment key={pIdx}>
+                          <span style={{ fontWeight: 700, backgroundColor: "#f4f6f1", border: "1px solid #dde3d8", padding: "3px 8px", borderRadius: 6, color: "#1e2e1a" }}>
+                            {p.replace(/^\[|\]$/g, "")}
+                          </span>
+                          {pIdx < parts.length - 1 && (
+                            <span style={{ color: "#72a728", fontWeight: 800, fontSize: 14 }}>➔</span>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  ) : (
+                    <span style={{ fontWeight: 600, flex: 1 }}>{nodeText}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       );

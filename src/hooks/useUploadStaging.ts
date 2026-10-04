@@ -52,7 +52,28 @@ export function useUploadStaging({
     });
 
     setStagedFiles((prev) => {
-      const combined = [...prev, ...newItems];
+      // Deduplicate against existing staged files (by name, size, lastModified)
+      const existingKeys = new Set(
+        prev.map((item) => `${item.file.name}_${item.file.size}_${item.file.lastModified}`)
+      );
+
+      const uniqueNewItems: StagedFile[] = [];
+      for (const item of newItems) {
+        const key = `${item.file.name}_${item.file.size}_${item.file.lastModified}`;
+        if (!existingKeys.has(key)) {
+          existingKeys.add(key);
+          uniqueNewItems.push(item);
+        } else {
+          // Cleanup unused preview URL object if duplicate
+          if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+        }
+      }
+
+      if (uniqueNewItems.length === 0) {
+        return prev;
+      }
+
+      const combined = [...prev, ...uniqueNewItems];
       if (!stagedDocTitle && combined.length > 0) {
         const cleanName = combined[0].name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ").trim();
         setStagedDocTitle(cleanName);
@@ -110,7 +131,6 @@ export function useUploadStaging({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: stagedDocTitle.trim() || undefined,
           files: filesPayload,
           goal: stagedGoal,
           instruction: stagedCustomInstruction.trim() || undefined

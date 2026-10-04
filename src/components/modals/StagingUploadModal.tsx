@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload, Camera, Check, X } from "lucide-react";
+import { Upload, Camera, Check, X, FileUp, Sparkles, FileText, Image } from "lucide-react";
 import { AIProcessLoader } from "../common/AIProcessLoader";
 
 export interface StagingUploadModalProps {
@@ -16,6 +16,7 @@ export interface StagingUploadModalProps {
   setStagedCustomInstruction: (val: string) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   cameraInputRef: React.RefObject<HTMLInputElement | null>;
+  handleStageFiles?: (files: FileList | File[] | File) => void;
   handleCancelStaging: () => void;
   handleRemoveStagedFile: (id: string) => void;
   handleConfirmStagedUpload: () => void;
@@ -35,10 +36,12 @@ export function StagingUploadModal({
   setStagedCustomInstruction,
   fileInputRef,
   cameraInputRef,
+  handleStageFiles,
   handleCancelStaging,
   handleRemoveStagedFile,
   handleConfirmStagedUpload,
 }: StagingUploadModalProps) {
+  const [isInnerDragging, setIsInnerDragging] = React.useState(false);
   if (!isStagingModalOpen) return null;
 
   return (
@@ -94,7 +97,21 @@ export function StagingUploadModal({
             </div>
 
             {/* Scrollable Items Tray */}
-            <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div
+              style={{ padding: "16px 20px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsInnerDragging(true);
+              }}
+              onDragLeave={() => setIsInnerDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsInnerDragging(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0 && handleStageFiles) {
+                  handleStageFiles(e.dataTransfer.files);
+                }
+              }}
+            >
               {isUploading ? (
                 <div style={{ padding: "8px 0" }}>
                   <AIProcessLoader
@@ -112,7 +129,9 @@ export function StagingUploadModal({
                 <>
                   {/* Staged Items Grid */}
                   <div style={{ display: "grid", gridTemplateColumns: stagedFiles.length === 1 ? "1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
-                    {stagedFiles.map((item) => (
+                    {stagedFiles.map((item) => {
+                      const isImg = ["png", "jpg", "jpeg", "webp", "bmp"].includes(item.ext?.toLowerCase() || "");
+                      return (
                       <div
                         key={item.id}
                         style={{
@@ -160,8 +179,9 @@ export function StagingUploadModal({
                           <div style={{ fontSize: 12.5, fontWeight: 700, color: "#17201d", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {item.name}
                           </div>
-                          <div style={{ fontSize: 10.5, color: "#78857f", fontFamily: "'DM Mono', monospace", marginTop: 2 }}>
-                            {(item.size / 1024).toFixed(1)} KB · {item.ext.toUpperCase()}
+                          <div style={{ fontSize: 10.5, color: isImg ? "#15803d" : "#78857f", fontFamily: "'DM Mono', monospace", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                            {isImg ? <Image size={11} /> : <FileText size={11} />}
+                            <span>{isImg ? "Foto/Gambar" : item.ext.toUpperCase()} · {(item.size / 1024).toFixed(1)} KB</span>
                           </div>
                         </div>
 
@@ -175,7 +195,43 @@ export function StagingUploadModal({
                           <X size={14} />
                         </button>
                       </div>
-                    ))}
+                    );
+                    })}
+                  </div>
+
+                  {/* Drag and Drop Zone inside Modal */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsInnerDragging(true);
+                    }}
+                    onDragLeave={() => setIsInnerDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsInnerDragging(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0 && handleStageFiles) {
+                        handleStageFiles(e.dataTransfer.files);
+                      }
+                    }}
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      border: isInnerDragging ? "2px dashed #72a728" : "1.5px dashed #dce1da",
+                      backgroundColor: isInnerDragging ? "#eef8db" : "#fbfcf9",
+                      borderRadius: 10,
+                      padding: "16px 14px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      marginTop: 4
+                    }}
+                  >
+                    <FileUp size={22} color={isInnerDragging ? "#4b6623" : "#72a728"} style={{ margin: "0 auto 6px" }} />
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#17201d" }}>
+                      Tarik & lepas berkas/foto tambahan ke sini
+                    </div>
+                    <div style={{ fontSize: 11, color: "#6f7975", marginTop: 2 }}>
+                      atau klik untuk menjelajah file di perangkatmu
+                    </div>
                   </div>
 
                   {/* Add More Buttons */}
@@ -226,27 +282,12 @@ export function StagingUploadModal({
                     </button>
                   </div>
 
-                  {/* Title field */}
-                  <div style={{ marginTop: 8 }}>
-                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#45544e", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
-                      Judul Materi (Bisa Disesuaikan)
-                    </label>
-                    <input
-                      type="text"
-                      value={stagedDocTitle}
-                      onChange={(e) => setStagedDocTitle(e.target.value)}
-                      placeholder="Beri judul modul..."
-                      style={{
-                        width: "100%",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #dce1da",
-                        borderRadius: 8,
-                        padding: "9px 12px",
-                        fontSize: 13,
-                        color: "#17201d",
-                        outline: "none"
-                      }}
-                    />
+                  {/* AI Smart Title Indicator */}
+                  <div style={{ marginTop: 10, padding: "10px 14px", backgroundColor: "#f8faf5", border: "1px solid #dce2da", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                    <Sparkles size={16} color="#4b6623" style={{ flexShrink: 0 }} />
+                    <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.45 }}>
+                      <strong style={{ color: "#18221f" }}>Judul Otomatis AI:</strong> Judul modul akademik akan dideteksi dan dirumuskan langsung oleh AI setelah berkas diurai.
+                    </div>
                   </div>
 
                   {/* Goal & Custom Intent Suggestion Chips */}

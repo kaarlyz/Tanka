@@ -19,6 +19,7 @@ export interface HomeHubTabProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   setIsTopicModalOpen: (val: boolean) => void;
   setIsStagingModalOpen: (val: boolean) => void;
+  handleStageFiles?: (files: FileList | File[] | File) => void;
   quizQuestions: QuizQuestion[];
   flashcards: Flashcard[];
   mistakes: MistakeItem[];
@@ -44,6 +45,7 @@ export function HomeHubTab({
   fileInputRef,
   setIsTopicModalOpen,
   setIsStagingModalOpen,
+  handleStageFiles,
   quizQuestions,
   flashcards,
   mistakes,
@@ -79,7 +81,7 @@ export function HomeHubTab({
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => setIsStagingModalOpen(true)}
                         style={{
                           backgroundColor: "#f8f9f5",
                           border: "1px solid #dce1da",

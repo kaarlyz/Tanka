@@ -592,6 +592,7 @@ export default function App() {
                   fileInputRef={fileInputRef}
                   setIsTopicModalOpen={setIsTopicModalOpen}
                   setIsStagingModalOpen={setIsStagingModalOpen}
+                  handleStageFiles={handleStageFiles}
                   quizQuestions={quizQuestions}
                   flashcards={flashcards}
                   mistakes={mistakes}
@@ -864,6 +865,7 @@ export default function App() {
         setStagedCustomInstruction={setStagedCustomInstruction}
         fileInputRef={fileInputRef}
         cameraInputRef={cameraInputRef}
+        handleStageFiles={handleStageFiles}
         handleCancelStaging={handleCancelStaging}
         handleRemoveStagedFile={handleRemoveStagedFile}
         handleConfirmStagedUpload={handleConfirmStagedUpload}

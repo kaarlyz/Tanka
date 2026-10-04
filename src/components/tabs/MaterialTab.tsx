@@ -140,22 +140,38 @@ export function MaterialTab({
     }
   };
 
+  const [isChapterDrawerOpen, setIsChapterDrawerOpen] = React.useState(false);
+  const chapterStripRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-scroll active chapter into view smoothly
+  React.useEffect(() => {
+    if (chapterStripRef.current) {
+      const activeBtn = chapterStripRef.current.querySelector<HTMLElement>(`[data-chapter-idx="${currentChapterIdx}"]`);
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      }
+    }
+  }, [currentChapterIdx]);
+
   // Partition document into bite-sized chapters by ## headings
   const chapters = React.useMemo(() => {
     const text = formattedContent || activeDocContent || "";
     if (!text) return [];
     const lines = text.split("\n");
-    const list: { id: number; title: string; content: string }[] = [];
-    let currentTitle = "Orientasi & Konsep Inti";
+    const list: { id: number; title: string; shortTitle: string; content: string }[] = [];
+    let currentTitle = "";
     let buffer: string[] = [];
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (line.trim().startsWith("## ")) {
         if (buffer.length > 0 && buffer.some((l) => l.trim().length > 0)) {
+          const rawTitle = currentTitle || "Pengantar";
+          const short = rawTitle.replace(/^Bab\s+\d+[:.]?\s*/i, "").trim() || rawTitle;
           list.push({
             id: list.length + 1,
-            title: currentTitle,
+            title: rawTitle,
+            shortTitle: short,
             content: buffer.join("\n").trim()
           });
           buffer = [];
@@ -167,20 +183,24 @@ export function MaterialTab({
     }
 
     if (buffer.length > 0 && buffer.some((l) => l.trim().length > 0)) {
+      const rawTitle = currentTitle || "Rangkuman Inti";
+      const short = rawTitle.replace(/^Bab\s+\d+[:.]?\s*/i, "").trim() || rawTitle;
       list.push({
         id: list.length + 1,
-        title: currentTitle,
+        title: rawTitle,
+        shortTitle: short,
         content: buffer.join("\n").trim()
       });
     }
 
-    if (list.length > 1 && list[0].content.length < 200 && list[0].title === "Orientasi & Konsep Inti") {
+    // Merge introductory snippet if first chapter is not a "Bab" heading and is short overview
+    if (list.length > 1 && !/^Bab\s+\d+/i.test(list[0].title) && list[0].content.length < 800) {
       const intro = list.shift()!;
-      list[0].content = intro.content + "\n\n" + list[0].content;
+      list[0].content = intro.content + "\n\n---\n\n" + list[0].content;
       list.forEach((c, idx) => { c.id = idx + 1; });
     }
 
-    return list.length > 0 ? list : [{ id: 1, title: activeDocTitle || "Modul Utama", content: text }];
+    return list.length > 0 ? list : [{ id: 1, title: activeDocTitle || "Modul Utama", shortTitle: "Materi Utama", content: text }];
   }, [formattedContent, activeDocContent, activeDocTitle]);
 
   const markdownComponents = React.useMemo(() => ({
@@ -612,53 +632,240 @@ export function MaterialTab({
                     {/* View Mode 2: Baca per Bab (Bite-sized Pelajarin.ai style) */}
                     {materialViewMode === "chapters" && (
                       <div style={{ marginTop: 14 }}>
-                        {/* Chapter Strip */}
-                        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10, marginBottom: 14 }} className="no-scrollbar">
-                          {chapters.map((ch, idx) => {
-                            const isCurrent = idx === currentChapterIdx;
-                            const isDone = !!completedChapters[ch.id];
-                            return (
-                              <button
-                                key={ch.id}
-                                onClick={() => setCurrentChapterIdx(idx)}
-                                style={{
-                                  flexShrink: 0,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                  padding: "8px 14px",
-                                  borderRadius: 8,
-                                  fontSize: 12,
-                                  fontWeight: 700,
-                                  border: isCurrent ? "1.5px solid #4b6623" : "1px solid #dde1da",
-                                  backgroundColor: isCurrent ? "#eef8db" : isDone ? "#f0fdf4" : "#ffffff",
-                                  color: isCurrent ? "#22370c" : isDone ? "#166534" : "#45544e",
-                                  cursor: "pointer",
-                                  transition: "0.15s ease"
-                                }}
-                              >
-                                <span
+                        {/* Chapter Navigation & Stepper Header */}
+                        <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde2d8", borderRadius: 12, padding: "14px 16px", marginBottom: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.02)" }}>
+                          {/* Top Row: Stepper Indicator & Drawer Trigger */}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 }}>
+                              <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "#4b6623", fontFamily: "'DM Mono', monospace", backgroundColor: "#eef8db", padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>
+                                Bab {chapters[currentChapterIdx]?.id || 1} / {chapters.length}
+                              </span>
+                              <h3 style={{ fontSize: 14.5, fontWeight: 800, color: "#17201d", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {chapters[currentChapterIdx]?.title}
+                              </h3>
+                            </div>
+
+                            <button
+                              onClick={() => setIsChapterDrawerOpen(!isChapterDrawerOpen)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                padding: "6px 12px",
+                                borderRadius: 8,
+                                fontSize: 12,
+                                fontWeight: 700,
+                                border: "1px solid #dce2da",
+                                backgroundColor: isChapterDrawerOpen ? "#18221f" : "#ffffff",
+                                color: isChapterDrawerOpen ? "#c8f064" : "#17201d",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                                flexShrink: 0
+                              }}
+                            >
+                              <ListOrdered size={14} />
+                              <span>Daftar Isi ({chapters.length} Bab)</span>
+                              <ChevronDown size={13} style={{ transform: isChapterDrawerOpen ? "rotate(180deg)" : "none", transition: "0.2s" }} />
+                            </button>
+                          </div>
+
+                          {/* Segmented Progress Bar */}
+                          <div style={{ display: "flex", gap: 4, height: 4, borderRadius: 2, overflow: "hidden", backgroundColor: "#f0f3ed", marginBottom: 12 }}>
+                            {chapters.map((ch, idx) => {
+                              const isDone = !!completedChapters[ch.id];
+                              const isCurrent = idx === currentChapterIdx;
+                              return (
+                                <div
+                                  key={ch.id}
                                   style={{
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: 999,
+                                    flex: 1,
                                     backgroundColor: isDone ? "#10b981" : isCurrent ? "#4b6623" : "#dce1da",
-                                    color: "#ffffff",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: 10,
-                                    fontWeight: 800
+                                    transition: "0.2s ease"
                                   }}
-                                >
-                                  {isDone ? "✓" : ch.id}
-                                </span>
-                                <span style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  {ch.title}
-                                </span>
-                              </button>
-                            );
-                          })}
+                                />
+                              );
+                            })}
+                          </div>
+
+                          {/* Scrollable Chapter Stepper with Arrow Controls & Wheel Support */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <button
+                              onClick={() => {
+                                if (chapterStripRef.current) chapterStripRef.current.scrollBy({ left: -180, behavior: "smooth" });
+                              }}
+                              style={{
+                                width: 30,
+                                height: 34,
+                                borderRadius: 6,
+                                border: "1px solid #dde1da",
+                                backgroundColor: "#fbfcf9",
+                                color: "#56615d",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                cursor: "pointer",
+                                flexShrink: 0
+                              }}
+                              title="Geser ke kiri"
+                            >
+                              ◀
+                            </button>
+
+                            <div
+                              ref={chapterStripRef}
+                              onWheel={(e) => {
+                                if (e.deltaY) {
+                                  e.currentTarget.scrollLeft += e.deltaY;
+                                }
+                              }}
+                              style={{
+                                display: "flex",
+                                gap: 8,
+                                overflowX: "auto",
+                                scrollbarWidth: "none",
+                                padding: "4px 2px",
+                                flex: 1
+                              }}
+                            >
+                              {chapters.map((ch, idx) => {
+                                const isCurrent = idx === currentChapterIdx;
+                                const isDone = !!completedChapters[ch.id];
+                                return (
+                                  <button
+                                    key={ch.id}
+                                    data-chapter-idx={idx}
+                                    onClick={() => setCurrentChapterIdx(idx)}
+                                    style={{
+                                      flexShrink: 0,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 8,
+                                      padding: "7px 12px",
+                                      borderRadius: 8,
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      border: isCurrent ? "1.5px solid #4b6623" : "1px solid #dde1da",
+                                      backgroundColor: isCurrent ? "#eef8db" : isDone ? "#f0fdf4" : "#ffffff",
+                                      color: isCurrent ? "#22370c" : isDone ? "#166534" : "#45544e",
+                                      cursor: "pointer",
+                                      transition: "0.15s ease",
+                                      boxShadow: isCurrent ? "0 2px 6px rgba(75, 102, 35, 0.12)" : "none"
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: 18,
+                                        height: 18,
+                                        borderRadius: 999,
+                                        backgroundColor: isDone ? "#10b981" : isCurrent ? "#4b6623" : "#dce1da",
+                                        color: "#ffffff",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: 10,
+                                        fontWeight: 800
+                                      }}
+                                    >
+                                      {isDone ? "✓" : ch.id}
+                                    </span>
+                                    <span style={{ maxWidth: 170, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {ch.shortTitle || ch.title}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                if (chapterStripRef.current) chapterStripRef.current.scrollBy({ left: 180, behavior: "smooth" });
+                              }}
+                              style={{
+                                width: 30,
+                                height: 34,
+                                borderRadius: 6,
+                                border: "1px solid #dde1da",
+                                backgroundColor: "#fbfcf9",
+                                color: "#56615d",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                cursor: "pointer",
+                                flexShrink: 0
+                              }}
+                              title="Geser ke kanan"
+                            >
+                              ▶
+                            </button>
+                          </div>
+
+                          {/* Collapsible Dropdown Drawer (Daftar Isi Penuh) */}
+                          {isChapterDrawerOpen && (
+                            <div
+                              style={{
+                                marginTop: 14,
+                                paddingTop: 12,
+                                borderTop: "1px solid #eef1eb",
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                                gap: 8
+                              }}
+                            >
+                              {chapters.map((ch, idx) => {
+                                const isCurrent = idx === currentChapterIdx;
+                                const isDone = !!completedChapters[ch.id];
+                                return (
+                                  <div
+                                    key={ch.id}
+                                    onClick={() => {
+                                      setCurrentChapterIdx(idx);
+                                      setIsChapterDrawerOpen(false);
+                                    }}
+                                    style={{
+                                      padding: "10px 14px",
+                                      borderRadius: 8,
+                                      border: isCurrent ? "1.5px solid #4b6623" : "1px solid #e2e8e0",
+                                      backgroundColor: isCurrent ? "#eef8db" : isDone ? "#f0fdf4" : "#fbfcf9",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "flex-start",
+                                      gap: 10,
+                                      transition: "0.15s ease"
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: 22,
+                                        height: 22,
+                                        borderRadius: 999,
+                                        backgroundColor: isDone ? "#10b981" : isCurrent ? "#4b6623" : "#dce1da",
+                                        color: "#ffffff",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: 11,
+                                        fontWeight: 800,
+                                        flexShrink: 0,
+                                        marginTop: 2
+                                      }}
+                                    >
+                                      {isDone ? "✓" : ch.id}
+                                    </span>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: 12.5, fontWeight: 700, color: isCurrent ? "#22370c" : "#1e293b", lineHeight: 1.35 }}>
+                                        {ch.title}
+                                      </div>
+                                      <div style={{ fontSize: 11, color: isDone ? "#166534" : "#727d78", marginTop: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                                        <span>{isDone ? "✓ Selesai dipelajari" : `Bab ${ch.id}`}</span>
+                                        <span>•</span>
+                                        <span>~{Math.max(1, Math.round(ch.content.split(/\s+/).length / 150))} mnt baca</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
 
                         {/* Chapter Card Content */}

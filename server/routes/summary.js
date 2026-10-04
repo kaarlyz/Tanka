@@ -14,14 +14,14 @@ async function handleSummaryRoutes(req, res, pathname, helpers) {
 
     let styleGuidance = "";
     if (style === "tutor") {
-      styleGuidance = `GAYA PENULISAN: TUTOR ADAPTIF & LATIHAN MANDIRI
-- PRINSIP: Jelaskan persis seperti seorang mentor sebaya yang asyik, tajam, fleksibel, dan adaptif terhadap karakter materi. Bimbing siswa agar punya intuisi kuat dan mandiri menyelesaikan soal.
-- FLEKSIBILITAS PEDAGOGIS:
-  * Eksak / Matematika / Fisika: Berikan intuisi konsep terlebih dahulu -> contoh pengerjaan angka kecil konkret langkah demi langkah -> soroti kondisi batas / syarat legal rumus -> intisari mental model.
-  * Sosial / Sosiologi / Sejarah: Bedah dialektika & perdebatan pemikir -> studi kasus nyata masyarakat -> tabel/bagan komparasi sudut pandang -> trik eliminasi jebakan ujian.
-  * Ekonomi / Bisnis: Jelaskan mekanisme insentif & sebab-akibat -> skenario nyata kebijakan riil -> komparasi instrumen -> intisari keputusan.
-- SEKSI PENUTUP: "INTISARI KUNCI (MENTAL MODEL)" berisi 3–4 kaidah emas untuk merekatkan pemahaman sebelum ujian.
-- DILARANG KERAS membuat daftar soal latihan / kuis di dalam catatan.`;
+      styleGuidance = `GAYA PENULISAN: TUTOR FIRST-PRINCIPLES (BEDAH ALUR BERPIKIR)
+- PRINSIP UTAMA: Jangan pernah menyuapi pengguna langsung dengan rumus, fakta mentah, atau hafalan buta. Bimbing mereka memahami *kenapa* hal ini ada dan *darimana asal-usulnya*. Berlaku universal untuk Matematika, Sejarah, Biologi, Ekonomi, maupun Sastra!
+- ALUR PEDAGOGIS WAJIB:
+  1. THE "WHY" (Asal-Usul & Intuisi): Awali materi dengan masalah nyata (real-world problem). Kenapa manusia dulu harus repot-repot menciptakan konsep/rumus/aturan ini? Apa yang terjadi jika ini tidak ada? Buat logikanya masuk akal.
+  2. THE CORE MECHANICS (Bedah Logika): Bongkar cara kerja konsepnya. Jika itu rumus matematika, bedah anatomi rumusnya (kenapa harus dikurang? kenapa dibagi?). Jika itu peristiwa sejarah, bedah insentif tokoh-tokohnya. Jika biologi, bedah evolusinya.
+  3. THE "HOW" (Studi Kasus Konkret): Tunjukkan satu penerapan pelan-pelan langkah demi langkah dari nol sampai selesai.
+  4. THE PITFALLS (Jebakan Berpikir): Tunjukkan miskonsepsi umum. Di mana orang biasanya salah paham dengan konsep ini?
+- SEKSI PENUTUP: "MENTAL MODEL" berisi intisari cara pandang yang benar terhadap materi ini.`;
     } else if (style === "memorization") {
       styleGuidance = `GAYA PENULISAN: POIN HAFALAN & INTISARI UJIAN CEPAT
 - Fokus pada materi yang wajib dihafal: istilah kunci, nama tokoh/proses, bagan klasifikasi, poin perbandingan yang sering mengecoh.

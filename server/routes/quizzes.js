@@ -13,7 +13,8 @@ async function handleQuizzesRoutes(req, res, pathname, helpers) {
       quizType = "conceptual",
       customInstruction = "",
       mode = "replace",
-      referenceQuestions = []
+      referenceQuestions = [],
+      lastScore = null
     } = await getBody(req);
 
     const parsedCount = parseInt(count, 10);
@@ -86,7 +87,19 @@ Gunakan acuan di atas untuk membuat soal sejenis/variasi sesuai arahan siswa.
       weaknessContext = `\nCATATAN EVALUASI & TITIK LEMAH PEMBELAJAR (PRIORITAS REMEDIAL):
 Pembelajar sebelumnya pernah keliru pada konsep/soal berikut:
 ${unresolvedMistakes.map((m, i) => `${i + 1}. Soal Terkait: "${m.question}" | Analisis Jebakan: ${m.pitfall || "Miskonsepsi pemahaman"}`).join("\n")}
-PRIORITAS: Alokasikan 1 atau 2 butir soal variasi baru yang menyasar konsep di atas.\n`;
+PRIORITAS: Alokasikan 1 atau 2 butir soal variasi baru yang menyasar konsep di atas. Buat opsi pengecoh yang dirancang persis dengan miskonsepsi (jebakan) tersebut agar kita tahu apakah dia jatuh ke lubang yang sama.\n`;
+    }
+
+    let adaptiveContext = "";
+    if (lastScore !== null && lastScore !== undefined) {
+      const s = parseInt(lastScore, 10);
+      if (s < 40) {
+         adaptiveContext = `\n[SISTEM ADAPTIF - SKOR TERAKHIR: ${s}/100]\nPengguna sangat kesulitan pada tes sebelumnya.\nINSTRUKSI KHUSUS:\n1. SCAFFOLDING MUNDUR: Turunkan tingkat kesulitan 1 level. Awali dengan 2 soal fundamental / konsep paling dasar sebelum ke hitungan kompleks.\n2. DRILL ISOMORFIK: Buat soal identik (isomorphic) dengan kesalahan sebelumnya tapi dengan angka/situasi yang diubah, agar ia membiasakan jalan pikiran yang benar.\n`;
+      } else if (s < 75) {
+         adaptiveContext = `\n[SISTEM ADAPTIF - SKOR TERAKHIR: ${s}/100]\nPengguna masih ragu di beberapa konsep menengah.\nINSTRUKSI KHUSUS: Pertahankan level ini, tapi pastikan bagian 'explanation' (pembahasan) dijabarkan jauh lebih mendetail dan asyik. Jelaskan *kenapa* opsi lain salah secara psikologis.\n`;
+      } else if (s >= 85) {
+         adaptiveContext = `\n[SISTEM ADAPTIF - SKOR TERAKHIR: ${s}/100]\nPengguna telah menguasai materi ini dengan baik!\nINSTRUKSI KHUSUS: Naikkan tingkat kesulitan (HOTS). Berikan soal sintesis/gabungan multi-aturan, atau studi kasus nyata yang menantang pemikiran kritisnya. Buat pengecoh (distractors) yang lebih halus.\n`;
+      }
     }
 
     const mathRule = isMathDomain
@@ -101,6 +114,8 @@ Buatkan TEPAT ${finalCount} butir soal pilihan ganda dengan 5 PILIHAN JAWABAN (A
 ${typeGuidance}
 ${customDirective}
 ${referenceContext}
+${weaknessContext}
+${adaptiveContext}
 
 STANDAR KUALITAS SOAL:
 1. SEBARAN TOPIK: Soal 1 (Level Fondasi Bab Awal), Soal 2–3 (Level Bab Tengah), Soal 4–5 (Level Lanjutan Bab Akhir).

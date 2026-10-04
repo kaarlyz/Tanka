@@ -113,7 +113,7 @@ export function SummaryTab({
                   ))}
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 8 }}>
+                <div className="print-hidden" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 8 }}>
                   <div>
                     <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
                       Rangkuman Cerdas & Poin Kritis Ujian
@@ -411,7 +411,7 @@ export function SummaryTab({
                     </ReactMarkdown>
 
                     {/* AI Tailoring Input */}
-                    <div style={{ marginTop: 24, padding: "16px", backgroundColor: "#f0fdf4", borderRadius: 12, border: "1px solid #dcfce7" }} className="no-print">
+                    <div style={{ marginTop: 24, padding: "16px", backgroundColor: "#f0fdf4", borderRadius: 12, border: "1px solid #dcfce7" }} className="print-hidden">
                       <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 10px", color: "#166534", display: "flex", alignItems: "center", gap: 6 }}>
                         <Sparkles size={14} color="#166534" /> 
                         Sesuaikan Rangkuman dengan AI

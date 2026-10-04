@@ -1225,7 +1225,8 @@ export default function App() {
           docId: activeDocId,
           model: selectedModel,
           count: targetCount,
-          quizType
+          quizType,
+          lastScore: isQuizCompleted ? score : null
         })
       });
       const data = await res.json().catch(() => ({}));

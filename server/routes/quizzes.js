@@ -217,15 +217,8 @@ ${factsContext}
       return sendJSON(res, { error: "Format JSON soal tidak valid dari model AI", raw: reply }, 500);
     }
 
-    // Uniform option distribution across quiz set (prevents clustering on E or C)
-    const targetPermutation = [0, 1, 2, 3, 4];
-    for (let i = targetPermutation.length - 1; i > 0; i--) {
-      const j = crypto.randomInt(0, i + 1);
-      [targetPermutation[i], targetPermutation[j]] = [targetPermutation[j], targetPermutation[i]];
-    }
-
     const letters = ["A", "B", "C", "D", "E"];
-    questions.forEach((q, qIdx) => {
+    questions.forEach((q) => {
       if (Array.isArray(q.options) && q.options.length >= 2) {
         // Strip any hardcoded "A. ", "B. ", "C) " prefix from LLM options
         q.options = q.options.map(opt => typeof opt === "string" ? opt.replace(/^[A-Ea-e][\.\)]\s*/, "").trim() : opt);
@@ -234,14 +227,14 @@ ${factsContext}
         const originalCorrect = q.options[oldCorrectIdx];
         const oldLetter = letters[oldCorrectIdx] || "A";
 
-        // Shuffle options
+        // 1. Shuffle all options with Fisher-Yates
         for (let i = q.options.length - 1; i > 0; i--) {
           const j = crypto.randomInt(0, i + 1);
           [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
         }
 
-        // Place correct answer at the uniform target slot for this question
-        const targetSlot = targetPermutation[qIdx % targetPermutation.length];
+        // 2. Assign independent random target slot per question (prevents deducible permutations)
+        const targetSlot = crypto.randomInt(0, q.options.length);
         const currPos = q.options.indexOf(originalCorrect);
         if (currPos !== -1 && targetSlot < q.options.length) {
           [q.options[currPos], q.options[targetSlot]] = [q.options[targetSlot], q.options[currPos]];

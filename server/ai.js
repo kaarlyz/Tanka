@@ -141,7 +141,22 @@ function scoreAcademicRelevance(title, topic, subject = "") {
   return score;
 }
 
-async function multiSourceAcademicSearch(topic, subject = "") {
+function cleanSegmentText(raw) {
+  if (!raw || typeof raw !== "string") return "";
+  let s = raw;
+  // 1. Strip MathML blocks that clutter Wikipedia text
+  s = s.replace(/<math[\s\S]*?<\/math>/gi, "");
+  s = s.replace(/<annotation[\s\S]*?<\/annotation>/gi, "");
+  // 2. Unescape common HTML entities
+  s = s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#038;/g, "&").replace(/&nbsp;/g, " ");
+  // 3. Strip remaining raw HTML tags
+  s = s.replace(/<[^>]+>/g, " ");
+  // 4. Normalize excess whitespace
+  s = s.replace(/[ \t]+/g, " ").replace(/\n\s*\n\s*\n+/g, "\n\n").trim();
+  return s;
+}
+
+async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [], options = {}) {
   const findings = {
     encyclopedia: [],
     textbook: [],
@@ -153,6 +168,14 @@ async function multiSourceAcademicSearch(topic, subject = "") {
   const cleanTopic = (topic || "").trim();
   const cleanSubject = (subject || "").trim();
   if (!cleanTopic) return "";
+
+  const allQueries = [cleanTopic];
+  if (Array.isArray(extraQueries)) {
+    extraQueries.forEach(q => {
+      const trimmed = (q || "").trim();
+      if (trimmed && !allQueries.includes(trimmed)) allQueries.push(trimmed);
+    });
+  }
 
   // 1. Wikipedia Indonesia
   try {
@@ -171,8 +194,9 @@ async function multiSourceAcademicSearch(topic, subject = "") {
         if (extRes.ok) {
           const extData = await extRes.json();
           const page = Object.values(extData.query?.pages || {})[0];
-          if (page?.extract && page.extract.length > 50 && !findings.encyclopedia.some(e => e.title === page.title)) {
-            findings.encyclopedia.push({ title: page.title, snippet: page.extract.slice(0, 8000) });
+          const cleanedExtract = cleanSegmentText(page?.extract || "");
+          if (cleanedExtract.length >= 150 && !findings.encyclopedia.some(e => e.title === page.title)) {
+            findings.encyclopedia.push({ title: page.title, snippet: cleanedExtract.slice(0, 8000) });
           }
         }
       }
@@ -196,41 +220,19 @@ async function multiSourceAcademicSearch(topic, subject = "") {
         if (extRes.ok) {
           const extData = await extRes.json();
           const page = Object.values(extData.query?.pages || {})[0];
-          if (page?.extract && page.extract.length > 50 && !findings.textbook.some(t => t.title === page.title)) {
-            findings.textbook.push({ title: page.title, snippet: page.extract.slice(0, 6000) });
+          const cleanedExtract = cleanSegmentText(page?.extract || "");
+          if (cleanedExtract.length >= 150 && !findings.textbook.some(t => t.title === page.title)) {
+            findings.textbook.push({ title: page.title, snippet: cleanedExtract.slice(0, 6000) });
           }
         }
       }
     }
   } catch (err) {}
 
-  // 3. CrossRef Open Academic API
+  // 3. Ruangguru Pedagogical Articles (High Priority for National Curriculum)
   try {
-    const url = `https://api.crossref.org/works?query=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&rows=5&select=title,abstract`;
-    const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0 (mailto:study@tanka.app)" } });
-    if (res.ok) {
-      const data = await res.json();
-      const items = data.message?.items || [];
-      for (const it of items) {
-        const title = it.title?.[0];
-        const snippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 1500) : "";
-        if (title && !findings.curriculumLiterature.some(c => c.title === title)) {
-          findings.curriculumLiterature.push({ title, snippet });
-        }
-      }
-    }
-  } catch (err) {}
-
-  // 4. Ruangguru Pedagogical Articles
-  try {
-    const queries = [cleanTopic];
-    const simplified = cleanTopic.replace(/^(faktor\s+(?:pendorong|penghambat|penyebab)?|teori|pengertian|konsep|macam-macam|bentuk-bentuk)\s+/i, "").trim();
-    if (simplified && simplified.toLowerCase() !== cleanTopic.toLowerCase()) {
-      queries.push(simplified);
-    }
-
     const rArticles = new Map();
-    for (const q of queries) {
+    for (const q of allQueries) {
       const searchUrl = `https://www.ruangguru.com/blog/?s=${encodeURIComponent(q)}`;
       const rRes = await fetch(searchUrl, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
@@ -262,7 +264,7 @@ async function multiSourceAcademicSearch(topic, subject = "") {
             .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
             .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
           const paras = [...bodyText.matchAll(/<(?:p|h[234]|li)[^>]*>([\s\S]*?)<\/(?:p|h[234]|li)>/gi)]
-            .map(p => p[1].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").replace(/&nbsp;/g, " ").replace(/&quot;/g, '"').trim())
+            .map(p => cleanSegmentText(p[1]))
             .filter(p => p.length > 25 && 
                          !p.includes("minutes read") && 
                          !p.includes("Download") && 
@@ -270,13 +272,38 @@ async function multiSourceAcademicSearch(topic, subject = "") {
                          !p.includes("document.querySelector") &&
                          !p.includes("gtm.start"));
           const fullBody = paras.slice(0, 30).join("\n\n");
-          if (fullBody.length > 80) {
+          if (fullBody.length >= 150) {
             findings.ruangguru.push({ title: art.title, url: art.url, snippet: fullBody.slice(0, 6000) });
           }
         }
       } catch {}
     }
   } catch (err) {}
+
+  // 4. CrossRef Open Academic API (Protected by Strict Relevance Gate & School Subject Lock)
+  // Deactivated by default for general school curricula to prevent off-topic thesis paper contamination
+  const schoolSourcesCount = findings.encyclopedia.length + findings.textbook.length + findings.ruangguru.length;
+  if (options.allowJournals || schoolSourcesCount === 0) {
+    try {
+      const url = `https://api.crossref.org/works?query=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&rows=6&select=title,abstract`;
+      const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0 (mailto:study@tanka.app)" } });
+      if (res.ok) {
+        const data = await res.json();
+        const items = data.message?.items || [];
+        for (const it of items) {
+          const title = it.title?.[0];
+          if (!title) continue;
+          const score = scoreAcademicRelevance(title, cleanTopic, cleanSubject);
+          if (score < 25) continue; // REJECT unrelated journals like Si Pitung or random theses
+          const rawSnippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 1500) : "";
+          const snippet = cleanSegmentText(rawSnippet);
+          if (!findings.curriculumLiterature.some(c => c.title === title) && (snippet.length >= 100 || title.length > 15)) {
+            findings.curriculumLiterature.push({ title, snippet });
+          }
+        }
+      }
+    } catch (err) {}
+  }
 
   // 5. 9Router Search (Deep Web Search - Free, Unrestricted Queries)
   try {

@@ -12,6 +12,48 @@ function normalizeTopicQuery(raw) {
   return s.trim() || raw.trim();
 }
 
+async function understandTopicQuery(rawTopic, userModel = "ag/gemini-3.8-flash-low") {
+  const prompt = `Tugas Anda: Analisis permintaan belajar murid dan terjemahkan menjadi query kurikulum sekolah standar.
+Permintaan Mentah Murid: "${rawTopic}"
+
+Aturan:
+1. "topik_kanonik": Judul resmi materi sesuai silabus Kurikulum Merdeka / SMA / SMP (Contoh: "Bentuk Aljabar", "Fotosintesis", "Hukum Newton", "G30S/PKI 1965", "Elastisitas Permintaan dan Penawaran"). Buang kata basa-basi percakapan seperti "aku ingin belajar", "tolong", "pengen ngerti".
+2. "mapel": Mata pelajaran sekolah resmi (Matematika, Biologi, Fisika, Kimia, Ekonomi, Sosiologi, Geografi, Sejarah, Bahasa Indonesia, Bahasa Inggris).
+3. "jenjang": "SMA" (Kelas 10-12) atau "SMP" jika materi dasar (misal Bentuk Aljabar Dasar = SMP Kelas 7).
+4. "query_pencarian": Array berisi 2-3 query pencarian web bertarget kurikulum sekolah (misal: ["bentuk aljabar kurikulum merdeka", "unsur dan operasi hitung bentuk aljabar"]).
+5. "ambigu": Boolean (true jika istilah terlalu umum tanpa konteks, false jika spesifik).
+
+Kembalikan HANYA format JSON valid berikut:
+{
+  "topik_kanonik": "...",
+  "mapel": "...",
+  "jenjang": "...",
+  "query_pencarian": ["...", "..."],
+  "ambigu": false
+}`;
+
+  try {
+    const res = await callRouter([
+      { role: "system", content: "You are an expert Indonesian curriculum coordinator. Output strictly valid JSON." },
+      { role: "user", content: prompt }
+    ], userModel, 0.1);
+    let s = res.trim();
+    if (s.startsWith("```json")) s = s.slice(7);
+    else if (s.startsWith("```")) s = s.slice(3);
+    if (s.endsWith("```")) s = s.slice(0, -3);
+    return JSON.parse(s.trim());
+  } catch (err) {
+    const cleaned = normalizeTopicQuery(rawTopic);
+    return {
+      topik_kanonik: cleaned,
+      mapel: "Umum",
+      jenjang: "SMA",
+      query_pencarian: [`${cleaned} kurikulum merdeka`, `${cleaned} rangkuman materi`],
+      ambigu: false
+    };
+  }
+}
+
 async function handleTopicsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
@@ -92,12 +134,18 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
     if (!topic) return sendJSON(res, { error: "Topic required" }, 400);
 
     const docId = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
-    const title = (formalTitle || normalizeTopicQuery(topic)).trim();
+    
+    // Step 0: Run Query Intelligence (Curriculum Normalizer & Ambiguity Detector)
+    console.log(`[topics] Running Step 0 Query Intelligence on "${topic}"...`);
+    const qIntel = await understandTopicQuery(topic, model);
+    const title = (formalTitle || qIntel.topik_kanonik || normalizeTopicQuery(topic)).trim();
+    const effectiveSubject = (subject || qIntel.mapel || "Umum").trim();
+    const searchQueries = qIntel.query_pencarian || [];
 
     // 1. INGESTION: Multi-Source Web Search across Curricular & Academic Sources
     let webRes = null;
     try {
-      webRes = await multiSourceAcademicSearch(title, subject);
+      webRes = await multiSourceAcademicSearch(title, effectiveSubject, searchQueries);
     } catch (err) {
       console.error("[topics] Multi-source academic search failed:", err);
     }

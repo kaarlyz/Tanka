@@ -6156,7 +6156,7 @@ export default function App() {
         </section>
 
           {/* Right Column: Figma Make "Tanya Nara" AI Panel (Collapsible) */}
-          <aside className="ai-panel-box" style={{ display: (activeTab !== "home" && isAiPanelOpen) ? "flex" : "none", flexShrink: 0 }}>
+          <aside className={`ai-panel-box ${(activeTab !== "home" && isAiPanelOpen) ? "open" : ""}`} style={{ display: (activeTab !== "home" && isAiPanelOpen) ? "flex" : "none", flexShrink: 0 }}>
             <div className="ai-panel-inner">
               <div>
                 <div className="ai-heading-box">

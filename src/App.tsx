@@ -573,7 +573,7 @@ export default function App() {
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
-          <section style={{ flex: 1, overflowY: "auto", padding: "16px 20px 80px 20px" }}>
+          <section style={{ flex: 1, overflowY: "auto", padding: "16px 20px 140px 20px" }}>
             <div style={{ maxWidth: 1040, margin: "0 auto" }}>
               {activeTab === "home" && (
                 <HomeHubTab

@@ -22,8 +22,83 @@ export function isAsciiDiagramText(text: string): boolean {
   return false;
 }
 
-export function normalizeDiagramsInMarkdown(md: string): string {
+export function sanitizeMathMarkdown(md: string): string {
   if (!md) return "";
+
+  // 1. Fix unclosed or misaligned LaTeX environments like \begin{aligned} / \end{aligned}
+  const lines = md.split("\n");
+  let inMathBlock = false;
+  let hasAligned = false;
+  const newLines: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Toggle block math state
+    if (line.trim().startsWith("$$")) {
+      inMathBlock = !inMathBlock;
+    }
+
+    // Fix orphaned \end{aligned} without \begin{aligned}
+    if (line.includes("\\end{aligned}") && !hasAligned) {
+      let startIdx = newLines.length;
+      while (startIdx > 0 && (newLines[startIdx - 1].includes("&=") || newLines[startIdx - 1].includes("\\\\") || newLines[startIdx - 1].trim() === "")) {
+        startIdx--;
+      }
+      newLines.splice(startIdx, 0, "$$\\begin{aligned}");
+      line = line.replace(/\\end\{aligned\}\s*\$\$/g, "\\end{aligned}\n$$");
+      hasAligned = false;
+      inMathBlock = false;
+    } else if (line.includes("\\begin{aligned}")) {
+      hasAligned = true;
+      if (!inMathBlock && !line.includes("$$")) {
+        line = "$$\n" + line;
+        inMathBlock = true;
+      }
+    } else if (line.includes("\\end{aligned}")) {
+      hasAligned = false;
+      if (inMathBlock && !line.includes("$$")) {
+        line = line + "\n$$";
+        inMathBlock = false;
+      }
+    }
+
+    // Safety: Headings, horizontal rules, and tables must NEVER be eaten by unclosed math!
+    if (inMathBlock && (line.trim().startsWith("#") || line.trim().startsWith("---") || line.trim().startsWith("|"))) {
+      newLines.push("$$");
+      inMathBlock = false;
+      hasAligned = false;
+    }
+
+    newLines.push(line);
+  }
+
+  if (inMathBlock) {
+    if (hasAligned) newLines.push("\\end{aligned}");
+    newLines.push("$$");
+  }
+
+  let result = newLines.join("\n");
+
+  // 2. Fix inline math with unmatched dollar signs: e.g. "$S A_3 + A_4 ... $$" -> "$$ S A_3 + A_4 ... $$"
+  result = result.replace(/(\n|^)\s*\$([^\$\n]+)\$\$\s*(\n|$)/g, "$1$$$$ $2 $$$$$3");
+
+  // 3. Close unclosed single $ on a line so it cannot swallow later lines
+  result = result.split("\n").map((l) => {
+    if (l.includes("$$")) return l;
+    const dollarCount = (l.match(/\$/g) || []).length;
+    if (dollarCount % 2 === 1) {
+      return l + "$";
+    }
+    return l;
+  }).join("\n");
+
+  return result;
+}
+
+export function normalizeDiagramsInMarkdown(rawMd: string): string {
+  if (!rawMd) return "";
+  const md = sanitizeMathMarkdown(rawMd);
   const lines = md.split("\n");
   const result: string[] = [];
   let inCode = false;

@@ -113,8 +113,8 @@ export function MaterialTab({
                       backgroundColor: "#ffffff",
                       border: "1px solid #dde1da",
                       borderRadius: 12,
-                      padding: "24px 26px",
-                      marginBottom: 20,
+                      padding: "24px 26px 48px",
+                      marginBottom: 60,
                       boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
                     }}
                   >
@@ -279,7 +279,7 @@ export function MaterialTab({
                     </div>
 
                     {/* Quick Launch Buttons (Primary CTA vs Secondary Actions) */}
-                    <div className="action-chips-grid" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <div className="action-chips-grid" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
                       <button
                         onClick={() => {
                           setActiveTab("quiz");

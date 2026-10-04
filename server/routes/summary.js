@@ -1,6 +1,68 @@
 const { db } = require("../db");
 const { callRouter, detectRealMath } = require("../ai");
 
+function sanitizeSummaryMath(md) {
+  if (!md) return "";
+  const lines = md.split("\n");
+  let inMathBlock = false;
+  let hasAligned = false;
+  const newLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    if (line.trim().startsWith("$$")) {
+      inMathBlock = !inMathBlock;
+    }
+
+    if (line.includes("\\end{aligned}") && !hasAligned) {
+      let startIdx = newLines.length;
+      while (startIdx > 0 && (newLines[startIdx - 1].includes("&=") || newLines[startIdx - 1].includes("\\\\") || newLines[startIdx - 1].trim() === "")) {
+        startIdx--;
+      }
+      newLines.splice(startIdx, 0, "$$\\begin{aligned}");
+      line = line.replace(/\\end\{aligned\}\s*\$\$/g, "\\end{aligned}\n$$");
+      hasAligned = false;
+      inMathBlock = false;
+    } else if (line.includes("\\begin{aligned}")) {
+      hasAligned = true;
+      if (!inMathBlock && !line.includes("$$")) {
+        line = "$$\n" + line;
+        inMathBlock = true;
+      }
+    } else if (line.includes("\\end{aligned}")) {
+      hasAligned = false;
+      if (inMathBlock && !line.includes("$$")) {
+        line = line + "\n$$";
+        inMathBlock = false;
+      }
+    }
+
+    if (inMathBlock && (line.trim().startsWith("#") || line.trim().startsWith("---") || line.trim().startsWith("|"))) {
+      newLines.push("$$");
+      inMathBlock = false;
+      hasAligned = false;
+    }
+
+    newLines.push(line);
+  }
+
+  if (inMathBlock) {
+    if (hasAligned) newLines.push("\\end{aligned}");
+    newLines.push("$$");
+  }
+
+  let result = newLines.join("\n");
+  result = result.replace(/(\n|^)\s*\$([^\$\n]+)\$\$\s*(\n|$)/g, "$1$$$$ $2 $$$$$3");
+  result = result.split("\n").map((l) => {
+    if (l.includes("$$")) return l;
+    const dollarCount = (l.match(/\$/g) || []).length;
+    if (dollarCount % 2 === 1) return l + "$";
+    return l;
+  }).join("\n");
+
+  return result;
+}
+
 async function handleSummaryRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
@@ -78,11 +140,12 @@ Materi Lengkap:
 ${doc.content.slice(0, 25000)}
 """`;
 
-    const summary = await callRouter([
-      { role: "system", content: "You are an elite academic tutor providing high-retention comprehensive study notes." },
+    const rawSummary = await callRouter([
+      { role: "system", content: "You are an elite academic tutor providing high-retention comprehensive study notes. ATURAN PENTING: Setiap rumus blok wajib dibungkus $$ ... $$. Jika menggunakan \\begin{aligned}, wajib ditutup \\end{aligned} dan dibungkus dalam $$ ... $$. Jangan pernah membuat $ tidak tertutup." },
       { role: "user", content: prompt }
     ], model);
 
+    const summary = sanitizeSummaryMath(rawSummary);
     db.prepare("UPDATE documents SET summary = ? WHERE id = ?").run(summary, docId);
     return sendJSON(res, { success: true, summary, style });
   }
@@ -101,6 +164,12 @@ Pengguna memiliki rangkuman materi berikut dan ingin melakukan penyesuaian khusu
 Tugas Anda:
 Edit/Ubah teks rangkuman di bawah HANYA sesuai dengan permintaan pengguna. Pertahankan bagian yang tidak terpengaruh, dan tetap gunakan format Markdown yang rapi (termasuk LaTeX $...$ untuk matematika).
 
+ATURAN WAJIB FORMAT RUMUS & MATEMATIKA:
+1. Setiap rumus matematika multiline harus dibungkus lengkap dengan $$ ... $$.
+2. Jika menggunakan \\begin{aligned}, WAJIB ditutup dengan \\end{aligned} dan selalu dibungkus di dalam $$ ... $$. DILARANG meninggalkan \\end{aligned} $$ tanpa pembuka \\begin{aligned}.
+3. Tanda dollar $ untuk inline math WAJIB berpasangan di baris yang sama. DILARANG membuat tanda dollar yang tidak tertutup.
+4. Jangan pernah menaruh heading Markdown (#), separator (---), atau tabel (|) di dalam blok math $$.
+
 Permintaan Penyesuaian Pengguna:
 "${tailorPrompt}"
 
@@ -110,11 +179,12 @@ ${currentSummary}
 
 Tulis ulang secara penuh hasil rangkuman yang telah disesuaikan:`;
 
-    const newSummary = await callRouter([
+    const rawNewSummary = await callRouter([
       { role: "system", content: "You are an elite academic assistant tailoring study materials." },
       { role: "user", content: prompt }
     ], model);
 
+    const newSummary = sanitizeSummaryMath(rawNewSummary);
     // Save the new version
     db.prepare("UPDATE documents SET summary = ? WHERE id = ?").run(newSummary, docId);
     return sendJSON(res, { success: true, summary: newSummary });

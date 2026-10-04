@@ -702,13 +702,13 @@ export function WebSearchProgressView({
       },
       {
         id: "synthesis",
-        name: "Tanka Anti-Slop Engine",
-        domain: "tanka.local / 9router",
-        category: "Penyusunan Catatan Belajar",
-        action: "Merapikan catatan konsep, rumus penting, dan latihan soal",
+        name: "Penyusunan Materi Belajar Tanka",
+        domain: "Kurikulum Terpadu",
+        category: "Penyusunan Modul Belajar",
+        action: "Merapikan rangkuman konsep, rumus penting, dan latihan soal",
         color: "#3f6212",
         bg: "#f7fee7",
-        badge: "Catatan Siap",
+        badge: "Modul Siap",
         icon: (
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <rect width="24" height="24" rx="6" fill="#18221f" />

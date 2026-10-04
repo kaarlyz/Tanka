@@ -22,7 +22,6 @@ export interface SidebarProps {
   handleStageFiles: (files: FileList | File[]) => void;
   setIsTopicModalOpen: (val: boolean) => void;
   setIsStagingModalOpen?: (val: boolean) => void;
-  setIsRawTextModalOpen?: (val: boolean) => void;
   handleCreateNewDoc?: () => void;
   setTopicStep?: (step: 1 | 2 | 3) => void;
   currentUser?: UserAccount | null;

@@ -112,13 +112,13 @@ ${factsContext}
     return sendJSON(res, { success: true, count: savedCards.length, flashcards: savedCards });
   }
 
-  // 2. PATCH /api/flashcards/:id/review - update flashcard score/status
-  const cardMatch = pathname.match(/^\/api\/flashcards\/([^/]+)\/review$/);
-  if (req.method === "POST" && cardMatch) {
+  // 2. PATCH or POST /api/flashcards/:id or /api/flashcards/:id/review - update flashcard score/status
+  const cardMatch = pathname.match(/^\/api\/flashcards\/([^/]+)(?:\/review)?$/);
+  if ((req.method === "PATCH" || req.method === "POST") && cardMatch) {
     const cardId = cardMatch[1];
     const { difficulty } = await getBody(req);
     db.prepare("UPDATE flashcards SET difficulty = ?, review_count = review_count + 1 WHERE id = ?").run(difficulty || "good", cardId);
-    return sendJSON(res, { success: true });
+    return sendJSON(res, { success: true, id: cardId, difficulty });
   }
 
   return false;

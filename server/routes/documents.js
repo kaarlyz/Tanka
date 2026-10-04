@@ -128,71 +128,6 @@ KEMBALIKAN HANYA FORMAT JSON VALID:
   }
 }
 
-// Universal AI Course Synthesizer: Transforms raw slides/pages/notes into a coherent chapter-by-chapter curriculum
-async function synthesizeCourseCurriculum(rawText, title, instruction = "", model = "ag/gemini-3.8-flash-low") {
-  const customClause = instruction ? `\nCatatan Khusus dari Siswa: "${instruction}"\n` : "";
-  const prompt = `Anda adalah seorang desainer kurikulum dan pendidik ahli senior untuk platform studi akademik modern (seperti Pelajarin.ai).
-Pengguna mengunggah materi mentah (berupa rangkuman slide presentasi PPT/PPTX, dokumen PDF, atau catatan tangan) berjudul: "${title}".
-${customClause}
-
-TEKS SUMBER MENTAH DARI BERKAS:
-"""
-${rawText.slice(0, 18000)}
-"""
-
-MASALAH YANG HARUS DISELESAIKAN:
-Teks sumber di atas seringkali berupa potongan slide lepas, bullet point mentah, atau catatan yang terputus-putus. Pengguna TIDAK INGIN membaca potongan teks mentah atau tulisan "--- Slide X ---". Pengguna menginginkan SATU MODUL BELAJAR TERPADU yang disusun secara pedagogis dan saling menyambung bab demi bab.
-
-TUGAS ANDA:
-Rombak dan susun ulang seluruh materi mentah di atas menjadi SATU MODUL PEMBELAJARAN LENGKAP & RUNTUT dengan pembagian bab-bab (Chapters) terstruktur secara dinamis.
-
-PRINSIP PENYUSUNAN BAB OTONOM & DINAMIS:
-1. JANGAN TERPAKU PADA JUMLAH BAB YANG KAKU: Anda BEBAS MENENTUKAN JUMLAH BAB SECARA OTONOM berdasarkan keluasan dan kedalaman materi sumber. Pikirkan sendiri berapa bab yang paling efektif agar siswa dapat memahami materi ini dari pemahaman dasar (fondasi nol) sampai tuntas dan menguasai ujian (bisa 3, 4, 5, 6, 7, atau 8 bab sesuai kebutuhan riil materi).
-2. TAHAP PEMAHAMAN KOGNITIF YANG MENGALIR:
-   - Mulai dari bab fondasi: petakan konsep dasar, latar belakang masalah, atau benturan kepentingan awal.
-   - Lanjutkan dengan bab-bab inti: mekanisme proses, periodisasi/klasifikasi, analisis komparasi, dinamika tokoh/rumus.
-   - Tutup dengan bab pemantapan: sintesis rantai kausalitas, panduan menjawab soal ujian, dan koreksi salah kaprah (miskonsepsi) siswa.
-3. KONEKTIVITAS ANTAR-BAB: Setiap bab harus menyambung dan melengkapi bab sebelumnya. Jangan sampai ada materi yang melompat tanpa konteks.
-
-FORMAT STRUKTUR OUTPUT (MARKDOWN):
-
-# ${title}
-
-> [1-2 kalimat orientasi / pengantar ringkas tentang gambaran besar apa yang akan dipelajari siswa].
-
-## Bab 1: [Judul Bab Fondasi & Latar Belakang Konsep]
-[Penjelasan konsep dasar mengalir, ramah pemula]
-### [Sub-konsep 1A]
-[Uraian butir konsep, kata kunci tebal, dan analogi konkret]
-### [Sub-konsep 1B]
-...
-
-## Bab 2: [Judul Bab Lanjutan Sesuai Kebutuhan Materi]
-...
-
-(Lanjutkan hingga Bab N sesuai evaluasi pedagogis terbaik Anda. Setiap bab diawali dengan '## Bab [N]: [Nama Bab]' dan sub-topik menggunakan '### [Nama Sub-konsep]' agar otomatis terpetakan menjadi Mind Map dan Chapter Reader interaktif).
-
-## Bab [Terakhir]: Rantai Kausalitas & Panduan Ujian (Exam Mastery)
-- **Rantai Kausalitas 1 Baris:** Sajikan alur ringkas menggunakan panah (misal: A ➔ B ➔ C ➔ D).
-- **Kancing Memori Soal:** Pasangkan kata kunci pertanyaan ujian yang sering keluar dengan jawaban analisisnya.
-- **Poin Kritis yang Sering Mengecoh:** Bedah salah kaprah siswa dalam memahami materi ini.
-
-PANDUAN GAYA PENULISAN:
-1. Hubungkan antar-bab secara mulus. Bersihkan semua noise format slide mentah ("--- Slide 1 ---", "LKONSEP DASAR", dsb).
-2. Tuliskan teks secara utuh, kaya wawasan, dan tidak setengah-setengah.
-3. Gunakan heading tingkat 2 ('## Bab ...') untuk setiap bab utama dan heading tingkat 3 ('### ...') untuk setiap sub-topik agar otomatis terpetakan menjadi Mind Map dan Chapter Reader yang sempurna.`;
-
-  try {
-    const result = await callRouter([{ role: "user", content: prompt }], model, 0.2);
-    if (result && result.trim().length > 300) {
-      return result.trim();
-    }
-  } catch (err) {
-    console.warn("[tanka] Curriculum synthesis error:", err.message);
-  }
-  return null;
-}
-
 async function handleDocumentsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
@@ -670,8 +605,10 @@ Tugas Anda:
       db.prepare("DELETE FROM quizzes WHERE doc_id = ?").run(docId);
       db.prepare("DELETE FROM chat_messages WHERE doc_id = ?").run(docId);
       db.prepare("DELETE FROM formula_cheatsheets WHERE doc_id = ?").run(docId);
+      db.prepare("DELETE FROM document_concepts WHERE doc_id = ?").run(docId);
+      db.prepare("DELETE FROM document_segments WHERE doc_id = ?").run(docId);
       db.prepare("DELETE FROM documents WHERE id = ?").run(docId);
-      return sendJSON(res, { success: true });
+      return sendJSON(res, { success: true, id: docId });
     }
   }
 

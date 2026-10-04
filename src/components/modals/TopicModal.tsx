@@ -324,7 +324,7 @@ export function TopicModal({
                   <WebSearchProgressView
                     topic={topicClarificationData?.formalTitle || topicInput}
                     subject={topicClarificationData?.subject || "Kurikulum Nasional"}
-                    subtitle="Meneliti referensi kurikulum merdeka, memverifikasi konsep kanonikal & menyusun modul Nara..."
+                    subtitle="Meneliti buku kurikulum resmi, memvalidasi konsep kunci & menyusun modul belajar..."
                   />
                 </div>
               )}

@@ -163,6 +163,33 @@ async function search9Router(query) {
   return "";
 }
 
+// Relevance scoring helper to filter out off-topic / wrong-subject search hits
+function scoreAcademicRelevance(title, topic, subject = "") {
+  const tLower = (title || "").toLowerCase();
+  const topLower = (topic || "").toLowerCase().trim();
+  const subLower = (subject || "").toLowerCase().trim();
+
+  const stopWords = new Set(["dan", "yang", "di", "ke", "dari", "untuk", "pada", "adalah", "ini", "itu", "tentang", "kelas", "sma", "smp", "sd"]);
+  const keywords = topLower.split(/[^a-zA-Z0-9]+/).filter(w => w.length > 2 && !stopWords.has(w));
+
+  let score = 0;
+  for (const kw of keywords) {
+    if (tLower.includes(kw)) score += 10;
+  }
+  if (tLower.includes(topLower)) score += 30;
+
+  if (subLower) {
+    if (tLower.includes(subLower)) score += 25;
+    const allSubjects = ["ekonomi", "sosiologi", "geografi", "sejarah", "matematika", "fisika", "kimia", "biologi"];
+    for (const s of allSubjects) {
+      if (s !== subLower && tLower.includes(s)) {
+        score -= 40; // Penalti berat jika beda mata pelajaran (misal materi sosiologi tapi artikel ekonomi)
+      }
+    }
+  }
+  return score;
+}
+
 // Multi-source academic & curriculum aggregator (Wikipedia ID, Wikibuku, CrossRef Educational Research, Ruangguru & 9Router)
 async function multiSourceAcademicSearch(topic, subject = "") {
   const findings = {
@@ -177,35 +204,51 @@ async function multiSourceAcademicSearch(topic, subject = "") {
   const cleanSubject = (subject || "").trim();
   if (!cleanTopic) return "";
 
-  // 1. Wikipedia Indonesia (Ensiklopedi & Konsep Baku Lengkap - Tanpa Memotong Intro)
+  // 1. Wikipedia Indonesia (Ensiklopedi & Konsep Baku Lengkap - Tanpa Truncation MediaWiki)
   try {
-    const wikiQueries = [cleanTopic, `${cleanTopic} ${cleanSubject || "konsep"}`.trim()];
-    for (const q of wikiQueries) {
-      const url = `https://id.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=2&prop=extracts&explaintext=1&format=json`;
-      const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
-      if (res.ok) {
-        const data = await res.json();
-        const pages = Object.values(data.query?.pages || {});
-        for (const p of pages) {
-          if (p.extract && p.extract.length > 50 && !findings.encyclopedia.some(e => e.title === p.title)) {
-            // Ambil hingga 3000 karakter materi utuh agar mencakup klasifikasi, rumus, dan sejarah teori
-            findings.encyclopedia.push({ title: p.title, snippet: p.extract.slice(0, 3000) });
+    const sUrl = `https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanTopic)}&srlimit=4&format=json`;
+    const sRes = await fetch(sUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
+    if (sRes.ok) {
+      const sData = await sRes.json();
+      const hits = (sData.query?.search || [])
+        .map(h => ({ title: h.title, score: scoreAcademicRelevance(h.title, cleanTopic, cleanSubject) }))
+        .filter(h => h.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      for (const h of hits.slice(0, 2)) {
+        const extUrl = `https://id.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(h.title)}&format=json`;
+        const extRes = await fetch(extUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
+        if (extRes.ok) {
+          const extData = await extRes.json();
+          const page = Object.values(extData.query?.pages || {})[0];
+          if (page?.extract && page.extract.length > 50 && !findings.encyclopedia.some(e => e.title === page.title)) {
+            findings.encyclopedia.push({ title: page.title, snippet: page.extract.slice(0, 3500) });
           }
         }
       }
     }
   } catch (err) {}
 
-  // 2. Wikibooks Indonesia (Buku Teks Bebas & Bab Kurikulum)
+  // 2. Wikibooks Indonesia (Buku Teks Bebas & Bab Kurikulum Resmi)
   try {
-    const url = `https://id.wikibooks.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&gsrlimit=2&prop=extracts&explaintext=1&format=json`;
-    const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
-    if (res.ok) {
-      const data = await res.json();
-      const pages = Object.values(data.query?.pages || {});
-      for (const p of pages) {
-        if (p.extract && p.extract.length > 50 && !findings.textbook.some(t => t.title === p.title)) {
-          findings.textbook.push({ title: p.title, snippet: p.extract.slice(0, 2000) });
+    const sUrl = `https://id.wikibooks.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&srlimit=3&format=json`;
+    const sRes = await fetch(sUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
+    if (sRes.ok) {
+      const sData = await sRes.json();
+      const hits = (sData.query?.search || [])
+        .map(h => ({ title: h.title, score: scoreAcademicRelevance(h.title, cleanTopic, cleanSubject) }))
+        .filter(h => h.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      for (const h of hits.slice(0, 1)) {
+        const extUrl = `https://id.wikibooks.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(h.title)}&format=json`;
+        const extRes = await fetch(extUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
+        if (extRes.ok) {
+          const extData = await extRes.json();
+          const page = Object.values(extData.query?.pages || {})[0];
+          if (page?.extract && page.extract.length > 50 && !findings.textbook.some(t => t.title === page.title)) {
+            findings.textbook.push({ title: page.title, snippet: page.extract.slice(0, 2500) });
+          }
         }
       }
     }
@@ -220,7 +263,7 @@ async function multiSourceAcademicSearch(topic, subject = "") {
       const items = data.message?.items || [];
       for (const it of items) {
         const title = it.title?.[0];
-        const snippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 400) : "";
+        const snippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 500) : "";
         if (title && !findings.curriculumLiterature.some(c => c.title === title)) {
           findings.curriculumLiterature.push({ title, snippet });
         }
@@ -228,41 +271,60 @@ async function multiSourceAcademicSearch(topic, subject = "") {
     }
   } catch (err) {}
 
-  // 4. Ruangguru Pedagogical Articles (Modul Pembelajaran Kurikulum Sekolah SD/SMP/SMA - Ekstraksi Dalam)
+  // 4. Ruangguru Pedagogical Articles (Multi-Query + Ranked Selection)
   try {
-    const searchUrl = `https://www.ruangguru.com/blog/?s=${encodeURIComponent(cleanTopic)}`;
-    const rRes = await fetch(searchUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
-    });
-    if (rRes.ok) {
-      const rHtml = await rRes.text();
-      const cardRegex = /<a[^>]+href="(https:\/\/www\.ruangguru\.com\/blog\/[^"]+)"[^>]*>[\s\S]*?<h2 class="content-title">([\s\S]*?)<\/h2>/gi;
-      const articles = [];
-      let m;
-      while ((m = cardRegex.exec(rHtml)) !== null && articles.length < 2) {
-        const url = m[1];
-        if (url.includes("/blog/c/") || url.includes("/tag/")) continue;
-        const title = m[2].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").trim();
-        articles.push({ url, title });
-      }
+    const queries = [cleanTopic];
+    const simplified = cleanTopic.replace(/^(faktor\s+(?:pendorong|penghambat|penyebab)?|teori|pengertian|konsep|macam-macam|bentuk-bentuk)\s+/i, "").trim();
+    if (simplified && simplified.toLowerCase() !== cleanTopic.toLowerCase()) {
+      queries.push(simplified);
+    }
 
-      for (const art of articles) {
-        try {
-          const artRes = await fetch(art.url, { headers: { "User-Agent": "Mozilla/5.0" } });
-          if (artRes.ok) {
-            const artHtml = await artRes.text();
-            // Ekstraksi seluruh teks materi (paragraf, sub-heading h2/h3, daftar poin li)
-            const paras = [...artHtml.matchAll(/<(?:p|h[234]|li)[^>]*>([\s\S]*?)<\/(?:p|h[234]|li)>/gi)]
-              .map(p => p[1].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").replace(/&nbsp;/g, " ").trim())
-              .filter(p => p.length > 25 && !p.includes("minutes read") && !p.includes("Download") && !p.includes("Copyright"));
-            const fullBody = paras.slice(1, 18).join("\n");
-            if (fullBody.length > 80) {
-              // Ambil hingga 3500 karakter materi mengajar Ruangguru yang komprehensif
-              findings.ruangguru.push({ title: art.title, url: art.url, snippet: fullBody.slice(0, 3500) });
-            }
+    const rArticles = new Map();
+    for (const q of queries) {
+      const searchUrl = `https://www.ruangguru.com/blog/?s=${encodeURIComponent(q)}`;
+      const rRes = await fetch(searchUrl, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+      });
+      if (rRes.ok) {
+        const rHtml = await rRes.text();
+        const cardRegex = /<a[^>]+href="(https:\/\/www\.ruangguru\.com\/blog\/[^"]+)"[^>]*>[\s\S]*?<h2 class="content-title">([\s\S]*?)<\/h2>/gi;
+        let m;
+        while ((m = cardRegex.exec(rHtml)) !== null) {
+          const url = m[1];
+          if (url.includes("/blog/c/") || url.includes("/tag/")) continue;
+          const title = m[2].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").trim();
+          const score = scoreAcademicRelevance(title, cleanTopic, cleanSubject);
+          if (score > 0 && !rArticles.has(url)) {
+            rArticles.set(url, { url, title, score });
           }
-        } catch {}
+        }
       }
+    }
+
+    const sortedArticles = Array.from(rArticles.values()).sort((a, b) => b.score - a.score);
+    for (const art of sortedArticles.slice(0, 2)) {
+      try {
+        const artRes = await fetch(art.url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } });
+        if (artRes.ok) {
+          const artHtml = await artRes.text();
+          const bodyText = artHtml
+            .replace(/<head\b[^<]*(?:(?!<\/head>)<[^<]*)*<\/head>/gi, "")
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
+          const paras = [...bodyText.matchAll(/<(?:p|h[234]|li)[^>]*>([\s\S]*?)<\/(?:p|h[234]|li)>/gi)]
+            .map(p => p[1].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").replace(/&nbsp;/g, " ").replace(/&quot;/g, '"').trim())
+            .filter(p => p.length > 25 && 
+                         !p.includes("minutes read") && 
+                         !p.includes("Download") && 
+                         !p.includes("Copyright") &&
+                         !p.includes("document.querySelector") &&
+                         !p.includes("gtm.start"));
+          const fullBody = paras.slice(0, 22).join("\n\n");
+          if (fullBody.length > 80) {
+            findings.ruangguru.push({ title: art.title, url: art.url, snippet: fullBody.slice(0, 3500) });
+          }
+        }
+      } catch {}
     }
   } catch (err) {}
 
@@ -1366,6 +1428,11 @@ PRINSIP KUNCI RUANG LINGKUP (STRICT SCOPE LOCK — ANTI-SCOPE-CREEP):
 3. KELENGKAPAN TAKSONOMI KURIKULUM RESMI (BUKU TEKS & RUANGGURU):
    - Uraikan butir-butir resmi yang biasa diujikan di sekolah secara lengkap (misal 8 faktor pendorong sosiologis resmi), jangan hanya menyebut 2-3 poin sambil mengarang analogi panjang.
    - Setiap butir wajib disertai CONTOH KASUS NYATA di Indonesia yang konkret dan mudah dibayangkan siswa.
+4. GROUNDED KE REFERENSI PENCARIAN (RUANGGURU, WIKIPEDIA, WIKIBUKU):
+   - Jika bagian "HASIL PENELUSURAN REFERENSI KURIKULUM & SUMBER INTERNET MULTI-SUMBER" tersedia di atas:
+     * WAJIB jadikan data tersebut sebagai patokan fakta, silabus resmi, nama tokoh, dan taksonomi utama.
+     * Serap pola ajar ramah siswa dan analogi konkret dari Ruangguru serta definisi baku dari Wikipedia.
+     * DILARANG mengarang bebas nama klasifikasi atau teori yang bertentangan dengan materi kurikulum yang ditemukan.
 
 STANDAR TERMINOLOGI & PENDIDIKAN INDONESIA (MUTLAK):
 1. GUNAKAN TERMINOLOGI RESMI BUKU TEKS & KURIKULUM:

@@ -577,7 +577,7 @@ export default function App() {
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
-          <section style={{ flex: 1, overflowY: "auto", padding: "16px 20px 140px 20px" }}>
+          <section className="main-scroll-section" style={{ flex: 1, minWidth: 0 }}>
             <div style={{ maxWidth: 1040, margin: "0 auto" }}>
               {activeTab === "home" && (
                 <HomeHubTab

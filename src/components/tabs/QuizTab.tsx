@@ -76,6 +76,8 @@ export interface QuizTabProps {
   setMistakeFilterScope: (val: "current" | "all") => void;
   activeDocMistakes: MistakeItem[];
   mistakes: MistakeItem[];
+  selectedModel?: string;
+  setQuizQuestions?: (val: any) => void;
 }
 
 export function QuizTab({
@@ -127,7 +129,41 @@ export function QuizTab({
   setMistakeFilterScope,
   activeDocMistakes,
   mistakes,
+  selectedModel,
+  setQuizQuestions
 }: QuizTabProps) {
+  const [tailorInput, setTailorInput] = React.useState("");
+  const [isTailoring, setIsTailoring] = React.useState(false);
+
+  const handleTailor = async () => {
+    if (!tailorInput.trim() || !activeDocId || !quizQuestions.length || !setQuizQuestions) return;
+    setIsTailoring(true);
+    try {
+      const res = await fetch("/api/ai/tailor-quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          docId: activeDocId,
+          currentQuiz: quizQuestions,
+          tailorPrompt: tailorInput,
+          model: selectedModel || "ag/gemini-3.8-flash-low"
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.quizzes) {
+        setQuizQuestions(data.quizzes);
+        setTailorInput("");
+        resetQuizState();
+      } else {
+        alert("Gagal menyesuaikan kuis: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Error: " + err);
+    } finally {
+      setIsTailoring(false);
+    }
+  };
+
   const currentQuestion = quizQuestions[currentQuestionIndex];
   const isCorrect = isAnswerSubmitted && selectedOption === currentQuestion?.correctIndex;
 
@@ -1347,6 +1383,47 @@ export function QuizTab({
                         </div>
                       )}
                     </div>
+
+                    {/* AI Tailoring for Quiz */}
+                    {quizQuestions.length > 0 && (
+                      <div style={{ marginTop: 24, padding: "16px", backgroundColor: "#f0fdf4", borderRadius: 12, border: "1px solid #dcfce7" }} className="no-print">
+                        <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 10px", color: "#166534", display: "flex", alignItems: "center", gap: 6 }}>
+                          <Sparkles size={14} color="#166534" /> 
+                          Sesuaikan Kuis dengan AI
+                        </h3>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <input 
+                            type="text"
+                            value={tailorInput}
+                            onChange={(e) => setTailorInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleTailor();
+                            }}
+                            placeholder="Contoh: Buat soalnya lebih susah (HOTS), fokuskan ke topik X..."
+                            style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #bbf7d0", backgroundColor: "#fff", color: "#166534", fontSize: 13, outline: "none" }}
+                            disabled={isTailoring}
+                          />
+                          <button 
+                            onClick={handleTailor}
+                            disabled={isTailoring || !tailorInput.trim()}
+                            style={{ 
+                              backgroundColor: isTailoring || !tailorInput.trim() ? "#dcfce7" : "#22c55e", 
+                              color: isTailoring || !tailorInput.trim() ? "#166534" : "#fff", 
+                              border: "none", 
+                              padding: "0 18px", 
+                              borderRadius: 8, 
+                              fontWeight: 700, 
+                              fontSize: 13,
+                              cursor: isTailoring || !tailorInput.trim() ? "not-allowed" : "pointer",
+                              transition: "all 0.2s"
+                            }}
+                          >
+                            {isTailoring ? "Menyesuaikan..." : "Sesuaikan"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 )}
               </div>

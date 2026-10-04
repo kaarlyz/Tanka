@@ -299,6 +299,48 @@ ${docContext}Tugas Anda:
     }
   }
 
+  // 4. POST /api/ai/tailor-quiz - Tailor/edit existing quiz JSON
+  if (req.method === "POST" && pathname === "/api/ai/tailor-quiz") {
+    const { docId, currentQuiz, tailorPrompt, model = "ag/gemini-3.8-flash-low" } = await getBody(req);
+    
+    if (!currentQuiz || !tailorPrompt) {
+      return sendJSON(res, { error: "Missing currentQuiz or tailorPrompt" }, 400);
+    }
+
+    const prompt = `Anda adalah asisten pembuat soal akademik.
+Berikut adalah array JSON berisi soal-soal kuis saat ini. Pengguna meminta penyesuaian:
+"${tailorPrompt}"
+
+Kuis saat ini (JSON):
+${JSON.stringify(currentQuiz, null, 2)}
+
+Tugas:
+Edit/Ubah data JSON soal tersebut agar memenuhi permintaan pengguna. Output WAJIB berupa JSON array valid yang memiliki struktur objek yang sama persis:
+[ { "question": "", "options": ["", "", "", ""], "answer": 0, "explanation": "" }, ... ]
+Jangan sertakan teks apapun selain JSON murni.`;
+
+    try {
+      const completion = await callRouter([
+        { role: "system", content: "You output pure valid JSON only." },
+        { role: "user", content: prompt }
+      ], model);
+
+      let cleanJson = completion;
+      if (cleanJson.includes("\`\`\`")) {
+        cleanJson = cleanJson.replace(/```json/g, "").replace(/```/g, "").trim();
+      }
+      const newQuiz = JSON.parse(cleanJson);
+
+      // We need to fetch the existing document, parse its quizzes, replace it, and save.
+      // Wait, we just overwrite the quizzes array for that doc.
+      // But we need to keep the structure. Let's assume newQuiz is the new array.
+      db.prepare("UPDATE documents SET quizzes = ? WHERE id = ?").run(JSON.stringify(newQuiz), docId);
+      return sendJSON(res, { success: true, quizzes: newQuiz });
+    } catch (err) {
+      return sendJSON(res, { error: "Gagal menyesuaikan kuis: " + err.message }, 500);
+    }
+  }
+
   return false;
 }
 

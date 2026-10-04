@@ -86,6 +86,39 @@ ${doc.content.slice(0, 25000)}
     return sendJSON(res, { success: true, summary, style });
   }
 
+  // 2. POST /api/ai/tailor-summary - Tailor/edit an existing summary dynamically based on a user prompt
+  if (req.method === "POST" && pathname === "/api/ai/tailor-summary") {
+    const { docId, currentSummary, tailorPrompt, model = "ag/gemini-3.8-flash-low" } = await getBody(req);
+    
+    if (!currentSummary || !tailorPrompt) {
+      return sendJSON(res, { error: "Missing currentSummary or tailorPrompt" }, 400);
+    }
+
+    const prompt = `Anda adalah asisten akademik cerdas yang membantu merevisi dan menyesuaikan materi belajar.
+Pengguna memiliki rangkuman materi berikut dan ingin melakukan penyesuaian khusus.
+
+Tugas Anda:
+Edit/Ubah teks rangkuman di bawah HANYA sesuai dengan permintaan pengguna. Pertahankan bagian yang tidak terpengaruh, dan tetap gunakan format Markdown yang rapi (termasuk LaTeX $...$ untuk matematika).
+
+Permintaan Penyesuaian Pengguna:
+"${tailorPrompt}"
+
+=== RANGKUMAN SAAT INI ===
+${currentSummary}
+===========================
+
+Tulis ulang secara penuh hasil rangkuman yang telah disesuaikan:`;
+
+    const newSummary = await callRouter([
+      { role: "system", content: "You are an elite academic assistant tailoring study materials." },
+      { role: "user", content: prompt }
+    ], model);
+
+    // Save the new version
+    db.prepare("UPDATE documents SET summary = ? WHERE id = ?").run(newSummary, docId);
+    return sendJSON(res, { success: true, summary: newSummary });
+  }
+
   return false;
 }
 

@@ -2038,6 +2038,8 @@ export default function App() {
                 setMistakeFilterScope={setMistakeFilterScope}
                 activeDocMistakes={activeDocMistakes}
                 mistakes={mistakes}
+                selectedModel={selectedModel}
+                setQuizQuestions={setQuizQuestions}
               />
             )}
 
@@ -2110,6 +2112,9 @@ export default function App() {
                 copiedId={copiedId}
                 quizQuestions={quizQuestions}
                 flashcards={flashcards}
+                activeDocId={activeDocId}
+                selectedModel={selectedModel}
+                setActiveDocSummary={setActiveDocSummary}
               />
             )}
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Menu, Play, Pause, RotateCcw, RotateCw, Clock, Sliders, Calculator, Brain, Cpu, Volume2, Check, Bell } from "lucide-react";
+import { Menu, Play, Pause, RotateCcw, RotateCw, Clock, Sliders, Calculator, Brain, Cpu, Volume2, Check, Bell, X } from "lucide-react";
 import { ActiveTab, FormulaItem } from "../../types";
 
 export interface TopBarProps {

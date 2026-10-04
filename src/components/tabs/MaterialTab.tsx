@@ -22,11 +22,13 @@ import {
   Globe,
   ChevronUp,
   ChevronDown,
-  Compass
+  Compass,
+  ListOrdered
 } from "lucide-react";
 import { ActiveTab, Flashcard, QuizQuestion } from "../../types";
 import { MathView } from "../common/MathView";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText } from "../common/DiagramRenderer";
+import { InteractiveMindMap } from "../common/InteractiveMindMap";
 
 export interface MaterialTabProps {
   activeDocId: string | null;
@@ -105,6 +107,108 @@ export function MaterialTab({
   handleGenerateQuiz,
   handleGenerateFlashcards,
 }: MaterialTabProps) {
+  const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full">("chapters");
+  const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
+  const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
+
+  // Partition document into bite-sized chapters by ## headings
+  const chapters = React.useMemo(() => {
+    const text = formattedContent || activeDocContent || "";
+    if (!text) return [];
+    const lines = text.split("\n");
+    const list: { id: number; title: string; content: string }[] = [];
+    let currentTitle = "Orientasi & Konsep Inti";
+    let buffer: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim().startsWith("## ")) {
+        if (buffer.length > 0 && buffer.some((l) => l.trim().length > 0)) {
+          list.push({
+            id: list.length + 1,
+            title: currentTitle,
+            content: buffer.join("\n").trim()
+          });
+          buffer = [];
+        }
+        currentTitle = line.replace(/^##\s+/, "").replace(/[*_#]/g, "").trim();
+      } else {
+        buffer.push(line);
+      }
+    }
+
+    if (buffer.length > 0 && buffer.some((l) => l.trim().length > 0)) {
+      list.push({
+        id: list.length + 1,
+        title: currentTitle,
+        content: buffer.join("\n").trim()
+      });
+    }
+
+    if (list.length > 1 && list[0].content.length < 200 && list[0].title === "Orientasi & Konsep Inti") {
+      const intro = list.shift()!;
+      list[0].content = intro.content + "\n\n" + list[0].content;
+      list.forEach((c, idx) => { c.id = idx + 1; });
+    }
+
+    return list.length > 0 ? list : [{ id: 1, title: activeDocTitle || "Modul Utama", content: text }];
+  }, [formattedContent, activeDocContent, activeDocTitle]);
+
+  const markdownComponents = React.useMemo(() => ({
+    h1: ({ children }: any) => (
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#17201d", marginTop: 20, marginBottom: 10, borderBottom: "1px solid #dde1da", paddingBottom: 6 }}>
+        {children}
+      </h1>
+    ),
+    h2: ({ children }: any) => (
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: "#22370c", marginTop: 20, marginBottom: 8 }}>
+        {children}
+      </h2>
+    ),
+    h3: ({ children }: any) => (
+      <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "#17201d", marginTop: 16, marginBottom: 6 }}>
+        {children}
+      </h3>
+    ),
+    p: ({ children }: any) => {
+      const pText = extractTextFromNode(children);
+      if (isAsciiDiagramText(pText)) {
+        return renderVisualDiagramOrPre(children);
+      }
+      return <p style={{ marginBottom: 12, color: "#374540", lineHeight: 1.65 }}>{children}</p>;
+    },
+    ul: ({ children }: any) => (
+      <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
+    ),
+    ol: ({ children }: any) => (
+      <ol style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ol>
+    ),
+    li: ({ children }: any) => (
+      <li style={{ marginBottom: 5, color: "#374540" }}>{children}</li>
+    ),
+    strong: ({ children }: any) => (
+      <strong style={{ color: "#17201d", fontWeight: 700 }}>{children}</strong>
+    ),
+    blockquote: ({ children }: any) => (
+      <blockquote style={{ borderLeft: "3px solid #8dbd42", backgroundColor: "#eef8db", padding: "10px 14px", borderRadius: "0 8px 8px 0", margin: "12px 0", color: "#22370c" }}>
+        {children}
+      </blockquote>
+    ),
+    pre: ({ children }: any) => renderVisualDiagramOrPre(children),
+    code: ({ children }: any) => (
+      <code style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, backgroundColor: "#f0f4ee", color: "#1f2b26", padding: "2px 5px", borderRadius: 4 }}>
+        {children}
+      </code>
+    ),
+    table: ({ children }: any) => (
+      <div style={{ overflowX: "auto", margin: "14px 0" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, border: "1px solid #dde1da", borderRadius: 8, overflow: "hidden" }}>
+          {children}
+        </table>
+      </div>
+    )
+  }), []);
+
   return (
               <div className="tab-pane-animate" style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 48 }}>
                 {activeDocId ? (
@@ -278,186 +382,375 @@ export function MaterialTab({
                       </div>
                     </div>
 
-                    {/* Quick Launch Buttons (Primary CTA vs Secondary Actions) */}
-                    <div className="action-chips-grid" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
-                      <button
-                        onClick={() => {
-                          setActiveTab("quiz");
-                          if (quizQuestions.length === 0) handleGenerateQuiz();
-                        }}
-                        style={{
-                          backgroundColor: "#18221f",
-                          color: "#c8f064",
-                          border: "none",
-                          borderRadius: 8,
-                          padding: "12px 20px",
-                          fontSize: 13.5,
-                          fontWeight: 700,
-                          letterSpacing: "-0.01em",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.15)"
-                        }}
-                      >
-                        <Target size={16} />
-                        Mulai Latihan Pilihan Ganda
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setActiveTab("feynman");
-                        }}
-                        style={{
-                          backgroundColor: "#ffffff",
-                          color: "#17201d",
-                          border: "1px solid #dce1da",
-                          borderRadius: 8,
-                          padding: "11px 16px",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6
-                        }}
-                      >
-                        <Brain size={15} color="#4b6623" />
-                        Uji Feynman Sendiri
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setActiveTab("flashcards");
-                          if (flashcards.length === 0) handleGenerateFlashcards();
-                        }}
-                        style={{
-                          backgroundColor: "#ffffff",
-                          color: "#17201d",
-                          border: "1px solid #dce1da",
-                          borderRadius: 8,
-                          padding: "11px 16px",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6
-                        }}
-                      >
-                        <Layers size={15} color="#4b6623" />
-                        Buka Flashcards
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setActiveTab("summary");
-                          if (!activeDocSummary) handleGenerateSummary();
-                        }}
-                        style={{
-                          backgroundColor: "#ffffff",
-                          color: "#17201d",
-                          border: "1px solid #dce1da",
-                          borderRadius: 8,
-                          padding: "11px 16px",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6
-                        }}
-                      >
-                        <Sparkles size={15} color="#10b981" />
-                        Baca Rangkuman
-                      </button>
-                    </div>
-
-                    {/* 💡 Catatan Nara Insight Box (from Figma Make design) */}
-                    <div className="insight-box">
-                      <span className="nara-mini">N</span>
-                      <div>
-                        <strong style={{ fontSize: 11, color: "#18221f", fontWeight: 800 }}>
-                          Catatan Nara · Panduan Belajar
-                        </strong>
-                        <p style={{ margin: "4px 0 0", color: "#56645e", fontSize: 12, lineHeight: "1.55" }}>
-                          Kuasai konsep inti materi terlebih dahulu sebelum menguji diri lewat kuis. Jika ada kalimat atau bagian materi yang membingungkan, tanyakan langsung ke panel tutor Nara di sisi kanan.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Rendered Full Lesson Content */}
-                    <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid #dde1da" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
-                          📖 Bahan Bacaan Modul Baku
-                        </span>
-                      </div>
-
-                      <div className="markdown-body" style={{ fontSize: 14.5, lineHeight: 1.7, color: "#1f2b26" }}>
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm, remarkMath]}
-                          rehypePlugins={[rehypeKatex]}
-                          components={{
-                            h1: ({ children }) => (
-                              <h1 style={{ fontSize: 20, fontWeight: 800, color: "#17201d", marginTop: 20, marginBottom: 10, borderBottom: "1px solid #dde1da", paddingBottom: 6 }}>
-                                {children}
-                              </h1>
-                            ),
-                            h2: ({ children }) => (
-                              <h2 style={{ fontSize: 17, fontWeight: 700, color: "#22370c", marginTop: 20, marginBottom: 8 }}>
-                                {children}
-                              </h2>
-                            ),
-                            h3: ({ children }) => (
-                              <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "#17201d", marginTop: 16, marginBottom: 6 }}>
-                                {children}
-                              </h3>
-                            ),
-                            p: ({ children }) => {
-                              const pText = extractTextFromNode(children);
-                              if (isAsciiDiagramText(pText)) {
-                                return renderVisualDiagramOrPre(children);
-                              }
-                              return <p style={{ marginBottom: 12, color: "#374540", lineHeight: 1.65 }}>{children}</p>;
-                            },
-                            ul: ({ children }) => (
-                              <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
-                            ),
-                            ol: ({ children }) => (
-                              <ol style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ol>
-                            ),
-                            li: ({ children }) => (
-                              <li style={{ marginBottom: 5, color: "#374540" }}>{children}</li>
-                            ),
-                            strong: ({ children }) => (
-                              <strong style={{ color: "#17201d", fontWeight: 700 }}>{children}</strong>
-                            ),
-                            blockquote: ({ children }) => (
-                              <blockquote style={{ borderLeft: "3px solid #8dbd42", backgroundColor: "#eef8db", padding: "10px 14px", borderRadius: "0 8px 8px 0", margin: "12px 0", color: "#22370c" }}>
-                                {children}
-                              </blockquote>
-                            ),
-                            pre: ({ children }) => renderVisualDiagramOrPre(children),
-                            code: ({ children }) => (
-                              <code style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, backgroundColor: "#f0f4ee", color: "#1f2b26", padding: "2px 5px", borderRadius: 4 }}>
-                                {children}
-                              </code>
-                            ),
-                            table: ({ children }) => (
-                              <div style={{ overflowX: "auto", margin: "14px 0" }}>
-                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, border: "1px solid #dde1da", borderRadius: 8, overflow: "hidden" }}>
-                                  {children}
-                                </table>
-                              </div>
-                            )
+                    {/* Pelajarin.ai Action Bar */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, padding: "10px 14px", backgroundColor: "#f8faf5", border: "1px solid #dde2d8", borderRadius: 10, margin: "16px 0 20px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <button
+                          onClick={() => setMaterialViewMode("chapters")}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            padding: "7px 14px",
+                            borderRadius: 8,
+                            fontSize: 12.5,
+                            fontWeight: 700,
+                            border: materialViewMode === "chapters" ? "1px solid #18221f" : "1px solid #dce2da",
+                            backgroundColor: materialViewMode === "chapters" ? "#18221f" : "#ffffff",
+                            color: materialViewMode === "chapters" ? "#c8f064" : "#17201d",
+                            cursor: "pointer",
+                            transition: "0.15s ease"
                           }}
                         >
-                          {formattedContent}
-                        </ReactMarkdown>
+                          <BookOpen size={14} />
+                          <span>Baca per Bab ({chapters.length})</span>
+                        </button>
+
+                        <button
+                          onClick={() => setMaterialViewMode("mindmap")}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            padding: "7px 14px",
+                            borderRadius: 8,
+                            fontSize: 12.5,
+                            fontWeight: 700,
+                            border: materialViewMode === "mindmap" ? "1px solid #18221f" : "1px solid #dce2da",
+                            backgroundColor: materialViewMode === "mindmap" ? "#18221f" : "#ffffff",
+                            color: materialViewMode === "mindmap" ? "#c8f064" : "#17201d",
+                            cursor: "pointer",
+                            transition: "0.15s ease"
+                          }}
+                        >
+                          <Compass size={14} />
+                          <span>Mind Map Interaktif</span>
+                        </button>
+
+                        <button
+                          onClick={() => setMaterialViewMode("full")}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            padding: "7px 14px",
+                            borderRadius: 8,
+                            fontSize: 12.5,
+                            fontWeight: 700,
+                            border: materialViewMode === "full" ? "1px solid #18221f" : "1px solid #dce2da",
+                            backgroundColor: materialViewMode === "full" ? "#18221f" : "#ffffff",
+                            color: materialViewMode === "full" ? "#c8f064" : "#17201d",
+                            cursor: "pointer",
+                            transition: "0.15s ease"
+                          }}
+                        >
+                          <FileText size={14} />
+                          <span>Dokumen Lengkap</span>
+                        </button>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <button
+                          onClick={() => {
+                            setActiveTab("flashcards");
+                            if (flashcards.length === 0) handleGenerateFlashcards();
+                          }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "6px 12px",
+                            borderRadius: 7,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            border: "1px solid #dce2da",
+                            backgroundColor: "#ffffff",
+                            color: "#22370c",
+                            cursor: "pointer"
+                          }}
+                        >
+                          <Layers size={13} color="#4b6623" />
+                          <span>Flashcards ({flashcards.length})</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setActiveTab("quiz");
+                            if (quizQuestions.length === 0) handleGenerateQuiz();
+                          }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "6px 12px",
+                            borderRadius: 7,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            border: "1px solid #dce2da",
+                            backgroundColor: "#ffffff",
+                            color: "#18221f",
+                            cursor: "pointer"
+                          }}
+                        >
+                          <Target size={13} color="#dc2626" />
+                          <span>Kuis ({quizQuestions.length})</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setActiveTab("feynman");
+                          }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "6px 12px",
+                            borderRadius: 7,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            border: "1px solid #dce2da",
+                            backgroundColor: "#ffffff",
+                            color: "#17201d",
+                            cursor: "pointer"
+                          }}
+                        >
+                          <Brain size={13} color="#4b6623" />
+                          <span>Feynman</span>
+                        </button>
+
+                        <button
+                          onClick={() => window.print()}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "6px 10px",
+                            borderRadius: 7,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            border: "1px solid #dce2da",
+                            backgroundColor: "#ffffff",
+                            color: "#45544e",
+                            cursor: "pointer"
+                          }}
+                          title="Cetak atau Simpan sebagai PDF"
+                        >
+                          <span>PDF</span>
+                        </button>
                       </div>
                     </div>
+
+                    {/* View Mode 1: Mind Map Interaktif */}
+                    {materialViewMode === "mindmap" && (
+                      <div style={{ marginTop: 14 }}>
+                        <InteractiveMindMap
+                          markdown={formattedContent || activeDocContent}
+                          title={activeDocTitle}
+                          height="640px"
+                        />
+                      </div>
+                    )}
+
+                    {/* View Mode 2: Baca per Bab (Bite-sized Pelajarin.ai style) */}
+                    {materialViewMode === "chapters" && (
+                      <div style={{ marginTop: 14 }}>
+                        {/* Chapter Strip */}
+                        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10, marginBottom: 14 }} className="no-scrollbar">
+                          {chapters.map((ch, idx) => {
+                            const isCurrent = idx === currentChapterIdx;
+                            const isDone = !!completedChapters[ch.id];
+                            return (
+                              <button
+                                key={ch.id}
+                                onClick={() => setCurrentChapterIdx(idx)}
+                                style={{
+                                  flexShrink: 0,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 8,
+                                  padding: "8px 14px",
+                                  borderRadius: 8,
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  border: isCurrent ? "1.5px solid #4b6623" : "1px solid #dde1da",
+                                  backgroundColor: isCurrent ? "#eef8db" : isDone ? "#f0fdf4" : "#ffffff",
+                                  color: isCurrent ? "#22370c" : isDone ? "#166534" : "#45544e",
+                                  cursor: "pointer",
+                                  transition: "0.15s ease"
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: 999,
+                                    backgroundColor: isDone ? "#10b981" : isCurrent ? "#4b6623" : "#dce1da",
+                                    color: "#ffffff",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 10,
+                                    fontWeight: 800
+                                  }}
+                                >
+                                  {isDone ? "✓" : ch.id}
+                                </span>
+                                <span style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {ch.title}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Chapter Card Content */}
+                        <div
+                          style={{
+                            padding: "22px 26px 30px",
+                            backgroundColor: "#ffffff",
+                            border: "1px solid #e2e8e0",
+                            borderRadius: 12,
+                            boxShadow: "0 4px 20px rgba(0,0,0,0.02)"
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #eef1eb" }}>
+                            <div>
+                              <span style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+                                Bab {chapters[currentChapterIdx]?.id || 1} dari {chapters.length}
+                              </span>
+                              <h2 style={{ fontSize: 18, fontWeight: 800, color: "#17201d", margin: "4px 0 0" }}>
+                                {chapters[currentChapterIdx]?.title}
+                              </h2>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const chId = chapters[currentChapterIdx]?.id;
+                                if (chId) setCompletedChapters((prev) => ({ ...prev, [chId]: !prev[chId] }));
+                              }}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                padding: "6px 12px",
+                                borderRadius: 7,
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                border: completedChapters[chapters[currentChapterIdx]?.id] ? "1px solid #a7f3d0" : "1px solid #dce1da",
+                                backgroundColor: completedChapters[chapters[currentChapterIdx]?.id] ? "#ecfdf5" : "#ffffff",
+                                color: completedChapters[chapters[currentChapterIdx]?.id] ? "#065f46" : "#56615d",
+                                cursor: "pointer"
+                              }}
+                            >
+                              <Check size={13} color={completedChapters[chapters[currentChapterIdx]?.id] ? "#10b981" : "#56615d"} />
+                              <span>{completedChapters[chapters[currentChapterIdx]?.id] ? "Selesai Dipelajari" : "Tandai Selesai"}</span>
+                            </button>
+                          </div>
+
+                          <div className="markdown-body" style={{ fontSize: 14.5, lineHeight: 1.7, color: "#1f2b26" }}>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm, remarkMath]}
+                              rehypePlugins={[rehypeKatex]}
+                              components={markdownComponents}
+                            >
+                              {chapters[currentChapterIdx]?.content || ""}
+                            </ReactMarkdown>
+                          </div>
+
+                          {/* Chapter Pagination Footer */}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 28, paddingTop: 16, borderTop: "1px solid #eef1eb" }}>
+                            <button
+                              disabled={currentChapterIdx === 0}
+                              onClick={() => setCurrentChapterIdx((i) => Math.max(0, i - 1))}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                padding: "8px 16px",
+                                borderRadius: 8,
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                border: "1px solid #dce1da",
+                                backgroundColor: currentChapterIdx === 0 ? "#f4f6f2" : "#ffffff",
+                                color: currentChapterIdx === 0 ? "#a3ada8" : "#17201d",
+                                cursor: currentChapterIdx === 0 ? "not-allowed" : "pointer"
+                              }}
+                            >
+                              ← Bab Sebelumnya
+                            </button>
+
+                            {currentChapterIdx < chapters.length - 1 ? (
+                              <button
+                                onClick={() => {
+                                  const chId = chapters[currentChapterIdx]?.id;
+                                  if (chId) setCompletedChapters((prev) => ({ ...prev, [chId]: true }));
+                                  setCurrentChapterIdx((i) => Math.min(chapters.length - 1, i + 1));
+                                }}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  padding: "8px 18px",
+                                  borderRadius: 8,
+                                  fontSize: 12.5,
+                                  fontWeight: 700,
+                                  border: "none",
+                                  backgroundColor: "#18221f",
+                                  color: "#c8f064",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                <span>Lanjut ke Bab {currentChapterIdx + 2}</span>
+                                <ChevronRight size={14} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setActiveTab("quiz");
+                                  if (quizQuestions.length === 0) handleGenerateQuiz();
+                                }}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  padding: "8px 18px",
+                                  borderRadius: 8,
+                                  fontSize: 12.5,
+                                  fontWeight: 700,
+                                  border: "none",
+                                  backgroundColor: "#10b981",
+                                  color: "#ffffff",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                <span>Semua Bab Selesai · Mulai Kuis</span>
+                                <Target size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* View Mode 3: Dokumen Lengkap */}
+                    {materialViewMode === "full" && (
+                      <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid #dde1da" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+                            📖 Bahan Bacaan Modul Baku
+                          </span>
+                        </div>
+
+                        <div className="markdown-body" style={{ fontSize: 14.5, lineHeight: 1.7, color: "#1f2b26" }}>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm, remarkMath]}
+                            rehypePlugins={[rehypeKatex]}
+                            components={markdownComponents}
+                          >
+                            {formattedContent}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Collapsible Raw Text Editor */}
                     {showRawText && (

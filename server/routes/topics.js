@@ -16,7 +16,11 @@ Tugas Anda:
 1. Identifikasi bidang ilmu yang relevan (misal: Matematika, Ekonomi, Sosiologi, Fisika, Biologi, Sejarah, dll).
 2. Tentukan judul topik formal akademik ("formalTitle") YANG DISIPLIN & MENGIKUTI RUANG LINGKUP PERMINTAAN:
    - DILARANG memperlebar judul menjadi bab induk raksasa jika pengguna meminta sub-topik spesifik!
-3. Buat 2 atau 3 pertanyaan diagnostik interaktif singkat terfokus pada sub-topik tersebut untuk memastikan materi yang disusun tepat sasaran. Tiap pertanyaan memiliki 3 atau 4 pilihan opsi ringkas.
+3. Buat 2 pertanyaan preferensi belajar pengguna ("questions"):
+   - DILARANG KERAS MEMBUAT KUIS / SOAL TEBAK FAKTA! Pengguna belum belajar materi ini!
+   - Pertanyaan HANYA boleh menanyakan:
+     a. Target Pembelajaran (pilihan: "Paham Alur Cerita & Sebab-Akibat", "Persiapan Ujian / Nilai Rapor", "Bedah Soal HOTS & Penalaran UTBK")
+     b. Kedalaman & Gaya Belajar (pilihan: "Penjelasan Runtut & Bebas Hafalan Buta", "Ringkasan Poin Inti Cepat", "Mendalam Komprehensif")
 
 Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
 {
@@ -24,14 +28,14 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
   "formalTitle": "Judul Topik Formal Akademik",
   "questions": [
     {
-      "id": "q1",
-      "question": "Pertanyaan diagnostik 1...",
-      "choices": ["Pilihan 1", "Pilihan 2", "Pilihan 3"]
+      "id": "target",
+      "question": "Fokus target yang ingin kamu capai di materi ini?",
+      "choices": ["Paham Alur Kausalitas & Bebas Hafalan Buta", "Persiapan Ujian Sekolah / Harian", "Penalaran Analitis HOTS UTBK"]
     },
     {
-      "id": "q2",
-      "question": "Pertanyaan diagnostik 2...",
-      "choices": ["Pilihan A", "Pilihan B", "Pilihan C"]
+      "id": "depth",
+      "question": "Gaya penyajian materi yang kamu sukai?",
+      "choices": ["Alur Cerita Bertahap & Mudah Dipahami", "Poin Inti Ringkas & Padat", "Bedah Menyeluruh dengan Studi Kasus"]
     }
   ]
 }`;
@@ -86,33 +90,72 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
       console.error("Multi-source academic search for topic generate failed:", err);
     }
 
-    const prompt = `Anda adalah pendidik ahli spesialis kurikulum nasional (Kurikulum Merdeka / SMA / UTBK) dan penyusunan modul ajar berstandar tinggi.
-Pengguna ingin mempelajari materi dari topik spesifik: "${topic}"
-Judul Formal Modul: "${formalTitle || topic}"
-Bidang / Mata Pelajaran: "${subject || "Umum"}"
-Preferensi / Kebutuhan Pembelajar:
-${Object.entries(answers).map(([k, v]) => `- ${k}: ${v}`).join("\n")}
+    const prompt = `Anda adalah seorang tutor/mentor belajar pribadi tingkat elit untuk siswa SMA dan persiapan UTBK.
+Pengguna ingin mempelajari topik berikut secara mendalam, runut, dan bebas dari kebingungan hafalan buta:
+"${topic}"
+Judul Materi: "${formalTitle || topic}"
+Mata Pelajaran: "${subject || "Umum"}"
 ${webContext}
-TUGAS UTAMA:
-Susun dokumen materi ajar belajar mandiri yang MENDALAM, TAJAM, TERFOKUS 100% PADA SUB-TOPIK YANG DIMINTA, dan SESUAI KURIKULUM RESMI INDONESIA.
 
-PRINSIP KUNCI RUANG LINGKUP:
-1. FOKUS 100% PADA SUB-TOPIK YANG DIMINTA (ANTI-SCOPE-CREEP).
-2. PASANGAN DIKOTOMI & LAWAN TANDING KONSEP UJIAN.
-3. KELENGKAPAN TAKSONOMI KURIKULUM RESMI (BUKU TEKS & RUANGGURU).
-4. GROUNDED KE REFERENSI PENCARIAN RESMI.
+PRINSIP PEDAGOGI KOGNITIF (WAJIB DIPATUHI):
+1. JANGAN MULAI DENGAN HAFALAN TANGGAL/RUMUS KERING. Mulailah dengan memberikan "peta mental" yang menenangkan pikiran siswa: pahami dulu benturan kepentingan, motif para aktor, atau logika kausalitasnya.
+2. BAHASA MENTOR EMPATIS & TRANSPARAN: Gunakan gaya bahasa yang renyah, jelas, komunikatif, dan lugas (seperti ChatGPT / tutor privat terbaik). Hindari bahasa birokratis atau teks klise yang kaku.
+3. KELENGKAPAN SEJARAH & KURIKULUM: Pastikan fakta penting kurikulum resmi Indonesia (tokoh, lokasi, insiden pemicu, tanggal kunci) tetap tercakup lengkap, namun DISAJIKAN DALAM RANTAI SEBAB-AKIBAT LOGIS, bukan sekadar daftar poin hafalan mati.
 
-STRUKTUR ISI MODUL:
-1. **Peta Konsep & Inti Sub-Topik**
-2. **Bedah Mendalam Butir-Butir Materi Baku**
-3. **Komparasi Lawan Tanding / Garis Batas Kritis**
-4. **Pola Soal Ujian & Jebakan Konseptual (Common Pitfalls)**
-5. **Studi Kasus Kontekstual & Bedah Solusi Nyata**
+SUSUNAN WAJIB STRUKTUR MODUL BELAJAR:
 
-Tulis materi secara padat, tajam, dan berbobot akademis tinggi dalam bahasa Indonesia yang lugas dan enak dipelajari.`;
+### ${formalTitle || topic}
+
+Kalimat pembuka: Kalimat orientasi yang menenangkan dan memandu pola pikir siswa (Contoh: "Kalau tujuanmu belajar untuk memahami dan bisa menjawab soal, jangan mulai dengan menghafal tanggal. Kita pahami dulu alur peristiwanya...").
+
+#### 1. Inti Cerita & Peta Benturan Kepentingan
+- Rumuskan inti masalah dalam 1-2 kalimat padat.
+- Bedah pihak-pihak yang terlibat beserta motif/kepentingannya yang bertabrakan (gunakan poin berbendera/ikon jika relevan, misal 🇮🇩 Indonesia vs 🇳🇱 NICA vs 🇬🇧 Sekutu).
+- Jelaskan mengapa benturan tersebut tak terhindarkan.
+
+#### 2. Latar Belakang & Rantai Kausalitas (Mengapa Terjadi?)
+- Jelaskan kronologi mengapa peristiwa ini meletus secara bertahap.
+- Bedah insiden pemicu emosional/spesifik di lapangan secara hidup dan faktual (misal: insiden Jalan Bali, penginjakan lencana Merah Putih, dsb).
+
+#### 3. Bedah Asal-Usul Nama & Jebakan Konseptual (Common Pitfalls)
+- Soroti bagian yang PALING SERING MEMBUAT SISWA SALAH / TERKECOH di soal ujian.
+- Jelaskan asal-usul istilah/nama konsepnya (misal: "Apa itu Medan Area? Medan Area bukan sekadar nama pertempuran, melainkan papan batas Fixed Boundaries...").
+- Koreksi penyederhanaan yang keliru (misal: "Jangan menyederhanakan menjadi Indonesia vs Inggris saja, karena...").
+
+#### 4. Peta Alur Kausalitas Sederhana (Vertical Pipeline)
+Sajikan alur peristiwa atau logika tahap demi tahap menggunakan panah vertikal sederhana agar mudah dipotret secara visual ke dalam memori jangka panjang:
+[Titik Awal]
+↓
+[Peristiwa 1]
+↓
+[Eskalasi / Pemicu]
+↓
+[Puncak Perlawanan]
+↓
+[Dampak / Hasil Akhir]
+
+#### 5. Kancing Memori Soal (Anchor Q&A)
+Pasangkan langsung kata kunci soal ujian yang paling sering muncul dengan jawaban spesifiknya:
+- Kalau ditanya "apa penyebab langsungnya?" ➔ Ingat: [Pemicu spesifik]
+- Kalau ditanya "apa yang menjadi tanda khas/pembedanya?" ➔ Ingat: [Ciri unik/pembeda]
+
+#### 6. 🧠 Cara Menghafalnya (Rantai Kausalitas 1 Baris & Tanggal Jangkar)
+- **Rantai 1 Baris:** Tuliskan rantai mnemonik ringkas: A ➔ B ➔ C ➔ D ➔ E
+- **Tanggal/Angka Kunci (Maksimal 2-3 Saja):** Sajikan tabel mini 2-3 baris tanggal paling menentukan, buang tanggal sampingan yang membebani memori.
+
+#### 7. Panduan Menjawab Soal Ujian (Actionable Exam Mastery)
+Tunjukkan cara mentransfer pemahaman ini saat menjawab soal ujian sekolah maupun soal penalaran analitis/HOTS:
+- Berikan contoh pertanyaan ujian tipikal: "Kalau nanti keluar soal: '...?'"
+- Contoh jawaban lemah/dangkal yang sering ditulis siswa (dan mengapa itu kurang tepat).
+- Contoh formulasi jawaban kuat & berbobot ilmiah (yang menunjukkan analisis sebab-akibat komprehensif).
+
+Penutup Belajar Aktif:
+Tutup dengan kalimat pemantik belajar aktif ke fitur Tanka: "Setelah paham alur dasarnya, buka tab **Uji Feynman** untuk jelaskan kembali dengan bahasamu sendiri, atau uji di tab **Latihan Kuis**!"
+
+Tulis modul secara lengkap, mendalam, dan memuaskan rasa ingin tahu siswa tanpa ada bagian penting yang terpotong.`;
 
     const content = await callRouter([
-      { role: "system", content: "Anda adalah pengajar ahli yang menyusun modul ajar dan buku teks studi mendalam berbasis kurikulum resmi." },
+      { role: "system", content: "Anda adalah tutor privat elit yang menjelaskan materi pelajaran dengan pendekatan alur kausalitas, bebas hafalan buta, dan tajam untuk menjawab soal ujian." },
       { role: "user", content: prompt }
     ], model, 0.3);
 

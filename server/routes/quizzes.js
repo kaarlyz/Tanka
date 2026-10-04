@@ -133,11 +133,18 @@ ${referenceContext}
 ${weaknessContext}
 ${adaptiveContext}
 
-STANDAR KUALITAS SOAL & ANTI-HALUSINASI:
-1. SKENARIO HARUS BARU: DILARANG mengulang skenario/cerita yang persis sama dengan contoh di modul teks. Buatkan studi kasus kontekstual baru.
-2. SEIMBANGKAN PANJANG OPSI (TIDAK BOLEH BIAS): Opsi yang benar TIDAK BOLEH selalu menjadi opsi terpanjang atau paling berkualifikasi. Buat kelima opsi A-E memiliki panjang kalimat yang seimbang.
-3. DISTRAKTOR HARUS MISKONSEPSI NYATA: Pengecoh harus berupa konsep kurikulum resmi yang benar-benar ada tapi salah konteks, bukan kata-kata fiktif.
-4. SOAL HITUNGAN KONKRET (JIKA EKONOMI/EKSAK): Jika materi memuat perhitungan/fungsi (misal permintaan-penawaran), buat minimal 1 butir soal pemecahan angka riil (misal mencari titik ekuilibrium Qd = Qs).
+STANDAR KUALITAS SOAL HOTS MURNI (BLOOM C4-C5 ANALISIS & EVALUASI - UTBK/ASAHMEN NASIONAL):
+1. ATURAN MUTLAK "SCENARIO-DEPENDENT" (ANTI-HAFALAN DEFINISI):
+   - Soal DILARANG KERAS menguji klasifikasi/hafalan definisi yang dibungkus cerita (Contoh TERLARANG: "Di rawa ada fitoplankton, siput, dan ikan. Mana yang konsumen?").
+   - Soal WAJIB menghadirkan DINAMIKA SEBAB-AKIBAT: GANGGUAN SISTEM (misal: populasi produsen anjlok akibat tumpahan limbah, pajak barang mewah naik $20\%$, cermin digeser $(+3, -2)$), PERUBAHAN MULTI-VARIABEL, atau POLA TREN KONDISI.
+   - UJI GUGUR SKENARIO: Jika cerita kasus dibuang dan pertanyaan masih bisa dijawab langsung dari ingatan definisi kamus, MAKA SOAL DINILAI GAGAL. Siswa WAJIB memproses data situasi untuk menemukan kesimpulan.
+2. SEMANTIC SYMMETRY PADA DISTRAKTOR (MISKONSEPSI NYATA SISWA):
+   - Setiap pilihan pengecoh (distraktor) WAJIB mewakili kesalahan berpikir nyata siswa (misal: mengabaikan asumsi ceteris paribus, salah menukar kuadran rotasi, menganggap elastisitas $<1$ berarti kuantitas tidak berubah sama sekali, salah menafsirkan fungsi dekomposer).
+   - Kelima opsi (A-E) harus memiliki tingkat kedalaman teknis dan nuansa bahasa yang setara. DILARANG membuat opsi pengecoh yang tampak konyol atau asal-asalan.
+3. KESEIMBANGAN PANJANG OPSI (ANTI-BIAS TEKSTUAL):
+   - Kelima opsi A-E wajib memiliki panjang karakter yang seragam (rentang selisih maks 15%). Opsi benar DILARANG menjadi satu-satunya kalimat yang paling panjang, paling rinci, atau paling berhati-hati.
+4. PERHITUNGAN MULTI-TAHAP KONKRET (EKONOMI & EKSAK):
+   - Pada materi hitung, berikan soal penalaran numerik berbasis kasus (misal: menghitung dampak pajak spesifik terhadap pergeseran harga keseimbangan baru, atau komposisi dua transformasi berturut-turut).
 5. DILARANG membuat opsi yang saling merujuk (misal: "A dan B benar", "Semua salah").
 6. FORMAT TEKS OPSI: DILARANG menyertakan prefix huruf seperti "A.", "B." di teks options.
 7. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E.
@@ -263,6 +270,27 @@ ${factsContext}
             return { ...s, desc };
           });
         }
+      }
+    });
+
+    // Deterministic Machine Validation (KaTeX syntax parity & empty braces cleanup)
+    const sanitizeMathString = (t) => {
+      if (!t || typeof t !== "string") return t;
+      let cleaned = t;
+      const dollarCount = (cleaned.match(/(?<!\\)\$/g) || []).length;
+      if (dollarCount % 2 !== 0) {
+        cleaned += "$";
+      }
+      return cleaned.replace(/\{\}/g, "");
+    };
+
+    questions.forEach((q) => {
+      q.question = sanitizeMathString(q.question);
+      if (Array.isArray(q.options)) {
+        q.options = q.options.map(sanitizeMathString);
+      }
+      if (q.explanation) {
+        q.explanation = sanitizeMathString(q.explanation);
       }
     });
 

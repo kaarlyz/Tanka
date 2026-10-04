@@ -179,24 +179,27 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
 
   // 1. Wikipedia Indonesia
   try {
-    const sUrl = `https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanTopic)}&srlimit=8&format=json`;
-    const sRes = await fetch(sUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
-    if (sRes.ok) {
-      const sData = await sRes.json();
-      const hits = (sData.query?.search || [])
-        .map(h => ({ title: h.title, score: scoreAcademicRelevance(h.title, cleanTopic, cleanSubject) }))
-        .filter(h => h.score > 0)
-        .sort((a, b) => b.score - a.score);
+    for (const q of allQueries) {
+      if (findings.encyclopedia.length >= 3) break;
+      const sUrl = `https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=8&format=json`;
+      const sRes = await fetch(sUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
+      if (sRes.ok) {
+        const sData = await sRes.json();
+        const hits = (sData.query?.search || [])
+          .map(h => ({ title: h.title, score: scoreAcademicRelevance(h.title, cleanTopic, cleanSubject) }))
+          .filter(h => h.score > 0)
+          .sort((a, b) => b.score - a.score);
 
-      for (const h of hits.slice(0, 4)) {
-        const extUrl = `https://id.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(h.title)}&format=json`;
-        const extRes = await fetch(extUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
-        if (extRes.ok) {
-          const extData = await extRes.json();
-          const page = Object.values(extData.query?.pages || {})[0];
-          const cleanedExtract = cleanSegmentText(page?.extract || "");
-          if (cleanedExtract.length >= 150 && !findings.encyclopedia.some(e => e.title === page.title)) {
-            findings.encyclopedia.push({ title: page.title, snippet: cleanedExtract.slice(0, 8000) });
+        for (const h of hits.slice(0, 3)) {
+          const extUrl = `https://id.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(h.title)}&format=json`;
+          const extRes = await fetch(extUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
+          if (extRes.ok) {
+            const extData = await extRes.json();
+            const page = Object.values(extData.query?.pages || {})[0];
+            const cleanedExtract = cleanSegmentText(page?.extract || "");
+            if (cleanedExtract.length >= 150 && !findings.encyclopedia.some(e => e.title === page.title)) {
+              findings.encyclopedia.push({ title: page.title, snippet: cleanedExtract.slice(0, 8000) });
+            }
           }
         }
       }
@@ -239,11 +242,10 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
       });
       if (rRes.ok) {
         const rHtml = await rRes.text();
-        const cardRegex = /<a[^>]+href="(https:\/\/www\.ruangguru\.com\/blog\/[^"]+)"[^>]*>[\s\S]*?<h2 class="content-title">([\s\S]*?)<\/h2>/gi;
+        const cardRegex = /<a[^>]+href="(https:\/\/www\.ruangguru\.com\/blog\/(?!c\/|tag\/)[^"]+)"[^>]*>[\s\S]*?<h2 class="content-title">([\s\S]*?)<\/h2>/gi;
         let m;
         while ((m = cardRegex.exec(rHtml)) !== null) {
           const url = m[1];
-          if (url.includes("/blog/c/") || url.includes("/tag/")) continue;
           const title = m[2].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").trim();
           const score = scoreAcademicRelevance(title, cleanTopic, cleanSubject);
           if (score > 0 && !rArticles.has(url)) {

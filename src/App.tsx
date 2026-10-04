@@ -234,17 +234,15 @@ export default function App() {
   const [examSubmitted, setExamSubmitted] = useState(false);
   const [examDurationSeconds, setExamDurationSeconds] = useState(0);
 
-  // Mistake Notebook state
-  const [mistakes, setMistakes] = useState<MistakeItem[]>([]);
-  const [isDrillingMistakes, setIsDrillingMistakes] = useState(false);
-  const [mistakeFilterScope, setMistakeFilterScope] = useState<"current" | "all">("current");
 
-  const activeDocMistakes = useMemo(() => {
-    if (!activeDocId) return mistakes;
-    return mistakes.filter((m) => m.docId === activeDocId);
-  }, [mistakes, activeDocId]);
+  const {
+    mistakes, setMistakes,
+    isDrillingMistakes, setIsDrillingMistakes,
+    mistakeFilterScope, setMistakeFilterScope,
+    activeDocMistakes, displayedMistakes,
+    fetchMistakes, recordMistake, resolveMistake, deleteMistake, handleClearMistakes
+  } = useMistakes({ activeDocId, activeDocTitle, showNotice });
 
-  const displayedMistakes = mistakeFilterScope === "current" && activeDocId ? activeDocMistakes : mistakes;
 
   // Formula Cheatsheet Drawer state
   const [isFormulaDrawerOpen, setIsFormulaDrawerOpen] = useState(false);
@@ -579,83 +577,6 @@ export default function App() {
       .replace(/\^n\b/g, "ⁿ")
       .replace(/_1\b/g, "₁")
       .replace(/_2\b/g, "₂");
-  }
-
-  async function fetchMistakes() {
-    try {
-      const res = await fetch("/api/mistakes");
-      const data = await res.json();
-      if (data.success && data.mistakes) {
-        setMistakes(data.mistakes);
-      }
-    } catch (e) {
-      console.error("Failed to fetch mistakes:", e);
-    }
-  }
-
-  async function recordMistake(q: QuizQuestion, userAnsIdx: number) {
-    try {
-      await fetch("/api/mistakes/record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          docId: activeDocId,
-          docTitle: activeDocTitle,
-          question: q.question,
-          options: q.options,
-          correctIndex: q.correctIndex,
-          userAnswerIndex: userAnsIdx,
-          formula: q.formula || "",
-          steps: q.steps || [],
-          explanation: q.explanation || "",
-          pitfall: q.pitfall || ""
-        })
-      });
-      fetchMistakes();
-    } catch (e) {
-      console.error("Failed to record mistake:", e);
-    }
-  }
-
-  async function resolveMistake(id: string) {
-    try {
-      await fetch(`/api/mistakes/${id}/resolve`, { method: "POST" });
-      setMistakes((prev) => prev.filter((m) => m.id !== id));
-      showNotice("Soal ditandai sudah dikuasai! Dihapus dari Bank Soal Salah.");
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async function deleteMistake(id: string) {
-    try {
-      await fetch(`/api/mistakes/${id}`, { method: "DELETE" });
-      setMistakes((prev) => prev.filter((m) => m.id !== id));
-      showNotice("Soal dihapus dari Bank Soal Salah.");
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async function handleClearMistakes() {
-    const isCurrent = mistakeFilterScope === "current" && activeDocId;
-    const confirmMsg = isCurrent
-      ? `Kosongkan semua catatan salah pada modul "${activeDocTitle}"?`
-      : "Kosongkan seluruh catatan di Bank Kesalahan?";
-    if (!confirm(confirmMsg)) return;
-
-    try {
-      const url = isCurrent ? `/api/mistakes/clear?docId=${activeDocId}` : "/api/mistakes/clear";
-      await fetch(url, { method: "POST" });
-      if (isCurrent) {
-        setMistakes((prev) => prev.filter((m) => m.docId !== activeDocId));
-      } else {
-        setMistakes([]);
-      }
-      showNotice("Bank kesalahan berhasil dibersihkan");
-    } catch {
-      showNotice("Gagal mengosongkan bank kesalahan");
-    }
   }
 
   function startMistakeDrill() {

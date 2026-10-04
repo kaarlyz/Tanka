@@ -38,7 +38,7 @@
         margin: 0;
         padding: 0;
       }
-      html, body {
+      html, body, #root {
         height: 100%;
         overflow: hidden;
       }
@@ -320,8 +320,8 @@
       /* --- Figma Make "nalar." Design System Classes --- */
       .app-shell {
         display: flex;
-        height: 100vh;
-        max-height: 100vh;
+        height: 100%;
+        max-height: 100%;
         overflow: hidden;
         background: #eef1eb;
       }
@@ -336,7 +336,7 @@
         color: #eff5ec;
         background: #18221f;
         border-right: 1px solid rgba(255, 255, 255, 0.06);
-        height: 100vh;
+        height: 100%;
         overflow-y: auto;
       }
       .brand-box {
@@ -494,8 +494,8 @@
         min-width: 0;
         display: flex;
         flex-direction: column;
-        height: 100vh;
-        max-height: 100vh;
+        height: 100%;
+        max-height: 100%;
         overflow: hidden;
       }
       .topbar-bar {
@@ -546,8 +546,8 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(330px, 380px);
         flex: 1;
-        height: calc(100vh - 64px);
-        max-height: calc(100vh - 64px);
+        height: calc(100% - 64px);
+        max-height: calc(100% - 64px);
         overflow: hidden;
       }
       .lesson-panel-box {
@@ -1108,8 +1108,8 @@
         }
         .app-shell {
           flex-direction: column !important;
-          height: 100vh !important;
-          max-height: 100vh !important;
+          height: 100% !important;
+          max-height: 100% !important;
           width: 100vw !important;
           overflow: hidden !important;
         }
@@ -1122,8 +1122,8 @@
           bottom: 0 !important;
           width: 84% !important;
           max-width: 320px !important;
-          height: 100vh !important;
-          max-height: 100vh !important;
+          height: 100% !important;
+          max-height: 100% !important;
           z-index: 3000 !important;
           background: #18221f !important;
           box-shadow: none !important;
@@ -1215,8 +1215,8 @@
 
         /* 5. Workspace Container & Scroll Area */
         .workspace-shell {
-          height: 100vh !important;
-          max-height: 100vh !important;
+          height: 100% !important;
+          max-height: 100% !important;
           width: 100vw !important;
           display: flex !important;
           flex-direction: column !important;
@@ -1225,8 +1225,8 @@
         .figma-grid {
           display: flex !important;
           flex-direction: column !important;
-          height: calc(100vh - 100px) !important;
-          max-height: calc(100vh - 100px) !important;
+          height: calc(100% - 100px) !important;
+          max-height: calc(100% - 100px) !important;
           overflow-y: auto !important;
           overflow-x: hidden !important;
           -webkit-overflow-scrolling: touch !important;
@@ -1259,7 +1259,7 @@
           top: auto !important;
           width: 100vw !important;
           height: 60dvh !important;
-          max-height: 100vh !important;
+          max-height: 100% !important;
           z-index: 3500 !important;
           background: #ffffff !important;
           display: flex !important;
@@ -1272,7 +1272,7 @@
         }
 
         .ai-panel-box.open.fullscreen {
-          height: 100vh !important;
+          height: 100% !important;
           border-radius: 0 !important;
         }
         .ai-panel-inner {

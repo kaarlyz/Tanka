@@ -119,7 +119,7 @@ export function TanyaNaraPanel({
             </span>
           </div>
 
-          <div className="chat-window-box no-scrollbar" style={{ minHeight: 220, maxHeight: "calc(100vh - 380px)" }}>
+          <div className="chat-window-box no-scrollbar" style={{ minHeight: 220, maxHeight: "calc(100% - 380px)" }}>
             <div className="ai-note-box">
               <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4, fontWeight: 700, color: "#17201d", fontSize: 11.5 }}>
                 <Brain size={13} color="#18221f" />

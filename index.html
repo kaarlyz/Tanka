@@ -332,12 +332,28 @@
         flex-direction: column;
         justify-content: flex-start;
         gap: 14px;
-        padding: 18px 16px 28px;
+        padding: 18px 16px 24px;
         color: #eff5ec;
         background: #18221f;
         border-right: 1px solid rgba(255, 255, 255, 0.06);
-        height: 100%;
+        height: 100vh;
+        max-height: 100vh;
         overflow-y: auto;
+        overflow-x: hidden;
+        box-sizing: border-box;
+      }
+      .figma-sidebar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .figma-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .figma-sidebar::-webkit-scrollbar-thumb {
+        background: #25322e;
+        border-radius: 4px;
+      }
+      .figma-sidebar::-webkit-scrollbar-thumb:hover {
+        background: #34413c;
       }
       .brand-box {
         display: flex;
@@ -563,11 +579,12 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 16px 16px 14px;
+        padding: 16px 16px 24px;
         border-left: 1px solid #dde1da;
-        height: 100%;
-        max-height: 100%;
-        overflow-y: hidden;
+        height: 100vh;
+        max-height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
         box-sizing: border-box;
       }
       .ai-panel-inner {
@@ -610,6 +627,28 @@
         border: 1px solid #a7f3d0;
         padding: 3px 8px;
         border-radius: 999px;
+      }
+      .mobile-sheet-pill {
+        width: 36px;
+        height: 4px;
+        border-radius: 999px;
+        background: #dce1da;
+        margin: 0 auto 8px auto;
+      }
+      .ai-panel-backdrop {
+        display: none;
+      }
+      @media (max-width: 768px) {
+        .ai-panel-backdrop.open {
+          display: block;
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 20, 0.45);
+          backdrop-filter: blur(2px);
+          -webkit-backdrop-filter: blur(2px);
+          z-index: 3499;
+          animation: fadeIn 0.2s ease;
+        }
       }
       .online-label-box i {
         width: 5px;
@@ -1123,7 +1162,7 @@
           width: 84% !important;
           max-width: 320px !important;
           height: 100% !important;
-          max-height: 100% !important;
+          max-height: 100dvh !important;
           z-index: 3000 !important;
           background: #18221f !important;
           box-shadow: none !important;
@@ -1134,11 +1173,12 @@
           overflow-y: auto !important;
           overflow-x: hidden !important;
           -webkit-overflow-scrolling: touch !important;
-          padding: 16px 14px 60px !important;
+          padding: 16px 14px 110px !important;
           display: flex !important;
           flex-direction: column !important;
           justify-content: flex-start !important;
           gap: 12px !important;
+          box-sizing: border-box !important;
         }
         .figma-sidebar.open, .sidebar-drawer.open {
           transform: translateX(0) !important;
@@ -1247,7 +1287,7 @@
           min-width: 0 !important;
         }
 
-        /* 6. Tanya Nara Fullscreen Modal Drawer on Mobile */
+      /* 6. Tanya Nara Fullscreen Modal Drawer on Mobile */
         .ai-panel-box {
           display: none !important;
         }
@@ -1258,8 +1298,8 @@
           bottom: 0 !important;
           top: auto !important;
           width: 100vw !important;
-          height: 60dvh !important;
-          max-height: 100% !important;
+          height: 75dvh !important;
+          max-height: 90dvh !important;
           z-index: 3500 !important;
           background: #ffffff !important;
           display: flex !important;
@@ -1267,22 +1307,45 @@
           animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
           border-left: none !important;
           border-radius: 20px 20px 0 0 !important;
-          box-shadow: 0 -10px 40px rgba(0,0,0,0.15) !important;
+          box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
           transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          padding: 10px 16px 20px !important;
+          overflow: hidden !important;
+          box-sizing: border-box !important;
         }
 
         .ai-panel-box.open.fullscreen {
           height: 100% !important;
+          max-height: 100% !important;
           border-radius: 0 !important;
+          top: 0 !important;
+          padding-bottom: 24px !important;
         }
         .ai-panel-inner {
           height: 100% !important;
           display: flex !important;
           flex-direction: column !important;
+          overflow: hidden !important;
         }
+        .chat-window-box,
         .chat-stream-box {
           flex: 1 !important;
+          min-height: 0 !important;
           max-height: none !important;
+          overflow-y: auto !important;
+        }
+        .prompt-chips-box {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          overflow-x: auto !important;
+          padding-bottom: 4px !important;
+          margin-bottom: 8px !important;
+          gap: 6px !important;
+          -webkit-overflow-scrolling: touch !important;
+        }
+        .prompt-chip-btn {
+          white-space: nowrap !important;
+          flex-shrink: 0 !important;
         }
 
         /* 7. Grid & Container Stacking (No Cramped Columns) */

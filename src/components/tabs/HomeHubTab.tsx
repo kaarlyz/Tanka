@@ -11,7 +11,7 @@ export interface HomeHubTabProps {
   activeDocTitle: string;
   activeDocContent: string;
   loadDocument: (id: string) => void;
-  handleDeleteDocument: (id: string) => void;
+  handleDeleteDocument: (id: string, e?: React.MouseEvent) => void;
   homeSearchQuery: string;
   setHomeSearchQuery: (val: string) => void;
   homeSubjectFilter: string;
@@ -24,6 +24,8 @@ export interface HomeHubTabProps {
   mistakes: MistakeItem[];
   handleGenerateQuiz: (params?: any) => void;
   handleStartNewTopic?: () => void;
+  setTopicInput?: (val: string) => void;
+  handleStartTopicClarify?: (topicText?: string) => void;
 }
 
 export function HomeHubTab({
@@ -46,6 +48,8 @@ export function HomeHubTab({
   flashcards,
   mistakes,
   handleGenerateQuiz,
+  setTopicInput,
+  handleStartTopicClarify,
 }: HomeHubTabProps) {
   const activeDoc = documents.find((d) => d.id === activeDocId) || null;
 
@@ -122,9 +126,9 @@ export function HomeHubTab({
                     onSubmit={(e) => {
                       e.preventDefault();
                       if (homeSearchQuery.trim()) {
-                        setTopicInput(homeSearchQuery.trim());
+                        if (setTopicInput) setTopicInput(homeSearchQuery.trim());
                         setIsTopicModalOpen(true);
-                        handleStartTopicClarify(homeSearchQuery.trim());
+                        if (handleStartTopicClarify) handleStartTopicClarify(homeSearchQuery.trim());
                       }
                     }}
                     style={{

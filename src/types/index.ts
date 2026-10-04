@@ -13,57 +13,76 @@ export interface Flashcard {
   doc_id: string;
   front: string;
   back: string;
-  level: number;
-  due_date: number;
-  created_at: number;
+  difficulty?: "new" | "again" | "hard" | "good" | "easy" | string;
+  review_count?: number;
+  level?: number;
+  due_date?: number;
+  created_at?: number;
 }
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  timestamp: number;
+  timestamp?: number;
 }
 
 export interface QuizStep {
-  step: string;
-  explanation: string;
+  step?: string | number;
+  title?: string;
+  desc?: string;
+  explanation?: string;
+  formula?: string;
 }
 
 export interface QuizQuestion {
+  id?: number | string;
   question: string;
   options: string[];
   correctIndex: number;
+  correct_index?: number;
   formula?: string;
-  steps?: string[] | QuizStep[];
+  steps?: Array<string | QuizStep>;
   explanation?: string;
   pitfall?: string;
 }
 
 export interface FeynmanResult {
   score: number;
-  strengths: string[];
-  misconceptions: string[];
-  missingConcepts: string[];
-  simplifiedAnalogy: string;
-  suggestedDrill: string;
+  verdict?: string;
+  accuratePoints?: string[];
+  missedOrFlawedPoints?: string[];
+  perfectAnalogy?: string;
+  feedback?: string;
+  strengths?: string[];
+  misconceptions?: string[];
+  missingConcepts?: string[];
+  simplifiedAnalogy?: string;
+  suggestedDrill?: string;
 }
 
 export interface MistakeItem {
   id: string;
-  doc_id: string;
-  doc_title: string;
+  doc_id?: string;
+  docId?: string;
+  doc_title?: string;
+  docTitle?: string;
   question: string;
   options: string[];
-  correct_index: number;
-  user_answer_index: number;
+  correct_index?: number;
+  correctIndex?: number;
+  user_answer_index?: number;
+  userAnswerIndex?: number;
   formula?: string;
-  steps?: string[];
+  steps?: Array<string | QuizStep>;
   explanation?: string;
+  concept?: string;
   pitfall?: string;
   resolved: number;
-  created_at: number;
-  updated_at: number;
+  created_at?: number;
+  createdAt?: number;
+  updated_at?: number;
+  updatedAt?: number;
 }
 
 export interface FormulaItem {
@@ -89,15 +108,17 @@ export interface StagedFile {
   file: File;
   name: string;
   size: number;
-  type: string;
+  ext?: string;
+  type?: string;
   previewUrl?: string;
   base64?: string;
 }
 
 export interface EnrichSuggestion {
   title: string;
-  description: string;
-  recommendedFocus: string;
+  description?: string;
+  recommendedFocus?: string;
+  focus?: string;
   reason: string;
 }
 
@@ -105,4 +126,16 @@ export interface WebSearchResult {
   title: string;
   url: string;
   snippet: string;
+}
+
+export interface TopicClarificationData {
+  subject: string;
+  formalTitle: string;
+  questions: { id: string; question: string; choices: string[] }[];
+}
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  name: string;
 }

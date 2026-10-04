@@ -112,11 +112,11 @@ export interface QuizTabProps {
   currentQuestionIndex: number;
   setCurrentQuestionIndex: React.Dispatch<React.SetStateAction<number>>;
   quizQuestionCount: number;
-  setQuizQuestionCount: (n: number) => void;
-  quizMode: "practice" | "exam";
-  setQuizMode: (mode: "practice" | "exam") => void;
-  quizType: "standard" | "hots" | "conceptual" | "calculation" | "story";
-  setQuizType: (t: "standard" | "hots" | "conceptual" | "calculation" | "story") => void;
+  setQuizQuestionCount: any;
+  quizMode: "practice" | "exam" | "study" | string;
+  setQuizMode: (mode: any) => void;
+  quizType: any;
+  setQuizType: (t: any) => void;
   isDrillingMistakes: boolean;
   userAnswers: { [key: number]: number };
   selectedOption: number | null;
@@ -125,7 +125,7 @@ export interface QuizTabProps {
   isQuizCompleted: boolean;
   score: number;
   solutionStep: number;
-  setSolutionStep: (step: number) => void;
+  setSolutionStep: any;
   examTimeLeft: number;
   setExamTimeLeft: (t: number) => void;
   examDurationSeconds: number;
@@ -145,11 +145,11 @@ export interface QuizTabProps {
   resetQuizState: () => void;
   isQuizChatOpen: boolean;
   setIsQuizChatOpen: (o: boolean) => void;
-  quizChatMessages: ChatMessage[];
+  quizChatMessages: any;
   quizChatInput: string;
   setQuizChatInput: (v: string) => void;
   isQuizChatSending: boolean;
-  handleSendQuizQuestionChat: () => void;
+  handleSendQuizQuestionChat: (customPrompt?: string) => void;
   activeDocTitle: string;
   activeDocId: string | null;
   setActiveTab: (tab: ActiveTab) => void;
@@ -980,16 +980,23 @@ export function QuizTab({
                               </div>
 
                               {(() => {
-                                const activeSt = currentQuestion.steps[Math.min(solutionStep, currentQuestion.steps.length - 1)];
+                                const rawSt: any = currentQuestion.steps[Math.min(solutionStep, currentQuestion.steps.length - 1)];
+                                const isObj = typeof rawSt === "object" && rawSt !== null;
                                 return (
                                   <div className="solution-content-card">
                                     <span>LANGKAH {Math.min(solutionStep, currentQuestion.steps.length - 1) + 1}</span>
-                                    {activeSt.title && <h4><MathView text={activeSt.title} /></h4>}
-                                    <p><MathView text={activeSt.desc} /></p>
-                                    {activeSt.formula && (
-                                      <div className="solution-formula-box">
-                                        <MathView text={activeSt.formula} />
-                                      </div>
+                                    {isObj ? (
+                                      <>
+                                        {rawSt.title && <h4><MathView text={rawSt.title} /></h4>}
+                                        {rawSt.desc && <p><MathView text={rawSt.desc} /></p>}
+                                        {rawSt.formula && (
+                                          <div className="solution-formula-box">
+                                            <MathView text={rawSt.formula} />
+                                          </div>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <p><MathView text={String(rawSt || "")} /></p>
                                     )}
                                   </div>
                                 );
@@ -1313,7 +1320,7 @@ export function QuizTab({
 
                           {/* Chat messages thread */}
                           <div style={{ maxHeight: 280, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 12, paddingRight: 4 }}>
-                            {(!quizChatMessages[currentQuestionIndex] || quizChatMessages[currentQuestionIndex].length === 0) ? (
+                            {(!Array.isArray(quizChatMessages?.[currentQuestionIndex]) || quizChatMessages[currentQuestionIndex].length === 0) ? (
                               <div
                                 style={{
                                   fontSize: 12,
@@ -1331,7 +1338,7 @@ export function QuizTab({
                                   : "Bingung cara menjawab soal ini? Ketuk salah satu petunjuk cepat di atas atau tanyakan ke AI."}
                               </div>
                             ) : (
-                              quizChatMessages[currentQuestionIndex].map((m, i) => {
+                              (quizChatMessages[currentQuestionIndex] as any[]).map((m: any, i: number) => {
                                 const isUser = m.role === "user";
                                 return (
                                   <div

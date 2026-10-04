@@ -61,6 +61,14 @@ db.exec(`
     formulas TEXT NOT NULL,
     created_at INTEGER NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    created_at INTEGER NOT NULL
+  );
 `);
 
 console.log("[tanka-db] Database initialized at:", dbPath);

@@ -5,18 +5,17 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
 
   // 1. POST /api/mistakes/record - record or update a mistake
   if (req.method === "POST" && pathname === "/api/mistakes/record") {
-    const {
-      docId,
-      docTitle = "",
-      question,
-      options = [],
-      correctIndex,
-      userAnswerIndex,
-      formula = "",
-      steps = [],
-      explanation = "",
-      pitfall = ""
-    } = await getBody(req);
+    const body = await getBody(req);
+    const docId = body.docId || body.doc_id || "";
+    const docTitle = body.docTitle || body.doc_title || "";
+    const question = body.question;
+    const options = body.options || [];
+    const correctIndex = body.correctIndex !== undefined ? body.correctIndex : body.correct_index;
+    const userAnswerIndex = body.userAnswerIndex !== undefined ? body.userAnswerIndex : body.user_answer_index;
+    const formula = body.formula || "";
+    const steps = body.steps || [];
+    const explanation = body.explanation || "";
+    const pitfall = body.pitfall || "";
 
     if (!question) return sendJSON(res, { error: "Question required" }, 400);
 
@@ -49,18 +48,24 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
     const mistakes = rows.map((r) => ({
       id: r.id,
       docId: r.doc_id,
+      doc_id: r.doc_id,
       docTitle: r.doc_title,
+      doc_title: r.doc_title,
       question: r.question,
       options: JSON.parse(r.options || "[]"),
       correctIndex: r.correct_index,
+      correct_index: r.correct_index,
       userAnswerIndex: r.user_answer_index,
+      user_answer_index: r.user_answer_index,
       formula: r.formula,
       steps: r.steps ? JSON.parse(r.steps) : [],
       explanation: r.explanation,
       pitfall: r.pitfall,
       resolved: r.resolved,
       createdAt: r.created_at,
-      updatedAt: r.updated_at
+      created_at: r.created_at,
+      updatedAt: r.updated_at,
+      updated_at: r.updated_at
     }));
     return sendJSON(res, { success: true, count: mistakes.length, mistakes });
   }

@@ -16,6 +16,11 @@ export interface MistakesTabProps {
   deleteMistake: (id: string) => void;
   resolveMistake: (id: string) => void;
   loadDocument: (id: string) => void;
+  setQuizQuestions?: (questions: any[]) => void;
+  setUserAnswers?: (ans: any) => void;
+  setIsAnswerSubmitted?: (sub: boolean) => void;
+  setCurrentQuestionIndex?: (idx: number) => void;
+  setActiveTab?: (tab: any) => void;
 }
 
 export function MistakesTab({
@@ -31,6 +36,11 @@ export function MistakesTab({
   deleteMistake,
   resolveMistake,
   loadDocument,
+  setQuizQuestions,
+  setUserAnswers,
+  setIsAnswerSubmitted,
+  setCurrentQuestionIndex,
+  setActiveTab,
 }: MistakesTabProps) {
   return (
               <div className="mistakes-view">
@@ -261,7 +271,7 @@ export function MistakesTab({
                               <div style={{ fontSize: 10, fontWeight: 800, color: "#7b914e", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "'DM Mono', monospace", marginBottom: 2 }}>
                                 Langkah Pembahasan Terstruktur
                               </div>
-                              {m.steps.map((st, sIdx) => (
+                              {m.steps.map((st: any, sIdx: number) => (
                                 <div
                                   key={sIdx}
                                   style={{
@@ -276,11 +286,22 @@ export function MistakesTab({
                                   }}
                                 >
                                   <span style={{ fontWeight: 800, color: "#566b36", fontFamily: "'DM Mono', monospace" }}>
-                                    {st.step || (sIdx + 1)}.
+                                    {typeof st === "object" && st?.step ? st.step : (sIdx + 1)}.
                                   </span>
                                   <div>
-                                    {st.title && <strong style={{ color: "#18211e" }}>{st.title}: </strong>}
-                                    <MathView text={st.desc} />
+                                    {typeof st === "string" ? (
+                                      <MathView text={st} />
+                                    ) : (
+                                      <>
+                                        {st?.title && <strong style={{ color: "#18211e" }}>{st.title}: </strong>}
+                                        {st?.desc && <MathView text={st.desc} />}
+                                        {st?.formula && (
+                                          <div style={{ marginTop: 4, fontFamily: "'DM Mono', monospace", color: "#465f33" }}>
+                                            <MathView text={st.formula} />
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -312,23 +333,23 @@ export function MistakesTab({
                               </button>
 
                               <button
-                                onClick={() => resolveMistake(m.id)}
+                                onClick={() => { if (setActiveTab) setActiveTab("quiz"); }}
                                 style={{
-                                  backgroundColor: "#edf4e3",
-                                  border: "1px solid #d7e5c5",
-                                  color: "#465f33",
-                                  borderRadius: 7,
-                                  padding: "7px 14px",
-                                  fontSize: 11.5,
+                                  backgroundColor: "#19231f",
+                                  color: "#c8f064",
+                                  border: "none",
+                                  borderRadius: 8,
+                                  padding: "8px 16px",
+                                  fontSize: 12.5,
                                   fontWeight: 700,
                                   cursor: "pointer",
-                                  display: "flex",
+                                  display: "inline-flex",
                                   alignItems: "center",
-                                  gap: 5
+                                  gap: 6
                                 }}
                               >
-                                <Check size={12} />
-                                <span>Tandai Sudah Dikuasai</span>
+                                <Play size={13} fill="#c8f064" />
+                                <span>Mulai Latihan Bebas</span>
                               </button>
 
                               <button
@@ -337,19 +358,22 @@ export function MistakesTab({
                                     loadDocument(m.docId);
                                   }
                                   // Setup single drill question
-                                  setQuizQuestions([{
-                                    id: "mistake_single_" + m.id,
-                                    question: m.question,
-                                    options: m.options || ["A", "B", "C", "D"],
-                                    correctAnswer: m.correctIndex,
-                                    explanation: m.explanation || m.concept || "Ulangi penalaran konsep.",
-                                    formula: m.formula || "",
-                                    steps: m.steps || []
-                                  }]);
-                                  setUserAnswers({});
-                                  setSubmitted(false);
-                                  setCurrentQuestionIndex(0);
-                                  setActiveTab("quiz");
+                                  if (setQuizQuestions) {
+                                    setQuizQuestions([{
+                                      id: "mistake_single_" + m.id,
+                                      question: m.question,
+                                      options: m.options || ["A", "B", "C", "D"],
+                                      correctAnswer: m.correctIndex !== undefined ? m.correctIndex : m.correct_index,
+                                      correctIndex: m.correctIndex !== undefined ? m.correctIndex : m.correct_index,
+                                      explanation: m.explanation || m.concept || "Ulangi penalaran konsep.",
+                                      formula: m.formula || "",
+                                      steps: m.steps || []
+                                    }]);
+                                  }
+                                  if (setUserAnswers) setUserAnswers({});
+                                  if (setIsAnswerSubmitted) setIsAnswerSubmitted(false);
+                                  if (setCurrentQuestionIndex) setCurrentQuestionIndex(0);
+                                  if (setActiveTab) setActiveTab("quiz");
                                 }}
                                 style={{
                                   backgroundColor: "#19231f",

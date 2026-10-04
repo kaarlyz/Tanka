@@ -5,7 +5,7 @@ import { AIProcessLoader } from "../common/AIProcessLoader";
 export interface StagingUploadModalProps {
   isStagingModalOpen: boolean;
   setIsStagingModalOpen: (val: boolean) => void;
-  stagedFiles: Array<{ id: string; file: File; name: string; size: number; ext: string; previewUrl?: string }>;
+  stagedFiles: Array<any>;
   isUploading: boolean;
   uploadError: string;
   stagedDocTitle: string;

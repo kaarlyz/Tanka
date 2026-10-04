@@ -1,6 +1,6 @@
 import React from "react";
 import { Plus, Trash2, Upload, Camera, Compass, X } from "lucide-react";
-import { ActiveTab, DocumentItem, QuizQuestion, MistakeItem, Flashcard } from "../../types";
+import { ActiveTab, DocumentItem, QuizQuestion, MistakeItem, Flashcard, UserAccount } from "../../types";
 
 export interface SidebarProps {
   isMobileDrawerOpen: boolean;
@@ -11,18 +11,23 @@ export interface SidebarProps {
   documents: DocumentItem[];
   activeDocId: string | null;
   loadDocument: (id: string) => void;
-  handleDeleteDocument: (id: string) => void;
-  quizQuestions: QuizQuestion[];
-  activeDocMistakes: MistakeItem[];
-  mistakes: MistakeItem[];
-  flashcards: Flashcard[];
+  handleDeleteDocument: (id: string, e?: React.MouseEvent) => void;
+  quizQuestions?: QuizQuestion[];
+  activeDocMistakes?: MistakeItem[];
+  mistakes?: MistakeItem[];
+  flashcards?: Flashcard[];
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   cameraInputRef: React.RefObject<HTMLInputElement | null>;
-  isUploading: boolean;
+  isUploading?: boolean;
   handleStageFiles: (files: FileList | File[]) => void;
   setIsTopicModalOpen: (val: boolean) => void;
-  setIsStagingModalOpen: (val: boolean) => void;
+  setIsStagingModalOpen?: (val: boolean) => void;
   setIsRawTextModalOpen?: (val: boolean) => void;
+  handleCreateNewDoc?: () => void;
+  setTopicStep?: (step: 1 | 2 | 3) => void;
+  currentUser?: UserAccount | null;
+  onOpenAuthModal?: () => void;
+  onLogout?: () => void;
 }
 
 export function Sidebar({
@@ -45,10 +50,25 @@ export function Sidebar({
   handleStageFiles,
   setIsTopicModalOpen,
   setIsStagingModalOpen,
+  handleCreateNewDoc,
+  setTopicStep,
+  currentUser,
+  onOpenAuthModal,
+  onLogout
 }: SidebarProps) {
   return (
       <aside
         className={`figma-sidebar ${isMobileDrawerOpen ? "sidebar-drawer open" : "desktop-only"}`}
+        style={{
+          height: "100%",
+          maxHeight: "100%",
+          overflowY: "scroll",
+          overflowX: "hidden",
+          WebkitOverflowScrolling: "touch",
+          display: "flex",
+          flexDirection: "column",
+          boxSizing: "border-box"
+        }}
       >
         {/* Brand Row */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexShrink: 0 }}>
@@ -72,9 +92,9 @@ export function Sidebar({
             {[
               { id: "home", label: "Beranda Hub", mark: "H" },
               { id: "material", label: "Materi Saya", mark: "M" },
-              { id: "quiz", label: "Latihan Kuis", mark: "L", count: quizQuestions.length },
-              { id: "mistakes", label: "Bank Soal Salah", mark: "B", count: activeDocId ? activeDocMistakes.length : mistakes.length, highlight: (activeDocId ? activeDocMistakes.length : mistakes.length) > 0 },
-              { id: "flashcards", label: "Flashcards", mark: "K", count: flashcards.length },
+              { id: "quiz", label: "Latihan Kuis", mark: "L", count: (quizQuestions || []).length },
+              { id: "mistakes", label: "Bank Soal Salah", mark: "B", count: activeDocId ? (activeDocMistakes || []).length : (mistakes || []).length, highlight: (activeDocId ? (activeDocMistakes || []).length : (mistakes || []).length) > 0 },
+              { id: "flashcards", label: "Flashcards", mark: "K", count: (flashcards || []).length },
               { id: "feynman", label: "Uji Feynman", mark: "F" }
             ].map((nav) => {
               const isActive = activeTab === nav.id;
@@ -118,7 +138,7 @@ export function Sidebar({
               <button
                 onClick={() => {
                   setIsMobileDrawerOpen(false);
-                  handleCreateNewDoc();
+                  if (handleCreateNewDoc) handleCreateNewDoc();
                 }}
                 style={{
                   backgroundColor: "#25322e",
@@ -244,7 +264,7 @@ export function Sidebar({
               onClick={() => {
                 setIsMobileDrawerOpen(false);
                 setIsTopicModalOpen(true);
-                setTopicStep(1);
+                if (setTopicStep) setTopicStep(1);
               }}
               style={{
                 backgroundColor: "#212d29",
@@ -295,7 +315,7 @@ export function Sidebar({
           </div>
 
         {/* Sidebar Bottom: Streak Widget & Profile Row */}
-        <div style={{ flexShrink: 0, marginTop: 8 }}>
+        <div style={{ flexShrink: 0, marginTop: "auto", paddingTop: 16, paddingBottom: 24 }}>
           <div className="streak-card-box" style={{ margin: "4px 0 10px" }}>
             <div className="streak-top-row">
               <span>Target mingguan</span>
@@ -311,11 +331,26 @@ export function Sidebar({
             <p>Satu sesi lagi untuk mencapai target belajarmu.</p>
           </div>
 
-          <button className="profile-row-box">
-            <div className="avatar-box">ER</div>
+          <button
+            className="profile-row-box"
+            onClick={() => {
+              if (currentUser) {
+                if (onLogout && confirm(`Keluar dari akun ${currentUser.name || currentUser.username}?`)) {
+                  onLogout();
+                }
+              } else if (onOpenAuthModal) {
+                onOpenAuthModal();
+              }
+            }}
+            style={{ cursor: "pointer", width: "100%", textAlign: "left" }}
+            title={currentUser ? "Klik untuk keluar akun" : "Klik untuk masuk / daftar akun"}
+          >
+            <div className="avatar-box">
+              {currentUser ? (currentUser.name || currentUser.username).slice(0, 2).toUpperCase() : "TK"}
+            </div>
             <span>
-              <strong>Eka Restu Syahputra</strong>
-              <small>Akun Belajar</small>
+              <strong>{currentUser ? (currentUser.name || currentUser.username) : "Tamu Belajar"}</strong>
+              <small>{currentUser ? `@${currentUser.username} • Keluar` : "Klik Masuk / Daftar"}</small>
             </span>
             <span className="profile-more-dots">•••</span>
           </button>

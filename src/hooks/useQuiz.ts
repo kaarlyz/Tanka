@@ -1,15 +1,16 @@
 import { useState, useCallback, useEffect } from "react";
-import { QuizQuestion, MistakeItem } from "../types";
+import { QuizQuestion, MistakeItem, ChatMessage } from "../types";
 
 export interface UseQuizProps {
   activeDocId: string | null;
   selectedModel: string;
-  quizType: "beginner" | "conceptual" | "analytical" | "standard" | "hots" | "calculation" | "story";
+  quizType: "beginner" | "conceptual" | "analytical" | "standard" | "hots" | "calculation" | "story" | any;
   showNotice: (msg: string) => void;
   recordMistake: (question: QuizQuestion, userAnswerIdx: number) => void;
+  activeDocContent?: string;
 }
 
-export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, recordMistake }: UseQuizProps) {
+export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, recordMistake, activeDocContent }: UseQuizProps) {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -188,6 +189,62 @@ export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, reco
     };
   }, [quizMode, isExamTimerRunning, examSubmitted, examTimeLeft, handleExamSubmit, showNotice]);
 
+  // Per-question interactive AI Tutor Chat
+  const [quizChatMessages, setQuizChatMessages] = useState<Record<number, ChatMessage[]>>({});
+  const [quizChatInput, setQuizChatInput] = useState("");
+  const [isQuizChatSending, setIsQuizChatSending] = useState(false);
+
+  const handleSendQuizQuestionChat = useCallback(async (presetText?: string) => {
+    const text = presetText || quizChatInput;
+    if (!text.trim() || isQuizChatSending) return;
+    const currentQ = quizQuestions[currentQuestionIndex];
+    if (!currentQ) return;
+
+    const currentHistory = quizChatMessages[currentQuestionIndex] || [];
+    const userMsg: ChatMessage = { id: "user_" + Date.now(), role: "user", content: text.trim() };
+    const newHistory = [...currentHistory, userMsg];
+    setQuizChatMessages((prev) => ({
+      ...prev,
+      [currentQuestionIndex]: newHistory
+    }));
+    if (!presetText) setQuizChatInput("");
+    setIsQuizChatSending(true);
+
+    try {
+      const res = await fetch("/api/ai/quiz-question-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          docId: activeDocId,
+          question: currentQ.question,
+          options: currentQ.options,
+          correctIndex: currentQ.correctIndex,
+          userSelectedIndex: selectedOption,
+          userMessage: text.trim(),
+          chatHistory: currentHistory,
+          model: selectedModel
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.reply) {
+        const botMsg: ChatMessage = { id: "bot_" + Date.now(), role: "assistant", content: data.reply };
+        setQuizChatMessages((prev) => ({
+          ...prev,
+          [currentQuestionIndex]: [
+            ...(prev[currentQuestionIndex] || []),
+            botMsg
+          ]
+        }));
+      } else {
+        showNotice(data.error || "Gagal menghubungi Tutor AI");
+      }
+    } catch {
+      showNotice("Koneksi ke server AI gagal");
+    } finally {
+      setIsQuizChatSending(false);
+    }
+  }, [quizChatInput, isQuizChatSending, quizQuestions, currentQuestionIndex, quizChatMessages, activeDocId, selectedOption, selectedModel, showNotice]);
+
   return {
     quizQuestions, setQuizQuestions,
     quizQuestionCount, setQuizQuestionCount,
@@ -206,6 +263,10 @@ export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, reco
     examSubmitted, setExamSubmitted,
     examDurationSeconds, setExamDurationSeconds,
     isQuizChatOpen, setIsQuizChatOpen,
+    quizChatMessages, setQuizChatMessages,
+    quizChatInput, setQuizChatInput,
+    isQuizChatSending,
+    handleSendQuizQuestionChat,
     handleGenerateQuiz,
     handleSelectQuizOption,
     handlePrevQuizQuestion,

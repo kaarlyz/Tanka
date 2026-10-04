@@ -33,27 +33,84 @@ export function TanyaNaraPanel({
   setChatInput,
   handleSendMessage,
 }: TanyaNaraPanelProps) {
+  React.useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [messages, isChatSending]);
+
   return (
-    <aside className={`ai-panel-box ${(activeTab !== "home" && isAiPanelOpen) ? "open" : ""}`} style={{ display: (activeTab !== "home" && isAiPanelOpen) ? "flex" : "none", flexShrink: 0 }}>
-      <div className="ai-panel-inner">
-        <div>
-          <div className="ai-heading-box">
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="ai-orbit-box">N</div>
-              <div>
-                <h2 style={{ fontSize: 13.5, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.01em" }}>Tanya Nara</h2>
-                <p style={{ fontSize: 10, color: "#727d78", margin: 0, fontWeight: 500 }}>Tutor Belajar Pribadi</p>
+    <>
+      {activeTab !== "home" && isAiPanelOpen && (
+        <div
+          className="ai-panel-backdrop open"
+          onClick={() => setIsAiPanelOpen(false)}
+        />
+      )}
+      <aside
+        className={`ai-panel-box ${(activeTab !== "home" && isAiPanelOpen) ? "open" : ""}`}
+        style={{
+          display: (activeTab !== "home" && isAiPanelOpen) ? "flex" : "none",
+          flexShrink: 0,
+          height: "100%",
+          maxHeight: "100vh",
+          boxSizing: "border-box",
+          overflow: "hidden"
+        }}
+      >
+        <div
+          className="ai-panel-inner"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            width: "100%",
+            overflow: "hidden"
+          }}
+        >
+          {/* 1. Header (Always pinned to top) */}
+          <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="mobile-sheet-pill mobile-only" />
+            <div className="ai-heading-box">
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="ai-orbit-box">N</div>
+                <div>
+                  <h2 style={{ fontSize: 13.5, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.01em" }}>Tanya Nara</h2>
+                  <p style={{ fontSize: 10, color: "#727d78", margin: 0, fontWeight: 500 }}>Tutor Belajar Pribadi</p>
+                </div>
               </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span className="online-label-box">
-                <i />
-                Online
-              </span>
-              {messages.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span className="online-label-box">
+                  <i />
+                  Online
+                </span>
+                {messages.length > 0 && (
+                  <button
+                    onClick={() => setMessages([])}
+                    title="Bersihkan riwayat percakapan"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#8a9691",
+                      cursor: "pointer",
+                      padding: "3px 4px",
+                      borderRadius: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      transition: "0.15s ease"
+                    }}
+                  >
+                    <RotateCw size={12} />
+                  </button>
+                )}
+                {/* Fullscreen Toggle (Mobile) */}
                 <button
-                  onClick={() => setMessages([])}
-                  title="Bersihkan riwayat percakapan"
+                  className="mobile-only"
+                  onClick={() => {
+                    const el = document.querySelector('.ai-panel-box');
+                    if (el) el.classList.toggle('fullscreen');
+                  }}
+                  title="Toggle Fullscreen"
                   style={{
                     background: "none",
                     border: "none",
@@ -62,64 +119,55 @@ export function TanyaNaraPanel({
                     padding: "3px 4px",
                     borderRadius: 4,
                     display: "flex",
-                    alignItems: "center",
-                    transition: "0.15s ease"
+                    alignItems: "center"
                   }}
                 >
-                  <RotateCw size={12} />
+                  <div style={{ width: 12, height: 12, border: "2px solid currentColor", borderRadius: 2 }} />
                 </button>
-              )}
-              {/* Fullscreen Toggle (Mobile) */}
-              <button
-                className="mobile-only"
-                onClick={() => {
-                  const el = document.querySelector('.ai-panel-box');
-                  if (el) el.classList.toggle('fullscreen');
-                }}
-                title="Toggle Fullscreen"
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#8a9691",
-                  cursor: "pointer",
-                  padding: "3px 4px",
-                  borderRadius: 4,
-                  display: "flex",
-                  alignItems: "center"
-                }}
-              >
-                <div style={{ width: 12, height: 12, border: "2px solid currentColor", borderRadius: 2 }} />
-              </button>
-              <button
-                onClick={() => setIsAiPanelOpen(false)}
-                title="Tutup panel Tanya Nara"
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#8a9691",
-                  cursor: "pointer",
-                  padding: "3px 4px",
-                  borderRadius: 4,
-                  display: "flex",
-                  alignItems: "center"
-                }}
-              >
-                <X size={15} />
-              </button>
+                <button
+                  onClick={() => setIsAiPanelOpen(false)}
+                  title="Tutup panel Tanya Nara"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#8a9691",
+                    cursor: "pointer",
+                    padding: "3px 4px",
+                    borderRadius: 4,
+                    display: "flex",
+                    alignItems: "center"
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+
+            <div className="ai-context-indicator">
+              <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
+                <Sparkles size={11} color="#4b6623" />
+                <span className="ctx-title">{activeDocTitle || "Modul Belajar"}</span>
+              </div>
+              <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "#56645e" }}>
+                {activeTab === "quiz" ? "Kuis" : activeTab === "flashcards" ? "Kartu" : activeTab === "summary" ? "Rangkuman" : "Materi"}
+              </span>
             </div>
           </div>
 
-          <div className="ai-context-indicator">
-            <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
-              <Sparkles size={11} color="#4b6623" />
-              <span className="ctx-title">{activeDocTitle || "Modul Belajar"}</span>
-            </div>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "#56645e" }}>
-              {activeTab === "quiz" ? "Kuis" : activeTab === "flashcards" ? "Kartu" : activeTab === "summary" ? "Rangkuman" : "Materi"}
-            </span>
-          </div>
-
-          <div className="chat-window-box no-scrollbar" style={{ minHeight: 220, maxHeight: "calc(100% - 380px)" }}>
+          {/* 2. Messages Container (Takes all remaining height, only scrollable element) */}
+          <div
+            className="chat-window-box no-scrollbar"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              padding: "10px 0",
+              margin: "6px 0"
+            }}
+          >
             <div className="ai-note-box">
               <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4, fontWeight: 700, color: "#17201d", fontSize: 11.5 }}>
                 <Brain size={13} color="#18221f" />
@@ -168,52 +216,53 @@ export function TanyaNaraPanel({
             )}
             <div ref={chatEndRef} />
           </div>
-        </div>
 
-        <div>
-          <div className="prompt-chips-box">
-            {(activeTab === "quiz"
-              ? ["Bahas soal ini", "Kenapa jawaban itu benar?", "Rumus terkait"]
-              : activeTab === "flashcards"
-              ? ["Jelaskan kartu ini", "Beri analogi", "Contoh penerapan"]
-              : activeTab === "feynman"
-              ? ["Koreksi penjelasanku", "Bantu susun analogi", "Apa yang kurang?"]
-              : ["Jelaskan lebih sederhana", "Beri contoh soal lain", "Trik cepat rumus"]
-            ).map((chip) => (
-              <button
-                key={chip}
-                className="prompt-chip-btn"
-                onClick={() => handleSendMessage(chip)}
+          {/* 3. Footer (Always pinned to bottom) */}
+          <div style={{ flexShrink: 0, paddingTop: 6, borderTop: "1px solid #eef1eb" }}>
+            <div className="prompt-chips-box">
+              {(activeTab === "quiz"
+                ? ["Bahas soal ini", "Kenapa jawaban itu benar?", "Rumus terkait"]
+                : activeTab === "flashcards"
+                ? ["Jelaskan kartu ini", "Beri analogi", "Contoh penerapan"]
+                : activeTab === "feynman"
+                ? ["Koreksi penjelasanku", "Bantu susun analogi", "Apa yang kurang?"]
+                : ["Jelaskan lebih sederhana", "Beri contoh soal lain", "Trik cepat rumus"]
+              ).map((chip) => (
+                <button
+                  key={chip}
+                  className="prompt-chip-btn"
+                  onClick={() => handleSendMessage(chip)}
+                  disabled={isChatSending}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+
+            <form
+              className="chat-form-box"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage();
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Tanya Nara atau ketik jawaban latihan..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
                 disabled={isChatSending}
-              >
-                {chip}
+              />
+              <button type="submit" disabled={isChatSending || !chatInput.trim()} title="Kirim pertanyaan">
+                ↑
               </button>
-            ))}
+            </form>
+            <p style={{ margin: "7px 0 0", fontSize: 9.5, color: "#8a9691", textAlign: "center" }}>
+              AI tersinkronisasi otomatis dengan modul & soal aktif.
+            </p>
           </div>
-
-          <form
-            className="chat-form-box"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-          >
-            <input
-              type="text"
-              placeholder="Tanya Nara atau ketik jawaban latihan..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              disabled={isChatSending}
-            />
-            <button type="submit" disabled={isChatSending || !chatInput.trim()} title="Kirim pertanyaan">
-              ↑
-            </button>
-          </form>
-          <p style={{ margin: "7px 0 0", fontSize: 9.5, color: "#8a9691", textAlign: "center" }}>
-            AI tersinkronisasi otomatis dengan modul & soal aktif.
-          </p>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

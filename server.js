@@ -27,6 +27,7 @@ const { handleMistakesRoutes } = require("./server/routes/mistakes");
 const { handleCheatsheetRoutes } = require("./server/routes/cheatsheet");
 const { handleChatRoutes } = require("./server/routes/chat");
 const { handleTopicsRoutes } = require("./server/routes/topics");
+const { handleAuthRoutes } = require("./server/routes/auth");
 
 const PORT = parseInt(process.env.PORT || "3001", 10);
 const ROUTER_URL = process.env.ROUTER_URL || "http://127.0.0.1:20128/v1";
@@ -103,6 +104,7 @@ const server = http.createServer(async (req, res) => {
     if (await handleCheatsheetRoutes(req, res, pathname, helpers)) return;
     if (await handleChatRoutes(req, res, pathname, helpers)) return;
     if (await handleTopicsRoutes(req, res, pathname, helpers)) return;
+    if (await handleAuthRoutes(req, res, pathname, helpers)) return;
 
     // Static file fallback (production built frontend)
     const distPath = path.join(__dirname, "dist");

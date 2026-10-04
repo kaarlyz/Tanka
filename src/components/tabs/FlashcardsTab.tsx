@@ -11,7 +11,7 @@ export interface FlashcardsTabProps {
   isFlipped: boolean;
   setIsFlipped: React.Dispatch<React.SetStateAction<boolean>>;
   handleGenerateFlashcards: () => Promise<void> | void;
-  handleReviewCard: (difficulty: number) => Promise<void> | void;
+  handleReviewCard: (difficulty: "again" | "hard" | "good" | "easy" | any) => Promise<void> | void;
   isGeneratingCards: boolean;
 }
 

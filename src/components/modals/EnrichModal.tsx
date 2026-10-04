@@ -7,7 +7,7 @@ export interface EnrichModalProps {
   setIsEnrichModalOpen: (val: boolean) => void;
   activeDocTitle: string;
   isEnriching: boolean;
-  enrichSuggestions: Array<{ title: string; focus: string; reason: string }>;
+  enrichSuggestions: Array<any>;
   isLoadingSuggestions: boolean;
   selectedEnrichTitles: string[];
   setSelectedEnrichTitles: React.Dispatch<React.SetStateAction<string[]>>;

@@ -9,6 +9,11 @@ const {
   extractTextWithAIVision,
   detectQuestionPatterns
 } = require("../ai");
+const {
+  segmentDocumentText,
+  extractConceptsAndOutline,
+  generateNaraModule
+} = require("../services/curriculumPipeline");
 
 // Intelligent Exam Sheet Processor
 async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance, goal = "", instruction = "") {
@@ -298,27 +303,46 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     const insert = db.prepare("INSERT INTO documents (id, title, content, created_at) VALUES (?, ?, ?, ?)");
     insert.run(id, cleanTitle, mergedText, createdAt);
 
+    // Persist document segments into document_segments table (no truncation)
+    try {
+      const segments = segmentDocumentText(mergedText, extractedParts[0]?.name?.endsWith(".pptx") ? "slide" : "text");
+      const insertSeg = db.prepare("INSERT INTO document_segments (id, doc_id, segment_index, source_type, raw_text, normalized_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+      for (const seg of segments) {
+        const segId = `seg_${id}_${seg.index}`;
+        insertSeg.run(segId, id, seg.index, seg.sourceType, seg.text, seg.text, createdAt);
+      }
+    } catch (segErr) {
+      console.warn("[tanka] Failed to persist segments:", segErr.message);
+    }
+
     // Intelligent exam sheet & kisi-kisi question detection
     const examResult = await processExamQuestionsIfDetected(id, mergedText, cleanTitle, db, body.goal, body.instruction);
     let finalContent = examResult.newContent || mergedText;
 
-    // If not an exam sheet, ALWAYS synthesize into a cohesive chapter-by-chapter course curriculum
+    // If not an exam sheet, use Nara Pipeline (Two-Pass: Canonical Concepts + Dynamic Outline + Nara Prosa)
     if (!examResult.isExamSheet) {
       try {
-        console.log(`[Curriculum Synthesis] Menyusun kurikulum bab terstruktur untuk: "${cleanTitle}"...`);
-        const structuredCurriculum = await synthesizeCourseCurriculum(
-          mergedText,
-          cleanTitle,
-          body.instruction || (body.goal !== "theory" ? body.goal : ""),
-          body.model || "ag/gemini-3.8-flash-low"
-        );
-        if (structuredCurriculum) {
-          finalContent = structuredCurriculum;
+        console.log(`[Curriculum Pipeline] Menyusun modul dinamis Nara untuk: "${cleanTitle}"...`);
+        const segments = segmentDocumentText(mergedText);
+        const dynamicOutline = await extractConceptsAndOutline(cleanTitle, mergedText, segments, body.model || "ag/gemini-3.8-flash-low");
+        
+        // Persist concepts to document_concepts table
+        if (dynamicOutline && Array.isArray(dynamicOutline.concepts)) {
+          const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+          for (const c of dynamicOutline.concepts) {
+            const conceptId = `${id}_${c.id || Math.random().toString(36).slice(2, 6)}`;
+            insertConcept.run(conceptId, id, c.name, c.definition || "", JSON.stringify(c.prerequisites || []), c.origin || "source", createdAt);
+          }
+        }
+
+        const naraContent = await generateNaraModule(dynamicOutline, mergedText, segments, body.model || "ag/gemini-3.8-flash-low");
+        if (naraContent && naraContent.length > 300) {
+          finalContent = naraContent;
           db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(finalContent, id);
-          console.log(`[Curriculum Synthesis] Sukses menyusun kurikulum (${finalContent.length} karakter).`);
+          console.log(`[Curriculum Pipeline] Sukses menyusun modul Nara (${finalContent.length} karakter).`);
         }
       } catch (e) {
-        console.warn("[tanka] Curriculum synthesis error:", e.message);
+        console.warn("[tanka] Curriculum pipeline error:", e.message);
       }
     }
 

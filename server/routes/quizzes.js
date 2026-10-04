@@ -1,3 +1,4 @@
+const crypto = require("node:crypto");
 const { db } = require("../db");
 const { callRouter, detectRealMath } = require("../ai");
 
@@ -118,11 +119,13 @@ ${weaknessContext}
 ${adaptiveContext}
 
 STANDAR KUALITAS SOAL:
-1. SEBARAN TOPIK: Soal 1 (Level Fondasi Bab Awal), Soal 2–3 (Level Bab Tengah), Soal 4–5 (Level Lanjutan Bab Akhir).
-2. BAHASA PERTANYAAN: Langsung ke sasaran objektif, to-the-point dan alami tanpa basa-basi.
-3. FIELD FORMULA: Kosongkan field "formula": "" kecuali stimulus visual soal memang berupa matriks/grafik persamaan besar. Rumus pengerjaan hanya berada di steps dan explanation.
-4. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E. Huruf yang disebut di explanation dan steps WAJIB sinkron 100% dengan correctIndex.
-5. KUALITAS PEMBAHASAN STEP-BY-STEP: 
+1. TARGET ANALISIS/HOTS: Setiap butir soal harus menuntut pemahaman konsep atau analisis kasus. DILARANG membuat opsi yang saling merujuk (misal: "A dan B benar", "Semua salah", "Pilihan A dan C tepat"). Setiap opsi HARUS berdiri sendiri.
+2. FORMAT TEKS OPSI: DILARANG menyertakan prefix huruf seperti "A.", "B.", "C)" di dalam teks options (tuliskan teks murni pilihannya saja).
+3. SEBARAN TOPIK: Soal 1 (Level Fondasi Bab Awal), Soal 2–3 (Level Bab Tengah), Soal 4–5 (Level Lanjutan Bab Akhir).
+4. BAHASA PERTANYAAN: Langsung ke sasaran objektif, to-the-point dan alami tanpa basa-basi.
+5. FIELD FORMULA: Kosongkan field "formula": "" kecuali stimulus visual soal memang berupa matriks/grafik persamaan besar. Rumus pengerjaan hanya berada di steps dan explanation.
+6. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E. Huruf yang disebut di explanation dan steps WAJIB sinkron 100% dengan correctIndex.
+7. KUALITAS PEMBAHASAN STEP-BY-STEP: 
    - WAJIB JABARKAN KONSEP DASAR / RUMUS UMUM DULU SEBELUM PENGERJAAN! Jika hitungan, tuliskan bentuk baku rumusnya. Jika non-hitungan (teori/sejarah/biologi), tuliskan definisi atau dalil utamanya secara eksplisit.
    - Langkah 1: Identifikasi Fakta/Variabel & Tulis Teori Dasar.
    - Langkah 2: Eksekusi Kasus / Substitusi Angka. JANGAN gunakan tanda titik dua (:) untuk menunjukkan hasil substitusi karena membingungkan (misal salah: "T = (2,3) : x'=x+2"). Gunakan tanda panah (\\rightarrow) atau kata penghubung yang jelas (misal: "maka", "sehingga", "dipetakan menjadi").
@@ -177,16 +180,19 @@ ${doc.content.slice(0, 15000)}
       }
     }
 
-    // Fisher-Yates shuffle
+    // Fisher-Yates shuffle using crypto.randomInt (Zero LLM option bias)
     const letters = ["A", "B", "C", "D", "E"];
     questions.forEach((q) => {
       if (Array.isArray(q.options) && q.options.length >= 2) {
+        // Strip any hardcoded "A. ", "B. ", "C) " prefix from LLM options
+        q.options = q.options.map(opt => typeof opt === "string" ? opt.replace(/^[A-Ea-e][\.\)]\s*/, "").trim() : opt);
+
         const oldCorrectIdx = typeof q.correctIndex === "number" && q.correctIndex >= 0 ? q.correctIndex : 0;
         const originalCorrect = q.options[oldCorrectIdx];
         const oldLetter = letters[oldCorrectIdx] || "A";
 
         for (let i = q.options.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
+          const j = crypto.randomInt(0, i + 1);
           [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
         }
         q.correctIndex = q.options.indexOf(originalCorrect);

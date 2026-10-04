@@ -1,5 +1,6 @@
 const { db } = require("../db");
 const { callRouter, multiSourceAcademicSearch } = require("../ai");
+const { NARA_GLOBAL_PERSONA } = require("../prompts/nara");
 
 async function handleTopicsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
@@ -90,51 +91,43 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
       console.error("Multi-source academic search for topic generate failed:", err);
     }
 
-    const prompt = `Anda adalah seorang tutor/mentor belajar pribadi tingkat elit untuk siswa SMA dan persiapan UTBK.
-Pengguna ingin mempelajari topik berikut secara mendalam, runut, dan bebas dari kebingungan hafalan buta:
-"${topic}"
-Judul Materi: "${formalTitle || topic}"
-Mata Pelajaran: "${subject || "Umum"}"
+    const prompt = `${NARA_GLOBAL_PERSONA}
+
+Pengguna ingin mempelajari topik: "${formalTitle || topic}" (Mata Pelajaran: ${subject || "Umum"}).
+Preferensi/fokus belajar pengguna: ${JSON.stringify(answers)}.
 ${webContext}
 
-PRINSIP PEDAGOGI KOGNITIF & PENYUSUNAN BAB DINAMIS:
-1. JANGAN TERPAKU PADA JUMLAH BAB KAKU: Anda BEBAS MENENTUKAN JUMLAH BAB SECARA OTONOM (misal: 3 bab untuk konsep padat, atau 4-7 bab untuk materi sejarah/teori luas). Pikirkan berapa bab yang paling efektif agar siswa memahami dari fondasi dasar sampai mahir.
-2. JANGAN MULAI DENGAN HAFALAN TANGGAL/RUMUS KERING: Awali bab 1 dengan "peta mental" yang menenangkan: pahami motif aktor, benturan kepentingan, atau kausalitas dasar.
-3. BAHASA MENTOR EMPATIS & TRANSPARAN: Gunakan gaya bahasa yang renyah, jelas, komunikatif, dan lugas (ala tutor privat terbaik).
-4. SETIAP BAB MEMILIKI SUB-KONSEP BERSIH: Gunakan '## Bab [N]: [Nama Bab]' untuk setiap bab utama dan '### [Nama Sub-konsep]' untuk setiap gagasan kunci agar otomatis terpetakan menjadi Mind Map dan Chapter Reader interaktif.
+PRINSIP PEDAGOGI NARA:
+1. JANGAN TERPAKU PADA JUMLAH BAB KAKU: Tentukan jumlah bab secara dinamis (3, 4, atau 5 bab) sesuai kebutuhan materi.
+2. JANGAN MULAI DENGAN HAFALAN KERING: Awali bab 1 dengan situasi masalah nyata atau pertanyaan pemantik yang hangat.
+3. GAYA BERTUTUR PAPAN TULIS: Gunakan kalimat lengkap, mengalir, maksimal 3-4 kalimat per paragraf. Hindari gaya kamus/telegram.
+4. PEMISAHAN MATERI & PENGAYAAN: Jika menyajikan analogi baru atau contoh di luar kurikulum standar, tandai dengan:
+   > 💡 **Insight Nara (Pengayaan):** [Analogi/contoh...]
+5. STRUKTUR BAB BERSIH: Gunakan '## Bab [N]: [Nama Bab]' dan '### [Nama Sub-konsep]' agar otomatis terpetakan menjadi Mind Map dan Chapter Reader.
 
-SUSUNAN WAJIB STRUKTUR MODUL BELAJAR:
-
+SUSUNAN MODUL:
 # ${formalTitle || topic}
+> [Kalimat orientasi singkat yang menenangkan dan memandu pola pikir siswa]
 
-> Kalimat orientasi yang menenangkan dan memandu pola pikir siswa (Contoh: "Kalau tujuanmu belajar untuk memahami dan bisa menjawab soal, jangan mulai dengan menghafal tanggal. Kita pahami dulu alur peristiwanya...").
+## Bab 1: [Fondasi & Pertanyaan Masalah Nyata]
+[Uraian situasi, motif, atau masalah awal]
 
-## Bab 1: [Inti Cerita & Peta Benturan Kepentingan / Fondasi Dasar]
-- Rumuskan inti masalah dalam 1-2 kalimat padat.
-- Bedah pihak-pihak yang terlibat beserta motif/kepentingannya yang bertabrakan (gunakan poin berbendera/ikon jika relevan, misal 🇮🇩 Indonesia vs 🇳🇱 NICA vs 🇬🇧 Sekutu).
-- Jelaskan mengapa benturan tersebut tak terhindarkan.
+## Bab 2: [Mekanisme Inti & Rantai Sebab-Akibat]
+[Uraian bertutur konsep utama, rumus KaTeX jika eksak, dan alur proses]
 
-## Bab 2: [Rantai Kausalitas & Kronologi / Mekanisme Inti]
-- Jelaskan kronologi mengapa peristiwa ini meletus secara bertahap.
-- Bedah insiden pemicu emosional/spesifik di lapangan secara hidup dan faktual (misal: insiden Jalan Bali, penginjakan lencana Merah Putih, dsb).
-
-(Lanjutkan Bab 3, 4, dst sesuai evaluasi pedagogis terbaik Anda untuk mengupas topik secara tuntas).
+(Lanjutkan Bab 3, dst sesuai kedalaman topik)
 
 ## Bab [Terakhir]: Kancing Memori Soal & Panduan Ujian (Exam Mastery)
-- **Peta Alur Kausalitas Sederhana:** Sajikan alur peristiwa menggunakan panah vertikal (A ↓ B ↓ C).
-- **Kancing Memori Soal (Anchor Q&A):** Pasangkan kata kunci ujian dengan jawaban spesifiknya (Misal: "Penyebab langsung?" ➔ Insiden Jalan Bali).
-- **🧠 Cara Menghafalnya:** Rantai mnemonik ringkas 1 baris (A ➔ B ➔ C ➔ D) dan tabel 2-3 tanggal/angka jangkar esensial.
-- **Panduan Menjawab Soal Ujian (HOTS):** Contoh perbandingan jawaban dangkal vs formulasi jawaban analitis berbobot.
+- **Alur Kausalitas Sederhana:** Sajikan alur peristiwa menggunakan panah (A ➔ B ➔ C).
+- **Kancing Memori Soal:** Pasangkan kata kunci ujian dengan konsep jawabannya.
+- **Poin Pengecoh yang Sering Mengecoh:** Bedah salah kaprah siswa.
 
-Penutup Belajar Aktif:
-Tutup dengan kalimat pemantik belajar aktif: "Setelah paham alur dasarnya, buka tab **Uji Feynman** untuk jelaskan kembali dengan bahasamu sendiri, atau uji di tab **Latihan Kuis**!"
-
-Tulis modul secara lengkap, mendalam, dan memuaskan rasa ingin tahu siswa tanpa ada bagian penting yang terpotong.`;
+Tulis modul secara lengkap dan nyaman dibaca siswa SMA.`;
 
     const content = await callRouter([
-      { role: "system", content: "Anda adalah tutor privat elit yang menjelaskan materi pelajaran dengan pendekatan alur kausalitas, bebas hafalan buta, dan tajam untuk menjawab soal ujian." },
+      { role: "system", content: "You are Nara, an empathetic and articulate study tutor who explains concepts from first principles." },
       { role: "user", content: prompt }
-    ], model, 0.3);
+    ], model, 0.25);
 
     const docId = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
     const title = (formalTitle || topic).trim();

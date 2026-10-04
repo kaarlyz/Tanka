@@ -69,6 +69,37 @@ db.exec(`
     name TEXT,
     created_at INTEGER NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS document_segments (
+    id TEXT PRIMARY KEY,
+    doc_id TEXT NOT NULL,
+    segment_index INTEGER NOT NULL,
+    source_type TEXT NOT NULL,
+    raw_text TEXT NOT NULL,
+    normalized_text TEXT,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS document_concepts (
+    id TEXT PRIMARY KEY,
+    doc_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    definition TEXT NOT NULL,
+    prerequisites TEXT,
+    origin TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS learner_events (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    doc_id TEXT NOT NULL,
+    concept_id TEXT,
+    activity_type TEXT NOT NULL,
+    result TEXT NOT NULL,
+    payload TEXT,
+    created_at INTEGER NOT NULL
+  );
 `);
 
 console.log("[tanka-db] Database initialized at:", dbPath);

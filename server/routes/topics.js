@@ -97,60 +97,37 @@ Judul Materi: "${formalTitle || topic}"
 Mata Pelajaran: "${subject || "Umum"}"
 ${webContext}
 
-PRINSIP PEDAGOGI KOGNITIF (WAJIB DIPATUHI):
-1. JANGAN MULAI DENGAN HAFALAN TANGGAL/RUMUS KERING. Mulailah dengan memberikan "peta mental" yang menenangkan pikiran siswa: pahami dulu benturan kepentingan, motif para aktor, atau logika kausalitasnya.
-2. BAHASA MENTOR EMPATIS & TRANSPARAN: Gunakan gaya bahasa yang renyah, jelas, komunikatif, dan lugas (seperti ChatGPT / tutor privat terbaik). Hindari bahasa birokratis atau teks klise yang kaku.
-3. KELENGKAPAN SEJARAH & KURIKULUM: Pastikan fakta penting kurikulum resmi Indonesia (tokoh, lokasi, insiden pemicu, tanggal kunci) tetap tercakup lengkap, namun DISAJIKAN DALAM RANTAI SEBAB-AKIBAT LOGIS, bukan sekadar daftar poin hafalan mati.
+PRINSIP PEDAGOGI KOGNITIF & PENYUSUNAN BAB DINAMIS:
+1. JANGAN TERPAKU PADA JUMLAH BAB KAKU: Anda BEBAS MENENTUKAN JUMLAH BAB SECARA OTONOM (misal: 3 bab untuk konsep padat, atau 4-7 bab untuk materi sejarah/teori luas). Pikirkan berapa bab yang paling efektif agar siswa memahami dari fondasi dasar sampai mahir.
+2. JANGAN MULAI DENGAN HAFALAN TANGGAL/RUMUS KERING: Awali bab 1 dengan "peta mental" yang menenangkan: pahami motif aktor, benturan kepentingan, atau kausalitas dasar.
+3. BAHASA MENTOR EMPATIS & TRANSPARAN: Gunakan gaya bahasa yang renyah, jelas, komunikatif, dan lugas (ala tutor privat terbaik).
+4. SETIAP BAB MEMILIKI SUB-KONSEP BERSIH: Gunakan '## Bab [N]: [Nama Bab]' untuk setiap bab utama dan '### [Nama Sub-konsep]' untuk setiap gagasan kunci agar otomatis terpetakan menjadi Mind Map dan Chapter Reader interaktif.
 
 SUSUNAN WAJIB STRUKTUR MODUL BELAJAR:
 
-### ${formalTitle || topic}
+# ${formalTitle || topic}
 
-Kalimat pembuka: Kalimat orientasi yang menenangkan dan memandu pola pikir siswa (Contoh: "Kalau tujuanmu belajar untuk memahami dan bisa menjawab soal, jangan mulai dengan menghafal tanggal. Kita pahami dulu alur peristiwanya...").
+> Kalimat orientasi yang menenangkan dan memandu pola pikir siswa (Contoh: "Kalau tujuanmu belajar untuk memahami dan bisa menjawab soal, jangan mulai dengan menghafal tanggal. Kita pahami dulu alur peristiwanya...").
 
-#### 1. Inti Cerita & Peta Benturan Kepentingan
+## Bab 1: [Inti Cerita & Peta Benturan Kepentingan / Fondasi Dasar]
 - Rumuskan inti masalah dalam 1-2 kalimat padat.
 - Bedah pihak-pihak yang terlibat beserta motif/kepentingannya yang bertabrakan (gunakan poin berbendera/ikon jika relevan, misal 🇮🇩 Indonesia vs 🇳🇱 NICA vs 🇬🇧 Sekutu).
 - Jelaskan mengapa benturan tersebut tak terhindarkan.
 
-#### 2. Latar Belakang & Rantai Kausalitas (Mengapa Terjadi?)
+## Bab 2: [Rantai Kausalitas & Kronologi / Mekanisme Inti]
 - Jelaskan kronologi mengapa peristiwa ini meletus secara bertahap.
 - Bedah insiden pemicu emosional/spesifik di lapangan secara hidup dan faktual (misal: insiden Jalan Bali, penginjakan lencana Merah Putih, dsb).
 
-#### 3. Bedah Asal-Usul Nama & Jebakan Konseptual (Common Pitfalls)
-- Soroti bagian yang PALING SERING MEMBUAT SISWA SALAH / TERKECOH di soal ujian.
-- Jelaskan asal-usul istilah/nama konsepnya (misal: "Apa itu Medan Area? Medan Area bukan sekadar nama pertempuran, melainkan papan batas Fixed Boundaries...").
-- Koreksi penyederhanaan yang keliru (misal: "Jangan menyederhanakan menjadi Indonesia vs Inggris saja, karena...").
+(Lanjutkan Bab 3, 4, dst sesuai evaluasi pedagogis terbaik Anda untuk mengupas topik secara tuntas).
 
-#### 4. Peta Alur Kausalitas Sederhana (Vertical Pipeline)
-Sajikan alur peristiwa atau logika tahap demi tahap menggunakan panah vertikal sederhana agar mudah dipotret secara visual ke dalam memori jangka panjang:
-[Titik Awal]
-↓
-[Peristiwa 1]
-↓
-[Eskalasi / Pemicu]
-↓
-[Puncak Perlawanan]
-↓
-[Dampak / Hasil Akhir]
-
-#### 5. Kancing Memori Soal (Anchor Q&A)
-Pasangkan langsung kata kunci soal ujian yang paling sering muncul dengan jawaban spesifiknya:
-- Kalau ditanya "apa penyebab langsungnya?" ➔ Ingat: [Pemicu spesifik]
-- Kalau ditanya "apa yang menjadi tanda khas/pembedanya?" ➔ Ingat: [Ciri unik/pembeda]
-
-#### 6. 🧠 Cara Menghafalnya (Rantai Kausalitas 1 Baris & Tanggal Jangkar)
-- **Rantai 1 Baris:** Tuliskan rantai mnemonik ringkas: A ➔ B ➔ C ➔ D ➔ E
-- **Tanggal/Angka Kunci (Maksimal 2-3 Saja):** Sajikan tabel mini 2-3 baris tanggal paling menentukan, buang tanggal sampingan yang membebani memori.
-
-#### 7. Panduan Menjawab Soal Ujian (Actionable Exam Mastery)
-Tunjukkan cara mentransfer pemahaman ini saat menjawab soal ujian sekolah maupun soal penalaran analitis/HOTS:
-- Berikan contoh pertanyaan ujian tipikal: "Kalau nanti keluar soal: '...?'"
-- Contoh jawaban lemah/dangkal yang sering ditulis siswa (dan mengapa itu kurang tepat).
-- Contoh formulasi jawaban kuat & berbobot ilmiah (yang menunjukkan analisis sebab-akibat komprehensif).
+## Bab [Terakhir]: Kancing Memori Soal & Panduan Ujian (Exam Mastery)
+- **Peta Alur Kausalitas Sederhana:** Sajikan alur peristiwa menggunakan panah vertikal (A ↓ B ↓ C).
+- **Kancing Memori Soal (Anchor Q&A):** Pasangkan kata kunci ujian dengan jawaban spesifiknya (Misal: "Penyebab langsung?" ➔ Insiden Jalan Bali).
+- **🧠 Cara Menghafalnya:** Rantai mnemonik ringkas 1 baris (A ➔ B ➔ C ➔ D) dan tabel 2-3 tanggal/angka jangkar esensial.
+- **Panduan Menjawab Soal Ujian (HOTS):** Contoh perbandingan jawaban dangkal vs formulasi jawaban analitis berbobot.
 
 Penutup Belajar Aktif:
-Tutup dengan kalimat pemantik belajar aktif ke fitur Tanka: "Setelah paham alur dasarnya, buka tab **Uji Feynman** untuk jelaskan kembali dengan bahasamu sendiri, atau uji di tab **Latihan Kuis**!"
+Tutup dengan kalimat pemantik belajar aktif: "Setelah paham alur dasarnya, buka tab **Uji Feynman** untuk jelaskan kembali dengan bahasamu sendiri, atau uji di tab **Latihan Kuis**!"
 
 Tulis modul secara lengkap, mendalam, dan memuaskan rasa ingin tahu siswa tanpa ada bagian penting yang terpotong.`;
 

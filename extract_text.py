@@ -8,7 +8,29 @@ import xml.etree.ElementTree as ET
 def extract_pdf(file_path):
     try:
         res = subprocess.run(["pdftotext", file_path, "-"], capture_output=True, text=True, check=True)
-        return res.stdout.strip()
+        text = res.stdout.strip()
+        if text:
+            return text
+        
+        # Fallback OCR if PDF is scanned or flattened image (e.g. Print To PDF)
+        import tempfile
+        import glob
+        with tempfile.TemporaryDirectory() as tmpdir:
+            prefix = os.path.join(tmpdir, "page")
+            subprocess.run(["pdftoppm", "-png", "-r", "150", file_path, prefix], check=True, capture_output=True)
+            page_pngs = sorted(glob.glob(os.path.join(tmpdir, "page-*.png")))
+            ocr_texts = []
+            for png in page_pngs:
+                t_res = subprocess.run(
+                    ["tesseract", png, "stdout", "-l", "ind+eng", "--oem", "1"],
+                    capture_output=True,
+                    text=True
+                )
+                if t_res.stdout and t_res.stdout.strip():
+                    ocr_texts.append(t_res.stdout.strip())
+            if ocr_texts:
+                return "\n\n--- Halaman Berikutnya ---\n\n".join(ocr_texts)
+        return ""
     except Exception as e:
         return f"[Error ekstrak PDF: {e}]"
 

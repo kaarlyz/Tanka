@@ -1,3 +1,23 @@
+const fs = require("node:fs");
+const path = require("node:path");
+
+// Automatically load .env if process.env.ROUTER_KEY is not yet populated
+if (!process.env.ROUTER_KEY) {
+  const envPath = path.join(__dirname, "..", ".env");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf8");
+    for (const line of envContent.split("\n")) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        let value = match[2] || "";
+        if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
 const ROUTER_URL = process.env.ROUTER_URL || "http://127.0.0.1:20128/v1";
 const ROUTER_KEY = process.env.ROUTER_KEY || "";
 

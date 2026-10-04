@@ -139,39 +139,41 @@ MASALAH YANG HARUS DISELESAIKAN:
 Teks sumber di atas seringkali berupa potongan slide lepas, bullet point mentah, atau catatan yang terputus-putus. Pengguna TIDAK INGIN membaca potongan teks mentah atau tulisan "--- Slide X ---". Pengguna menginginkan SATU MODUL BELAJAR TERPADU yang disusun secara pedagogis dan saling menyambung bab demi bab.
 
 TUGAS ANDA:
-Rombak dan susun ulang seluruh materi mentah di atas menjadi SATU MODUL PEMBELAJARAN LENGKAP & RUNTUT dengan pembagian 4 hingga 6 BAB (Chapters) terstruktur.
+Rombak dan susun ulang seluruh materi mentah di atas menjadi SATU MODUL PEMBELAJARAN LENGKAP & RUNTUT dengan pembagian bab-bab (Chapters) terstruktur secara dinamis.
 
-ATURAN STRUKTUR MODUL WAJIB (FORMAT MARKDOWN):
+PRINSIP PENYUSUNAN BAB OTONOM & DINAMIS:
+1. JANGAN TERPAKU PADA JUMLAH BAB YANG KAKU: Anda BEBAS MENENTUKAN JUMLAH BAB SECARA OTONOM berdasarkan keluasan dan kedalaman materi sumber. Pikirkan sendiri berapa bab yang paling efektif agar siswa dapat memahami materi ini dari pemahaman dasar (fondasi nol) sampai tuntas dan menguasai ujian (bisa 3, 4, 5, 6, 7, atau 8 bab sesuai kebutuhan riil materi).
+2. TAHAP PEMAHAMAN KOGNITIF YANG MENGALIR:
+   - Mulai dari bab fondasi: petakan konsep dasar, latar belakang masalah, atau benturan kepentingan awal.
+   - Lanjutkan dengan bab-bab inti: mekanisme proses, periodisasi/klasifikasi, analisis komparasi, dinamika tokoh/rumus.
+   - Tutup dengan bab pemantapan: sintesis rantai kausalitas, panduan menjawab soal ujian, dan koreksi salah kaprah (miskonsepsi) siswa.
+3. KONEKTIVITAS ANTAR-BAB: Setiap bab harus menyambung dan melengkapi bab sebelumnya. Jangan sampai ada materi yang melompat tanpa konteks.
+
+FORMAT STRUKTUR OUTPUT (MARKDOWN):
 
 # ${title}
 
-> [1-2 kalimat orientasi / pengantar ringkas tentang esensi materi ini dan gambaran besar apa yang akan dipelajari siswa].
+> [1-2 kalimat orientasi / pengantar ringkas tentang gambaran besar apa yang akan dipelajari siswa].
 
 ## Bab 1: [Judul Bab Fondasi & Latar Belakang Konsep]
-- Jelaskan konsep dasar secara mengalir dan ramah pemahaman.
-- Gunakan sub-heading '### [Nama Sub-konsep]' untuk memecah poin-poin utama agar mind map dapat mengenali strukturnya dengan jelas.
-- Jelaskan istilah-istilah kunci dan analogi konkret.
+[Penjelasan konsep dasar mengalir, ramah pemula]
+### [Sub-konsep 1A]
+[Uraian butir konsep, kata kunci tebal, dan analogi konkret]
+### [Sub-konsep 1B]
+...
 
-## Bab 2: [Judul Bab Karakteristik / Ragam Wilayah / Inti Materi]
-- Bedah pembagian wilayah, karakteristik karya, atau tahapan-tahapan penting secara komprehensif.
-- Gunakan sub-heading '### [Nama Sub-konsep]' dan sajikan poin-poin analisis yang mendalam.
-- Buatkan tabel perbandingan yang rapi jika ada komparasi antar kategori/wilayah.
+## Bab 2: [Judul Bab Lanjutan Sesuai Kebutuhan Materi]
+...
 
-## Bab 3: [Judul Bab Transformasi / Modernisasi / Analisis Mendalam]
-- Jelaskan proses perubahan, tokoh-tokoh penting, revolusi teknik, atau kausalitas dampaknya.
-- Sambungkan benang merah dari bab sebelumnya (misal dari era klasik/tradisi menuju era modern/kontemporer).
+(Lanjutkan hingga Bab N sesuai evaluasi pedagogis terbaik Anda. Setiap bab diawali dengan '## Bab [N]: [Nama Bab]' dan sub-topik menggunakan '### [Nama Sub-konsep]' agar otomatis terpetakan menjadi Mind Map dan Chapter Reader interaktif).
 
-## Bab 4: [Judul Bab Sintesis, Tokoh Kunci & Relevansi Kontemporer]
-- Bahas tokoh-tokoh pelopor, gerakan seni/desain, atau penerapan mutakhir.
-- Jelaskan bagaimana inovasi tersebut mengubah paradigma dan cara pandang masyarakat.
-
-## Bab 5: [Judul Bab Rantai Kausalitas & Jebakan Ujian (Exam Mastery)]
+## Bab [Terakhir]: Rantai Kausalitas & Panduan Ujian (Exam Mastery)
 - **Rantai Kausalitas 1 Baris:** Sajikan alur ringkas menggunakan panah (misal: A ➔ B ➔ C ➔ D).
 - **Kancing Memori Soal:** Pasangkan kata kunci pertanyaan ujian yang sering keluar dengan jawaban analisisnya.
 - **Poin Kritis yang Sering Mengecoh:** Bedah salah kaprah siswa dalam memahami materi ini.
 
 PANDUAN GAYA PENULISAN:
-1. Hubungkan antar-bab secara mulus. Jangan ada format slide mentah ("--- Slide 1 ---", "LKONSEP DASAR", dsb).
+1. Hubungkan antar-bab secara mulus. Bersihkan semua noise format slide mentah ("--- Slide 1 ---", "LKONSEP DASAR", dsb).
 2. Tuliskan teks secara utuh, kaya wawasan, dan tidak setengah-setengah.
 3. Gunakan heading tingkat 2 ('## Bab ...') untuk setiap bab utama dan heading tingkat 3 ('### ...') untuk setiap sub-topik agar otomatis terpetakan menjadi Mind Map dan Chapter Reader yang sempurna.`;
 
@@ -236,14 +238,16 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
         }
       }
 
-      if (!text) {
+      // If AI vision failed, empty, or file is document (PDF, DOCX, PPTX, TXT)
+      if (!text || text.trim().length === 0) {
         const tmpFilePath = path.join(scratchDir, `upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
         try {
           fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
-          text = execFileSync(scriptPath, [tmpFilePath], {
+          const scriptOutput = execFileSync("python3", [scriptPath, tmpFilePath], {
             encoding: "utf8",
             maxBuffer: 25 * 1024 * 1024
           }).trim();
+          text = scriptOutput;
         } catch (err) {
           console.error(`Gagal ekstrak ${f.fileName}:`, err.message);
         } finally {
@@ -253,9 +257,18 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
         }
       }
 
-      if (text && !text.startsWith("[Error OCR Gambar:")) {
-        extractedParts.push({ name: f.fileName, text });
+      const isErrorText = !text ||
+        text.startsWith("[Error OCR Gambar:") ||
+        text.startsWith("[Error ekstrak PDF:") ||
+        text.startsWith("[Error ekstrak DOCX:") ||
+        text.startsWith("[Error ekstrak PPTX:") ||
+        text.trim().length === 0;
+
+      if (!isErrorText) {
+        extractedParts.push({ name: f.fileName, text: text.trim() });
         fileNames.push(path.basename(f.fileName, ext).replace(/[_-]/g, " ").trim());
+      } else {
+        console.warn(`[Upload Warning] Teks dari ${f.fileName} kosong atau menghasilkan error: ${text.slice(0, 100)}`);
       }
     }
 

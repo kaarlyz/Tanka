@@ -331,10 +331,10 @@ Jangan sertakan teks apapun selain JSON murni.`;
       }
       const newQuiz = JSON.parse(cleanJson);
 
-      // We need to fetch the existing document, parse its quizzes, replace it, and save.
-      // Wait, we just overwrite the quizzes array for that doc.
-      // But we need to keep the structure. Let's assume newQuiz is the new array.
-      db.prepare("UPDATE documents SET quizzes = ? WHERE id = ?").run(JSON.stringify(newQuiz), docId);
+      const quizId = "quiz_" + Date.now();
+      db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")
+        .run(quizId, docId, JSON.stringify(newQuiz), Date.now());
+
       return sendJSON(res, { success: true, quizzes: newQuiz });
     } catch (err) {
       return sendJSON(res, { error: "Gagal menyesuaikan kuis: " + err.message }, 500);

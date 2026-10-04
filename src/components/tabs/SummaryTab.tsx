@@ -235,12 +235,16 @@ export function SummaryTab({
                   </div>
                 </div>
 
-                {isGeneratingSummary ? (
+                {isGeneratingSummary || isTailoring ? (
                   <AIProcessLoader
-                    title="Menyusun Rangkuman Komprehensif"
-                    subtitle="AI merangkum materi secara sistematis tanpa menghilangkan rumus KaTeX dan fakta esensial."
-                    badge="Intisari Belajar"
-                    steps={[
+                    title={isTailoring ? "Menyesuaikan Rangkuman" : "Menyusun Rangkuman Komprehensif"}
+                    subtitle={isTailoring ? "AI merevisi rangkuman berdasarkan instruksi kustom Anda." : "AI merangkum materi secara sistematis tanpa menghilangkan rumus KaTeX dan fakta esensial."}
+                    badge={isTailoring ? "AI Tailoring" : "Intisari Belajar"}
+                    steps={isTailoring ? [
+                      { label: "Menganalisis Instruksi Anda", detail: "Membaca penyesuaian gaya dan konteks saat ini." },
+                      { label: "Merombak Paragraf", detail: "Menerapkan analogi, penyederhanaan, atau bahasa baru." },
+                      { label: "Memvalidasi Hasil", detail: "Memastikan format Markdown dan struktur materi aman." }
+                    ] : [
                       { label: "Memetakan Intisari Materi", detail: "Mengelompokkan ide utama vs detail pendukung." },
                       { label: "Menata Hierarki Konsep Terstruktur", detail: "Menyusun poin-poin penjelasan logis dan glosarium istilah." },
                       { label: "Mengekstrak Kaidah & Rumus Kunci", detail: "Menyorot formula esensial dan pola jebakan soal ujian." }

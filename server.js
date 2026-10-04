@@ -50,6 +50,7 @@ function sendJSON(res, data, statusCode = 200) {
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   });
   res.end(JSON.stringify(payload));
+  return true;
 }
 
 // Helper to parse JSON body

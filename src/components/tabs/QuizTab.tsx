@@ -375,12 +375,17 @@ export function QuizTab({
                   </div>
                 )}
 
-                {isGeneratingQuiz ? (
+                {isGeneratingQuiz || isTailoring ? (
                   <AIProcessLoader
-                    title="Menyusun Paket Latihan Soal HOTS"
-                    subtitle="AI menganalisis konsep kunci dan menyusun soal penalaran bertingkat."
-                    badge="Pembuat Soal AI"
-                    steps={[
+                    title={isTailoring ? "Menyesuaikan Latihan Soal" : "Menyusun Paket Latihan Soal HOTS"}
+                    subtitle={isTailoring ? "AI merevisi dan menyesuaikan daftar pertanyaan dan pengecoh berdasarkan permintaan Anda." : "AI menganalisis konsep kunci dan menyusun soal penalaran bertingkat."}
+                    badge={isTailoring ? "AI Tailoring" : "Pembuat Soal AI"}
+                    steps={isTailoring ? [
+                      { label: "Membaca Instruksi Baru", detail: "Menganalisis permintaan penyesuaian (tingkat kesulitan, jenis soal)." },
+                      { label: "Menyusun Ulang Pertanyaan", detail: "Mengganti atau menyesuaikan pertanyaan agar sesuai target." },
+                      { label: "Membuat Pengecoh & Kunci Baru", detail: "Menyesuaikan opsi jawaban dan penjelasan." },
+                      { label: "Memvalidasi JSON", detail: "Memastikan format kuis tetap interaktif dan bisa dimainkan." }
+                    ] : [
                       { label: "Membaca Fakta Kunci & Teori", detail: "Mengekstrak konsep esensial, tanggal, rumus, dan hubungan sebab-akibat." },
                       { label: "Merancang Skenario Soal Kasus", detail: "Menyusun stimulus kontekstual dan pertanyaan bertingkat HOTS." },
                       { label: "Membuat Opsi Pengecoh Cerdas", detail: "Menguji penalaran siswa agar tidak terjebak hafalan buta." },

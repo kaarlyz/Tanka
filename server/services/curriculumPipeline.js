@@ -89,7 +89,10 @@ ${segmentOverview}
 """
 
 ATURAN STRUKTUR & KONTEN:
-1. JANGAN memaksakan harus 5 bab jika materinya ringkas (boleh 2, 3, atau 4 bab sesuai kebutuhan alami materi).
+1. JUMLAH BAB HARUS PROPORSIONAL DENGAN KONSEP (OTONOM & FLEKSIBEL):
+   - Jika materi ringkas (hanya 2-3 konsep), susun TEPAT 2 atau 3 bab saja.
+   - JANGAN memaksakan harus 5 bab jika materinya sempit. DILARANG membuat bab fiktif untuk memenuhi kuota.
+   - Setiap bab dalam array "chapters" WAJIB memiliki minimal 1 keyConceptId ("keyConceptIds": ["c1"]). DILARANG membuat bab tanpa konsep.
 2. Hanya cantumkan konsep kunci yang BENAR-BENAR ada di dalam teks sumber (origin: "source").
 3. DILARANG MENCIPTAKAN RUMUS FIKTIF. Jika bukan materi eksak/hitung (seperti Sosiologi, Sejarah), kosongkan field rumus.
 4. Jika ada konsep penting dari kurikulum nasional yang relevan tapi belum dibahas teks, masukkan sebagai pengayaan (origin: "ai_enrichment").
@@ -176,7 +179,7 @@ ${sourceContext.slice(0, 24000)}
 PETUNJUK PENULISAN:
 1. Mulai dengan judul markdown: # ${outline.title}
 2. Tuliskan ringkasan eksekutif dalam blockquote: > [Ringkasan singkat bertutur]
-3. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab). JANGAN tambah bab yang tidak ada di rencana.
+3. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab). DILARANG MENAMBAH BAB DI LUAR RENCANA. Jika rencana bab hanya memiliki 2 atau 3 bab, hasil akhir WAJIB TEPAT 2 ATAU 3 BAB. Dilarang menambahkan bab ujian / kancing memori mandiri jika tidak ada di dalam rencana bab.
 4. KONTRAK STRUKTUR SUB-BAB (WAJIB DIPATUHI PER KONSEP):
    Setiap sub-bab (### [Nama Konsep]) WAJIB memuat urutan ini:
    a. Situasi / Intuisi konkret sehari-hari (1-2 paragraf pendek).

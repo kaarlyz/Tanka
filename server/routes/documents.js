@@ -366,7 +366,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     });
   }
 
-  // 2b. POST /api/documents/:id/restructure - re-synthesize document into chapter-by-chapter curriculum
+  // 2b. POST /api/documents/:id/restructure - re-synthesize document into chapter-by-chapter curriculum via Two-Pass Pipeline
   const restructureMatch = pathname.match(/^\/api\/documents\/([^/]+)\/restructure$/);
   if (req.method === "POST" && restructureMatch) {
     const docId = restructureMatch[1];
@@ -376,20 +376,57 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     }
     const body = await getBody(req);
     const model = body.model || "ag/gemini-3.8-flash-low";
-    const instruction = body.instruction || "";
 
-    console.log(`[Curriculum Synthesis] Restructuring doc ${docId} ("${doc.title}")...`);
-    const structuredCurriculum = await synthesizeCourseCurriculum(doc.content, doc.title, instruction, model);
+    console.log(`[Curriculum Synthesis] Restructuring doc ${docId} ("${doc.title}") via Two-Pass Pipeline...`);
+
+    const { segmentDocumentText, extractConceptsAndOutline, generateNaraModule } = require("../services/curriculumPipeline");
+
+    // 1. Get or create source segments
+    let segments = db.prepare("SELECT id, segment_index as [index], source_type as sourceType, raw_text as text FROM document_segments WHERE doc_id = ? ORDER BY segment_index ASC").all(docId);
+    if (!segments || segments.length === 0) {
+      const rawSegs = segmentDocumentText(doc.content, "source_document");
+      const insertSeg = db.prepare("INSERT INTO document_segments (id, doc_id, segment_index, source_type, raw_text, normalized_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+      segments = [];
+      rawSegs.forEach(seg => {
+        const segId = `seg_${docId}_${seg.index}`;
+        insertSeg.run(segId, docId, seg.index, "source_document", seg.text, seg.text, Date.now());
+        segments.push({ id: segId, index: seg.index, text: seg.text, sourceType: "source_document" });
+      });
+    }
+
+    // 2. Pass 1: Extract concepts and autonomous dynamic outline strictly bound to actual concepts
+    const outline = await extractConceptsAndOutline(doc.title, doc.content, segments, model);
+
+    // Sync concepts to database
+    if (outline && Array.isArray(outline.concepts)) {
+      db.prepare("DELETE FROM document_concepts WHERE doc_id = ?").run(docId);
+      const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+      for (const c of outline.concepts) {
+        const conceptId = `${docId}_${c.id || Math.random().toString(36).slice(2, 6)}`;
+        const def = c.definisi_baku || c.definition || "";
+        const extra = JSON.stringify({
+          rumus: c.rumus || "",
+          tokoh: c.tokoh || [],
+          salah_kaprah: c.salah_kaprah || "",
+          sumber_ref: c.sumber_ref || "source_document"
+        });
+        insertConcept.run(conceptId, docId, c.name, def, extra, c.origin || "source", Date.now());
+      }
+    }
+
+    // 3. Pass 2: Generate Nara module strictly respecting outline chapters
+    const structuredCurriculum = await generateNaraModule(outline, doc.content, segments, model);
     if (!structuredCurriculum) {
       return sendJSON(res, { error: "Gagal menyusun ulang kurikulum materi" }, 500);
     }
 
-    db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(structuredCurriculum, docId);
+    db.prepare("UPDATE documents SET content = ?, summary = ? WHERE id = ?").run(structuredCurriculum, outline.executiveSummary || "", docId);
     return sendJSON(res, {
       success: true,
       id: docId,
       title: doc.title,
-      content: structuredCurriculum
+      content: structuredCurriculum,
+      chapterCount: (outline.chapters || []).length
     });
   }
 

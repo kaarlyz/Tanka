@@ -36,8 +36,9 @@ export function sanitizeMathMarkdown(md: string): string {
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
 
-    // Toggle block math state
-    if (line.trim().startsWith("$$")) {
+    // Toggle block math state only if line has an odd number of $$
+    const dMatches = line.match(/\$\$/g);
+    if (dMatches && dMatches.length % 2 === 1) {
       inMathBlock = !inMathBlock;
     }
 

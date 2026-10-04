@@ -196,7 +196,8 @@ export function MaterialTab({
     // Merge introductory snippet if first chapter is not a "Bab" heading and is short overview
     if (list.length > 1 && !/^Bab\s+\d+/i.test(list[0].title) && list[0].content.length < 800) {
       const intro = list.shift()!;
-      list[0].content = intro.content + "\n\n---\n\n" + list[0].content;
+      const cleanIntro = intro.content.replace(/\n*---\s*$/, "").trim();
+      list[0].content = cleanIntro ? cleanIntro + "\n\n---\n\n" + list[0].content : list[0].content;
       list.forEach((c, idx) => { c.id = idx + 1; });
     }
 

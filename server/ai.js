@@ -70,7 +70,7 @@ async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperatu
   }
 }
 
-async function search9Router(query) {
+async function search9Router(query, maxResults = 8) {
   try {
     const res = await fetch(`${ROUTER_URL}/search`, {
       method: "POST",
@@ -78,12 +78,12 @@ async function search9Router(query) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${ROUTER_KEY}`,
       },
-      body: JSON.stringify({ query, max_results: 4 }),
+      body: JSON.stringify({ query, max_results: maxResults }),
     });
     if (res.ok) {
       const data = await res.json();
       if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-        return data.results.map((r, i) => `${i + 1}. [${r.title}](${r.url}): ${r.snippet}`).join("\n\n");
+        return data.results.map((r, i) => `${i + 1}. **[${r.title}](${r.url})**\n${r.snippet || r.content || ""}`).join("\n\n");
       }
     }
   } catch (err) {}
@@ -131,7 +131,7 @@ async function multiSourceAcademicSearch(topic, subject = "") {
 
   // 1. Wikipedia Indonesia
   try {
-    const sUrl = `https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanTopic)}&srlimit=4&format=json`;
+    const sUrl = `https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanTopic)}&srlimit=8&format=json`;
     const sRes = await fetch(sUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
     if (sRes.ok) {
       const sData = await sRes.json();
@@ -140,14 +140,14 @@ async function multiSourceAcademicSearch(topic, subject = "") {
         .filter(h => h.score > 0)
         .sort((a, b) => b.score - a.score);
 
-      for (const h of hits.slice(0, 2)) {
+      for (const h of hits.slice(0, 4)) {
         const extUrl = `https://id.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(h.title)}&format=json`;
         const extRes = await fetch(extUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
         if (extRes.ok) {
           const extData = await extRes.json();
           const page = Object.values(extData.query?.pages || {})[0];
           if (page?.extract && page.extract.length > 50 && !findings.encyclopedia.some(e => e.title === page.title)) {
-            findings.encyclopedia.push({ title: page.title, snippet: page.extract.slice(0, 3500) });
+            findings.encyclopedia.push({ title: page.title, snippet: page.extract.slice(0, 8000) });
           }
         }
       }
@@ -156,7 +156,7 @@ async function multiSourceAcademicSearch(topic, subject = "") {
 
   // 2. Wikibooks Indonesia
   try {
-    const sUrl = `https://id.wikibooks.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&srlimit=3&format=json`;
+    const sUrl = `https://id.wikibooks.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&srlimit=6&format=json`;
     const sRes = await fetch(sUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
     if (sRes.ok) {
       const sData = await sRes.json();
@@ -165,14 +165,14 @@ async function multiSourceAcademicSearch(topic, subject = "") {
         .filter(h => h.score > 0)
         .sort((a, b) => b.score - a.score);
 
-      for (const h of hits.slice(0, 1)) {
+      for (const h of hits.slice(0, 3)) {
         const extUrl = `https://id.wikibooks.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(h.title)}&format=json`;
         const extRes = await fetch(extUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
         if (extRes.ok) {
           const extData = await extRes.json();
           const page = Object.values(extData.query?.pages || {})[0];
           if (page?.extract && page.extract.length > 50 && !findings.textbook.some(t => t.title === page.title)) {
-            findings.textbook.push({ title: page.title, snippet: page.extract.slice(0, 2500) });
+            findings.textbook.push({ title: page.title, snippet: page.extract.slice(0, 6000) });
           }
         }
       }
@@ -181,14 +181,14 @@ async function multiSourceAcademicSearch(topic, subject = "") {
 
   // 3. CrossRef Open Academic API
   try {
-    const url = `https://api.crossref.org/works?query=${encodeURIComponent(`${cleanTopic} Kurikulum Merdeka SMA ${cleanSubject}`.trim())}&rows=3&select=title,abstract`;
+    const url = `https://api.crossref.org/works?query=${encodeURIComponent(`${cleanTopic} ${cleanSubject}`.trim())}&rows=5&select=title,abstract`;
     const res = await fetch(url, { headers: { "User-Agent": "TankaAcademicBot/1.0 (mailto:study@tanka.app)" } });
     if (res.ok) {
       const data = await res.json();
       const items = data.message?.items || [];
       for (const it of items) {
         const title = it.title?.[0];
-        const snippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 500) : "";
+        const snippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 1500) : "";
         if (title && !findings.curriculumLiterature.some(c => c.title === title)) {
           findings.curriculumLiterature.push({ title, snippet });
         }
@@ -227,7 +227,7 @@ async function multiSourceAcademicSearch(topic, subject = "") {
     }
 
     const sortedArticles = Array.from(rArticles.values()).sort((a, b) => b.score - a.score);
-    for (const art of sortedArticles.slice(0, 2)) {
+    for (const art of sortedArticles.slice(0, 3)) {
       try {
         const artRes = await fetch(art.url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } });
         if (artRes.ok) {
@@ -241,24 +241,26 @@ async function multiSourceAcademicSearch(topic, subject = "") {
             .filter(p => p.length > 25 && 
                          !p.includes("minutes read") && 
                          !p.includes("Download") && 
-                         !p.includes("Copyright") &&
+                         !p.includes("Copyright") && 
                          !p.includes("document.querySelector") &&
                          !p.includes("gtm.start"));
-          const fullBody = paras.slice(0, 22).join("\n\n");
+          const fullBody = paras.slice(0, 30).join("\n\n");
           if (fullBody.length > 80) {
-            findings.ruangguru.push({ title: art.title, url: art.url, snippet: fullBody.slice(0, 3500) });
+            findings.ruangguru.push({ title: art.title, url: art.url, snippet: fullBody.slice(0, 6000) });
           }
         }
       } catch {}
     }
   } catch (err) {}
 
-  // 5. 9Router Search
+  // 5. 9Router Search (Deep Web Search - Free, Unrestricted Queries)
   try {
-    const res9 = await search9Router(`${cleanTopic} ${cleanSubject} silabus SMA kurikulum merdeka`);
-    if (res9) {
-      findings.web.push(res9);
-    }
+    const [resRaw, resDeep] = await Promise.all([
+      search9Router(cleanTopic, 8),
+      search9Router(`${cleanTopic} ${cleanSubject} konsep materi penjelasan lengkap`, 8)
+    ]);
+    if (resRaw) findings.web.push(resRaw);
+    if (resDeep && resDeep !== resRaw) findings.web.push(resDeep);
   } catch (err) {}
 
   let bundle = "";

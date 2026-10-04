@@ -474,30 +474,32 @@ Format keluaran WAJIB berupa JSON array valid MURNI tanpa markdown wrapping (tan
       webContext = `\nHASIL PENELUSURAN REFERENSI AKADEMIK & KURIKULUM MULTI-SUMBER:\n${webFindings}\n\n`;
     }
 
-    const prompt = `Anda adalah asisten riset dan pengayaan materi pembelajaran komprehensif.
+    const prompt = `Anda adalah asisten riset dan pengayaan materi pembelajaran tingkat elit.
 Topik Utama Dokumen: "${doc.title}"
-Instruksi Pengayaan: "${focusTopic || "Lengkapi konsep-konsep kunci yang belum mendalam, berikan contoh dunia nyata, dan prediksi poin ujian penting."}"
+Instruksi / Fokus Khusus Pengguna: "${focusTopic || "Perluas materi ini secara maksimal: lengkapi konsep-konsep kunci yang belum mendalam, berikan contoh dunia nyata, eksplorasi teori/variasi, dan bedah pola soal ujian."}"
+
 ${webContext}
+
 Isi Dokumen Sumber Saat Ini:
 """
-${doc.content.slice(0, 15000)}
+${doc.content.slice(0, 25000)}
 """
 
-Tugas Anda: Susun modul "Pengayaan Materi & Referensi Tambahan" untuk menyempurnakan dokumen di atas agar pembelajar mendapatkan pemahaman yang 100% tuntas dan siap menghadapi ujian.
-Struktur modul suplemen:
-1. **Latar Belakang Konsep & Penerapan Nyata**: Mengapa materi ini penting dan bagaimana analogi konkretnya di kehidupan nyata.
-2. **Poin-Poin Kunci yang Perlu Diperdalam**: Konsep, klasifikasi, atau aturan yang belum dibahas mendalam di berkas asli.
-3. **2 Contoh Soal Terapan & Pembahasan**: Soal kontekstual yang menguji pemahaman esensial.
-4. **Glosarium Istilah Tambahan**: 3-5 istilah teknis yang sering keluar di literatur atau ujian.
+PRINSIP RISET & PENGAYAAN MAKSIMAL (BEBAS BATASAN):
+1. EKSPLORASI BEBAS & MENDALAM: Jangan membatasi panjang tulisan, jangan gunakan ringkasan dangkal. Jelaskan setiap konsep, variasi fenomena, data historis/eksak, serta bukti penerapannya secara komprehensif sampai tuntas.
+2. INTEGRASI BAB & SUB-KONSEP TERSTRUKTUR:
+   Format suplemen pengayaan ini ke dalam bab-bab baru terstruktur (misal: '## Bab Pengayaan: [Judul Pengayaan Mendalam]') dan gunakan sub-heading '### [Nama Sub-konsep]' untuk setiap gagasan kunci agar otomatis terintegrasi ke dalam Mind Map dan Chapter Reader Tanka.
+3. KAYA CONTOH NYATA & BEDAH SOAL HOTS:
+   Sajikan studi kasus konkret, analogi yang mencerahkan, komparasi tabel, serta bedah soal penalaran ujian tingkat tinggi (HOTS) beserta analisis langkah pemecahannya.
 
-Tulis dalam Bahasa Indonesia yang lugas, padat, dan terstruktur rapi dengan Markdown. Dilarang mengulang teks yang sudah jelas di atas, fokus HANYA pada materi tambahan bernilai tinggi.`;
+Tulis dalam Bahasa Indonesia yang mengalir, komunikatif, dan kaya wawasan ilmiah.`;
 
     const enrichmentText = await callRouter([
-      { role: "system", content: "Anda adalah pakar riset kurikulum yang menyusun suplemen materi ajar komprehensif." },
+      { role: "system", content: "Anda adalah pakar riset kurikulum dan mentor akademik yang memperkaya materi belajar secara mendalam, luas, dan tanpa pembatasan kata." },
       { role: "user", content: prompt }
     ], model, 0.3);
 
-    const updatedContent = doc.content + "\n\n\n# PENGAYAAN MATERI & REFERENSI TAMBAHAN (AI SEARCH)\n\n" + enrichmentText.trim();
+    const updatedContent = doc.content + "\n\n---\n\n" + enrichmentText.trim();
     db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(updatedContent, docId);
 
     return sendJSON(res, {

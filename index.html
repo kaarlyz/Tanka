@@ -38,14 +38,17 @@
         margin: 0;
         padding: 0;
       }
+      html, body {
+        height: 100%;
+        overflow: hidden;
+      }
       body {
         font-family: 'Manrope', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         background-color: #eef1eb;
         color: #17201d;
         font-size: 14.5px;
         line-height: 1.5;
-        min-height: 100dvh;
-        overflow-x: hidden;
+        width: 100%;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         letter-spacing: -0.01em;
@@ -53,7 +56,7 @@
       
       @media (min-width: 769px) {
         body {
-          zoom: 1.2;
+          zoom: 1.15;
         }
       }
       code, pre, .mono, .font-mono {
@@ -1105,8 +1108,8 @@
         }
         .app-shell {
           flex-direction: column !important;
-          height: 100dvh !important;
-          max-height: 100dvh !important;
+          height: 100vh !important;
+          max-height: 100vh !important;
           width: 100vw !important;
           overflow: hidden !important;
         }
@@ -1119,8 +1122,8 @@
           bottom: 0 !important;
           width: 84% !important;
           max-width: 320px !important;
-          height: 100dvh !important;
-          max-height: 100dvh !important;
+          height: 100vh !important;
+          max-height: 100vh !important;
           z-index: 3000 !important;
           background: #18221f !important;
           box-shadow: none !important;
@@ -1212,8 +1215,8 @@
 
         /* 5. Workspace Container & Scroll Area */
         .workspace-shell {
-          height: 100dvh !important;
-          max-height: 100dvh !important;
+          height: 100vh !important;
+          max-height: 100vh !important;
           width: 100vw !important;
           display: flex !important;
           flex-direction: column !important;
@@ -1222,8 +1225,8 @@
         .figma-grid {
           display: flex !important;
           flex-direction: column !important;
-          height: calc(100dvh - 100px) !important;
-          max-height: calc(100dvh - 100px) !important;
+          height: calc(100vh - 100px) !important;
+          max-height: calc(100vh - 100px) !important;
           overflow-y: auto !important;
           overflow-x: hidden !important;
           -webkit-overflow-scrolling: touch !important;
@@ -1256,7 +1259,7 @@
           top: auto !important;
           width: 100vw !important;
           height: 60dvh !important;
-          max-height: 100dvh !important;
+          max-height: 100vh !important;
           z-index: 3500 !important;
           background: #ffffff !important;
           display: flex !important;
@@ -1269,7 +1272,7 @@
         }
 
         .ai-panel-box.open.fullscreen {
-          height: 100dvh !important;
+          height: 100vh !important;
           border-radius: 0 !important;
         }
         .ai-panel-inner {

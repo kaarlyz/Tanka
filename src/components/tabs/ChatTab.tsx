@@ -23,7 +23,7 @@ export function ChatTab({
   isChatSending,
 }: ChatTabProps) {
   return (
-              <div style={{ maxWidth: 840, margin: "0 auto", display: "flex", flexDirection: "column", height: "calc(100dvh - 160px)", minHeight: 400 }}>
+              <div style={{ maxWidth: 840, margin: "0 auto", display: "flex", flexDirection: "column", height: "calc(100vh - 160px)", minHeight: 400 }}>
                 {/* Active grounding info banner */}
                 <div
                   style={{

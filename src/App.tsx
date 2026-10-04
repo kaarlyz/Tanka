@@ -16,6 +16,7 @@ import { FeynmanTab } from "./components/tabs/FeynmanTab";
 import { FlashcardsTab } from "./components/tabs/FlashcardsTab";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useStudyTimer } from "./hooks/useStudyTimer";
+import { useMistakes } from "./hooks/useMistakes";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -1508,7 +1509,7 @@ export default function App() {
   }, [activeDocContent]);
 
   return (
-    <div className="app-shell" style={{ display: "flex", height: "100dvh", backgroundColor: "#eef1eb", color: "#17201d", overflow: "hidden" }}>
+    <div className="app-shell" style={{ display: "flex", height: "100vh", backgroundColor: "#eef1eb", color: "#17201d", overflow: "hidden" }}>
       {/* Toast Notification */}
       {statusNotice && (
         <div

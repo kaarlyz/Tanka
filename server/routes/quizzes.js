@@ -122,7 +122,11 @@ STANDAR KUALITAS SOAL:
 2. BAHASA PERTANYAAN: Langsung ke sasaran objektif, to-the-point dan alami tanpa basa-basi.
 3. FIELD FORMULA: Kosongkan field "formula": "" kecuali stimulus visual soal memang berupa matriks/grafik persamaan besar. Rumus pengerjaan hanya berada di steps dan explanation.
 4. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E. Huruf yang disebut di explanation dan steps WAJIB sinkron 100% dengan correctIndex.
-5. KUALITAS PEMBAHASAN STEP-BY-STEP: Langkah 1 Identifikasi -> Langkah 2 Proses Pengerjaan Eksplisit -> Langkah 3 Kesimpulan.
+5. KUALITAS PEMBAHASAN STEP-BY-STEP: 
+   - WAJIB JABARKAN KONSEP DASAR / RUMUS UMUM DULU SEBELUM PENGERJAAN! Jika hitungan, tuliskan bentuk baku rumusnya. Jika non-hitungan (teori/sejarah/biologi), tuliskan definisi atau dalil utamanya secara eksplisit.
+   - Langkah 1: Identifikasi Fakta/Variabel & Tulis Teori Dasar.
+   - Langkah 2: Eksekusi Kasus / Substitusi Angka.
+   - Langkah 3: Kesimpulan Singkat & Analisis Kenapa Pengecoh Salah.
 
 ${weaknessContext}
 ${mathRule}

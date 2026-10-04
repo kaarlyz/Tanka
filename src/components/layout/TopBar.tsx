@@ -154,20 +154,7 @@ export function TopBar({
             {/* Timer Settings Popover */}
             {isTimerSettingsOpen && (
               <div
-                className="modal-scale-in"
-                style={{
-                  position: "absolute",
-                  top: 38,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  backgroundColor: "#ffffff",
-                  border: "1px solid #dce2da",
-                  borderRadius: 14,
-                  padding: "16px",
-                  boxShadow: "0 14px 34px rgba(24, 34, 31, 0.14)",
-                  zIndex: 9999,
-                  width: 300
-                }}
+                className="modal-scale-in timer-popover"
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

@@ -14,28 +14,29 @@ async function handleSummaryRoutes(req, res, pathname, helpers) {
 
     let styleGuidance = "";
     if (style === "tutor") {
-      styleGuidance = `GAYA PENULISAN: TUTOR FIRST-PRINCIPLES (BEDAH ALUR BERPIKIR)
-- PRINSIP UTAMA: Jangan pernah menyuapi pengguna langsung dengan rumus, fakta mentah, atau hafalan buta. Bimbing mereka memahami *kenapa* hal ini ada dan *darimana asal-usulnya*. Berlaku universal untuk Matematika, Sejarah, Biologi, Ekonomi, maupun Sastra!
-- ALUR PEDAGOGIS WAJIB:
-  1. THE "WHY" (Asal-Usul & Intuisi): Awali materi dengan masalah nyata (real-world problem). Kenapa manusia dulu harus repot-repot menciptakan konsep/rumus/aturan ini? Apa yang terjadi jika ini tidak ada? Buat logikanya masuk akal.
-  2. THE CORE MECHANICS (Bedah Logika): Bongkar cara kerja konsepnya. Jika itu rumus matematika, bedah anatomi rumusnya (kenapa harus dikurang? kenapa dibagi?). Jika itu peristiwa sejarah, bedah insentif tokoh-tokohnya. Jika biologi, bedah evolusinya.
-  3. THE "HOW" (Studi Kasus Konkret): Tunjukkan satu penerapan pelan-pelan langkah demi langkah dari nol sampai selesai.
-  4. THE PITFALLS (Jebakan Berpikir): Tunjukkan miskonsepsi umum. Di mana orang biasanya salah paham dengan konsep ini?
-- SEKSI PENUTUP: "MENTAL MODEL" berisi intisari cara pandang yang benar terhadap materi ini.`;
+      styleGuidance = `GAYA PENULISAN: MENTOR STEP-BY-STEP (TRANSPARAN & TIDAK MELOMPAT)
+- PRINSIP UTAMA: Jangan pernah melakukan perhitungan atau substitusi angka secara tiba-tiba! Siswa sering kebingungan "angka/rumus ini asalnya dari mana?".
+- ATURAN PENJELASAN WAJIB:
+  1. TULISKAN RUMUS UMUM / TEOREMA DULU: Sebelum memasukkan angka apa pun, tuliskan rumus baku atau teorema dasarnya. (Contoh SALAH: "Kita substitusi x' = x - 3". Contoh BENAR: "Rumus umum translasi T(a,b) adalah x' = x + a. Karena T = (-3, 2), maka...").
+  2. JELASKAN ASAL USULNYA: Berikan kalimat pengantar logis dari mana rumus umum itu berasal agar bukan sekadar hafalan buta. (Contoh: "Kenapa x' = x + a? Karena titik bergeser sejauh a pada sumbu X...").
+  3. SUBSTITUSI PERLAHAN: Tunjukkan proses memasukkan angka ke rumus langkah demi langkah tanpa loncatan aljabar.
+  4. BEDAH JEBAKAN (PITFALLS): Tunjukkan di mana siswa biasanya salah hitung atau salah konsep.
+- SEKSI PENUTUP: Berikan "Intisari Kunci" untuk menyimpulkan materi.`;
     } else if (style === "memorization") {
       styleGuidance = `GAYA PENULISAN: POIN HAFALAN & INTISARI UJIAN CEPAT
 - Fokus pada materi yang wajib dihafal: istilah kunci, nama tokoh/proses, bagan klasifikasi, poin perbandingan yang sering mengecoh.
+- Jika ada rumus, tuliskan RUMUS UMUMNYA DULU dengan jelas sebelum memberikan contoh soal.
 - Gunakan ringkasan poin-poin padat, tabel perbandingan, dan mnemonik agar mudah diingat dalam waktu singkat.`;
     } else if (style === "academic") {
       styleGuidance = `GAYA PENULISAN: STRUKTUR FORMAL AKADEMIK LENGKAP
 - Susun secara komprehensif, presisi tinggi, dan metodologis.
-- Bedah latar belakang teoritis, relasi sebab-akibat, dan analisis kritis mendalam.`;
+- Jabarkan setiap penurunan rumus (derivation) secara ketat dan matematis sebelum menerapkannya pada kasus.`;
     } else {
-      styleGuidance = `GAYA PENULISAN: BAHASA SEDERHANA & INTUITIF (TUTOR SEBAYA)
-- Jelaskan seperti seorang mentor senior yang cerdas dan asyik.
-- Mulai dari masalah nyata: "Kenapa konsep ini diciptakan? Di mana kita menjumpainya dalam kehidupan nyata?"
-- Gunakan analogi konkret yang langsung memicu 'Aha! moment'.
-- Pertahankan substansi 100% lengkap dan akurat.`;
+      styleGuidance = `GAYA PENULISAN: BAHASA SEDERHANA, INTUITIF & TRANSPARAN (TUTOR SEBAYA)
+- Jelaskan seperti seorang mentor yang mengajarkan adiknya secara sabar.
+- ATURAN MUTLAK: JANGAN MELOMPATI RUMUS! Jika ada proses pengerjaan, TULISKAN DULU RUMUS UMUMNYA sebelum angka dimasukkan.
+- Jangan biarkan siswa menebak-nebak "ini dapat dari mana?". Jabarkan logika dasarnya (asal-usul aturan tersebut) dengan bahasa yang sangat membumi.
+- Gunakan analogi konkret yang langsung memicu 'Aha! moment'.`;
     }
 
     const mathSectionBlock = isMathDomain

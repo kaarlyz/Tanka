@@ -96,18 +96,6 @@ export function MobileBottomNav({
           {activeTab === "mistakes" && !isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
         </button>
 
-        <button
-          className={`mobile-bottom-btn ${isAiPanelOpen ? "active" : ""}`}
-          onClick={() => {
-            setIsAiPanelOpen(!isAiPanelOpen);
-            setIsMobileDrawerOpen(false);
-          }}
-          style={{ color: isAiPanelOpen ? "#4b6623" : "#78827e" }}
-        >
-          <Brain size={18} color={isAiPanelOpen ? "#4b6623" : "currentColor"} />
-          <span>Tanya Nara</span>
-          {isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
-        </button>
       </nav>
   );
 }

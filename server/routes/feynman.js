@@ -27,7 +27,9 @@ Penjelasan dari siswa:
 ${explanation.trim()}
 """
 
-ATURAN FORMAT MATEMATIKA: Jika ulasan mengandung rumus matematika, pecahan, akar, sigma, kuadrat, atau aljabar, WAJIB bungkus ekspresi dengan tanda dollar ($...$) menggunakan LaTeX standar.
+ATURAN EVALUASI:
+1. Periksa apakah siswa hanya menghafal fakta akhir/prosedur angka tanpa menyebutkan konsep dasar/rumus umumnya. Jika ia melompat langsung ke pengerjaan kasus, ingatkan di bagian "missedOrFlawedPoints" bahwa ia harus paham teori dasar/rumus aslinya terlebih dahulu.
+2. Jika ulasan mengandung rumus matematika, pecahan, akar, sigma, aljabar, WAJIB bungkus ekspresi dengan tanda dollar ($...$) menggunakan LaTeX standar.
 
 Format output WAJIB HANYA berupa JSON valid tanpa teks tambahan:
 {

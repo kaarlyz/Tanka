@@ -2219,7 +2219,31 @@ export default function App() {
         handleConfirmStagedUpload={handleConfirmStagedUpload}
       />
 
-      {/* Mobile Bottom Navigation Bar (Fixed on <= 768px) */}
+      {/* Mobile FAB Tanya Nara (Fixed on <= 768px) */}
+      <button
+        className="mobile-only fab-bounce"
+        onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+        style={{
+          position: "fixed",
+          bottom: "76px",
+          right: "20px",
+          width: "56px",
+          height: "56px",
+          borderRadius: "50%",
+          backgroundColor: "#18221f",
+          color: "#c8f064",
+          border: "none",
+          boxShadow: "0 8px 24px rgba(24, 34, 31, 0.25)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 3400,
+          cursor: "pointer"
+        }}
+      >
+        <Brain size={24} />
+      </button>
+
       {/* Mobile Bottom Navigation Bar (Fixed on <= 768px) */}
       <MobileBottomNav
         activeTab={activeTab}

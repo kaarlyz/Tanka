@@ -15,6 +15,7 @@ import { SummaryTab } from "./components/tabs/SummaryTab";
 import { FeynmanTab } from "./components/tabs/FeynmanTab";
 import { FlashcardsTab } from "./components/tabs/FlashcardsTab";
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useStudyTimer } from "./hooks/useStudyTimer";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";

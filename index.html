@@ -1219,11 +1219,21 @@
           page-break-after: avoid !important;
         }
 
-        .markdown-body p, .nara-md-response p,
+        .markdown-body p, .nara-md-response p {
+          font-size: 10pt !important;
+          line-height: 1.6 !important;
+          color: #24302b !important;
+          orphans: 3 !important;
+          widows: 3 !important;
+        }
+
         .markdown-body li, .nara-md-response li {
           font-size: 10pt !important;
           line-height: 1.6 !important;
           color: #24302b !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          margin-bottom: 4pt !important;
         }
 
         .markdown-body ul, .nara-md-response ul,
@@ -1234,10 +1244,9 @@
           padding-left: 16pt !important;
         }
 
-        .markdown-body li, .nara-md-response li {
+        .visual-diagram-card, .visual-flow-step, .katex-display {
           break-inside: avoid !important;
           page-break-inside: avoid !important;
-          margin-bottom: 4pt !important;
         }
 
         /* Prevent table and diagram clipping & orphan pages */

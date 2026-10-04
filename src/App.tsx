@@ -268,6 +268,197 @@ function getSubjectBadge(title: string) {
   return { label: "Modul Belajar", color: "#4b6623", bg: "#f2f8e8", border: "#d7e8be" };
 }
 
+// Interactive Visual Diagram & Flow Renderer for Academic Summaries
+function renderVisualDiagramOrPre(children: any) {
+  let text = "";
+  const extractText = (node: any): string => {
+    if (!node) return "";
+    if (typeof node === "string") return node;
+    if (Array.isArray(node)) return node.map(extractText).join("");
+    if (node.props?.children) return extractText(node.props.children);
+    return "";
+  };
+  text = extractText(children).trim();
+
+  // Pattern 1: Peta Sumbu Teori (Siklus vs Linier & Konflik vs Fungsional)
+  if ((text.includes("ARAH PERUBAHAN") || text.includes("TEORI PERUBAHAN SOSIAL")) && text.includes("SIKLUS") && text.includes("LINIER")) {
+    return (
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "18px 20px", backgroundColor: "#f8faf6", border: "1px solid #d4ded2", borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.03)" }}>
+        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1.2px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+          <span>🗺️ Peta Dua Sumbu Utama Teori Perubahan Sosial</span>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+          {/* Sumbu 1: Arah Gerak */}
+          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 10, padding: "14px 16px" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
+              Sumbu 1: Pola Arah Gerak
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8 }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>↻</span>
+                <div>
+                  <strong style={{ fontSize: 13, color: "#92400e", display: "block" }}>1. Teori Siklus (Cyclical)</strong>
+                  <span style={{ fontSize: 11.5, color: "#78350f", lineHeight: 1.4, display: "block", marginTop: 2 }}>Pola melingkar berulang tanpa akhir; tolak kemajuan mutlak (Spengler, Toynbee, Sorokin).</span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 8 }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>➔</span>
+                <div>
+                  <strong style={{ fontSize: 13, color: "#065f46", display: "block" }}>2. Teori Linier / Evolusi</strong>
+                  <span style={{ fontSize: 11.5, color: "#047857", lineHeight: 1.4, display: "block", marginTop: 2 }}>Gerak maju satu arah secara kumulatif & permanen dari primitif ke modern (Comte, Spencer).</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sumbu 2: Penggerak Sistem */}
+          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 10, padding: "14px 16px" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
+              Sumbu 2: Mekanisme Penggerak
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8 }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>⚔️</span>
+                <div>
+                  <strong style={{ fontSize: 13, color: "#991b1b", display: "block" }}>3. Teori Konflik</strong>
+                  <span style={{ fontSize: 11.5, color: "#7f1d1d", lineHeight: 1.4, display: "block", marginTop: 2 }}>Bentrokan kepentingan dua kelompok (alat modal Marx vs wewenang hierarki Dahrendorf).</span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8 }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>⚖️</span>
+                <div>
+                  <strong style={{ fontSize: 13, color: "#166534", display: "block" }}>4. Teori Fungsionalis</strong>
+                  <span style={{ fontSize: 11.5, color: "#14532d", lineHeight: 1.4, display: "block", marginTop: 2 }}>Organisme terpadu menjaga keseimbangan dinamis / ekuilibrium; adaptasi gradual (Parsons, Ogburn, Merton).</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Pattern 2: Flow Siklus 4 Fase (Cycle Step Flow)
+  if (text.includes("Lahir") && (text.includes("Kemunduran") || text.includes("Kejayaan") || text.includes("Puncak"))) {
+    return (
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 20px", backgroundColor: "#fffdf5", border: "1px solid #fde68a", borderRadius: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#b45309", fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>
+          🔄 Alur Melingkar Teori Siklus (Tanpa Garis Akhir Mutlak)
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, flexWrap: "wrap" }}>
+          {[
+            { step: "Fase 1", title: "Lahir / Bangkit", sub: "Kekuatan perintis baru", bg: "#fef3c7", border: "#fde68a", color: "#92400e" },
+            { step: "Fase 2", title: "Tumbuh / Puncak", sub: "Ekspansi & kematangan", bg: "#dcfce7", border: "#bbf7d0", color: "#166534" },
+            { step: "Fase 3", title: "Kejayaan Emas", sub: "Stabilitas kemakmuran", bg: "#e0e7ff", border: "#c7d2fe", color: "#3730a3" },
+            { step: "Fase 4", title: "Kemunduran / Runtuh", sub: "Elit gagal adaptasi", bg: "#fee2e2", border: "#fecaca", color: "#991b1b" }
+          ].map((item, idx) => (
+            <React.Fragment key={idx}>
+              <div style={{ flex: "1 1 120px", padding: "10px 12px", backgroundColor: item.bg, border: `1px solid ${item.border}`, borderRadius: 8, textAlign: "center" }}>
+                <div style={{ fontSize: 9.5, fontWeight: 800, textTransform: "uppercase", color: item.color, opacity: 0.8, fontFamily: "'DM Mono', monospace" }}>{item.step}</div>
+                <strong style={{ fontSize: 12.5, color: item.color, display: "block", marginTop: 2 }}>{item.title}</strong>
+                <span style={{ fontSize: 10.5, color: item.color, opacity: 0.85, display: "block", marginTop: 2 }}>{item.sub}</span>
+              </div>
+              {idx < 3 && <span style={{ fontSize: 14, color: "#b45309", fontWeight: 800, padding: "0 2px" }}>➔</span>}
+            </React.Fragment>
+          ))}
+        </div>
+        <div style={{ textAlign: "center", marginTop: 10, fontSize: 11, color: "#92400e", fontWeight: 600 }}>
+          ↺ Keruntuhan fase 4 menjadi bibit kebangkitan fase 1 baru bagi peradaban berikutnya.
+        </div>
+      </div>
+    );
+  }
+
+  // Pattern 3: Pohon Keputusan Ujian (Decision Tree)
+  if (text.includes("[Membaca Teks Soal]") || (text.includes("kembali ke masa lampau") && text.includes("SIKLUS"))) {
+    return (
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "18px 20px", backgroundColor: "#f8f9fa", border: "1px solid #dde1da", borderRadius: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#18221f", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
+          ⚡ Pohon Eliminasi Cepat Soal Ujian
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8 }}>
+            <span style={{ fontSize: 12.5, color: "#78350f" }}>Kata kunci: <em>"kembali ke masa lampau"</em> / <em>"pola berulang"</em> / <em>"tren surut lalu bangkit"</em></span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#92400e", backgroundColor: "#fef3c7", padding: "4px 10px", borderRadius: 6 }}>➜ TEORI SIKLUS</span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 8 }}>
+            <span style={{ fontSize: 12.5, color: "#065f46" }}>Kata kunci: <em>"tahapan maju permanen"</em> / <em>"tidak kembali ke titik awal"</em> / <em>"Comte / Spencer"</em></span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#065f46", backgroundColor: "#d1fae5", padding: "4px 10px", borderRadius: 6 }}>➜ TEORI LINIER</span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8 }}>
+            <span style={{ fontSize: 12.5, color: "#7f1d1d" }}>Kata kunci: <em>"friksi dua kelompok"</em> / <em>"upah & modal (Marx)"</em> / <em>"wewenang & jabatan (Dahrendorf)"</em></span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#991b1b", backgroundColor: "#fee2e2", padding: "4px 10px", borderRadius: 6 }}>➜ TEORI KONFLIK</span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8 }}>
+            <span style={{ fontSize: 12.5, color: "#14532d" }}>Kata kunci: <em>"keseimbangan sistem (AGIL)"</em> / <em>"teknologi mendahului aturan (Cultural Lag)"</em></span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#166534", backgroundColor: "#dcfce7", padding: "4px 10px", borderRadius: 6 }}>➜ TEORI FUNGSIONAL</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Pattern 4: Cultural Lag Flow
+  if (text.includes("Budaya Material") && text.includes("Budaya Imaterial")) {
+    return (
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 20px", backgroundColor: "#fbfcf9", border: "1px solid #dce1da", borderRadius: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 10 }}>
+          ⚡ Dinamika Cultural Lag (William F. Ogburn)
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "center" }}>
+          <div style={{ padding: "12px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase" }}>Budaya Material</div>
+            <strong style={{ fontSize: 13, color: "#1e40af", display: "block", marginTop: 2 }}>Inovasi Teknologi Fisik</strong>
+            <span style={{ fontSize: 11, color: "#2563eb", display: "block", marginTop: 4 }}>🚀 Melaju Kilat & Cepat (Fintech, Gawai, AI)</span>
+          </div>
+
+          <div style={{ textAlign: "center", padding: "0 8px" }}>
+            <span style={{ fontSize: 20 }}>⚡</span>
+            <div style={{ fontSize: 9.5, fontWeight: 800, color: "#dc2626", textTransform: "uppercase", marginTop: 2 }}>Kesenjangan</div>
+          </div>
+
+          <div style={{ padding: "12px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#b45309", textTransform: "uppercase" }}>Budaya Imaterial</div>
+            <strong style={{ fontSize: 13, color: "#92400e", display: "block", marginTop: 2 }}>Regulasi & Norma Sosial</strong>
+            <span style={{ fontSize: 11, color: "#b45309", display: "block", marginTop: 4 }}>🐢 Tertinggal / Adaptasi Lambat</span>
+          </div>
+        </div>
+        <div style={{ marginTop: 10, padding: "8px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, fontSize: 11.5, color: "#991b1b" }}>
+          <strong>Akibat:</strong> Menimbulkan <em>Cultural Lag</em> berupa disorganisasi sosial, kejahatan digital baru, dan anomi sebelum regulasi resmi terbit.
+        </div>
+      </div>
+    );
+  }
+
+  // Default Monospace pre fallback
+  return (
+    <pre
+      style={{
+        backgroundColor: "#f6f8f5",
+        border: "1px solid #d4ded2",
+        borderLeft: "3px solid #65a30d",
+        borderRadius: 8,
+        padding: "12px 14px",
+        fontFamily: "'DM Mono', monospace",
+        fontSize: 11.5,
+        lineHeight: 1.45,
+        color: "#18221f",
+        overflowX: "auto",
+        whiteSpace: "pre",
+        margin: "14px 0"
+      }}
+    >
+      {children}
+    </pre>
+  );
+}
+
 export default function App() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
@@ -279,6 +470,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"home" | "material" | "flashcards" | "quiz" | "feynman" | "summary" | "chat" | "mistakes">("home");
   const [homeSearchQuery, setHomeSearchQuery] = useState("");
   const [homeSubjectFilter, setHomeSubjectFilter] = useState("Semua");
+
+  // AI Tutor Drawer & Creation Tabs
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+  const [materialCreationTab, setMaterialCreationTab] = useState<"upload" | "topic" | "manual">("upload");
 
   // Mobile drawer state
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -1827,6 +2022,30 @@ export default function App() {
               <span className="desktop-only">Lembar Rumus</span>
             </button>
 
+            {/* Tanya Nara AI Drawer Toggle */}
+            <button
+              onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+              style={{
+                backgroundColor: isAiPanelOpen ? "#18221f" : "#ffffff",
+                border: `1px solid ${isAiPanelOpen ? "#18221f" : "#dce1da"}`,
+                color: isAiPanelOpen ? "#c8f064" : "#17201d",
+                borderRadius: 8,
+                padding: "7px 14px",
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                transition: "all 0.15s ease"
+              }}
+              title={isAiPanelOpen ? "Tutup panel AI Tutor Nara" : "Buka panel AI Tutor Nara"}
+            >
+              <Brain size={14} color={isAiPanelOpen ? "#c8f064" : "#4b6623"} />
+              <span>Tanya Nara</span>
+              {isAiPanelOpen && <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#c8f064" }} />}
+            </button>
+
             <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 6, backgroundColor: "#ffffff", border: "1px solid #dce1da", borderRadius: 8, padding: "5px 8px" }}>
               <Cpu size={12} color="#4b6623" />
               <select
@@ -1844,8 +2063,8 @@ export default function App() {
           </div>
         </header>
 
-        {/* 2-Column Split: Main Study Panel + AI Tutor Panel */}
-        <div className="figma-grid" style={activeTab === "home" ? { gridTemplateColumns: "1fr" } : undefined}>
+        {/* Responsive Grid: Full width workspace by default, 2-column split when Tanya Nara is open */}
+        <div className="figma-grid" style={{ gridTemplateColumns: (activeTab !== "home" && isAiPanelOpen) ? "minmax(0, 1fr) 360px" : "1fr" }}>
           <section className="lesson-panel-box no-scrollbar" style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
           {/* Sub Navigation Tabs (Segmented Control Bar) */}
           <div
@@ -2492,125 +2711,7 @@ export default function App() {
 
             {/* TAB 1: MATERIAL & INGESTION (CLEAN OVERVIEW CARD) */}
             {activeTab === "material" && (
-              <div style={{ maxWidth: 1080, margin: "0 auto" }}>
-                {/* Drag and Drop Zone */}
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    border: isDragging ? "2px dashed #72a728" : "1px dashed #dce1da",
-                    backgroundColor: isDragging ? "#eef8db" : "#ffffff",
-                    borderRadius: 12,
-                    padding: "24px 26px",
-                    textAlign: "center",
-                    cursor: "pointer",
-                    marginBottom: 20,
-                    boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)",
-                    transition: "border 0.2s ease, background 0.2s ease"
-                  }}
-                >
-                  <FileUp size={24} color="#72a728" style={{ margin: "0 auto 8px" }} />
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#17201d", lineHeight: 1.4, wordBreak: "break-word" }}>
-                    Unggah Dokumen PDF, Word, PPTX, Foto, atau Teks
-                  </div>
-                  <div style={{ fontSize: 12, color: "#6f7975", marginTop: 3, lineHeight: 1.4 }}>
-                    PDF, Word, PowerPoint, Foto (OCR), dan Teks (.txt, .md).
-                  </div>
-
-                  {/* Direct Action Chips */}
-                  <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        fileInputRef.current?.click();
-                      }}
-                      style={{
-                        backgroundColor: "#18221f",
-                        border: "1px solid #18221f",
-                        color: "#c8f064",
-                        borderRadius: 8,
-                        padding: "7px 14px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6
-                      }}
-                    >
-                      <Upload size={13} />
-                      <span>Pilih Berkas Dokumen</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        cameraInputRef.current?.click();
-                      }}
-                      style={{
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #dce1da",
-                        color: "#17201d",
-                        borderRadius: 8,
-                        padding: "7px 14px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6
-                      }}
-                    >
-                      <Camera size={13} color="#4b6623" />
-                      <span>Foto Soal Langsung (Kamera HP)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsTopicModalOpen(true);
-                        setTopicStep(1);
-                      }}
-                      style={{
-                        backgroundColor: "#eef8db",
-                        border: "1px solid #c2e28f",
-                        color: "#273f15",
-                        borderRadius: 8,
-                        padding: "7px 14px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6
-                      }}
-                    >
-                      <Compass size={13} color="#4b6623" />
-                      <span>Belum Punya Berkas? Buat dari Topik (AI)</span>
-                    </button>
-                  </div>
-
-                  {isUploading && (
-                    <div style={{ marginTop: 12, fontSize: 12, color: "#4b6623", fontWeight: 600 }}>
-                      Mengekstrak teks dokumen ke memori...
-                    </div>
-                  )}
-                  {uploadError && (
-                    <div style={{ marginTop: 8, fontSize: 12, color: "#ef4444" }}>
-                      Gagal mengunggah: {uploadError}
-                    </div>
-                  )}
-                </div>
-
-                {/* If a Document is Active, Show Clean Executive Overview Card */}
+              <div style={{ maxWidth: 1080, margin: "0 auto", paddingBottom: 48 }}>
                 {activeDocId ? (
                   <div
                     style={{
@@ -2670,6 +2771,27 @@ export default function App() {
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          style={{
+                            backgroundColor: "#f8f9f5",
+                            border: "1px solid #dce1da",
+                            color: "#17201d",
+                            borderRadius: 8,
+                            padding: "6px 12px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                          }}
+                          title="Ganti atau unggah berkas baru"
+                        >
+                          <Upload size={13} color="#4b6623" />
+                          <span>Unggah Baru</span>
+                        </button>
+
                         <button
                           onClick={() => setIsEnrichModalOpen(true)}
                           disabled={isEnriching || !activeDocId}
@@ -2870,6 +2992,74 @@ export default function App() {
                       </div>
                     </div>
 
+                    {/* Rendered Full Lesson Content */}
+                    <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid #dde1da" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+                          📖 Bahan Bacaan Modul Baku
+                        </span>
+                      </div>
+
+                      <div className="markdown-body" style={{ fontSize: 14.5, lineHeight: 1.7, color: "#1f2b26" }}>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                          components={{
+                            h1: ({ children }) => (
+                              <h1 style={{ fontSize: 20, fontWeight: 800, color: "#17201d", marginTop: 20, marginBottom: 10, borderBottom: "1px solid #dde1da", paddingBottom: 6 }}>
+                                {children}
+                              </h1>
+                            ),
+                            h2: ({ children }) => (
+                              <h2 style={{ fontSize: 17, fontWeight: 700, color: "#22370c", marginTop: 20, marginBottom: 8 }}>
+                                {children}
+                              </h2>
+                            ),
+                            h3: ({ children }) => (
+                              <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "#17201d", marginTop: 16, marginBottom: 6 }}>
+                                {children}
+                              </h3>
+                            ),
+                            p: ({ children }) => (
+                              <p style={{ marginBottom: 12, color: "#374540" }}>{children}</p>
+                            ),
+                            ul: ({ children }) => (
+                              <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
+                            ),
+                            ol: ({ children }) => (
+                              <ol style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ol>
+                            ),
+                            li: ({ children }) => (
+                              <li style={{ marginBottom: 5, color: "#374540" }}>{children}</li>
+                            ),
+                            strong: ({ children }) => (
+                              <strong style={{ color: "#17201d", fontWeight: 700 }}>{children}</strong>
+                            ),
+                            blockquote: ({ children }) => (
+                              <blockquote style={{ borderLeft: "3px solid #8dbd42", backgroundColor: "#eef8db", padding: "10px 14px", borderRadius: "0 8px 8px 0", margin: "12px 0", color: "#22370c" }}>
+                                {children}
+                              </blockquote>
+                            ),
+                            pre: ({ children }) => renderVisualDiagramOrPre(children),
+                            code: ({ children }) => (
+                              <code style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, backgroundColor: "#f0f4ee", color: "#1f2b26", padding: "2px 5px", borderRadius: 4 }}>
+                                {children}
+                              </code>
+                            ),
+                            table: ({ children }) => (
+                              <div style={{ overflowX: "auto", margin: "14px 0" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, border: "1px solid #dde1da", borderRadius: 8, overflow: "hidden" }}>
+                                  {children}
+                                </table>
+                              </div>
+                            )
+                          }}
+                        >
+                          {activeDocContent}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+
                     {/* Collapsible Raw Text Editor */}
                     {showRawText && (
                       <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #dde1da" }}>
@@ -2937,81 +3127,261 @@ export default function App() {
                     )}
                   </div>
                 ) : (
-                  /* Manual Create / Initial State */
+                  /* Single Unified Create / Ingest Hub */
                   <div
                     style={{
                       backgroundColor: "#ffffff",
                       border: "1px solid #dde1da",
                       borderRadius: 12,
-                      padding: "24px 26px",
-                      boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+                      padding: "24px 28px",
+                      boxShadow: "0 4px 20px rgba(27, 39, 35, 0.03)"
                     }}
                   >
-                    <h2 style={{ fontSize: 18, fontWeight: 800, color: "#17201d", marginBottom: 14 }}>
-                      Tulis atau Tempel Catatan Manual
-                    </h2>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
+                      <div>
+                        <h2 style={{ fontSize: 18, fontWeight: 800, color: "#17201d", margin: 0 }}>
+                          Mulai Modul Belajar Baru
+                        </h2>
+                        <p style={{ fontSize: 12.5, color: "#6f7975", margin: "4px 0 0" }}>
+                          Pilih metode untuk memasukkan materi bahan ajar.
+                        </p>
+                      </div>
 
-                    <div style={{ marginBottom: 12 }}>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
-                        Judul Materi
-                      </label>
-                      <input
-                        type="text"
-                        value={activeDocTitle}
-                        onChange={(e) => setActiveDocTitle(e.target.value)}
-                        placeholder="Contoh: Sosiologi Konflik dan Resolusi..."
-                        style={{
-                          width: "100%",
-                          backgroundColor: "#fafbf8",
-                          border: "1px solid #dce1da",
-                          borderRadius: 8,
-                          padding: "10px 14px",
-                          fontSize: 14,
-                          color: "#17201d",
-                          outline: "none"
-                        }}
-                      />
+                      {/* Tab Selection Chips */}
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {[
+                          { id: "upload", label: "Unggah Berkas", icon: Upload },
+                          { id: "topic", label: "Buat Topik AI", icon: Compass },
+                          { id: "manual", label: "Tulis Catatan", icon: FileText }
+                        ].map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setMaterialCreationTab(t.id as any)}
+                            style={{
+                              backgroundColor: materialCreationTab === t.id ? "#18221f" : "#fafbf8",
+                              color: materialCreationTab === t.id ? "#c8f064" : "#56615d",
+                              border: `1px solid ${materialCreationTab === t.id ? "#18221f" : "#dce1da"}`,
+                              borderRadius: 7,
+                              padding: "6px 12px",
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 5
+                            }}
+                          >
+                            <t.icon size={12} />
+                            <span>{t.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    <div style={{ marginBottom: 14 }}>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
-                        Isi Catatan / Materi Teks
-                      </label>
-                      <textarea
-                        rows={10}
-                        value={activeDocContent}
-                        onChange={(e) => setActiveDocContent(e.target.value)}
-                        placeholder="Tempel catatan atau teks di sini..."
-                        style={{
-                          width: "100%",
-                          backgroundColor: "#fafbf8",
-                          border: "1px solid #dce1da",
-                          borderRadius: 8,
-                          padding: "12px",
-                          fontSize: 14,
-                          lineHeight: "1.6",
-                          color: "#17201d",
-                          outline: "none",
-                          resize: "vertical"
+                    {materialCreationTab === "upload" && (
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDragging(true);
                         }}
-                      />
-                    </div>
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          border: isDragging ? "2px dashed #72a728" : "1px dashed #dce1da",
+                          backgroundColor: isDragging ? "#eef8db" : "#fbfcf9",
+                          borderRadius: 10,
+                          padding: "36px 20px",
+                          textAlign: "center",
+                          cursor: "pointer",
+                          transition: "border 0.2s ease, background 0.2s ease"
+                        }}
+                      >
+                        <FileUp size={28} color="#72a728" style={{ margin: "0 auto 10px" }} />
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#17201d" }}>
+                          Tarik & lepas berkas ke sini, atau klik untuk memilih
+                        </div>
+                        <div style={{ fontSize: 12, color: "#6f7975", marginTop: 4 }}>
+                          Mendukung PDF, Word (.docx), PPTX, Foto catatan (OCR), dan Teks (.txt, .md).
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 16 }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fileInputRef.current?.click();
+                            }}
+                            style={{
+                              backgroundColor: "#18221f",
+                              color: "#c8f064",
+                              border: "none",
+                              borderRadius: 7,
+                              padding: "8px 16px",
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 5
+                            }}
+                          >
+                            <Upload size={13} />
+                            <span>Pilih Berkas</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cameraInputRef.current?.click();
+                            }}
+                            style={{
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #dce1da",
+                              color: "#17201d",
+                              borderRadius: 7,
+                              padding: "8px 16px",
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 5
+                            }}
+                          >
+                            <Camera size={13} color="#4b6623" />
+                            <span>Kamera HP</span>
+                          </button>
+                        </div>
+                        {isUploading && (
+                          <div style={{ marginTop: 14, fontSize: 12, color: "#4b6623", fontWeight: 600 }}>
+                            Mengekstrak teks dokumen ke memori...
+                          </div>
+                        )}
+                        {uploadError && (
+                          <div style={{ marginTop: 10, fontSize: 12, color: "#ef4444" }}>
+                            Gagal mengunggah: {uploadError}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                    <button
-                      onClick={handleSaveDocument}
-                      style={{
-                        backgroundColor: "#18221f",
-                        color: "#c8f064",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: "10px 20px",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: "pointer"
-                      }}
-                    >
-                      Simpan Dokumen
-                    </button>
+                    {materialCreationTab === "topic" && (
+                      <div style={{ padding: "16px 0" }}>
+                        <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#17201d", marginBottom: 8 }}>
+                          Topik atau Bab Pembelajaran
+                        </label>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <input
+                            type="text"
+                            value={topicInput}
+                            onChange={(e) => setTopicInput(e.target.value)}
+                            placeholder="Misal: Teori Konflik Sosiologi, Elastisitas Permintaan, Fungsi Invers..."
+                            style={{
+                              flex: 1,
+                              backgroundColor: "#fafbf8",
+                              border: "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "10px 14px",
+                              fontSize: 14,
+                              color: "#17201d",
+                              outline: "none"
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (topicInput.trim()) {
+                                setIsTopicModalOpen(true);
+                                handleStartTopicClarify(topicInput.trim());
+                              }
+                            }}
+                            style={{
+                              backgroundColor: "#18221f",
+                              color: "#c8f064",
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "10px 18px",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                          >
+                            <Sparkles size={13} />
+                            <span>Susun Materi (AI)</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {materialCreationTab === "manual" && (
+                      <div>
+                        <div style={{ marginBottom: 12 }}>
+                          <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
+                            Judul Materi
+                          </label>
+                          <input
+                            type="text"
+                            value={activeDocTitle}
+                            onChange={(e) => setActiveDocTitle(e.target.value)}
+                            placeholder="Contoh: Sosiologi Konflik dan Resolusi..."
+                            style={{
+                              width: "100%",
+                              backgroundColor: "#fafbf8",
+                              border: "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "10px 14px",
+                              fontSize: 14,
+                              color: "#17201d",
+                              outline: "none"
+                            }}
+                          />
+                        </div>
+
+                        <div style={{ marginBottom: 14 }}>
+                          <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
+                            Isi Catatan / Materi Teks
+                          </label>
+                          <textarea
+                            rows={8}
+                            value={activeDocContent}
+                            onChange={(e) => setActiveDocContent(e.target.value)}
+                            placeholder="Tempel catatan atau teks di sini..."
+                            style={{
+                              width: "100%",
+                              backgroundColor: "#fafbf8",
+                              border: "1px solid #dce1da",
+                              borderRadius: 8,
+                              padding: "12px",
+                              fontSize: 14,
+                              lineHeight: "1.6",
+                              color: "#17201d",
+                              outline: "none",
+                              resize: "vertical"
+                            }}
+                          />
+                        </div>
+
+                        <button
+                          onClick={handleSaveDocument}
+                          style={{
+                            backgroundColor: "#18221f",
+                            color: "#c8f064",
+                            border: "none",
+                            borderRadius: 8,
+                            padding: "10px 20px",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: "pointer"
+                          }}
+                        >
+                          Simpan Modul
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -3020,225 +3390,114 @@ export default function App() {
             {/* TAB 2: MULTIPLE CHOICE QUIZ DRILL (LATIHAN SOAL PILIHAN GANDA) */}
             {activeTab === "quiz" && (
               <div style={{ maxWidth: 940, margin: "0 auto" }}>
-                {/* Quiz Question Count Selector (Quick Presets + Stepper / Custom Number Input) */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #dde1da",
-                    borderRadius: 12,
-                    padding: "12px 16px",
-                    marginBottom: 16,
-                    boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)",
-                    flexWrap: "wrap",
-                    gap: 10
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>Jumlah Soal:</span>
-                    {[3, 5, 10, 15, 20].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => setQuizQuestionCount(num)}
-                        style={{
-                          backgroundColor: quizQuestionCount === num ? "#18221f" : "#fafbf8",
-                          color: quizQuestionCount === num ? "#c8f064" : "#56615d",
-                          border: `1px solid ${quizQuestionCount === num ? "#18221f" : "#dce1da"}`,
-                          borderRadius: 6,
-                          padding: "5px 10px",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          transition: "all 0.15s ease"
-                        }}
-                      >
-                        {num}
-                      </button>
-                    ))}
-
-                    {/* Stepper / Custom Number Input */}
-                    <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: "#fafbf8", border: "1px solid #dce1da", borderRadius: 6, padding: "2px 4px", gap: 2 }}>
-                      <button
-                        onClick={() => setQuizQuestionCount((prev) => Math.max(1, prev - 1))}
-                        style={{ background: "none", border: "none", color: "#56615d", cursor: "pointer", fontSize: 14, fontWeight: 700, padding: "0 6px" }}
-                        title="Kurangi 1 soal"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        min="1"
-                        max="30"
-                        value={quizQuestionCount}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) setQuizQuestionCount(Math.max(1, Math.min(30, val)));
-                        }}
-                        style={{
-                          width: 38,
-                          textAlign: "center",
-                          backgroundColor: "transparent",
-                          border: "none",
-                          color: "#18221f",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          fontFamily: "'DM Mono', monospace",
-                          outline: "none"
-                        }}
-                      />
-                      <button
-                        onClick={() => setQuizQuestionCount((prev) => Math.min(30, prev + 1))}
-                        style={{ background: "none", border: "none", color: "#56615d", cursor: "pointer", fontSize: 14, fontWeight: 700, padding: "0 6px" }}
-                        title="Tambah 1 soal"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <span style={{ fontSize: 11, color: "#727d78" }}>butir</span>
-
-                    {/* Quiz Focus / Difficulty Selector */}
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 6, backgroundColor: "#fafbf8", padding: 2, borderRadius: 6, border: "1px solid #dce1da" }}>
-                      {[
-                        { id: "beginner", label: "Pemula", title: "Pemula & Bertahap: Mulai dari angka kecil sederhana dan pilihan ringkas" },
-                        { id: "conceptual", label: "Standar", title: "Standar Ujian Sekolah: Pemahaman konsep dan skenario harian" },
-                        { id: "analytical", label: "HOTS", title: "HOTS / Ujian Seleksi: Analisis tingkat tinggi dan pemecahan masalah non-rutin" }
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => setQuizType(item.id as any)}
-                          style={{
-                            backgroundColor: quizType === item.id ? "#18221f" : "transparent",
-                            color: quizType === item.id ? "#c8f064" : "#56615d",
-                            border: quizType === item.id ? "1px solid #18221f" : "1px solid transparent",
-                            borderRadius: 5,
-                            padding: "4px 8px",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "0.15s ease"
-                          }}
-                          title={item.title}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleGenerateQuiz()}
-                    disabled={isGeneratingQuiz || !activeDocId}
-                    style={{
-                      backgroundColor: "#18221f",
-                      color: "#c8f064",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "8px 16px",
-                      fontSize: 12.5,
-                      fontWeight: 700,
-                      cursor: isGeneratingQuiz ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)"
-                    }}
-                  >
-                    <Sparkles size={13} />
-                    {isGeneratingQuiz ? "Menyusun Soal..." : `Generate ${quizQuestionCount} Soal Baru`}
-                  </button>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-                  <div>
-                    <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
-                      {isDrillingMistakes ? "Drill Khusus Soal yang Pernah Salah" : (quizMode === "exam" ? "Simulasi Tryout Ujian Asli" : "Simulasi Latihan Soal Pemahaman")}
-                    </h2>
-                    <p style={{ fontSize: 12, color: "#6f7975", marginTop: 2 }}>
-                      {quizMode === "exam"
-                        ? "Waktu berjalan mundur, lembar jawaban dinilai sekaligus setelah seluruh nomor selesai dikumpulkan."
-                        : "Format pilihan ganda HOTS dengan pembahasan konsep dan analisis jebakan soal."}
-                    </p>
-                  </div>
-
-                  {/* Mode Toggle Switch */}
-                  {!isDrillingMistakes && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, backgroundColor: "#ffffff", border: "1px solid #dce1da", borderRadius: 8, padding: 3 }}>
-                      <button
-                        onClick={() => {
-                          setQuizMode("study");
-                          resetQuizState();
-                        }}
-                        style={{
-                          backgroundColor: quizMode === "study" ? "#18221f" : "transparent",
-                          color: quizMode === "study" ? "#c8f064" : "#6f7975",
-                          border: quizMode === "study" ? "1px solid #18221f" : "1px solid transparent",
-                          borderRadius: 6,
-                          padding: "5px 10px",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5
-                        }}
-                      >
-                        <BookOpen size={12} />
-                        <span>Mode Belajar</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setQuizMode("exam");
-                          resetQuizState();
-                          setExamTimeLeft(quizQuestions.length * 90);
-                          setIsExamTimerRunning(true);
-                          setExamDurationSeconds(quizQuestions.length * 90);
-                        }}
-                        style={{
-                          backgroundColor: quizMode === "exam" ? "#fef3c7" : "transparent",
-                          color: quizMode === "exam" ? "#b45309" : "#6f7975",
-                          border: quizMode === "exam" ? "1px solid #f59e0b" : "1px solid transparent",
-                          borderRadius: 6,
-                          padding: "5px 10px",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5
-                        }}
-                      >
-                        <Clock size={12} />
-                        <span>Mode Tryout</span>
-                        {quizMode === "exam" && (
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: "#b45309", marginLeft: 4 }}>
-                            {Math.floor(examTimeLeft / 60)}:{(examTimeLeft % 60).toString().padStart(2, "0")}
-                          </span>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {quizQuestions.length === 0 ? (
+                {/* Quiz Question Count Selector (Shown only when quiz questions already exist) */}
+                {quizQuestions.length > 0 && (
                   <div
                     style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                       backgroundColor: "#ffffff",
                       border: "1px solid #dde1da",
                       borderRadius: 12,
-                      padding: "36px 20px",
-                      textAlign: "center",
-                      boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+                      padding: "12px 16px",
+                      marginBottom: 16,
+                      boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)",
+                      flexWrap: "wrap",
+                      gap: 10
                     }}
                   >
-                    <Target size={32} color="#727d78" style={{ margin: "0 auto 10px" }} />
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#17201d" }}>
-                      Belum Ada Paket Latihan Soal
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>Jumlah Soal:</span>
+                      {[3, 5, 10, 15, 20].map((num) => (
+                        <button
+                          key={num}
+                          onClick={() => setQuizQuestionCount(num)}
+                          style={{
+                            backgroundColor: quizQuestionCount === num ? "#18221f" : "#fafbf8",
+                            color: quizQuestionCount === num ? "#c8f064" : "#56615d",
+                            border: `1px solid ${quizQuestionCount === num ? "#18221f" : "#dce1da"}`,
+                            borderRadius: 6,
+                            padding: "5px 10px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          {num}
+                        </button>
+                      ))}
+
+                      {/* Stepper / Custom Number Input */}
+                      <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: "#fafbf8", border: "1px solid #dce1da", borderRadius: 6, padding: "2px 4px", gap: 2 }}>
+                        <button
+                          onClick={() => setQuizQuestionCount((prev) => Math.max(1, prev - 1))}
+                          style={{ background: "none", border: "none", color: "#56615d", cursor: "pointer", fontSize: 14, fontWeight: 700, padding: "0 6px" }}
+                          title="Kurangi 1 soal"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          max="30"
+                          value={quizQuestionCount}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val)) setQuizQuestionCount(Math.max(1, Math.min(30, val)));
+                          }}
+                          style={{
+                            width: 38,
+                            textAlign: "center",
+                            backgroundColor: "transparent",
+                            border: "none",
+                            color: "#18221f",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            fontFamily: "'DM Mono', monospace",
+                            outline: "none"
+                          }}
+                        />
+                        <button
+                          onClick={() => setQuizQuestionCount((prev) => Math.min(30, prev + 1))}
+                          style={{ background: "none", border: "none", color: "#56615d", cursor: "pointer", fontSize: 14, fontWeight: 700, padding: "0 6px" }}
+                          title="Tambah 1 soal"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <span style={{ fontSize: 11, color: "#727d78" }}>butir</span>
+
+                      {/* Quiz Focus / Difficulty Selector */}
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 6, backgroundColor: "#fafbf8", padding: 2, borderRadius: 6, border: "1px solid #dce1da" }}>
+                        {[
+                          { id: "beginner", label: "Pemula", title: "Pemula & Bertahap: Mulai dari konsep dasar dan angka sederhana" },
+                          { id: "conceptual", label: "Standar", title: "Standar Ujian: Pemahaman konsep dan skenario kontekstual" },
+                          { id: "analytical", label: "HOTS", title: "HOTS: Analisis tingkat tinggi dan pemecahan masalah non-rutin" }
+                        ].map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => setQuizType(item.id as any)}
+                            style={{
+                              backgroundColor: quizType === item.id ? "#18221f" : "transparent",
+                              color: quizType === item.id ? "#c8f064" : "#56615d",
+                              border: quizType === item.id ? "1px solid #18221f" : "1px solid transparent",
+                              borderRadius: 5,
+                              padding: "4px 8px",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              transition: "0.15s ease"
+                            }}
+                            title={item.title}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 400, margin: "6px auto 16px" }}>
-                      Pilih jumlah butir di atas dan biarkan AI menyusun paket soal penalaran bertingkat berdasarkan materi ini.
-                    </p>
+
                     <button
                       onClick={() => handleGenerateQuiz()}
                       disabled={isGeneratingQuiz || !activeDocId}
@@ -3247,14 +3506,274 @@ export default function App() {
                         color: "#c8f064",
                         border: "none",
                         borderRadius: 8,
-                        padding: "10px 20px",
-                        fontSize: 13,
+                        padding: "8px 16px",
+                        fontSize: 12.5,
                         fontWeight: 700,
-                        cursor: "pointer"
+                        cursor: isGeneratingQuiz ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)"
                       }}
                     >
-                      {isGeneratingQuiz ? "Menyusun Soal..." : `Generate ${quizQuestionCount} Soal Sekarang`}
+                      <Sparkles size={13} />
+                      {isGeneratingQuiz ? "Menyusun Soal..." : `Generate Baru`}
                     </button>
+                  </div>
+                )}
+
+                {/* Sub-Header & Mode Switch (Only shown when questions exist) */}
+                {quizQuestions.length > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                    <div>
+                      <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
+                        {isDrillingMistakes ? "Drill Khusus Soal yang Pernah Salah" : (quizMode === "exam" ? "Simulasi Tryout Ujian Asli" : "Simulasi Latihan Soal Pemahaman")}
+                      </h2>
+                      <p style={{ fontSize: 12, color: "#6f7975", marginTop: 2 }}>
+                        {quizMode === "exam"
+                          ? "Waktu berjalan mundur, lembar jawaban dinilai sekaligus setelah seluruh nomor selesai dikumpulkan."
+                          : "Format pilihan ganda HOTS dengan pembahasan konsep dan analisis jebakan soal."}
+                      </p>
+                    </div>
+
+                    {/* Mode Toggle Switch */}
+                    {!isDrillingMistakes && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, backgroundColor: "#ffffff", border: "1px solid #dce1da", borderRadius: 8, padding: 3 }}>
+                        <button
+                          onClick={() => {
+                            setQuizMode("study");
+                            resetQuizState();
+                          }}
+                          style={{
+                            backgroundColor: quizMode === "study" ? "#18221f" : "transparent",
+                            color: quizMode === "study" ? "#c8f064" : "#6f7975",
+                            border: quizMode === "study" ? "1px solid #18221f" : "1px solid transparent",
+                            borderRadius: 6,
+                            padding: "5px 10px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                          }}
+                        >
+                          <BookOpen size={12} />
+                          <span>Mode Belajar</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setQuizMode("exam");
+                            resetQuizState();
+                            setExamTimeLeft(quizQuestions.length * 90);
+                            setIsExamTimerRunning(true);
+                            setExamDurationSeconds(quizQuestions.length * 90);
+                          }}
+                          style={{
+                            backgroundColor: quizMode === "exam" ? "#fef3c7" : "transparent",
+                            color: quizMode === "exam" ? "#b45309" : "#6f7975",
+                            border: quizMode === "exam" ? "1px solid #f59e0b" : "1px solid transparent",
+                            borderRadius: 6,
+                            padding: "5px 10px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                          }}
+                        >
+                          <Clock size={12} />
+                          <span>Mode Tryout</span>
+                          {quizMode === "exam" && (
+                            <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: "#b45309", marginLeft: 4 }}>
+                              {Math.floor(examTimeLeft / 60)}:{(examTimeLeft % 60).toString().padStart(2, "0")}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {quizQuestions.length === 0 ? (
+                  /* Unified Quiz Setup Screen (No Redundancy) */
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #dde1da",
+                      borderRadius: 12,
+                      padding: "36px 32px",
+                      boxShadow: "0 4px 20px rgba(27, 39, 35, 0.03)"
+                    }}
+                  >
+                    <div style={{ textAlign: "center", maxWidth: 540, margin: "0 auto 28px" }}>
+                      <div
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 12,
+                          backgroundColor: "#f2f8e8",
+                          color: "#4b6623",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          margin: "0 auto 14px"
+                        }}
+                      >
+                        <Target size={24} />
+                      </div>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: "#17201d", margin: "0 0 6px" }}>
+                        Simulasi Latihan Soal Pemahaman
+                      </h2>
+                      <p style={{ fontSize: 13, color: "#6f7975", lineHeight: 1.5, margin: 0 }}>
+                        AI akan menganalisis materi aktif <strong style={{ color: "#17201d" }}>"{activeDocTitle || "Modul Ini"}"</strong> dan menyusun paket latihan pilihan ganda berkualitas tinggi.
+                      </p>
+                    </div>
+
+                    <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
+                      {/* Jumlah Soal */}
+                      <div>
+                        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 8 }}>
+                          Jumlah Butir Soal:
+                        </label>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          {[3, 5, 10, 15, 20].map((num) => (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => setQuizQuestionCount(num)}
+                              style={{
+                                flex: 1,
+                                backgroundColor: quizQuestionCount === num ? "#18221f" : "#fafbf8",
+                                color: quizQuestionCount === num ? "#c8f064" : "#56615d",
+                                border: `1px solid ${quizQuestionCount === num ? "#18221f" : "#dce1da"}`,
+                                borderRadius: 8,
+                                padding: "8px 0",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              {num} butir
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Tingkat Kesulitan */}
+                      <div>
+                        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 8 }}>
+                          Tingkat Kesulitan Soal:
+                        </label>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          {[
+                            { id: "beginner", label: "Pemula", desc: "Konsep dasar bertahap" },
+                            { id: "conceptual", label: "Standar", desc: "Pemahaman kurikulum" },
+                            { id: "analytical", label: "HOTS", desc: "Analisis & penalaran" }
+                          ].map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setQuizType(item.id as any)}
+                              style={{
+                                flex: 1,
+                                backgroundColor: quizType === item.id ? "#18221f" : "#fafbf8",
+                                color: quizType === item.id ? "#c8f064" : "#56615d",
+                                border: `1px solid ${quizType === item.id ? "#18221f" : "#dce1da"}`,
+                                borderRadius: 8,
+                                padding: "10px 8px",
+                                textAlign: "center",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              <div style={{ fontSize: 13, fontWeight: 700 }}>{item.label}</div>
+                              <div style={{ fontSize: 10.5, opacity: 0.8, marginTop: 2 }}>{item.desc}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Mode Latihan */}
+                      <div>
+                        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 8 }}>
+                          Mode Pelaksanaan:
+                        </label>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <button
+                            type="button"
+                            onClick={() => setQuizMode("study")}
+                            style={{
+                              backgroundColor: quizMode === "study" ? "#18221f" : "#fafbf8",
+                              color: quizMode === "study" ? "#c8f064" : "#56615d",
+                              border: `1px solid ${quizMode === "study" ? "#18221f" : "#dce1da"}`,
+                              borderRadius: 8,
+                              padding: "10px 12px",
+                              textAlign: "left",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8
+                            }}
+                          >
+                            <BookOpen size={16} />
+                            <div>
+                              <div style={{ fontSize: 12.5, fontWeight: 700 }}>Mode Belajar</div>
+                              <div style={{ fontSize: 10.5, opacity: 0.8 }}>Pembahasan langsung per nomor</div>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuizMode("exam")}
+                            style={{
+                              backgroundColor: quizMode === "exam" ? "#18221f" : "#fafbf8",
+                              color: quizMode === "exam" ? "#c8f064" : "#56615d",
+                              border: `1px solid ${quizMode === "exam" ? "#18221f" : "#dce1da"}`,
+                              borderRadius: 8,
+                              padding: "10px 12px",
+                              textAlign: "left",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8
+                            }}
+                          >
+                            <Clock size={16} />
+                            <div>
+                              <div style={{ fontSize: 12.5, fontWeight: 700 }}>Mode Tryout</div>
+                              <div style={{ fontSize: 10.5, opacity: 0.8 }}>Simulasi ujian berwaktu mundur</div>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Generate Button */}
+                      <button
+                        onClick={() => handleGenerateQuiz()}
+                        disabled={isGeneratingQuiz || !activeDocId}
+                        style={{
+                          backgroundColor: "#18221f",
+                          color: "#c8f064",
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "14px 24px",
+                          fontSize: 14,
+                          fontWeight: 800,
+                          cursor: isGeneratingQuiz ? "not-allowed" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          marginTop: 8,
+                          boxShadow: "0 4px 14px rgba(24, 34, 31, 0.15)"
+                        }}
+                      >
+                        <Sparkles size={16} />
+                        <span>{isGeneratingQuiz ? "Sedang Menyusun Soal..." : `Generate ${quizQuestionCount} Soal Sekarang`}</span>
+                      </button>
+                    </div>
                   </div>
                 ) : isQuizCompleted || (quizMode === "exam" && examSubmitted) ? (
                   /* Quiz / Exam Completed Screen */
@@ -5186,27 +5705,7 @@ export default function App() {
                             {children}
                           </blockquote>
                         ),
-                        pre: ({ children }) => (
-                          <pre
-                            style={{
-                              backgroundColor: "#f6f8f5",
-                              border: "1px solid #d4ded2",
-                              borderLeft: "3px solid #65a30d",
-                              borderRadius: 8,
-                              padding: "12px 14px",
-                              fontFamily: "'DM Mono', monospace",
-                              fontSize: 11.5,
-                              lineHeight: 1.45,
-                              color: "#18221f",
-                              overflowX: "auto",
-                              whiteSpace: "pre-wrap",
-                              wordBreak: "break-word",
-                              margin: "14px 0"
-                            }}
-                          >
-                            {children}
-                          </pre>
-                        ),
+                        pre: ({ children }) => renderVisualDiagramOrPre(children),
                         code: ({ children }) => (
                           <code
                             style={{
@@ -5458,8 +5957,8 @@ export default function App() {
           </div>
         </section>
 
-          {/* Right Column: Figma Make "Tanya Nara" AI Panel */}
-          <aside className="ai-panel-box desktop-only" style={{ display: activeTab === "home" ? "none" : undefined }}>
+          {/* Right Column: Figma Make "Tanya Nara" AI Panel (Collapsible) */}
+          <aside className="ai-panel-box desktop-only" style={{ display: (activeTab !== "home" && isAiPanelOpen) ? "flex" : "none", width: 360, flexShrink: 0 }}>
             <div className="ai-panel-inner">
               <div>
                 <div className="ai-heading-box">
@@ -5494,6 +5993,22 @@ export default function App() {
                         <RotateCw size={12} />
                       </button>
                     )}
+                    <button
+                      onClick={() => setIsAiPanelOpen(false)}
+                      title="Tutup panel Tanya Nara"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#8a9691",
+                        cursor: "pointer",
+                        padding: "3px 4px",
+                        borderRadius: 4,
+                        display: "flex",
+                        alignItems: "center"
+                      }}
+                    >
+                      <X size={15} />
+                    </button>
                   </div>
                 </div>
 
@@ -5604,62 +6119,6 @@ export default function App() {
             </div>
           </aside>
         </div>
-
-        {/* Lesson Footer Bar */}
-        {(() => {
-          if (activeTab === "home") return null;
-          const hasContent = activeDocContent.length > 0 ? 1 : 0;
-          const hasFlashcards = flashcards.length > 0 ? 1 : 0;
-          const hasQuiz = quizQuestions.length > 0 ? 1 : 0;
-          const hasSummary = activeDocSummary.length > 0 ? 1 : 0;
-          const progressPct = Math.round(((hasContent + hasFlashcards + hasQuiz + hasSummary) / 4) * 100);
-          return (
-        <footer className="lesson-footer-bar desktop-only">
-          <div className="course-progress-box">
-            <span>Progres modul</span>
-            <div className="course-progress-bar">
-              <div className="course-progress-bar-fill" style={{ width: `${progressPct}%` }} />
-            </div>
-            <strong style={{ color: "#17201d", fontFamily: "'DM Mono', monospace" }}>{progressPct}%</strong>
-          </div>
-
-          <div className="footer-steps">
-            <span className={hasContent ? "done" : ""}>Materi</span>
-            <span className={hasFlashcards ? "done" : ""}>Flashcard</span>
-            <span className={hasQuiz ? "done" : ""}>Latihan</span>
-            <span className={hasSummary ? "done" : ""}>Rangkuman</span>
-          </div>
-
-          <button
-            onClick={() => {
-              if (activeTab === "material") setActiveTab("flashcards");
-              else if (activeTab === "flashcards") setActiveTab("quiz");
-              else if (activeTab === "quiz") setActiveTab("summary");
-              else setActiveTab("material");
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 14px",
-              color: "#18221f",
-              backgroundColor: "#c8f064",
-              border: 0,
-              borderRadius: 8,
-              fontSize: 11.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "0.15s ease"
-            }}
-          >
-            <span>
-              {activeTab === "material" ? "Lanjut ke Flashcard" : activeTab === "flashcards" ? "Lanjut ke Latihan Soal" : activeTab === "quiz" ? "Lanjut ke Rangkuman" : "Kembali ke Materi"}
-            </span>
-            <ChevronRight size={14} />
-          </button>
-        </footer>
-          );
-        })()}
       </div>
 
       {/* 📐 FORMULA CHEATSHEET DRAWER OVERLAY */}

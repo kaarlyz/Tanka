@@ -2244,6 +2244,34 @@ export default function App() {
         <Brain size={24} />
       </button>
 
+      {/* Hidden File Inputs for Upload & Camera */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        multiple
+        accept=".pdf,.docx,.pptx,.txt,.md,image/png,image/jpeg,image/webp"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleStageFiles(e.target.files);
+            e.target.value = "";
+          }
+        }}
+      />
+      <input
+        type="file"
+        ref={cameraInputRef}
+        style={{ display: "none" }}
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleStageFiles(e.target.files);
+            e.target.value = "";
+          }
+        }}
+      />
+
       {/* Mobile Bottom Navigation Bar (Fixed on <= 768px) */}
       <MobileBottomNav
         activeTab={activeTab}

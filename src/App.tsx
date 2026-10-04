@@ -244,22 +244,28 @@ function MathView({ text, style, className }: { text?: string; style?: React.CSS
 
 function getSubjectBadge(title: string) {
   const t = (title || "").toLowerCase();
-  if (t.includes("sosiologi") || t.includes("sosial") || t.includes("masyarakat") || t.includes("konflik")) {
+  if (t.includes("sosiologi") || t.includes("sosial") || t.includes("masyarakat") || t.includes("konflik") || t.includes("perubahan")) {
     return { label: "Sosiologi", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe" };
   }
   if (t.includes("ekonomi") || t.includes("pasar") || t.includes("harga") || t.includes("uang") || t.includes("permintaan") || t.includes("elastisitas") || t.includes("perdagangan")) {
     return { label: "Ekonomi", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" };
   }
-  if (t.includes("matematika") || t.includes("aljabar") || t.includes("matriks") || t.includes("hitung") || t.includes("fungsi") || t.includes("persamaan") || t.includes("trigonometri")) {
+  if (t.includes("matematika") || t.includes("aljabar") || t.includes("matriks") || t.includes("hitung") || t.includes("fungsi") || t.includes("persamaan") || t.includes("trigonometri") || t.includes("kalkulus")) {
     return { label: "Matematika", color: "#d97706", bg: "#fffbeb", border: "#fde68a" };
   }
-  if (t.includes("indo") || t.includes("bahasa") || t.includes("teks") || t.includes("paragraf") || t.includes("puisi") || t.includes("kalimat")) {
+  if (t.includes("indo") || t.includes("bahasa") || t.includes("teks") || t.includes("paragraf") || t.includes("puisi") || t.includes("kalimat") || t.includes("sastra")) {
     return { label: "B. Indonesia", color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" };
   }
-  if (t.includes("inggris") || t.includes("english") || t.includes("grammar") || t.includes("reading")) {
+  if (t.includes("inggris") || t.includes("english") || t.includes("grammar") || t.includes("reading") || t.includes("vocabulary")) {
     return { label: "B. Inggris", color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc" };
   }
-  return { label: "Materi TKA", color: "#4b6623", bg: "#f2f8e8", border: "#d7e8be" };
+  if (t.includes("fisika") || t.includes("kimia") || t.includes("biologi") || t.includes("sains")) {
+    return { label: "Sains", color: "#db2777", bg: "#fdf2f8", border: "#fbcfe8" };
+  }
+  if (t.includes("sejarah") || t.includes("perang") || t.includes("kemerdekaan")) {
+    return { label: "Sejarah", color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe" };
+  }
+  return { label: "Modul Belajar", color: "#4b6623", bg: "#f2f8e8", border: "#d7e8be" };
 }
 
 export default function App() {
@@ -1561,10 +1567,10 @@ export default function App() {
             </div>
 
             {/* Document list */}
-            <div className="no-scrollbar" style={{ flex: "0 1 auto", maxHeight: 110, overflowY: "auto", paddingRight: 2 }}>
+            <div className="no-scrollbar" style={{ flex: 1, minHeight: 160, maxHeight: 360, overflowY: "auto", paddingRight: 2 }}>
               {documents.length === 0 ? (
-                <div style={{ padding: "16px 8px", color: "#6e7c77", fontSize: 11.5, textAlign: "center" }}>
-                  Belum ada dokumen. Unggah atau buat topik AI.
+                <div style={{ padding: "18px 8px", color: "#6e7c77", fontSize: 12.5, textAlign: "center" }}>
+                  Belum ada dokumen. Unggah atau buat modul baru.
                 </div>
               ) : (
                 documents.map((doc) => {
@@ -1577,9 +1583,9 @@ export default function App() {
                         setIsMobileDrawerOpen(false);
                       }}
                       style={{
-                        padding: "8px 10px",
+                        padding: "9px 12px",
                         borderRadius: 8,
-                        marginBottom: 4,
+                        marginBottom: 5,
                         backgroundColor: isSelected ? "#25322e" : "transparent",
                         border: isSelected ? "1px solid #34413c" : "1px solid transparent",
                         cursor: "pointer",
@@ -1589,19 +1595,20 @@ export default function App() {
                         transition: "all 0.15s ease"
                       }}
                     >
-                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginRight: 6 }}>
-                        <div style={{ fontSize: 12, fontWeight: isSelected ? 700 : 500, color: isSelected ? "#f5f8f3" : "#aeb9b4" }}>
+                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginRight: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: isSelected ? 700 : 500, color: isSelected ? "#f5f8f3" : "#aeb9b4" }}>
                           {doc.title}
                         </div>
-                        <div style={{ fontSize: 10, color: "#6e7c77", fontFamily: "'DM Mono', monospace" }}>
+                        <div style={{ fontSize: 11, color: "#7a8a84", fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
                           {doc.flashcard_count || 0} kartu
                         </div>
                       </div>
                       <button
                         onClick={(e) => handleDeleteDocument(doc.id, e)}
-                        style={{ background: "none", border: "none", color: "#6e7c77", cursor: "pointer", padding: 4 }}
+                        style={{ background: "none", border: "none", color: "#7a8a84", cursor: "pointer", padding: 4 }}
+                        title="Hapus dokumen"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   );
@@ -1728,7 +1735,7 @@ export default function App() {
             <div className="avatar-box">ER</div>
             <span>
               <strong>Eka Restu Syahputra</strong>
-              <small>Pelajar aktif XII-6</small>
+              <small>Akun Belajar</small>
             </span>
             <span className="profile-more-dots">•••</span>
           </button>
@@ -1748,8 +1755,10 @@ export default function App() {
               <Menu size={22} />
             </button>
             <div style={{ minWidth: 0 }}>
-              <span className="topbar-eyebrow">RUANG BELAJAR CERDAS</span>
-              <h1 className="topbar-title" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeDocTitle || "Dasar Pembelajaran"}</h1>
+              <span className="topbar-eyebrow">{activeTab === "home" ? "TANKA STUDY" : "MODUL AKTIF"}</span>
+              <h1 className="topbar-title" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {activeTab === "home" ? "Beranda Belajar" : (activeDocTitle || "Modul Belajar")}
+              </h1>
             </div>
           </div>
 
@@ -1758,24 +1767,25 @@ export default function App() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 6,
+              gap: 7,
               backgroundColor: timerMode === "focus" ? "#f0f6eb" : "#fbf4e8",
               border: `1px solid ${timerMode === "focus" ? "#d2e3c3" : "#ecd8b5"}`,
               borderRadius: 999,
-              padding: "4px 10px",
+              padding: "5px 12px",
               fontFamily: "'DM Mono', monospace",
               flexShrink: 0
             }}
           >
-            <Clock size={12} color={timerMode === "focus" ? "#4b6623" : "#b45309"} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: timerMode === "focus" ? "#4b6623" : "#b45309" }}>
+            <Clock size={13} color={timerMode === "focus" ? "#4b6623" : "#b45309"} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: timerMode === "focus" ? "#4b6623" : "#b45309" }}>
               {timerDisplay}
             </span>
             <button
               onClick={() => setIsTimerRunning(!isTimerRunning)}
               style={{ background: "none", border: "none", color: "#4b6623", cursor: "pointer", padding: "2px 4px", display: "flex" }}
+              title={isTimerRunning ? "Jeda" : "Mulai"}
             >
-              {isTimerRunning ? <Pause size={11} /> : <Play size={11} />}
+              {isTimerRunning ? <Pause size={12} /> : <Play size={12} />}
             </button>
             <button
               onClick={() => {
@@ -1784,8 +1794,9 @@ export default function App() {
               }}
               className="desktop-only"
               style={{ background: "none", border: "none", color: "#88918d", cursor: "pointer", padding: "2px 4px", display: "flex" }}
+              title="Reset timer"
             >
-              <RotateCw size={10} />
+              <RotateCw size={11} />
             </button>
           </div>
 
@@ -1803,8 +1814,8 @@ export default function App() {
                 border: "1px solid #dce1da",
                 color: "#17201d",
                 borderRadius: 8,
-                padding: "6px 12px",
-                fontSize: 11.5,
+                padding: "7px 13px",
+                fontSize: 12.5,
                 fontWeight: 600,
                 cursor: "pointer",
                 display: "flex",
@@ -1906,28 +1917,28 @@ export default function App() {
           </div>
 
           {/* Workspace Tab Panels */}
-          <div className="main-content-area" style={{ flex: 1, overflowY: "auto", padding: 20 }}>
-            {/* TAB 0: BERANDA / STUDY HUB (ANTI-SLOP UTILITY DASHBOARD) */}
+          <div className="main-content-area" style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+            {/* TAB 0: BERANDA / STUDY HUB (CLEAN DESKTOP UTILITY DASHBOARD) */}
             {activeTab === "home" && (
-              <div style={{ maxWidth: 940, margin: "0 auto", paddingBottom: 36 }}>
-                {/* 1. COMPACT UTILITY BAR */}
+              <div style={{ maxWidth: 1160, margin: "0 auto", paddingBottom: 48 }}>
+                {/* 1. TOP ACTION & SEARCH CARD */}
                 <div
                   style={{
                     backgroundColor: "#ffffff",
                     borderRadius: 12,
-                    padding: "16px 18px",
+                    padding: "20px 24px",
                     border: "1px solid #dce1da",
-                    boxShadow: "0 2px 10px rgba(27, 39, 35, 0.02)",
-                    marginBottom: 16
+                    boxShadow: "0 2px 12px rgba(27, 39, 35, 0.03)",
+                    marginBottom: 20
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 12 }}>
                     <div>
-                      <h1 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.01em" }}>
+                      <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.02em" }}>
                         Pusat Belajar Mandiri
                       </h1>
-                      <div style={{ fontSize: 11.5, color: "#6f7975", marginTop: 2 }}>
-                        Persiapan TKA: Matematika • Ekonomi • Sosiologi • B. Indo • B. Inggris
+                      <div style={{ fontSize: 13, color: "#6f7975", marginTop: 3 }}>
+                        Eksplorasi materi terstruktur, kuis pemahaman, dan evaluasi hasil belajar.
                       </div>
                     </div>
 
@@ -1939,17 +1950,17 @@ export default function App() {
                           backgroundColor: "#f8f9f5",
                           border: "1px solid #dce1da",
                           color: "#17201d",
-                          borderRadius: 7,
-                          padding: "6px 12px",
-                          fontSize: 11.5,
+                          borderRadius: 8,
+                          padding: "8px 14px",
+                          fontSize: 13,
                           fontWeight: 600,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
-                          gap: 5
+                          gap: 6
                         }}
                       >
-                        <Upload size={12} color="#4b6623" />
+                        <Upload size={14} color="#4b6623" />
                         <span>Unggah File</span>
                       </button>
 
@@ -1960,18 +1971,18 @@ export default function App() {
                           backgroundColor: "#18221f",
                           border: "none",
                           color: "#c8f064",
-                          borderRadius: 7,
-                          padding: "6px 13px",
-                          fontSize: 11.5,
+                          borderRadius: 8,
+                          padding: "8px 16px",
+                          fontSize: 13,
                           fontWeight: 700,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
-                          gap: 5
+                          gap: 6
                         }}
                       >
-                        <Plus size={13} />
-                        <span>Buat Topik Baru</span>
+                        <Plus size={14} />
+                        <span>Buat Modul Baru</span>
                       </button>
                     </div>
                   </div>
@@ -1992,24 +2003,24 @@ export default function App() {
                       backgroundColor: "#f8f9f5",
                       borderRadius: 8,
                       border: "1px solid #dce1da",
-                      padding: "3px 4px 3px 12px",
-                      gap: 8
+                      padding: "4px 6px 4px 14px",
+                      gap: 10
                     }}
                   >
-                    <Search size={15} color="#8a9691" style={{ flexShrink: 0 }} />
+                    <Search size={18} color="#8a9691" style={{ flexShrink: 0 }} />
                     <input
                       type="text"
                       value={homeSearchQuery}
                       onChange={(e) => setHomeSearchQuery(e.target.value)}
-                      placeholder="Cari modul atau ketik topik baru (misal: Teori Perubahan Sosial, Elastisitas Permintaan, Fungsi Kuadrat)..."
+                      placeholder="Cari materi atau masukkan topik baru (misal: Teori Perubahan Sosial, Elastisitas Permintaan, Fungsi Kuadrat)..."
                       style={{
                         flex: 1,
                         minWidth: 0,
                         border: "none",
                         outline: "none",
-                        fontSize: 12.5,
+                        fontSize: 14,
                         color: "#17201d",
-                        padding: "7px 0",
+                        padding: "8px 0",
                         backgroundColor: "transparent"
                       }}
                     />
@@ -2021,97 +2032,120 @@ export default function App() {
                         color: homeSearchQuery.trim() ? "#c8f064" : "#9ca3af",
                         border: "none",
                         borderRadius: 6,
-                        padding: "6px 12px",
-                        fontSize: 11.5,
+                        padding: "8px 16px",
+                        fontSize: 13,
                         fontWeight: 700,
                         cursor: homeSearchQuery.trim() ? "pointer" : "default",
                         display: "flex",
                         alignItems: "center",
-                        gap: 4,
+                        gap: 6,
                         flexShrink: 0
                       }}
                     >
                       <span>Cari / Buat</span>
-                      <ArrowRight size={12} />
+                      <ArrowRight size={14} />
                     </button>
                   </form>
                 </div>
 
-                {/* 2. THREE COMPACT STATUS TILES */}
+                {/* 2. THREE BENTO STATUS COUNTERS */}
                 <div
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: 10,
-                    marginBottom: 16
+                    gap: 14,
+                    marginBottom: 20
                   }}
                 >
                   <div
                     style={{
                       backgroundColor: "#ffffff",
-                      borderRadius: 10,
-                      padding: "12px 14px",
+                      borderRadius: 12,
+                      padding: "16px 20px",
                       border: "1px solid #dce1da",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between"
+                      justifyContent: "space-between",
+                      boxShadow: "0 2px 8px rgba(27, 39, 35, 0.02)"
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 10.5, color: "#6f7975", fontWeight: 600, textTransform: "uppercase" }}>Modul Tersimpan</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: "#17201d", fontFamily: "'DM Mono', monospace", marginTop: 2 }}>
+                      <div style={{ fontSize: 11.5, color: "#6f7975", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                        Modul Tersimpan
+                      </div>
+                      <div style={{ fontSize: 26, fontWeight: 800, color: "#17201d", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>
                         {documents.length}
                       </div>
+                      <div style={{ fontSize: 12, color: "#8a9691", marginTop: 2 }}>
+                        Koleksi materi aktif
+                      </div>
                     </div>
-                    <BookOpen size={16} color="#4b6623" />
+                    <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "#f2f8e8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <BookOpen size={18} color="#4b6623" />
+                    </div>
                   </div>
 
                   <div
                     style={{
                       backgroundColor: "#ffffff",
-                      borderRadius: 10,
-                      padding: "12px 14px",
+                      borderRadius: 12,
+                      padding: "16px 20px",
                       border: "1px solid #dce1da",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between"
+                      justifyContent: "space-between",
+                      boxShadow: "0 2px 8px rgba(27, 39, 35, 0.02)"
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 10.5, color: "#6f7975", fontWeight: 600, textTransform: "uppercase" }}>Total Flashcard</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: "#17201d", fontFamily: "'DM Mono', monospace", marginTop: 2 }}>
+                      <div style={{ fontSize: 11.5, color: "#6f7975", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                        Total Flashcard
+                      </div>
+                      <div style={{ fontSize: 26, fontWeight: 800, color: "#17201d", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>
                         {documents.reduce((acc, d) => acc + (d.flashcard_count || 0), 0) || flashcards.length}
                       </div>
+                      <div style={{ fontSize: 12, color: "#8a9691", marginTop: 2 }}>
+                        Fakta siap recall
+                      </div>
                     </div>
-                    <Layers size={16} color="#3b82f6" />
+                    <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Layers size={18} color="#3b82f6" />
+                    </div>
                   </div>
 
                   <div
                     onClick={() => setActiveTab("mistakes")}
                     style={{
                       backgroundColor: mistakes.length > 0 ? "#fffaf5" : "#ffffff",
-                      borderRadius: 10,
-                      padding: "12px 14px",
+                      borderRadius: 12,
+                      padding: "16px 20px",
                       border: mistakes.length > 0 ? "1px solid #fed7aa" : "1px solid #dce1da",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(27, 39, 35, 0.02)",
+                      transition: "all 0.15s ease"
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 10.5, color: mistakes.length > 0 ? "#ea580c" : "#6f7975", fontWeight: 600, textTransform: "uppercase" }}>
+                      <div style={{ fontSize: 11.5, color: mistakes.length > 0 ? "#ea580c" : "#6f7975", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
                         Bank Soal Salah
                       </div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: mistakes.length > 0 ? "#c2410c" : "#17201d", fontFamily: "'DM Mono', monospace", marginTop: 2 }}>
+                      <div style={{ fontSize: 26, fontWeight: 800, color: mistakes.length > 0 ? "#c2410c" : "#17201d", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>
                         {mistakes.length}
                       </div>
+                      <div style={{ fontSize: 12, color: mistakes.length > 0 ? "#ea580c" : "#8a9691", marginTop: 2 }}>
+                        {mistakes.length > 0 ? "Klik untuk review kesalahan" : "Belum ada catatan salah"}
+                      </div>
                     </div>
-                    <AlertTriangle size={16} color={mistakes.length > 0 ? "#ea580c" : "#f59e0b"} />
+                    <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: mistakes.length > 0 ? "#ffedd5" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <AlertTriangle size={18} color={mistakes.length > 0 ? "#ea580c" : "#f59e0b"} />
+                    </div>
                   </div>
                 </div>
 
-                {/* 3. LANJUTKAN SESI TERAKHIR (COMPACT STRIP) */}
+                {/* 3. LANJUTKAN SESI TERAKHIR (WIDE STRIP) */}
                 {(activeDoc || (documents && documents[0])) && (() => {
                   const targetDoc = activeDoc || documents[0];
                   const badge = getSubjectBadge(targetDoc.title);
@@ -2120,25 +2154,26 @@ export default function App() {
                       style={{
                         backgroundColor: "#ffffff",
                         border: "1px solid #dce1da",
-                        borderRadius: 10,
-                        padding: "12px 16px",
-                        marginBottom: 16,
+                        borderRadius: 12,
+                        padding: "16px 22px",
+                        marginBottom: 20,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
                         flexWrap: "wrap",
-                        gap: 10
+                        gap: 14,
+                        boxShadow: "0 2px 10px rgba(27, 39, 35, 0.02)"
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "1 1 300px", minWidth: 200 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "1 1 360px", minWidth: 240 }}>
                         <span
                           style={{
                             backgroundColor: badge.bg,
                             color: badge.color,
                             border: `1px solid ${badge.border}`,
-                            padding: "2px 7px",
-                            borderRadius: 5,
-                            fontSize: 10,
+                            padding: "3px 9px",
+                            borderRadius: 6,
+                            fontSize: 11,
                             fontWeight: 700,
                             flexShrink: 0
                           }}
@@ -2146,14 +2181,16 @@ export default function App() {
                           {badge.label}
                         </span>
                         <div style={{ overflow: "hidden" }}>
-                          <div style={{ fontSize: 9.5, color: "#8a9691", fontWeight: 600, textTransform: "uppercase" }}>Sesi Terakhir</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "#17201d", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <div style={{ fontSize: 10.5, color: "#8a9691", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                            Lanjutkan Sesi Terakhir
+                          </div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: "#17201d", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1 }}>
                             {targetDoc.title}
                           </div>
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                         <button
                           onClick={() => {
                             loadDocument(targetDoc.id);
@@ -2163,18 +2200,18 @@ export default function App() {
                             backgroundColor: "#18221f",
                             color: "#c8f064",
                             border: "none",
-                            borderRadius: 6,
-                            padding: "5px 11px",
-                            fontSize: 11,
+                            borderRadius: 7,
+                            padding: "8px 14px",
+                            fontSize: 12.5,
                             fontWeight: 700,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
-                            gap: 5
+                            gap: 6
                           }}
                         >
-                          <BookOpen size={12} />
-                          <span>Baca</span>
+                          <BookOpen size={14} />
+                          <span>Baca Materi</span>
                         </button>
 
                         <button
@@ -2186,18 +2223,18 @@ export default function App() {
                             backgroundColor: "#f8f9f5",
                             color: "#17201d",
                             border: "1px solid #dce1da",
-                            borderRadius: 6,
-                            padding: "5px 10px",
-                            fontSize: 11,
+                            borderRadius: 7,
+                            padding: "8px 14px",
+                            fontSize: 12.5,
                             fontWeight: 600,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
-                            gap: 4
+                            gap: 5
                           }}
                         >
-                          <Target size={12} color="#72a728" />
-                          <span>Kuis</span>
+                          <Target size={14} color="#72a728" />
+                          <span>Latihan Soal</span>
                         </button>
 
                         <button
@@ -2209,33 +2246,39 @@ export default function App() {
                             backgroundColor: "#f8f9f5",
                             color: "#17201d",
                             border: "1px solid #dce1da",
-                            borderRadius: 6,
-                            padding: "5px 10px",
-                            fontSize: 11,
+                            borderRadius: 7,
+                            padding: "8px 14px",
+                            fontSize: 12.5,
                             fontWeight: 600,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
-                            gap: 4
+                            gap: 5
                           }}
                         >
-                          <Layers size={12} color="#3b82f6" />
-                          <span>Kartu</span>
+                          <Layers size={14} color="#3b82f6" />
+                          <span>Flashcards</span>
                         </button>
                       </div>
                     </div>
                   );
                 })()}
 
-                {/* 4. RAK DOKUMEN DENGAN FILTER MAPEL TKA */}
+                {/* 4. RAK DOKUMEN DENGAN FILTER MAPEL UNIVERSAL */}
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#17201d" }}>
-                      Daftar Modul ({documents.length})
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <BookOpen size={16} color="#4b6623" />
+                      <h2 style={{ fontSize: 15, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.01em" }}>
+                        Koleksi Modul Belajar
+                      </h2>
+                      <span style={{ fontSize: 12, color: "#6f7975", fontFamily: "'DM Mono', monospace" }}>
+                        ({documents.length})
+                      </span>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-                      {["Semua", "Matematika", "Ekonomi", "Sosiologi", "B. Indo", "B. Inggris"].map((cat) => (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      {["Semua", "Sosiologi", "Ekonomi", "Matematika", "Sains", "Bahasa"].map((cat) => (
                         <button
                           key={cat}
                           onClick={() => setHomeSubjectFilter(cat)}
@@ -2243,9 +2286,9 @@ export default function App() {
                             backgroundColor: homeSubjectFilter === cat ? "#18221f" : "#ffffff",
                             color: homeSubjectFilter === cat ? "#c8f064" : "#6f7975",
                             border: homeSubjectFilter === cat ? "1px solid #18221f" : "1px solid #dce1da",
-                            padding: "3px 8px",
-                            borderRadius: 6,
-                            fontSize: 10.5,
+                            padding: "5px 12px",
+                            borderRadius: 7,
+                            fontSize: 12,
                             fontWeight: 600,
                             cursor: "pointer",
                             transition: "all 0.15s ease"
@@ -2257,12 +2300,11 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* List of Documents */}
+                  {/* 2-Column Responsive Grid of Documents */}
                   {(() => {
                     const filteredDocs = documents.filter((doc) => {
                       if (homeSubjectFilter === "Semua") return true;
-                      if (homeSubjectFilter === "B. Indo") return doc.title.toLowerCase().includes("indo");
-                      if (homeSubjectFilter === "B. Inggris") return doc.title.toLowerCase().includes("inggris") || doc.title.toLowerCase().includes("english");
+                      if (homeSubjectFilter === "Bahasa") return doc.title.toLowerCase().includes("indo") || doc.title.toLowerCase().includes("inggris") || doc.title.toLowerCase().includes("english");
                       return doc.title.toLowerCase().includes(homeSubjectFilter.toLowerCase());
                     });
 
@@ -2272,23 +2314,30 @@ export default function App() {
                           style={{
                             backgroundColor: "#ffffff",
                             border: "1px dashed #dce1da",
-                            borderRadius: 10,
-                            padding: "24px 16px",
+                            borderRadius: 12,
+                            padding: "36px 20px",
                             textAlign: "center"
                           }}
                         >
-                          <div style={{ fontSize: 12.5, fontWeight: 600, color: "#17201d" }}>
+                          <BookOpen size={24} color="#8a9691" style={{ margin: "0 auto 8px" }} />
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#17201d" }}>
                             Belum ada modul untuk kategori ini
                           </div>
-                          <div style={{ fontSize: 11, color: "#8a9691", marginTop: 2 }}>
-                            Ketik topik materi di kolom atas lalu klik "Cari / Buat".
+                          <div style={{ fontSize: 12, color: "#8a9691", marginTop: 4 }}>
+                            Gunakan kotak pencarian di atas untuk membuat modul topik baru atau unggah berkas.
                           </div>
                         </div>
                       );
                     }
 
                     return (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+                          gap: 14
+                        }}
+                      >
                         {filteredDocs.map((doc) => {
                           const badge = getSubjectBadge(doc.title);
                           const isCurrent = doc.id === activeDocId;
@@ -2297,91 +2346,138 @@ export default function App() {
                               key={doc.id}
                               style={{
                                 backgroundColor: "#ffffff",
-                                border: isCurrent ? "1px solid #72a728" : "1px solid #dce1da",
-                                borderRadius: 8,
-                                padding: "10px 14px",
+                                border: isCurrent ? "1.5px solid #72a728" : "1px solid #dce1da",
+                                borderRadius: 12,
+                                padding: "16px 18px",
                                 display: "flex",
-                                alignItems: "center",
+                                flexDirection: "column",
                                 justifyContent: "space-between",
-                                gap: 10,
+                                boxShadow: "0 2px 10px rgba(27, 39, 35, 0.02)",
                                 transition: "all 0.15s ease"
                               }}
                             >
-                              <div
-                                onClick={() => {
-                                  loadDocument(doc.id);
-                                  setActiveTab("material");
-                                }}
-                                style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, cursor: "pointer" }}
-                              >
-                                <span
+                              <div>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                                  <span
+                                    style={{
+                                      backgroundColor: badge.bg,
+                                      color: badge.color,
+                                      border: `1px solid ${badge.border}`,
+                                      padding: "2px 8px",
+                                      borderRadius: 6,
+                                      fontSize: 10.5,
+                                      fontWeight: 700
+                                    }}
+                                  >
+                                    {badge.label}
+                                  </span>
+                                  <button
+                                    onClick={(e) => handleDeleteDocument(doc.id, e)}
+                                    title="Hapus modul"
+                                    style={{ background: "none", border: "none", color: "#aeb9b4", cursor: "pointer", padding: 3 }}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+
+                                <h4
+                                  onClick={() => {
+                                    loadDocument(doc.id);
+                                    setActiveTab("material");
+                                  }}
                                   style={{
-                                    backgroundColor: badge.bg,
-                                    color: badge.color,
-                                    border: `1px solid ${badge.border}`,
-                                    padding: "2px 6px",
-                                    borderRadius: 4,
-                                    fontSize: 9.5,
+                                    fontSize: 14.5,
                                     fontWeight: 700,
-                                    flexShrink: 0
+                                    margin: "0 0 8px 0",
+                                    color: "#17201d",
+                                    lineHeight: 1.4,
+                                    cursor: "pointer"
                                   }}
                                 >
-                                  {badge.label}
-                                </span>
+                                  {doc.title}
+                                </h4>
 
-                                <div style={{ minWidth: 0, flex: 1 }}>
-                                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "#17201d", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                    {doc.title}
+                                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11.5, color: "#8a9691", marginBottom: 14 }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                    <Layers size={12} color="#6f7975" />
+                                    <span>{doc.flashcard_count || 0} Flashcard</span>
                                   </div>
-                                  <div style={{ fontSize: 10.5, color: "#8a9691", fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-                                    {doc.flashcard_count || 0} kartu • {new Date(doc.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
-                                  </div>
+                                  <span>•</span>
+                                  <span>{new Date(doc.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
                                 </div>
                               </div>
 
-                              <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, borderTop: "1px solid #f0f2ee", paddingTop: 10 }}>
                                 <button
                                   onClick={() => {
                                     loadDocument(doc.id);
                                     setActiveTab("material");
                                   }}
                                   style={{
+                                    flex: 1,
                                     backgroundColor: "#18221f",
                                     color: "#c8f064",
                                     border: "none",
-                                    borderRadius: 5,
-                                    padding: "4px 8px",
-                                    fontSize: 11,
+                                    borderRadius: 6,
+                                    padding: "7px 10px",
+                                    fontSize: 12,
                                     fontWeight: 700,
-                                    cursor: "pointer"
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 5
                                   }}
                                 >
-                                  Buka
+                                  <BookOpen size={13} />
+                                  <span>Buka Modul</span>
                                 </button>
+
                                 <button
                                   onClick={() => {
                                     loadDocument(doc.id);
                                     setActiveTab("quiz");
                                   }}
+                                  title="Latihan Soal"
                                   style={{
                                     backgroundColor: "#f8f9f5",
                                     color: "#17201d",
                                     border: "1px solid #dce1da",
-                                    borderRadius: 5,
-                                    padding: "4px 8px",
-                                    fontSize: 11,
+                                    borderRadius: 6,
+                                    padding: "7px 11px",
+                                    fontSize: 12,
                                     fontWeight: 600,
-                                    cursor: "pointer"
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 4
                                   }}
                                 >
-                                  Kuis
+                                  <Target size={13} color="#72a728" />
+                                  <span>Kuis</span>
                                 </button>
+
                                 <button
-                                  onClick={(e) => handleDeleteDocument(doc.id, e)}
-                                  style={{ background: "none", border: "none", color: "#aeb9b4", cursor: "pointer", padding: 3 }}
-                                  title="Hapus"
+                                  onClick={() => {
+                                    loadDocument(doc.id);
+                                    setActiveTab("flashcards");
+                                  }}
+                                  title="Flashcards 3D"
+                                  style={{
+                                    backgroundColor: "#f8f9f5",
+                                    color: "#17201d",
+                                    border: "1px solid #dce1da",
+                                    borderRadius: 6,
+                                    padding: "7px 11px",
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 4
+                                  }}
                                 >
-                                  <Trash2 size={12} />
+                                  <Layers size={13} color="#3b82f6" />
                                 </button>
                               </div>
                             </div>
@@ -2396,7 +2492,7 @@ export default function App() {
 
             {/* TAB 1: MATERIAL & INGESTION (CLEAN OVERVIEW CARD) */}
             {activeTab === "material" && (
-              <div style={{ maxWidth: 880, margin: "0 auto" }}>
+              <div style={{ maxWidth: 1080, margin: "0 auto" }}>
                 {/* Drag and Drop Zone */}
                 <div
                   onDragOver={(e) => {
@@ -2923,7 +3019,7 @@ export default function App() {
 
             {/* TAB 2: MULTIPLE CHOICE QUIZ DRILL (LATIHAN SOAL PILIHAN GANDA) */}
             {activeTab === "quiz" && (
-              <div style={{ maxWidth: 760, margin: "0 auto" }}>
+              <div style={{ maxWidth: 940, margin: "0 auto" }}>
                 {/* Quiz Question Count Selector (Quick Presets + Stepper / Custom Number Input) */}
                 <div
                   style={{
@@ -3984,7 +4080,7 @@ export default function App() {
 
             {/* TAB: BANK SOAL SALAH (MISTAKE NOTEBOOK) */}
             {activeTab === "mistakes" && (
-              <div style={{ maxWidth: 780, margin: "0 auto" }}>
+              <div style={{ maxWidth: 960, margin: "0 auto" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -4306,7 +4402,7 @@ export default function App() {
 
             {/* TAB 3: ACTIVE RECALL FEYNMAN EVALUATOR */}
             {activeTab === "feynman" && (
-              <div style={{ maxWidth: 780, margin: "0 auto" }}>
+              <div style={{ maxWidth: 960, margin: "0 auto" }}>
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <Brain size={20} color="#4b6623" />
@@ -4498,7 +4594,7 @@ export default function App() {
 
             {/* TAB 4: 3D INTERACTIVE FLASHCARDS */}
             {activeTab === "flashcards" && (
-              <div style={{ maxWidth: 740, margin: "0 auto" }}>
+              <div style={{ maxWidth: 860, margin: "0 auto" }}>
                 {/* Flashcard Header Controls */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
                   <div>
@@ -4822,7 +4918,7 @@ export default function App() {
 
             {/* TAB 5: BEAUTIFULLY PARSED MARKDOWN SUMMARY + AUDIO TTS */}
             {activeTab === "summary" && (
-              <div style={{ maxWidth: 840, margin: "0 auto" }}>
+              <div style={{ maxWidth: 1040, margin: "0 auto" }}>
                 {/* Summary Style Selection Pills */}
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14, flexWrap: "wrap", backgroundColor: "#fafbf8", padding: "8px 12px", borderRadius: 8, border: "1px solid #dde1da" }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.06em", marginRight: 4 }}>

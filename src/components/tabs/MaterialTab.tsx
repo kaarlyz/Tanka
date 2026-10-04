@@ -21,7 +21,8 @@ import {
   FileUp,
   Globe,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Compass
 } from "lucide-react";
 import { ActiveTab, Flashcard, QuizQuestion } from "../../types";
 import { MathView } from "../common/MathView";

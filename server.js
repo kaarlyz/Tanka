@@ -503,6 +503,118 @@ Aturan:
       }
     }
 
+    // Heuristic detector for exam sheets, test questions, or kisi-kisi latihan
+    function detectQuestionPatterns(text) {
+      if (!text || typeof text !== "string") return false;
+      const optionMatches = text.match(/(?:^|\n|\s)[A-Ea-e][\.\)]\s+[^\n]+/g);
+      const questionNumberMatches = text.match(/(?:^|\n)\s*(?:\d+[\.\)]|\bSoal\s*\d+|\bNo\.?\s*\d+)/g);
+      const hasKeywords = /\b(kisi-kisi|pilihan ganda|pilihlah|berikut ini yang|manakah|latihan soal|ulangan harian|ujian sekolah|try out|pertanyaan berikut)\b/i.test(text);
+
+      if (optionMatches && optionMatches.length >= 3) return true;
+      if (questionNumberMatches && questionNumberMatches.length >= 2 && ((optionMatches && optionMatches.length >= 2) || hasKeywords)) return true;
+      if (hasKeywords && optionMatches && optionMatches.length >= 2) return true;
+      return false;
+    }
+
+    // Intelligent Exam Sheet Processor: extracts questions to quizzes & synthesizes theory study guide
+    async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance) {
+      if (!detectQuestionPatterns(rawText)) {
+        return { isExamSheet: false };
+      }
+
+      console.log(`[Exam Detection] Terdeteksi lembar soal / kisi-kisi pada: "${title}". Mengekstrak butir soal & menyusun teori penguasaan...`);
+
+      try {
+        const prompt = `Anda adalah asisten kurikulum akademik dan pakar bedah kisi-kisi ujian.
+Teks berikut terdeteksi sebagai lembar soal latihan / kisi-kisi ujian.
+
+JUDUL / TOPIK: "${title}"
+TEKS SUMBER SOAL:
+"""
+${rawText.slice(0, 16000)}
+"""
+
+TUGAS UTAMA (WAJIB DUA HAL DALAM FORMAT JSON):
+1. "questions": Ekstrak SEMUA butir pertanyaan pilihan ganda atau latihan yang ada di dokumen. Untuk setiap butir soal:
+   - "id": integer urut (1, 2, 3...)
+   - "question": Teks pertanyaan lengkap (sertakan rumus LaTeX/KaTeX jika ada, misalnya $x^2$, $\\frac{a}{b}$).
+   - "options": Array 4-5 opsi pilihan jawaban ["A. ...", "B. ...", "C. ...", "D. ..."]. Jika di dokumen berupa essay/isian tanpa pilihan, formulasikan 4 pilihan ganda logis yang menguji konsep tersebut.
+   - "correctIndex": Indeks integer jawaban yang benar (0=A, 1=B, 2=C, 3=D). Gunakan kunci jawaban dokumen jika tersedia, atau tentukan jawaban paling akurat secara akademis.
+   - "explanation": Langkah pembahasan bertahap dan konsep ilmiah di balik jawaban benar.
+   - "formula": Rumus atau kaidah kunci.
+   - "pitfall": Jebakan umum yang sering mengecoh siswa pada soal ini.
+
+2. "studyGuide": Susun PANDUAN MATERI BELAJAR & TEORI PENGUASAAN KISI-KISI yang komprehensif berdasarkan soal-soal di atas.
+   PENTING: Jangan hanya mengulang soal! Buatkan materi catatan belajar terstruktur agar siswa memahami teori dan rumus di balik soal-soal tersebut:
+   - # Panduan Belajar & Teori Kisi-Kisi: ${title}
+   - ## 1. Peta Materi & Teori Dasar (Menjelaskan latar belakang topik yang diujikan secara runut)
+   - ## 2. Bedah Konsep & Formula Kunci (Rumus KaTeX dan cara menerapkannya)
+   - ## 3. Pola Analisis Soal & Trik Cepat (Cara berpikir sistematis membedah tipe soal ini)
+   - ## 4. Jebakan Umum & Poin Wajib Ingat (Catatan ringkas untuk menghadapi ujian)
+
+KEMBALIKAN HANYA FORMAT JSON VALID:
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "...",
+      "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+      "correctIndex": 0,
+      "explanation": "...",
+      "formula": "...",
+      "pitfall": "..."
+    }
+  ],
+  "studyGuide": "# Panduan Belajar..."
+}`;
+
+        const rawResponse = await callRouter([{ role: "user", content: prompt }], "ag/gemini-3.8-flash-low", 0.2);
+        if (!rawResponse) return { isExamSheet: false };
+
+        let cleanJson = rawResponse.trim();
+        if (cleanJson.startsWith("```json")) cleanJson = cleanJson.slice(7);
+        if (cleanJson.startsWith("```")) cleanJson = cleanJson.slice(3);
+        if (cleanJson.endsWith("```")) cleanJson = cleanJson.slice(0, -3);
+
+        const parsed = JSON.parse(cleanJson.trim());
+        const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+        const studyGuide = typeof parsed.studyGuide === "string" ? parsed.studyGuide : "";
+
+        if (questions.length > 0) {
+          const quizId = "quiz_exam_" + Date.now();
+          dbInstance.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)").run(
+            quizId,
+            docId,
+            JSON.stringify(questions),
+            Date.now()
+          );
+          console.log(`[Exam Detection] Sukses menyimpan ${questions.length} butir soal ke tabel quizzes.`);
+        }
+
+        if (studyGuide) {
+          const enrichedContent = `${studyGuide}\n\n---\n\n### 📋 Soal Latihan Terdeteksi dari Dokumen Asli\nButir-butir soal ini telah otomatis dimasukkan ke menu **Latihan Soal** agar siap Anda kerjakan secara interaktif.\n\n${rawText.slice(0, 5000)}`;
+
+          dbInstance.prepare("UPDATE documents SET content = ? WHERE id = ?").run(enrichedContent, docId);
+          console.log(`[Exam Detection] Sukses memperbarui dokumen dengan materi teori kisi-kisi.`);
+          return {
+            isExamSheet: true,
+            questionCount: questions.length,
+            newContent: enrichedContent,
+            questions
+          };
+        }
+
+        return {
+          isExamSheet: questions.length > 0,
+          questionCount: questions.length,
+          questions
+        };
+      } catch (err) {
+        console.error("[Exam Detection Error]:", err.message);
+        return { isExamSheet: false };
+      }
+    }
+
     // 2.b POST /api/documents/upload - handle single or multiple PDF, PPTX, DOCX, and image uploads
     if (req.method === "POST" && pathname === "/api/documents/upload") {
       const body = await getBody(req);
@@ -587,14 +699,21 @@ Aturan:
       const insert = db.prepare("INSERT INTO documents (id, title, content, created_at) VALUES (?, ?, ?, ?)");
       insert.run(id, cleanTitle, mergedText, createdAt);
 
+      // Intelligent exam sheet & kisi-kisi question detection
+      const examResult = await processExamQuestionsIfDetected(id, mergedText, cleanTitle, db);
+      const finalContent = examResult.newContent || mergedText;
+
       return sendJSON(res, {
         success: true,
         id,
         title: cleanTitle,
-        content: mergedText,
+        content: finalContent,
         fileCount: extractedParts.length,
-        wordCount: mergedText.split(/\s+/).length,
-        created_at: createdAt
+        wordCount: finalContent.split(/\s+/).length,
+        created_at: createdAt,
+        isExamSheet: examResult.isExamSheet || false,
+        questionCount: examResult.questionCount || 0,
+        detectedQuestions: examResult.questions || []
       });
     }
 
@@ -737,7 +856,21 @@ Saran harus adaptif:
       const createdAt = Date.now();
       const insert = db.prepare("INSERT INTO documents (id, title, content, created_at) VALUES (?, ?, ?, ?)");
       insert.run(id, finalTitle, content.trim(), createdAt);
-      return sendJSON(res, { success: true, id, title: finalTitle, created_at: createdAt });
+
+      // Intelligent exam sheet & kisi-kisi question detection
+      const examResult = await processExamQuestionsIfDetected(id, content.trim(), finalTitle, db);
+      const finalContent = examResult.newContent || content.trim();
+
+      return sendJSON(res, {
+        success: true,
+        id,
+        title: finalTitle,
+        content: finalContent,
+        created_at: createdAt,
+        isExamSheet: examResult.isExamSheet || false,
+        questionCount: examResult.questionCount || 0,
+        detectedQuestions: examResult.questions || []
+      });
     }
 
     // 4. GET /api/documents/:id - get single document with flashcards

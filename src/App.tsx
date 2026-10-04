@@ -32,6 +32,9 @@ import {
   Clock,
   Play,
   Pause,
+  Bell,
+  BellRing,
+  Sliders,
   Brain,
   Mic,
   MicOff,
@@ -1372,11 +1375,15 @@ export default function App() {
   const feynmanRecognitionRef = useRef<any>(null);
   const feynmanMediaStreamRef = useRef<MediaStream | null>(null);
 
-  // 10/10 Micro-burst focus timer state
+  // Focus & Study Timer state
+  const [timerDurationMinutes, setTimerDurationMinutes] = useState(10); // default 10 minutes
   const [timerSeconds, setTimerSeconds] = useState(600); // 10 minutes default
   const [timerMode, setTimerMode] = useState<"focus" | "break">("focus");
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
+  const [isTimerSettingsOpen, setIsTimerSettingsOpen] = useState(false);
+  const [isAlarmActive, setIsAlarmActive] = useState(false);
+  const [customMinutesInput, setCustomMinutesInput] = useState("10");
 
   // Text to speech state
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -1568,48 +1575,92 @@ export default function App() {
     };
   }, [quizMode, isExamTimerRunning, examSubmitted, examTimeLeft]);
 
-  // 10/10 Focus & Rest Timer countdown effect
+  // Focus & Rest Timer countdown effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isTimerRunning && timerSeconds > 0) {
       interval = setInterval(() => {
         setTimerSeconds((prev) => prev - 1);
       }, 1000);
-    } else if (timerSeconds === 0) {
-      // Cycle completed
-      playNotificationSound();
+    } else if (timerSeconds === 0 && isTimerRunning) {
+      // Timer cycle completed -> Trigger Alarm
+      setIsTimerRunning(false);
+      setIsAlarmActive(true);
+      playAlarmSound();
+
       if (timerMode === "focus") {
         setCompletedSessions((prev) => prev + 1);
-        setTimerMode("break");
-        setTimerSeconds(600); // 10 mins break
-        showNotice("Sesi 10 Menit Fokus Selesai. Waktunya Istirahat!");
+        showNotice(`Sesi fokus ${timerDurationMinutes} menit selesai! Saatnya istirahat.`);
       } else {
-        setTimerMode("focus");
-        setTimerSeconds(600); // 10 mins focus
-        showNotice("Istirahat Selesai. Siap Mulai 10 Menit Fokus Lagi!");
+        showNotice("Waktu istirahat selesai! Siap mulai sesi fokus baru?");
       }
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isTimerRunning, timerSeconds, timerMode]);
+  }, [isTimerRunning, timerSeconds, timerMode, timerDurationMinutes]);
 
-  function playNotificationSound() {
+  // Set timer duration in minutes
+  function applyTimerDuration(mins: number, autoStart = false) {
+    const validMins = Math.max(1, Math.min(180, mins));
+    setTimerDurationMinutes(validMins);
+    setTimerSeconds(validMins * 60);
+    setCustomMinutesInput(validMins.toString());
+    setIsTimerSettingsOpen(false);
+    if (autoStart) {
+      setIsTimerRunning(true);
+    } else {
+      setIsTimerRunning(false);
+    }
+    showNotice(`Waktu belajar diatur ke ${validMins} menit`);
+  }
+
+  // Melodic, rich chime alarm via Web Audio API + Mobile Vibration
+  function playAlarmSound() {
     try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.3); // A5
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.4);
-    } catch {
-      // Audio context fallback
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+
+      // Play 3 successive ascending bell melodies (Ding-Dong-Chime)
+      const playChime = (startOffset: number) => {
+        const notes = [
+          { freq: 523.25, time: 0 },    // C5
+          { freq: 659.25, time: 0.16 }, // E5
+          { freq: 783.99, time: 0.32 }, // G5
+          { freq: 1046.5, time: 0.48 }  // C6
+        ];
+
+        notes.forEach(({ freq, time }) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + startOffset + time);
+
+          gain.gain.setValueAtTime(0, ctx.currentTime + startOffset + time);
+          gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + startOffset + time + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startOffset + time + 0.55);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(ctx.currentTime + startOffset + time);
+          osc.stop(ctx.currentTime + startOffset + time + 0.58);
+        });
+      };
+
+      // Play round 1, round 2, round 3 with 0.85s gap
+      playChime(0);
+      playChime(0.85);
+      playChime(1.7);
+
+      // Mobile phone vibration
+      if ("vibrate" in navigator) {
+        navigator.vibrate([350, 150, 350, 150, 600]);
+      }
+    } catch (e) {
+      console.warn("[tanka] Web Audio alarm error:", e);
     }
   }
 
@@ -2017,9 +2068,21 @@ export default function App() {
       });
       const data = await res.json();
       if (data.success) {
-        showNotice("Materi berhasil disimpan");
+        if (data.isExamSheet && data.questionCount > 0) {
+          showNotice(`📋 Terdeteksi ${data.questionCount} Soal Kisi-Kisi! Materi teori disusun & soal siap dilatih.`);
+          if (data.detectedQuestions && data.detectedQuestions.length > 0) {
+            setQuizQuestions(data.detectedQuestions);
+            setCurrentQuestionIndex(0);
+            setUserAnswers({});
+            setQuestionEvaluations({});
+            setExamSubmitted(false);
+          }
+        } else {
+          showNotice("Materi berhasil disimpan");
+        }
         await fetchDocuments();
         setActiveDocId(data.id);
+        setActiveDocContent(data.content || activeDocContent);
         setShowRawText(false);
       }
     } catch {
@@ -2136,7 +2199,18 @@ export default function App() {
       });
       const data = await res.json();
       if (data.success) {
-        showNotice(`Materi "${data.title}" berhasil dibuat dan siap dipelajari!`);
+        if (data.isExamSheet && data.questionCount > 0) {
+          showNotice(`📋 Terdeteksi ${data.questionCount} Soal Kisi-Kisi! Materi teori berhasil disusun & soal siap dikerjakan.`);
+          if (data.detectedQuestions && data.detectedQuestions.length > 0) {
+            setQuizQuestions(data.detectedQuestions);
+            setCurrentQuestionIndex(0);
+            setUserAnswers({});
+            setQuestionEvaluations({});
+            setExamSubmitted(false);
+          }
+        } else {
+          showNotice(`Materi "${data.title}" berhasil dibuat dan siap dipelajari!`);
+        }
         handleCancelStaging();
         await fetchDocuments();
         loadDocument(data.id);
@@ -2676,6 +2750,167 @@ export default function App() {
         </div>
       )}
 
+      {/* ⏰ ALARM MODAL KETIKA WAKTU BELAJAR/ISTIRAHAT SELESAI */}
+      {isAlarmActive && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(24, 33, 30, 0.65)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+            padding: 20
+          }}
+        >
+          <div
+            className="modal-scale-in"
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: 16,
+              maxWidth: 420,
+              width: "100%",
+              padding: "28px 24px",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.25)",
+              textAlign: "center",
+              border: "2px solid #c8e6a0"
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                backgroundColor: "#f4f8ed",
+                border: "2px solid #a3e635",
+                margin: "0 auto 16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                animation: "pulseGlow 1.5s infinite"
+              }}
+            >
+              <BellRing size={32} color="#4b6623" />
+            </div>
+
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: "#166534",
+                backgroundColor: "#dcfce7",
+                padding: "3px 9px",
+                borderRadius: 999,
+                letterSpacing: "0.06em"
+              }}
+            >
+              WAKTU {timerMode === "focus" ? "BELAJAR" : "ISTIRAHAT"} TUNTAS
+            </span>
+
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#18211e", margin: "10px 0 6px" }}>
+              {timerMode === "focus" ? "Sesi Fokus Selesai!" : "Waktu Istirahat Selesai!"}
+            </h2>
+
+            <p style={{ fontSize: 13, color: "#52625b", lineHeight: 1.5, margin: "0 0 20px" }}>
+              {timerMode === "focus"
+                ? `Hebat! Anda telah menyelesaikan fokus ${timerDurationMinutes} menit. Saatnya meregangkan badan dan istirahat 10 menit agar otak tetap segar.`
+                : "Pikiran Anda sudah segar kembali. Siap untuk melanjutkan sesi fokus berikutnya?"}
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {timerMode === "focus" ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsAlarmActive(false);
+                      setTimerMode("break");
+                      setTimerSeconds(600); // 10 mins break
+                      setIsTimerRunning(true);
+                      showNotice("Sesi istirahat 10 menit dimulai");
+                    }}
+                    style={{
+                      backgroundColor: "#c8f064",
+                      color: "#18211e",
+                      border: "none",
+                      borderRadius: 10,
+                      padding: "12px",
+                      fontSize: 13.5,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <span>☕ Mulai Istirahat (10 Menit)</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAlarmActive(false);
+                      setTimerMode("focus");
+                      setTimerSeconds(timerDurationMinutes * 60);
+                      setIsTimerRunning(true);
+                      showNotice(`Sesi fokus baru ${timerDurationMinutes} menit dimulai`);
+                    }}
+                    style={{
+                      backgroundColor: "#f4f8ed",
+                      color: "#4b6623",
+                      border: "1px solid #c8e6a0",
+                      borderRadius: 10,
+                      padding: "10px",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: "pointer"
+                    }}
+                  >
+                    <span>⚡ Lanjut Fokus {timerDurationMinutes} Menit Lagi</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsAlarmActive(false);
+                    setTimerMode("focus");
+                    setTimerSeconds(timerDurationMinutes * 60);
+                    setIsTimerRunning(true);
+                    showNotice(`Sesi fokus ${timerDurationMinutes} menit dimulai`);
+                  }}
+                  style={{
+                    backgroundColor: "#c8f064",
+                    color: "#18211e",
+                    border: "none",
+                    borderRadius: 10,
+                    padding: "12px",
+                    fontSize: 13.5,
+                    fontWeight: 800,
+                    cursor: "pointer"
+                  }}
+                >
+                  <span>Mulai Sesi Fokus ({timerDurationMinutes}m)</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setIsAlarmActive(false)}
+                style={{
+                  backgroundColor: "transparent",
+                  color: "#6b7280",
+                  border: "none",
+                  padding: "8px",
+                  fontSize: 12.5,
+                  cursor: "pointer"
+                }}
+              >
+                Tutup Alarm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Backdrop overlay for mobile drawer */}
       {isMobileDrawerOpen && (
         <div
@@ -2981,42 +3216,250 @@ export default function App() {
             </div>
           </div>
 
-          {/* Center: Timer */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              backgroundColor: timerMode === "focus" ? "#f0f6eb" : "#fbf4e8",
-              border: `1px solid ${timerMode === "focus" ? "#d2e3c3" : "#ecd8b5"}`,
-              borderRadius: 999,
-              padding: "5px 12px",
-              fontFamily: "'DM Mono', monospace",
-              flexShrink: 0
-            }}
-          >
-            <Clock size={13} color={timerMode === "focus" ? "#4b6623" : "#b45309"} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: timerMode === "focus" ? "#4b6623" : "#b45309" }}>
-              {timerDisplay}
-            </span>
-            <button
-              onClick={() => setIsTimerRunning(!isTimerRunning)}
-              style={{ background: "none", border: "none", color: "#4b6623", cursor: "pointer", padding: "2px 4px", display: "flex" }}
-              title={isTimerRunning ? "Jeda" : "Mulai"}
-            >
-              {isTimerRunning ? <Pause size={12} /> : <Play size={12} />}
-            </button>
-            <button
-              onClick={() => {
-                setIsTimerRunning(false);
-                setTimerSeconds(600);
+          {/* Center: Timer & Settings */}
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                backgroundColor: timerMode === "focus" ? "#f0f6eb" : "#fbf4e8",
+                border: `1px solid ${timerMode === "focus" ? "#d2e3c3" : "#ecd8b5"}`,
+                borderRadius: 999,
+                padding: "5px 12px",
+                fontFamily: "'DM Mono', monospace",
+                flexShrink: 0
               }}
-              className="desktop-only"
-              style={{ background: "none", border: "none", color: "#88918d", cursor: "pointer", padding: "2px 4px", display: "flex" }}
-              title="Reset timer"
             >
-              <RotateCw size={11} />
-            </button>
+              <button
+                onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
+                style={{ background: "none", border: "none", padding: 0, display: "flex", alignItems: "center", cursor: "pointer" }}
+                title="Klik untuk setel durasi waktu belajar"
+              >
+                <Clock size={13} color={timerMode === "focus" ? "#4b6623" : "#b45309"} />
+              </button>
+
+              <span
+                onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: timerMode === "focus" ? "#4b6623" : "#b45309",
+                  cursor: "pointer",
+                  userSelect: "none"
+                }}
+                title="Klik untuk setel durasi waktu belajar"
+              >
+                {timerDisplay}
+              </span>
+
+              <button
+                onClick={() => setIsTimerRunning(!isTimerRunning)}
+                style={{ background: "none", border: "none", color: timerMode === "focus" ? "#4b6623" : "#b45309", cursor: "pointer", padding: "2px 4px", display: "flex" }}
+                title={isTimerRunning ? "Jeda" : "Mulai"}
+              >
+                {isTimerRunning ? <Pause size={12} /> : <Play size={12} />}
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsTimerRunning(false);
+                  setTimerSeconds(timerDurationMinutes * 60);
+                }}
+                className="desktop-only"
+                style={{ background: "none", border: "none", color: "#88918d", cursor: "pointer", padding: "2px 4px", display: "flex" }}
+                title="Reset timer ke durasi awal"
+              >
+                <RotateCw size={11} />
+              </button>
+
+              <button
+                onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: isTimerSettingsOpen ? "#166534" : "#88918d",
+                  cursor: "pointer",
+                  padding: "2px 3px",
+                  display: "flex"
+                }}
+                title="Setel durasi waktu (5m, 10m, 25m, kustom)"
+              >
+                <Sliders size={11} />
+              </button>
+            </div>
+
+            {/* Timer Settings Popover */}
+            {isTimerSettingsOpen && (
+              <div
+                className="modal-scale-in"
+                style={{
+                  position: "absolute",
+                  top: 38,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  backgroundColor: "#ffffff",
+                  border: "1px solid #dce2da",
+                  borderRadius: 14,
+                  padding: "16px",
+                  boxShadow: "0 14px 34px rgba(24, 34, 31, 0.14)",
+                  zIndex: 9999,
+                  width: 300
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Clock size={14} color="#566b36" />
+                    <span style={{ fontSize: 13, fontWeight: 800, color: "#18211e" }}>Setel Waktu Belajar</span>
+                  </div>
+                  <button
+                    onClick={() => setIsTimerSettingsOpen(false)}
+                    style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", padding: 2 }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+
+                {/* Preset Chips */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 14 }}>
+                  {[
+                    { label: "5 Menit", mins: 5, desc: "Kilat" },
+                    { label: "10 Menit", mins: 10, desc: "Fokus 10/10" },
+                    { label: "15 Menit", mins: 15, desc: "Sedang" },
+                    { label: "25 Menit", mins: 25, desc: "Pomodoro" },
+                    { label: "45 Menit", mins: 45, desc: "Simulasi" },
+                    { label: "60 Menit", mins: 60, desc: "1 Jam" }
+                  ].map((p) => {
+                    const isSelected = timerDurationMinutes === p.mins;
+                    return (
+                      <button
+                        key={p.mins}
+                        onClick={() => applyTimerDuration(p.mins, false)}
+                        style={{
+                          padding: "7px 4px",
+                          borderRadius: 8,
+                          border: `1.5px solid ${isSelected ? "#566b36" : "#e5e7eb"}`,
+                          backgroundColor: isSelected ? "#f0fdf4" : "#f9fafb",
+                          color: isSelected ? "#166534" : "#374151",
+                          cursor: "pointer",
+                          textAlign: "center"
+                        }}
+                      >
+                        <div style={{ fontSize: 11.5, fontWeight: 800 }}>{p.label}</div>
+                        <div style={{ fontSize: 9.5, color: isSelected ? "#15803d" : "#9ca3af", marginTop: 1 }}>{p.desc}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom minute input */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#5a6862", marginBottom: 6 }}>Kustom Durasi (Menit):</div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <button
+                      onClick={() => {
+                        const val = Math.max(1, (parseInt(customMinutesInput) || 10) - 1);
+                        setCustomMinutesInput(val.toString());
+                      }}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 6,
+                        border: "1px solid #d1d5db",
+                        backgroundColor: "#f3f4f6",
+                        cursor: "pointer",
+                        fontWeight: 800,
+                        fontSize: 14,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="180"
+                      value={customMinutesInput}
+                      onChange={(e) => setCustomMinutesInput(e.target.value)}
+                      style={{
+                        flex: 1,
+                        height: 32,
+                        borderRadius: 6,
+                        border: "1px solid #d1d5db",
+                        textAlign: "center",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        fontFamily: "'DM Mono', monospace"
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const val = Math.min(180, (parseInt(customMinutesInput) || 10) + 1);
+                        setCustomMinutesInput(val.toString());
+                      }}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 6,
+                        border: "1px solid #d1d5db",
+                        backgroundColor: "#f3f4f6",
+                        cursor: "pointer",
+                        fontWeight: 800,
+                        fontSize: 14,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => {
+                        const mins = parseInt(customMinutesInput) || 10;
+                        applyTimerDuration(mins, false);
+                      }}
+                      style={{
+                        height: 32,
+                        padding: "0 12px",
+                        borderRadius: 6,
+                        border: "none",
+                        backgroundColor: "#566b36",
+                        color: "#ffffff",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                    >
+                      Terapkan
+                    </button>
+                  </div>
+                </div>
+
+                {/* Test Alarm Sound */}
+                <div style={{ borderTop: "1px solid #f1f4ee", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <button
+                    onClick={playAlarmSound}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#4b6623",
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5
+                    }}
+                  >
+                    <Bell size={13} />
+                    <span>Uji Suara Alarm 🔔</span>
+                  </button>
+                  <span style={{ fontSize: 10.5, color: "#9ca3af" }}>Web Audio API</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Actions */}

@@ -11,6 +11,7 @@ export interface FeynmanTabProps {
   setFeynmanExplanation: (e: string) => void;
   feynmanResult: FeynmanResult | null;
   isRecordingFeynman: boolean;
+  isTranscribing?: boolean;
   feynmanRecordingSeconds: number;
   isEvaluatingFeynman: boolean;
   handleToggleFeynmanRecording: () => void;
@@ -24,6 +25,7 @@ export function FeynmanTab({
   setFeynmanExplanation,
   feynmanResult,
   isRecordingFeynman,
+  isTranscribing,
   feynmanRecordingSeconds,
   isEvaluatingFeynman,
   handleToggleFeynmanRecording,
@@ -83,22 +85,28 @@ export function FeynmanTab({
                       <button
                         type="button"
                         onClick={handleToggleFeynmanRecording}
+                        disabled={isTranscribing}
                         style={{
-                          backgroundColor: isRecordingFeynman ? "#fee2e2" : "#f1f5eb",
-                          border: `1px solid ${isRecordingFeynman ? "#fca5a5" : "#cddfc0"}`,
-                          color: isRecordingFeynman ? "#b91c1c" : "#3b581e",
+                          backgroundColor: isRecordingFeynman ? "#fee2e2" : isTranscribing ? "#fef3c7" : "#f1f5eb",
+                          border: `1px solid ${isRecordingFeynman ? "#fca5a5" : isTranscribing ? "#fcd34d" : "#cddfc0"}`,
+                          color: isRecordingFeynman ? "#b91c1c" : isTranscribing ? "#92400e" : "#3b581e",
                           borderRadius: 6,
                           padding: "4px 10px",
                           fontSize: 11.5,
                           fontWeight: 700,
-                          cursor: "pointer",
+                          cursor: isTranscribing ? "wait" : "pointer",
                           display: "flex",
                           alignItems: "center",
                           gap: 5,
                           transition: "all 0.15s ease"
                         }}
                       >
-                        {isRecordingFeynman ? (
+                        {isTranscribing ? (
+                          <>
+                            <Sparkles size={13} className="animate-spin" />
+                            <span>Mentranskripsikan Audio...</span>
+                          </>
+                        ) : isRecordingFeynman ? (
                           <>
                             <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#ef4444" }} />
                             <span>Merekam ({Math.floor(feynmanRecordingSeconds / 60)}:{String(feynmanRecordingSeconds % 60).padStart(2, "0")}) · Klik Selesai</span>

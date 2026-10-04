@@ -125,6 +125,42 @@ Format output WAJIB HANYA berupa JSON valid tanpa teks tambahan:
     return sendJSON(res, { success: true, evaluation: evalResult });
   }
 
+  // 2. POST /api/ai/transcribe-audio - ultra-fast offline STT via faster-whisper
+  if (req.method === "POST" && pathname === "/api/ai/transcribe-audio") {
+    const { audioBase64, language = "id" } = await getBody(req);
+    if (!audioBase64) {
+      return sendJSON(res, { error: "No audio data provided" }, 400);
+    }
+    const fs = require("fs");
+    const path = require("path");
+    const { execFile } = require("child_process");
+
+    const tempFile = path.join("/tmp", `feynman_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.webm`);
+    try {
+      const buffer = Buffer.from(audioBase64, "base64");
+      fs.writeFileSync(tempFile, buffer);
+
+      const sttScript = path.join(__dirname, "../services/stt.py");
+      execFile("uv", ["run", "--python", "3.12", "--with", "faster-whisper", "--with", "av<14", "python3", sttScript, tempFile, language], (err, stdout, stderr) => {
+        try { fs.unlinkSync(tempFile); } catch {}
+        if (err) {
+          console.error("[tanka-stt] Error:", err, stderr);
+          return sendJSON(res, { error: "Transkripsi audio gagal", detail: stderr }, 500);
+        }
+        try {
+          const parsed = JSON.parse(stdout.trim());
+          return sendJSON(res, parsed);
+        } catch {
+          return sendJSON(res, { success: true, text: stdout.trim() });
+        }
+      });
+    } catch (e) {
+      try { fs.unlinkSync(tempFile); } catch {}
+      return sendJSON(res, { error: e.message }, 500);
+    }
+    return true;
+  }
+
   return false;
 }
 

@@ -10,57 +10,84 @@ async function handleFlashcardsRoutes(req, res, pathname, helpers) {
     const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
     if (!doc) return sendJSON(res, { error: "Document not found" }, 404);
 
+    // Architectural Rule: Flashcards read from Canonical Concepts & Source Segments to prevent cascade hallucinations
+    const concepts = db.prepare("SELECT * FROM document_concepts WHERE doc_id = ?").all(docId);
+    const segments = db.prepare("SELECT raw_text FROM document_segments WHERE doc_id = ? ORDER BY segment_index ASC").all(docId);
+
+    let factsContext = "";
+    if (concepts && concepts.length > 0) {
+      factsContext += "DAFTAR KONSEP KANONIKAL RESMI (SUMBER UTAMA):\n" +
+        concepts.map((c, i) => `${i + 1}. [${c.name}]: ${c.definition} ${c.prerequisites ? `(Detail: ${c.prerequisites})` : ""}`).join("\n") + "\n\n";
+    }
+    if (segments && segments.length > 0) {
+      factsContext += "TEKS SUMBER ASLI:\n" + segments.map(s => s.raw_text).join("\n\n").slice(0, 16000);
+    } else {
+      factsContext += "TEKS MATERI:\n" + doc.content.slice(0, 20000);
+    }
+
     const prompt = `Anda adalah spesialis metode Active Recall & Spaced Repetition (standar SuperMemo / Anki).
-Lakukan AUDIT MENYELURUH terhadap seluruh isi dokumen materi di bawah ini.
-Identifikasi SELURUH konsep inti, kaidah operasional, rumus & variabel, aturan baku, perbedaan konsep yang sering tertukar, dan contoh aplikasi cepat.
-Jangan batasi jumlah kartu secara artifisial — buat kartu sebanyak yang dibutuhkan agar MENCENGKERAM SELURUH KONSEP POKOK dokumen (biasanya antara 8 hingga 20+ kartu tergantung kekayaan materi), tanpa kartu pengisi.
+Lakukan AUDIT MENYELURUH terhadap FAKTA & KONSEP KANONIKAL di bawah ini.
+HANYA buat flashcard dari konsep, definisi, dan aturan baku yang sahih.
+DILARANG membuat kartu dari analogi cerita fiktif, dongeng pengayaan, atau rumus matematika yang tidak ada di teks sumber!
 
 ATURAN STRUKTUR KARTU (PRINSIP ATOMIK SUPERMEMO / ANKI):
 1. PRINSIP 1 KARTU = 1 FAKTA ATOMIK TUNGGAL:
-   - DILARANG KERAS menggabungkan dua topik atau daftar panjang dalam satu kartu.
-   - JIKA SATU TOPIK MEMILIKI BEBERAPA CABANG/POIN, WAJIB DIPISAH MENJADI BEBERAPA KARTU ATOMIK.
+   - DILARANG KERAS menggabungkan dua topik dalam satu kartu.
 2. DISTRIBUSI SEIMBANG DARI AWAL HINGGA AKHIR MATERI:
-   - Kartu 1–4: FONDASI & DEFINISI DASAR bab pembuka.
-   - Kartu 5–8: Perkembangan konsep, konteks, aturan di bab tengah.
-   - Kartu 9–dst: Tokoh kunci, teknik khusus, pembeda konsep di bab akhir.
+   - Kartu 1–4: FONDASI & DEFINISI BAKU konsep pembuka.
+   - Kartu 5–8: Hubungan sebab-akibat, aturan, dan variabel.
+   - Kartu 9–dst: Pembeda konsep yang sering tertukar dan rumus resmi.
 3. SISI DEPAN (Front) - Pertanyaan Spesifik & Langsung ke Sasaran (3-10 kata).
-4. SISI BELAKANG (Back) - Jawaban Padat, Konkret & Manusiawi (1-2 kalimat). Jika materi eksak, gunakan LaTeX ($...$).
+4. SISI BELAKANG (Back) - Jawaban Padat, Konkret & Presisi (1-2 kalimat). Jika rumus, gunakan LaTeX ($...$).
 
 Format output WAJIB HANYA berupa array JSON murni tanpa markdown fence:
 [
   {"front": "Pertanyaan stimulus atomik tunggal", "back": "Jawaban ringkas 1-2 kalimat konkret atau nilai rumus"}
 ]
 
-Materi:
+Fakta & Sumber Materi:
 """
-${doc.content.slice(0, 25000)}
+${factsContext}
 """`;
 
     const aiResponse = await callRouter([
-      { role: "system", content: "You are an educational AI that extracts high-yield atomic flashcards in strict JSON." },
+      { role: "system", content: "You are an educational AI that extracts high-yield atomic flashcards from canonical facts in strict JSON." },
       { role: "user", content: prompt }
     ], model);
 
-    let cleanJson = aiResponse.trim();
-    if (cleanJson.startsWith("```json")) cleanJson = cleanJson.slice(7);
-    else if (cleanJson.startsWith("```")) cleanJson = cleanJson.slice(3);
-    if (cleanJson.endsWith("```")) cleanJson = cleanJson.slice(0, -3);
-    cleanJson = cleanJson.trim();
+    function parseJsonWithFallback(raw) {
+      let s = raw.trim();
+      if (s.startsWith("```json")) s = s.slice(7);
+      else if (s.startsWith("```")) s = s.slice(3);
+      if (s.endsWith("```")) s = s.slice(0, -3);
+      s = s.trim().replace(/,\s*([\]}])/g, "$1");
+
+      try {
+        return JSON.parse(s);
+      } catch {
+        try {
+          const repaired = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+          return JSON.parse(repaired);
+        } catch {
+          const match = s.match(/\[\s*\{[\s\S]*\}\s*\]/);
+          if (match) {
+            try {
+              return JSON.parse(match[0].replace(/,\s*([\]}])/g, "$1"));
+            } catch {
+              const matchRepaired = match[0].replace(/,\s*([\]}])/g, "$1").replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+              return JSON.parse(matchRepaired);
+            }
+          }
+          throw new Error("Invalid JSON structure");
+        }
+      }
+    }
 
     let parsedCards = [];
     try {
-      parsedCards = JSON.parse(cleanJson);
-    } catch (parseErr) {
-      const jsonMatch = cleanJson.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (jsonMatch) {
-        try {
-          parsedCards = JSON.parse(jsonMatch[0]);
-        } catch {
-          return sendJSON(res, { error: "AI produced invalid JSON", raw: aiResponse }, 500);
-        }
-      } else {
-        return sendJSON(res, { error: "AI produced invalid JSON", raw: aiResponse }, 500);
-      }
+      parsedCards = parseJsonWithFallback(aiResponse);
+    } catch {
+      return sendJSON(res, { error: "AI produced invalid JSON", raw: aiResponse }, 500);
     }
 
     db.prepare("DELETE FROM flashcards WHERE doc_id = ?").run(docId);

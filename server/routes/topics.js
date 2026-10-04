@@ -135,6 +135,28 @@ Tulis modul secara lengkap dan nyaman dibaca siswa SMA.`;
     db.prepare("INSERT INTO documents (id, title, content, summary, created_at) VALUES (?, ?, ?, ?, ?)")
       .run(docId, title, content, "", Date.now());
 
+    // Segment and store canonical concepts for search-generated topics to feed quizzes & flashcards
+    try {
+      const { segmentDocumentText, extractConceptsAndOutline } = require("../services/curriculumPipeline");
+      const segments = segmentDocumentText(content, "web_search");
+      const insertSeg = db.prepare("INSERT INTO document_segments (id, doc_id, segment_index, source_type, raw_text, normalized_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+      for (const seg of segments) {
+        insertSeg.run(`seg_${docId}_${seg.index}`, docId, seg.index, "web_search", seg.text, seg.text, Date.now());
+      }
+      const outline = await extractConceptsAndOutline(title, content, segments, model);
+      if (outline && Array.isArray(outline.concepts)) {
+        const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        for (const c of outline.concepts) {
+          const conceptId = `${docId}_${c.id || Math.random().toString(36).slice(2, 6)}`;
+          const def = c.definisi_baku || c.definition || "";
+          const extra = JSON.stringify({ rumus: c.rumus || "", tokoh: c.tokoh || [], salah_kaprah: c.salah_kaprah || "" });
+          insertConcept.run(conceptId, docId, c.name, def, extra, c.origin || "source", Date.now());
+        }
+      }
+    } catch (e) {
+      console.warn("[tanka] Failed to save concepts for topic:", e.message);
+    }
+
     return sendJSON(res, { success: true, docId, title, content_length: content.length });
   }
 

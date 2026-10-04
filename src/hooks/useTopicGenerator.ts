@@ -31,35 +31,41 @@ export function useTopicGenerator({
       return;
     }
     setTopicInput(raw);
-    setIsClarifyingTopic(true);
+    setIsGeneratingTopic(true);
+    setTopicStep(3); // 1-Click Search: langsung masuk ke progress riset multi-sumber tanpa modal pertanyaan
     try {
-      const res = await fetch("/api/ai/topic-clarify", {
+      const res = await fetch("/api/ai/topic-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: raw, model: selectedModel })
+        body: JSON.stringify({
+          topic: raw,
+          formalTitle: raw,
+          subject: "Umum",
+          answers: {},
+          model: selectedModel
+        })
       });
       const data = await res.json();
-      if (data.success) {
-        setTopicClarificationData({
-          subject: data.subject || "Umum",
-          formalTitle: data.formalTitle || raw,
-          questions: data.questions || []
-        });
-        const defaults: Record<string, string> = {};
-        (data.questions || []).forEach((q: any) => {
-          if (q.choices && q.choices[0]) defaults[q.id] = q.choices[0];
-        });
-        setTopicAnswers(defaults);
-        setTopicStep(2);
+      if (data.success && data.docId) {
+        await fetchDocuments();
+        await loadDocument(data.docId);
+        setIsTopicModalOpen(false);
+        setTopicStep(1);
+        setTopicInput("");
+        setTopicClarificationData(null);
+        setActiveTab("material");
+        showNotice(`Materi "${data.title}" berhasil disusun dan siap dipelajari!`);
       } else {
-        showNotice(data.error || "Gagal menganalisis topik");
+        showNotice(data.error || "Gagal menyusun materi");
+        setTopicStep(1);
       }
     } catch {
-      showNotice("Koneksi ke 9Router gagal");
+      showNotice("Gagal menyusun dokumen materi");
+      setTopicStep(1);
     } finally {
-      setIsClarifyingTopic(false);
+      setIsGeneratingTopic(false);
     }
-  }, [topicInput, selectedModel, showNotice]);
+  }, [topicInput, selectedModel, fetchDocuments, loadDocument, setActiveTab, showNotice]);
 
   const handleGenerateTopicDocument = useCallback(async () => {
     if (!topicClarificationData) return;

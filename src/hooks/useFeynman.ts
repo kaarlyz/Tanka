@@ -14,9 +14,12 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
   const [feynmanResult, setFeynmanResult] = useState<FeynmanResult | null>(null);
 
   const [isRecordingFeynman, setIsRecordingFeynman] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [feynmanRecordingSeconds, setFeynmanRecordingSeconds] = useState(0);
   const feynmanRecognitionRef = useRef<any>(null);
   const feynmanMediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const handleEvaluateFeynman = useCallback(async () => {
     if (!feynmanExplanation.trim()) {
@@ -50,12 +53,58 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
   }, [feynmanExplanation, feynmanTopic, activeDocTitle, selectedModel, showNotice]);
 
   const handleToggleFeynmanRecording = useCallback(async () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
     if (isRecordingFeynman) {
       if (feynmanRecognitionRef.current) {
         try {
           feynmanRecognitionRef.current.stop();
         } catch {}
       }
+
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        const recorder = mediaRecorderRef.current;
+        recorder.onstop = async () => {
+          if (audioChunksRef.current.length > 0) {
+            const audioBlob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+            // If browser has no live SpeechRecognition or transcript is empty, send to backend STT
+            if (!SpeechRecognition || !feynmanExplanation.trim()) {
+              setIsTranscribing(true);
+              try {
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = async () => {
+                  try {
+                    const base64Data = (reader.result as string).split(",")[1];
+                    const res = await fetch("/api/ai/transcribe-audio", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ audioBase64: base64Data, language: "id" })
+                    });
+                    const data = await res.json();
+                    if (data.success && data.text) {
+                      setFeynmanExplanation((prev) => (prev ? prev.trim() + " " : "") + data.text.trim());
+                      showNotice("Transkripsi suara berhasil!");
+                    } else {
+                      showNotice("Tidak ada suara terdeteksi dalam rekaman.");
+                    }
+                  } catch {
+                    showNotice("Gagal memproses transkripsi audio");
+                  } finally {
+                    setIsTranscribing(false);
+                  }
+                };
+              } catch {
+                setIsTranscribing(false);
+              }
+            }
+          }
+        };
+        try {
+          recorder.stop();
+        } catch {}
+      }
+
       if (feynmanMediaStreamRef.current) {
         feynmanMediaStreamRef.current.getTracks().forEach((track) => track.stop());
         feynmanMediaStreamRef.current = null;
@@ -64,11 +113,25 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       feynmanMediaStreamRef.current = stream;
+      audioChunksRef.current = [];
+
+      // Setup MediaRecorder for robust universal browser recording (Firefox, Safari, Chromium)
+      if (typeof MediaRecorder !== "undefined") {
+        const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : MediaRecorder.isTypeSupported("audio/ogg")
+          ? "audio/ogg"
+          : "";
+        const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        recorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+        };
+        recorder.start(250);
+        mediaRecorderRef.current = recorder;
+      }
 
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
@@ -93,8 +156,6 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
 
         recognition.start();
         feynmanRecognitionRef.current = recognition;
-      } else {
-        showNotice("Browser tidak mendukung transkripsi langsung, mikrofon aktif.");
       }
 
       setIsRecordingFeynman(true);
@@ -126,6 +187,7 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
     feynmanResult,
     setFeynmanResult,
     isRecordingFeynman,
+    isTranscribing,
     feynmanRecordingSeconds,
     handleEvaluateFeynman,
     handleToggleFeynmanRecording

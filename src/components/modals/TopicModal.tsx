@@ -164,7 +164,7 @@ export function TopicModal({
                         />
                         <button
                           onClick={() => handleStartTopicClarify()}
-                          disabled={isClarifyingTopic || !topicInput.trim()}
+                          disabled={isGeneratingTopic || isClarifyingTopic || !topicInput.trim()}
                           style={{
                             backgroundColor: "#18221f",
                             color: "#c8f064",
@@ -173,14 +173,14 @@ export function TopicModal({
                             padding: "0 18px",
                             fontSize: 13,
                             fontWeight: 700,
-                            cursor: isClarifyingTopic || !topicInput.trim() ? "not-allowed" : "pointer",
+                            cursor: isGeneratingTopic || isClarifyingTopic || !topicInput.trim() ? "not-allowed" : "pointer",
                             display: "flex",
                             alignItems: "center",
                             gap: 6
                           }}
                         >
-                          <span>Lanjut</span>
-                          <ChevronRight size={15} />
+                          <Sparkles size={14} />
+                          <span>Mulai Riset</span>
                         </button>
                       </div>
 

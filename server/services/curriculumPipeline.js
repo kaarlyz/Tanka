@@ -91,16 +91,20 @@ ${segmentOverview}
 ATURAN STRUKTUR & KONTEN:
 1. JANGAN memaksakan harus 5 bab jika materinya ringkas (boleh 2, 3, atau 4 bab sesuai kebutuhan alami materi).
 2. Hanya cantumkan konsep kunci yang BENAR-BENAR ada di dalam teks sumber (origin: "source").
-3. Jika ada konsep penting dari kurikulum nasional yang relevan tapi belum dibahas teks, masukkan sebagai pengayaan (origin: "ai_enrichment").
-4. Kembalikan HANYA format JSON valid berikut:
+3. DILARANG MENCIPTAKAN RUMUS FIKTIF. Jika bukan materi eksak/hitung (seperti Sosiologi, Sejarah), kosongkan field rumus.
+4. Jika ada konsep penting dari kurikulum nasional yang relevan tapi belum dibahas teks, masukkan sebagai pengayaan (origin: "ai_enrichment").
+5. Kembalikan HANYA format JSON valid berikut:
 {
   "title": "${docTitle}",
   "executiveSummary": "Ringkasan 2-3 kalimat bertutur tentang esensi materi.",
   "concepts": [
     {
       "id": "c1",
-      "name": "Nama Konsep",
-      "definition": "Definisi ringkas dan jelas",
+      "name": "Nama Konsep / Istilah Baku",
+      "definisi_baku": "Definisi baku resmi sesuai kurikulum/buku teks",
+      "rumus": "Rumus KaTeX baku (misal $Q_d = a - bP$) jika ada, atau kosongkan jika ilmu sosial/non-hitung",
+      "tokoh": ["Nama Tokoh/Ahli resmi jika ada di materi"],
+      "salah_kaprah": "Miskonsepsi yang sering terjadi pada siswa",
       "origin": "source"
     }
   ],
@@ -173,11 +177,19 @@ PETUNJUK PENULISAN:
 1. Mulai dengan judul markdown: # ${outline.title}
 2. Tuliskan ringkasan eksekutif dalam blockquote: > [Ringkasan singkat bertutur]
 3. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab). JANGAN tambah bab yang tidak ada di rencana.
-4. Gunakan gaya mengajar bertutur khas Nara: situasi/analogi dulu, baru istilah formal. Kalimat lengkap, hindari gaya telegram.
-5. Jika ada contoh kasus atau analogi di luar teks sumber, wajib tandai dengan:
+4. KONTRAK STRUKTUR SUB-BAB (WAJIB DIPATUHI PER KONSEP):
+   Setiap sub-bab (### [Nama Konsep]) WAJIB memuat urutan ini:
+   a. Situasi / Intuisi konkret sehari-hari (1-2 paragraf pendek).
+   b. Kotak Definisi Baku resmi dalam blockquote:
+      > 📖 **Definisi Baku:** [Tuliskan definisi baku kurikulum/buku teks di sini secara presisi tanpa diubah jadi dongeng]
+   c. Penjelasan Mekanisme & Sebab-Akibat.
+   d. Rumus & Contoh Hitungan Konkret (Jika Eksak / Ekonomi): Tuliskan rumus KaTeX ($...$) dan contoh hitungan dengan angka riil.
+   e. Peringatan Salah Kaprah (Pitfall): Kesalahan umum siswa di ujian.
+5. LARANGAN MUTLAK ANTI-HALUSINASI:
+   - DILARANG KERAS MENCIPTAKAN RUMUS FISIKA/MATEMATIKA PADA TOPIK SOSIAL/HUMANIORA (Sosiologi, Sejarah, Bahasa).
+   - Dilarang mengarang tokoh fiktif atau istilah palsu.
+6. Jika ada contoh kasus atau analogi di luar teks sumber, wajib tandai dengan:
    > 💡 **Insight Nara (Pengayaan):** [Uraian contoh/analogi...]
-6. Jika ada alur proses/sebab-akibat, gunakan format panah transisi yang jelas:
-   1. [Tahap Awal] -> [Proses Terjadi] -> [Dampak Akhir]
 7. Jika ada rumus eksak/matematika, WAJIB gunakan format KaTeX rapi ($rumus$ atau $$blok$$).`;
 
   const content = await callRouter(

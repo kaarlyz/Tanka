@@ -331,7 +331,13 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
           const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
           for (const c of dynamicOutline.concepts) {
             const conceptId = `${id}_${c.id || Math.random().toString(36).slice(2, 6)}`;
-            insertConcept.run(conceptId, id, c.name, c.definition || "", JSON.stringify(c.prerequisites || []), c.origin || "source", createdAt);
+            const def = c.definisi_baku || c.definition || "";
+            const extra = JSON.stringify({
+              rumus: c.rumus || "",
+              tokoh: c.tokoh || [],
+              salah_kaprah: c.salah_kaprah || ""
+            });
+            insertConcept.run(conceptId, id, c.name, def, extra, c.origin || "source", createdAt);
           }
         }
 

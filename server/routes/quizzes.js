@@ -103,13 +103,28 @@ PRIORITAS: Alokasikan 1 atau 2 butir soal variasi baru yang menyasar konsep di a
       }
     }
 
+    // Pull canonical concepts & raw segments to ground questions in source facts, not LLM stories
+    const concepts = db.prepare("SELECT * FROM document_concepts WHERE doc_id = ?").all(docId);
+    const segments = db.prepare("SELECT raw_text FROM document_segments WHERE doc_id = ? ORDER BY segment_index ASC").all(docId);
+
+    let factsContext = "";
+    if (concepts && concepts.length > 0) {
+      factsContext = "DAFTAR KONSEP KANONIKAL RESMI (SUMBER UTAMA):\n" +
+        concepts.map((c, i) => `${i + 1}. [${c.name}]: ${c.definition} ${c.prerequisites ? `(Detail: ${c.prerequisites})` : ""}`).join("\n") + "\n\n";
+    }
+    if (segments && segments.length > 0) {
+      factsContext += "SUMBER FAKTA ASLI:\n" + segments.map(s => s.raw_text).join("\n\n").slice(0, 15000);
+    } else {
+      factsContext += "TEKS MATERI:\n" + doc.content.slice(0, 15000);
+    }
+
     const mathRule = isMathDomain
       ? `ATURAN FORMAT MATEMATIKA:
 Jika materi/soal mengandung rumus atau hitungan, WAJIB gunakan KaTeX LaTeX ($...$ inline atau $$...$$ blok), contoh: $\\frac{a}{b}$, $\\sqrt{x}$, $x^2$.`
       : `ATURAN MATERI NON-HITUNGAN:
-Materi ini adalah materi konseptual/teori non-matematika. Kosongkan field "formula": "" dan fokus pada pemahaman konsep/fakta.`;
+Materi ini adalah materi konseptual/teori non-matematika. Kosongkan field "formula": "" dan fokus pada pemahaman konsep/fakta. DILARANG MENGARANG RUMUS FISIKA/MATEMATIKA PADA ILMU SOSIAL.`;
 
-    const prompt = `Anda adalah pembuat soal ujian akademik profesional berstandar tinggi.
+    const prompt = `Anda adalah pembuat soal ujian akademik profesional berstandar tinggi (UTBK & Ujian Sekolah).
 Buatkan TEPAT ${finalCount} butir soal pilihan ganda dengan 5 PILIHAN JAWABAN (A, B, C, D, E).
 
 ${typeGuidance}
@@ -118,20 +133,15 @@ ${referenceContext}
 ${weaknessContext}
 ${adaptiveContext}
 
-STANDAR KUALITAS SOAL:
-1. TARGET ANALISIS/HOTS: Setiap butir soal harus menuntut pemahaman konsep atau analisis kasus. DILARANG membuat opsi yang saling merujuk (misal: "A dan B benar", "Semua salah", "Pilihan A dan C tepat"). Setiap opsi HARUS berdiri sendiri.
-2. FORMAT TEKS OPSI: DILARANG menyertakan prefix huruf seperti "A.", "B.", "C)" di dalam teks options (tuliskan teks murni pilihannya saja).
-3. SEBARAN TOPIK: Soal 1 (Level Fondasi Bab Awal), Soal 2–3 (Level Bab Tengah), Soal 4–5 (Level Lanjutan Bab Akhir).
-4. BAHASA PERTANYAAN: Langsung ke sasaran objektif, to-the-point dan alami tanpa basa-basi.
-5. FIELD FORMULA: Kosongkan field "formula": "" kecuali stimulus visual soal memang berupa matriks/grafik persamaan besar. Rumus pengerjaan hanya berada di steps dan explanation.
-6. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E. Huruf yang disebut di explanation dan steps WAJIB sinkron 100% dengan correctIndex.
-7. KUALITAS PEMBAHASAN STEP-BY-STEP: 
-   - WAJIB JABARKAN KONSEP DASAR / RUMUS UMUM DULU SEBELUM PENGERJAAN! Jika hitungan, tuliskan bentuk baku rumusnya. Jika non-hitungan (teori/sejarah/biologi), tuliskan definisi atau dalil utamanya secara eksplisit.
-   - Langkah 1: Identifikasi Fakta/Variabel & Tulis Teori Dasar.
-   - Langkah 2: Eksekusi Kasus / Substitusi Angka. JANGAN gunakan tanda titik dua (:) untuk menunjukkan hasil substitusi karena membingungkan (misal salah: "T = (2,3) : x'=x+2"). Gunakan tanda panah (\\rightarrow) atau kata penghubung yang jelas (misal: "maka", "sehingga", "dipetakan menjadi").
-   - Langkah 3: Kesimpulan Singkat & Analisis Kenapa Pengecoh Salah.
+STANDAR KUALITAS SOAL & ANTI-HALUSINASI:
+1. SKENARIO HARUS BARU: DILARANG mengulang skenario/cerita yang persis sama dengan contoh di modul teks. Buatkan studi kasus kontekstual baru.
+2. SEIMBANGKAN PANJANG OPSI (TIDAK BOLEH BIAS): Opsi yang benar TIDAK BOLEH selalu menjadi opsi terpanjang atau paling berkualifikasi. Buat kelima opsi A-E memiliki panjang kalimat yang seimbang.
+3. DISTRAKTOR HARUS MISKONSEPSI NYATA: Pengecoh harus berupa konsep kurikulum resmi yang benar-benar ada tapi salah konteks, bukan kata-kata fiktif.
+4. SOAL HITUNGAN KONKRET (JIKA EKONOMI/EKSAK): Jika materi memuat perhitungan/fungsi (misal permintaan-penawaran), buat minimal 1 butir soal pemecahan angka riil (misal mencari titik ekuilibrium Qd = Qs).
+5. DILARANG membuat opsi yang saling merujuk (misal: "A dan B benar", "Semua salah").
+6. FORMAT TEKS OPSI: DILARANG menyertakan prefix huruf seperti "A.", "B." di teks options.
+7. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E.
 
-${weaknessContext}
 ${mathRule}
 
 Format output WAJIB HANYA berupa array JSON valid tanpa markdown fence:
@@ -152,9 +162,9 @@ Format output WAJIB HANYA berupa array JSON valid tanpa markdown fence:
   }
 ]
 
-Materi:
+Fakta & Konsep Sumber:
 """
-${doc.content.slice(0, 15000)}
+${factsContext}
 """`;
 
     const reply = await callRouter([
@@ -162,22 +172,39 @@ ${doc.content.slice(0, 15000)}
       { role: "user", content: prompt }
     ], model, 0.2);
 
-    let cleanJSON = reply.trim();
-    if (cleanJSON.startsWith("```json")) cleanJSON = cleanJSON.slice(7);
-    else if (cleanJSON.startsWith("```")) cleanJSON = cleanJSON.slice(3);
-    if (cleanJSON.endsWith("```")) cleanJSON = cleanJSON.slice(0, -3);
-    cleanJSON = cleanJSON.trim().replace(/,\s*([\]}])/g, "$1");
+    function parseJsonWithFallback(raw) {
+      let s = raw.trim();
+      if (s.startsWith("```json")) s = s.slice(7);
+      else if (s.startsWith("```")) s = s.slice(3);
+      if (s.endsWith("```")) s = s.slice(0, -3);
+      s = s.trim().replace(/,\s*([\]}])/g, "$1");
+
+      try {
+        return JSON.parse(s);
+      } catch {
+        try {
+          const repaired = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+          return JSON.parse(repaired);
+        } catch {
+          const match = s.match(/\[\s*\{[\s\S]*\}\s*\]/);
+          if (match) {
+            try {
+              return JSON.parse(match[0].replace(/,\s*([\]}])/g, "$1"));
+            } catch {
+              const matchRepaired = match[0].replace(/,\s*([\]}])/g, "$1").replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+              return JSON.parse(matchRepaired);
+            }
+          }
+          throw new Error("Invalid JSON structure");
+        }
+      }
+    }
 
     let questions = [];
     try {
-      questions = JSON.parse(cleanJSON);
-    } catch (parseErr) {
-      const jsonMatch = cleanJSON.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (jsonMatch) {
-        questions = JSON.parse(jsonMatch[0].replace(/,\s*([\]}])/g, "$1"));
-      } else {
-        return sendJSON(res, { error: "Format JSON soal tidak valid dari model AI", raw: reply }, 500);
-      }
+      questions = parseJsonWithFallback(reply);
+    } catch {
+      return sendJSON(res, { error: "Format JSON soal tidak valid dari model AI", raw: reply }, 500);
     }
 
     // Fisher-Yates shuffle using crypto.randomInt (Zero LLM option bias)

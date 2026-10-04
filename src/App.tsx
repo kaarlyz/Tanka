@@ -207,6 +207,7 @@ export default function App() {
     isEvaluatingFeynman,
     feynmanResult,
     isRecordingFeynman,
+    isTranscribing,
     feynmanRecordingSeconds,
     handleEvaluateFeynman,
     handleToggleFeynmanRecording
@@ -729,6 +730,7 @@ export default function App() {
                   feynmanResult={feynmanResult}
                   handleEvaluateFeynman={handleEvaluateFeynman}
                   isRecordingFeynman={isRecordingFeynman}
+                  isTranscribing={isTranscribing}
                   feynmanRecordingSeconds={feynmanRecordingSeconds}
                   handleToggleFeynmanRecording={handleToggleFeynmanRecording}
                 />

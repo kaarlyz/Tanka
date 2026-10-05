@@ -253,7 +253,11 @@ export function TopicModal({
                           fontFamily: "'DM Mono', monospace"
                         }}
                       >
-                        {topicClarificationData.subject}
+                        {topicAnswers["cabang_materi"] && topicAnswers["cabang_materi"].includes("Sosiologi") 
+                          ? "Sosiologi" 
+                          : (topicAnswers["cabang_materi"] && topicAnswers["cabang_materi"].includes("Matematika") 
+                              ? "Matematika" 
+                              : topicClarificationData.subject)}
                       </span>
                       <button
                         onClick={() => setTopicStep(1)}
@@ -263,7 +267,7 @@ export function TopicModal({
                       </button>
                     </div>
                     <div style={{ fontSize: 14.5, fontWeight: 800, color: "#17201d" }}>
-                      {topicClarificationData.formalTitle}
+                      {topicAnswers["cabang_materi"] || topicClarificationData.formalTitle}
                     </div>
                   </div>
 
@@ -314,6 +318,45 @@ export function TopicModal({
                         </div>
                       </div>
                     ))}
+
+                    {/* Kolom Input Tambahan: Jelaskan Konteks Materi */}
+                    <div
+                      style={{
+                        backgroundColor: "#f8f9f5",
+                        border: "1px solid #dde1da",
+                        borderRadius: 10,
+                        padding: "14px 16px"
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#17201d", marginBottom: 4 }}>
+                        Jelaskan Konteks Materi (Opsional)
+                      </div>
+                      <div style={{ fontSize: 11.5, color: "#6f7975", marginBottom: 10 }}>
+                        Punya catatan khusus? Tulis di sini agar AI memfokuskan bab sesuai kebutuhanmu (misal: "fokus rumus turunan pertama aljabar" atau "untuk persiapan ulangan sosiologi bab 2").
+                      </div>
+                      <textarea
+                        value={topicAnswers["custom_context"] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setTopicAnswers((prev) => ({ ...prev, custom_context: val }));
+                        }}
+                        placeholder="Ketik konteks spesifik di sini..."
+                        rows={2}
+                        style={{
+                          width: "100%",
+                          boxSizing: "border-box",
+                          padding: "10px 12px",
+                          fontSize: 12.5,
+                          border: "1px solid #c9cfc6",
+                          borderRadius: 8,
+                          outline: "none",
+                          fontFamily: "inherit",
+                          resize: "vertical",
+                          backgroundColor: "#ffffff",
+                          color: "#18221f"
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               )}

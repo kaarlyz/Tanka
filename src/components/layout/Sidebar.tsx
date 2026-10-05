@@ -302,7 +302,7 @@ export function Sidebar({
               type="file"
               ref={fileInputRef}
               multiple
-              accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp,.bmp,.txt,.md"
+              accept=".pdf,.docx,.pptx,.xlsx,.xls,.doc,.ppt,.txt,.md,.csv,.tsv,.rtf,.png,.jpg,.jpeg,.webp,.bmp,.heic,.heif,.avif"
               style={{ display: "none" }}
               onChange={(e) => {
                 if (e.target.files && e.target.files.length > 0) {

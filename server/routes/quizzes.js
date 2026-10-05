@@ -1,6 +1,7 @@
 const crypto = require("node:crypto");
 const { db } = require("../db");
 const { callRouter, detectRealMath } = require("../ai");
+const { safeJsonParse } = require("../utils/jsonParser");
 
 async function handleQuizzesRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
@@ -124,8 +125,10 @@ Jika materi/soal mengandung rumus atau hitungan, WAJIB gunakan KaTeX LaTeX ($...
       : `ATURAN MATERI NON-HITUNGAN:
 Materi ini adalah materi konseptual/teori non-matematika. Kosongkan field "formula": "" dan fokus pada pemahaman konsep/fakta. DILARANG MENGARANG RUMUS FISIKA/MATEMATIKA PADA ILMU SOSIAL.`;
 
-    const prompt = `Anda adalah pembuat soal ujian akademik profesional berstandar tinggi (UTBK & Ujian Sekolah).
-Buatkan TEPAT ${finalCount} butir soal pilihan ganda dengan 5 PILIHAN JAWABAN (A, B, C, D, E).
+    // Fungsi pembantu generate batch kecil (maksimal 7-8 soal per panggilan AI agar JSON utuh & anti-truncation)
+    const generateQuizBatch = async (batchCount, offsetId = 1) => {
+      const prompt = `Anda adalah pembuat soal ujian akademik profesional berstandar tinggi (UTBK & Ujian Sekolah).
+Buatkan TEPAT ${batchCount} butir soal pilihan ganda dengan 5 PILIHAN JAWABAN (A, B, C, D, E) mulai nomor urut ID ${offsetId}.
 
 ${typeGuidance}
 ${customDirective}
@@ -133,35 +136,29 @@ ${referenceContext}
 ${weaknessContext}
 ${adaptiveContext}
 
-STANDAR KUALITAS SOAL HOTS MURNI (BLOOM C4-C5 ANALISIS & EVALUASI - UTBK/ASAHMEN NASIONAL):
-1. ATURAN MUTLAK "SCENARIO-DEPENDENT" (ANTI-HAFALAN DEFINISI):
-   - Soal DILARANG KERAS menguji klasifikasi/hafalan definisi yang dibungkus cerita (Contoh TERLARANG: "Di rawa ada fitoplankton, siput, dan ikan. Mana yang konsumen?").
-   - Soal WAJIB menghadirkan DINAMIKA SEBAB-AKIBAT: GANGGUAN SISTEM (misal: populasi produsen anjlok akibat tumpahan limbah, pajak barang mewah naik $20\%$, cermin digeser $(+3, -2)$), PERUBAHAN MULTI-VARIABEL, atau POLA TREN KONDISI.
-   - UJI GUGUR SKENARIO: Jika cerita kasus dibuang dan pertanyaan masih bisa dijawab langsung dari ingatan definisi kamus, MAKA SOAL DINILAI GAGAL. Siswa WAJIB memproses data situasi untuk menemukan kesimpulan.
-2. SEMANTIC SYMMETRY PADA DISTRAKTOR (MISKONSEPSI NYATA SISWA):
-   - Setiap pilihan pengecoh (distraktor) WAJIB mewakili kesalahan berpikir nyata siswa (misal: mengabaikan asumsi ceteris paribus, salah menukar kuadran rotasi, menganggap elastisitas $<1$ berarti kuantitas tidak berubah sama sekali, salah menafsirkan fungsi dekomposer).
-   - Kelima opsi (A-E) harus memiliki tingkat kedalaman teknis dan nuansa bahasa yang setara. DILARANG membuat opsi pengecoh yang tampak konyol atau asal-asalan.
-3. KESEIMBANGAN PANJANG OPSI (ANTI-BIAS TEKSTUAL):
-   - Kelima opsi A-E wajib memiliki panjang karakter yang seragam (rentang selisih maks 15%). Opsi benar DILARANG menjadi satu-satunya kalimat yang paling panjang, paling rinci, atau paling berhati-hati.
-4. PERHITUNGAN MULTI-TAHAP KONKRET (EKONOMI & EKSAK):
-   - Pada materi hitung, berikan soal penalaran numerik berbasis kasus (misal: menghitung dampak pajak spesifik terhadap pergeseran harga keseimbangan baru, atau komposisi dua transformasi berturut-turut).
-5. DILARANG membuat opsi yang saling merujuk (misal: "A dan B benar", "Semua salah").
-6. FORMAT TEKS OPSI: DILARANG menyertakan prefix huruf seperti "A.", "B." di teks options.
-7. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E.
+STANDAR KUALITAS SOAL (UTBK/ASESMEN NASIONAL):
+1. ATURAN "SCENARIO-DEPENDENT" (ANTI-HAFALAN DEFINISI):
+   - Soal menghadirkan dinamika kasus, sebab-akibat, atau analisis teks kontekstual.
+2. SEMANTIC SYMMETRY PADA DISTRAKTOR:
+   - Pilihan pengecoh (distraktor) mewakili kesalahan berpikir/miskonsepsi nyata siswa.
+3. KESEIMBANGAN PANJANG OPSI:
+   - Kelima opsi A-E memiliki tingkat kedalaman dan panjang kalimat yang seimbang.
+4. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E.
+5. FORMAT TEKS OPSI: DILARANG menyertakan prefix huruf seperti "A.", "B." di teks options.
 
 ${mathRule}
 
 Format output WAJIB HANYA berupa array JSON valid tanpa markdown fence:
 [
   {
-    "id": 1,
+    "id": ${offsetId},
     "question": "...",
     "options": ["...", "...", "...", "...", "..."],
     "correctIndex": 1,
     "formula": "",
     "steps": [
       {"step": 1, "title": "Identifikasi", "desc": "..."},
-      {"step": 2, "title": "Operasi", "desc": "..."},
+      {"step": 2, "title": "Operasi/Penalaran", "desc": "..."},
       {"step": 3, "title": "Kesimpulan", "desc": "..."}
     ],
     "explanation": "...",
@@ -174,54 +171,43 @@ Fakta & Konsep Sumber:
 ${factsContext}
 """`;
 
-    const reply = await callRouter([
-      { role: "system", content: "You are an expert exam question generator that strictly outputs valid JSON arrays." },
-      { role: "user", content: prompt }
-    ], model, 0.2);
+      const reply = await callRouter([
+        { role: "system", content: "You are an expert exam question generator that strictly outputs valid JSON arrays." },
+        { role: "user", content: prompt }
+      ], model, 0.2, 16384);
 
-    function parseJsonWithFallback(raw) {
-      let s = raw.trim();
-      if (s.startsWith("```json")) s = s.slice(7);
-      else if (s.startsWith("```")) s = s.slice(3);
-      if (s.endsWith("```")) s = s.slice(0, -3);
-      s = s.trim();
-
-      // 1. Direct parse first (preserves math decimals like $2{,}0$)
-      try {
-        return JSON.parse(s);
-      } catch {}
-
-      // 2. Escape LaTeX backslashes (\frac, \sum)
-      try {
-        const repaired = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-        return JSON.parse(repaired);
-      } catch {}
-
-      // 3. Strip trailing commas outside quotes only
-      try {
-        const noTrailing = s.replace(/,\s*([\]\}])(?=(?:[^"]*"[^"]*")*[^"]*$)/g, "$1");
-        const repaired = noTrailing.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-        return JSON.parse(repaired);
-      } catch {}
-
-      // 4. Fallback extract array
-      const match = s.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (match) {
-        try {
-          return JSON.parse(match[0]);
-        } catch {
-          const matchRepaired = match[0].replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-          return JSON.parse(matchRepaired);
-        }
+      const parsed = safeJsonParse(reply);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
       }
-      throw new Error("Invalid JSON structure");
-    }
+      throw new Error("Format JSON soal tidak valid dari model AI");
+    };
 
     let questions = [];
     try {
-      questions = parseJsonWithFallback(reply);
-    } catch {
-      return sendJSON(res, { error: "Format JSON soal tidak valid dari model AI", raw: reply }, 500);
+      if (finalCount <= 8) {
+        questions = await generateQuizBatch(finalCount, 1);
+      } else {
+        // Jika diminta >8 soal (misal 10, 15, 20 soal), pecah jadi batch paralel agar output token aman & cepat
+        const batchSize = 7;
+        const tasks = [];
+        let remaining = finalCount;
+        let currentOffset = 1;
+        while (remaining > 0) {
+          const take = Math.min(batchSize, remaining);
+          tasks.push({ count: take, offset: currentOffset });
+          currentOffset += take;
+          remaining -= take;
+        }
+
+        const results = await Promise.all(
+          tasks.map(t => generateQuizBatch(t.count, t.offset))
+        );
+        questions = results.flat();
+      }
+    } catch (err) {
+      console.error("[Generate-Quiz] Gagal menyusun soal:", err.message);
+      return sendJSON(res, { error: "Format JSON soal tidak valid dari model AI: " + err.message }, 500);
     }
 
     const letters = ["A", "B", "C", "D", "E"];
@@ -240,7 +226,7 @@ ${factsContext}
           [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
         }
 
-        // 2. Assign independent random target slot per question (prevents deducible permutations)
+        // 2. Assign independent random target slot per question
         const targetSlot = crypto.randomInt(0, q.options.length);
         const currPos = q.options.indexOf(originalCorrect);
         if (currPos !== -1 && targetSlot < q.options.length) {
@@ -252,12 +238,14 @@ ${factsContext}
 
         const newLetter = letters[q.correctIndex] || "A";
 
+        // Bersihkan penyebutan huruf acak yang kontradiktif dari pembahasan AI
         if (q.explanation) {
-          // Clean any internal AI monologue from explanation
           q.explanation = q.explanation
             .replace(/(?:Koreksi data|Mari sesuaikan data|Q2 harus|Kita ubah agar)[^.]*\./gi, "")
-            .replace(new RegExp(`(Pilihan|Opsi)\\s+${oldLetter}\\b`, "gi"), `$1 ${newLetter}`)
-            .replace(/(Pilihan|Opsi)\s+[A-E]\s+(benar|tepat)/gi, `$1 ${newLetter} $2`)
+            .replace(/Pilihan\s+[A-E]\s+benar(?:\s+karena)?/gi, "Jawaban yang tepat adalah")
+            .replace(/Opsi\s+[A-E]\s+benar(?:\s+karena)?/gi, "Jawaban yang tepat adalah")
+            .replace(/Pilihan\s+[A-E]\s+tepat/gi, "Jawaban yang tepat")
+            .replace(/Opsi\s+[A-E]\s+tepat/gi, "Jawaban yang tepat")
             .trim();
         }
 
@@ -265,8 +253,8 @@ ${factsContext}
           q.steps = q.steps.map((s) => {
             let desc = s.desc || "";
             desc = desc
-              .replace(new RegExp(`(pilihan|opsi)\\s+${oldLetter}\\b`, "gi"), `$1 ${newLetter}`)
-              .replace(/(pilihan|opsi)\s+[A-E]\s+(benar|tepat)/gi, `$1 ${newLetter} $2`);
+              .replace(/pilihan\s+[A-E]\s+benar/gi, "jawaban yang tepat")
+              .replace(/opsi\s+[A-E]\s+benar/gi, "jawaban yang tepat");
             return { ...s, desc };
           });
         }
@@ -428,11 +416,8 @@ Jangan sertakan teks apapun selain JSON murni.`;
         { role: "user", content: prompt }
       ], model);
 
-      let cleanJson = completion;
-      if (cleanJson.includes("\`\`\`")) {
-        cleanJson = cleanJson.replace(/```json/g, "").replace(/```/g, "").trim();
-      }
-      const newQuiz = JSON.parse(cleanJson);
+      const newQuiz = safeJsonParse(completion);
+      if (!newQuiz) throw new Error("Format JSON kuis baru tidak valid");
 
       const quizId = "quiz_" + Date.now();
       db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")

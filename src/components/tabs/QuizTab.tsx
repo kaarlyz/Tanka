@@ -796,8 +796,8 @@ export function QuizTab({
                         <MathView text={currentQuestion?.question} />
                       </div>
 
-                      {/* Question Formula Card (Blackboard styling from Figma Make) */}
-                      {currentQuestion?.formula && (
+                      {/* Question Formula Card: HANYA tampil jika user sudah menjawab di mode Belajar agar tidak membocorkan cara pengerjaan soal saat ujian */}
+                      {quizMode === "study" && isAnswerSubmitted && currentQuestion?.formula && (
                         <div className="question-formula">
                           <MathView text={currentQuestion.formula} />
                         </div>

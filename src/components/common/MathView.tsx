@@ -49,6 +49,11 @@ export function MathView({ text, style, className }: MathViewProps) {
         str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}/g, (_, sub, sup) => `$\\sum_{${sub}}^{${sup}}$`);
       }
 
+      // 1b. Normalize any raw LaTeX environment \begin{...} without enclosing $$ or $
+      if (str.includes("\\begin{") && !str.includes("$$")) {
+        str = str.replace(/\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/g, (m) => `$$${m}$$`);
+      }
+
       // 1. Process block math $$...$$
       if (str.includes("$$")) {
         str = str.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
@@ -95,6 +100,8 @@ export function MathView({ text, style, className }: MathViewProps) {
       // 4. Process simple algebraic powers (e.g. x^2, y^3) without catastrophic backtracking
       if (str.includes("^")) {
         str = str.replace(/\b([a-zA-Z0-9()]+)\^([a-zA-Z0-9()]+)\b/g, (match, base, exp) => {
+          // Jangan proses jika karakter berada di dalam tag HTML
+          if (str.includes("<") && str.includes(">")) return match;
           try {
             return katex.renderToString(`${base}^{${exp}}`, { displayMode: false, throwOnError: false });
           } catch {

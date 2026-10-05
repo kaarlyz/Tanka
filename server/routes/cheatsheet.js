@@ -1,5 +1,6 @@
 const { db } = require("../db");
 const { callRouter } = require("../ai");
+const { safeJsonParse } = require("../utils/jsonParser");
 
 async function handleCheatsheetRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
@@ -42,19 +43,12 @@ ${doc.content.slice(0, 10000)}
       { role: "user", content: prompt }
     ], model, 0.2);
 
-    let cleanJSON = reply.trim();
-    if (cleanJSON.startsWith("```json")) cleanJSON = cleanJSON.slice(7);
-    else if (cleanJSON.startsWith("```")) cleanJSON = cleanJSON.slice(3);
-    if (cleanJSON.endsWith("```")) cleanJSON = cleanJSON.slice(0, -3);
-    cleanJSON = cleanJSON.trim();
-
     let formulas = [];
     try {
-      formulas = JSON.parse(cleanJSON);
+      const parsed = safeJsonParse(reply);
+      formulas = Array.isArray(parsed) ? parsed : (parsed && parsed.formulas ? parsed.formulas : []);
     } catch (e) {
-      const match = cleanJSON.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (match) formulas = JSON.parse(match[0]);
-      else formulas = [];
+      formulas = [];
     }
 
     if (formulas.length > 0) {

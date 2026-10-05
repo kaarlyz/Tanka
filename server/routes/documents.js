@@ -14,6 +14,7 @@ const {
   extractConceptsAndOutline,
   generateNaraModule
 } = require("../services/curriculumPipeline");
+const { safeJsonParse } = require("../utils/jsonParser");
 
 // Intelligent Exam Sheet Processor
 async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance, goal = "", instruction = "") {
@@ -84,12 +85,8 @@ KEMBALIKAN HANYA FORMAT JSON VALID:
     const rawResponse = await callRouter([{ role: "user", content: prompt }], "ag/gemini-3.8-flash-low", 0.2);
     if (!rawResponse) return { isExamSheet: false };
 
-    let cleanJson = rawResponse.trim();
-    if (cleanJson.startsWith("```json")) cleanJson = cleanJson.slice(7);
-    if (cleanJson.startsWith("```")) cleanJson = cleanJson.slice(3);
-    if (cleanJson.endsWith("```")) cleanJson = cleanJson.slice(0, -3);
-
-    const parsed = JSON.parse(cleanJson.trim());
+    const parsed = safeJsonParse(rawResponse);
+    if (!parsed) return { isExamSheet: false };
     const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
     const studyGuide = typeof parsed.studyGuide === "string" ? parsed.studyGuide : "";
 
@@ -128,6 +125,20 @@ KEMBALIKAN HANYA FORMAT JSON VALID:
   }
 }
 
+function detectFileExtension(fileName, base64Data) {
+  let ext = path.extname(fileName || "").toLowerCase();
+  if (ext && ext !== ".bin" && ext !== ".tmp") return ext;
+  if (!base64Data || typeof base64Data !== "string") return ".txt";
+  const head = base64Data.slice(0, 40);
+  if (head.startsWith("/9j/")) return ".jpg";
+  if (head.startsWith("iVBORw")) return ".png";
+  if (head.startsWith("UklGR")) return ".webp";
+  if (head.startsWith("JVBERi0")) return ".pdf";
+  if (head.startsWith("UEsDBBQ")) return ".docx";
+  if (head.startsWith("0M8R4kg")) return ".doc";
+  return ".txt";
+}
+
 async function handleDocumentsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
@@ -155,61 +166,97 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     const extractedParts = [];
     const fileNames = [];
 
-    for (const f of incomingFiles) {
-      if (!f.fileName || !f.fileData) continue;
-      const ext = path.extname(f.fileName).toLowerCase() || ".txt";
-      let text = "";
-      const isImage = [".png", ".jpg", ".jpeg", ".webp", ".bmp"].includes(ext);
+    // Ekstrak berkas OCR secara paralel (maksimal 4 berkas sekaligus) agar hemat waktu & anti-timeout
+    const concurrency = 4;
+    for (let i = 0; i < incomingFiles.length; i += concurrency) {
+      const chunk = incomingFiles.slice(i, i + concurrency);
+      await Promise.all(
+        chunk.map(async (f) => {
+          if (!f.fileName || !f.fileData) return;
+          const ext = detectFileExtension(f.fileName, f.fileData);
+          let text = "";
+          const isImage = [".png", ".jpg", ".jpeg", ".webp", ".bmp", ".heic", ".heif", ".avif", ".tiff", ".tif"].includes(ext) || f.fileType === "image";
 
-      if (isImage) {
-        const mimeMap = {
-          ".png": "image/png",
-          ".jpg": "image/jpeg",
-          ".jpeg": "image/jpeg",
-          ".webp": "image/webp",
-          ".bmp": "image/bmp"
-        };
-        const mimeType = mimeMap[ext] || "image/jpeg";
-        try {
-          console.log(`[Upload] Menjalankan AI Vision Multimodal OCR untuk gambar: ${f.fileName}...`);
-          text = await extractTextWithAIVision(f.fileData, mimeType);
-        } catch (aiErr) {
-          console.warn("AI vision extraction failed, fallback to script:", aiErr.message);
-        }
-      }
+          if (isImage) {
+            const mimeMap = {
+              ".png": "image/png",
+              ".jpg": "image/jpeg",
+              ".jpeg": "image/jpeg",
+              ".webp": "image/webp",
+              ".bmp": "image/bmp",
+              ".heic": "image/heic",
+              ".heif": "image/heif",
+              ".avif": "image/avif",
+              ".tiff": "image/tiff",
+              ".tif": "image/tiff"
+            };
+            let visionB64 = f.fileData;
+            let visionMime = mimeMap[ext] || "image/jpeg";
 
-      // If AI vision failed, empty, or file is document (PDF, DOCX, PPTX, TXT)
-      if (!text || text.trim().length === 0) {
-        const tmpFilePath = path.join(scratchDir, `upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
-        try {
-          fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
-          const scriptOutput = execFileSync("python3", [scriptPath, tmpFilePath], {
-            encoding: "utf8",
-            maxBuffer: 25 * 1024 * 1024
-          }).trim();
-          text = scriptOutput;
-        } catch (err) {
-          console.error(`Gagal ekstrak ${f.fileName}:`, err.message);
-        } finally {
-          if (fs.existsSync(tmpFilePath)) {
-            try { fs.unlinkSync(tmpFilePath); } catch {}
+            // Jika format HEIC/HEIF/AVIF/TIFF, konversi dulu ke JPEG via magick agar dapat dibaca AI Vision
+            if ([".heic", ".heif", ".avif", ".tiff", ".tif"].includes(ext)) {
+              const tmpSrc = path.join(scratchDir, `src_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
+              const tmpDst = path.join(scratchDir, `dst_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`);
+              try {
+                fs.writeFileSync(tmpSrc, Buffer.from(f.fileData, "base64"));
+                execFileSync("magick", [tmpSrc, "-quality", "85", tmpDst]);
+                if (fs.existsSync(tmpDst)) {
+                  visionB64 = fs.readFileSync(tmpDst).toString("base64");
+                  visionMime = "image/jpeg";
+                }
+              } catch (magickErr) {
+                console.warn("[Upload] Gagal konversi format gambar via magick:", magickErr.message);
+              } finally {
+                try { if (fs.existsSync(tmpSrc)) fs.unlinkSync(tmpSrc); } catch {}
+                try { if (fs.existsSync(tmpDst)) fs.unlinkSync(tmpDst); } catch {}
+              }
+            }
+
+            try {
+              console.log(`[Upload] Menjalankan AI Vision Multimodal OCR untuk gambar: ${f.fileName}...`);
+              text = await extractTextWithAIVision(visionB64, visionMime, body.model);
+            } catch (aiErr) {
+              console.warn("AI vision extraction failed, fallback to script:", aiErr.message);
+            }
           }
-        }
-      }
 
-      const isErrorText = !text ||
-        text.startsWith("[Error OCR Gambar:") ||
-        text.startsWith("[Error ekstrak PDF:") ||
-        text.startsWith("[Error ekstrak DOCX:") ||
-        text.startsWith("[Error ekstrak PPTX:") ||
-        text.trim().length === 0;
+          // If AI vision failed, empty, or file is document (PDF, DOCX, PPTX, TXT)
+          if (!text || text.trim().length === 0) {
+            const tmpFilePath = path.join(scratchDir, `upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
+            try {
+              fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
+              const scriptOutput = execFileSync("python3", [scriptPath, tmpFilePath], {
+                encoding: "utf8",
+                maxBuffer: 25 * 1024 * 1024
+              }).trim();
+              text = scriptOutput;
+            } catch (err) {
+              console.error(`Gagal ekstrak ${f.fileName}:`, err.message);
+            } finally {
+              if (fs.existsSync(tmpFilePath)) {
+                try { fs.unlinkSync(tmpFilePath); } catch {}
+              }
+            }
+          }
 
-      if (!isErrorText) {
-        extractedParts.push({ name: f.fileName, text: text.trim() });
-        fileNames.push(path.basename(f.fileName, ext).replace(/[_-]/g, " ").trim());
-      } else {
-        console.warn(`[Upload Warning] Teks dari ${f.fileName} kosong atau menghasilkan error: ${text.slice(0, 100)}`);
-      }
+          const isErrorText = !text ||
+            text.startsWith("[Error OCR Gambar:") ||
+            text.startsWith("[Error ekstrak PDF:") ||
+            text.startsWith("[Error ekstrak DOCX:") ||
+            text.startsWith("[Error ekstrak PPTX:") ||
+            text.startsWith("[Error ekstrak XLSX:") ||
+            text.startsWith("[Error konversi LibreOffice:") ||
+            text.startsWith("[Format berkas") ||
+            text.trim().length === 0;
+
+          if (!isErrorText) {
+            extractedParts.push({ name: f.fileName, text: text.trim() });
+            fileNames.push(path.basename(f.fileName, ext).replace(/[_-]/g, " ").trim());
+          } else {
+            console.warn(`[Upload Warning] Teks dari ${f.fileName} kosong atau menghasilkan error: ${text.slice(0, 100)}`);
+          }
+        })
+      );
     }
 
     if (extractedParts.length === 0) {
@@ -311,8 +358,9 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     }
     const body = await getBody(req);
     const model = body.model || "ag/gemini-3.8-flash-low";
+    const customInstruction = (body.instruction || body.tailorPrompt || "").trim();
 
-    console.log(`[Curriculum Synthesis] Restructuring doc ${docId} ("${doc.title}") via Two-Pass Pipeline...`);
+    console.log(`[Curriculum Synthesis] Restructuring doc ${docId} ("${doc.title}") via Two-Pass Pipeline... ${customInstruction ? `(Instruksi: "${customInstruction}")` : ""}`);
 
     const { segmentDocumentText, extractConceptsAndOutline, generateNaraModule } = require("../services/curriculumPipeline");
 
@@ -330,7 +378,12 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     }
 
     // 2. Pass 1: Extract concepts and autonomous dynamic outline strictly bound to actual concepts
-    const outline = await extractConceptsAndOutline(doc.title, doc.content, segments, model);
+    const outline = await extractConceptsAndOutline(
+      customInstruction ? `${doc.title} (Instruksi Tambahan: ${customInstruction})` : doc.title,
+      doc.content,
+      segments,
+      model
+    );
 
     // Sync concepts to database
     if (outline && Array.isArray(outline.concepts)) {
@@ -350,7 +403,12 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     }
 
     // 3. Pass 2: Generate Nara module strictly respecting outline chapters
-    const structuredCurriculum = await generateNaraModule(outline, doc.content, segments, model);
+    const structuredCurriculum = await generateNaraModule(
+      outline, 
+      customInstruction ? `${doc.content}\n\n[Instruksi Khusus Revisi Pengguna]: ${customInstruction}` : doc.content, 
+      segments, 
+      model
+    );
     if (!structuredCurriculum) {
       return sendJSON(res, { error: "Gagal menyusun ulang kurikulum materi" }, 500);
     }
@@ -430,9 +488,9 @@ Format keluaran WAJIB berupa JSON array valid MURNI tanpa markdown wrapping (tan
 
     try {
       const aiResponse = await callRouter([{ role: "user", content: prompt }], "ag/gemini-3.8-flash-low", 0.3);
-      const cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
-      const suggestions = JSON.parse(cleanJson);
-      return sendJSON(res, { suggestions });
+      const parsed = safeJsonParse(aiResponse);
+      const suggestions = Array.isArray(parsed) ? parsed : [];
+      return sendJSON(res, { success: true, suggestions });
     } catch (err) {
       console.error("Gagal generate enrich suggestions:", err.message);
       return sendJSON(res, {

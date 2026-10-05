@@ -55,39 +55,13 @@ ${factsContext}
       { role: "user", content: prompt }
     ], model);
 
-    function parseJsonWithFallback(raw) {
-      let s = raw.trim();
-      if (s.startsWith("```json")) s = s.slice(7);
-      else if (s.startsWith("```")) s = s.slice(3);
-      if (s.endsWith("```")) s = s.slice(0, -3);
-      s = s.trim();
+const { safeJsonParse } = require("../utils/jsonParser");
 
-      try {
-        return JSON.parse(s);
-      } catch {}
-
-      try {
-        const repaired = s.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-        return JSON.parse(repaired);
-      } catch {}
-
-      try {
-        const noTrailing = s.replace(/,\s*([\]\}])(?=(?:[^"]*"[^"]*")*[^"]*$)/g, "$1");
-        const repaired = noTrailing.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-        return JSON.parse(repaired);
-      } catch {}
-
-      const match = s.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (match) {
-        try {
-          return JSON.parse(match[0]);
-        } catch {
-          const matchRepaired = match[0].replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-          return JSON.parse(matchRepaired);
-        }
-      }
-      throw new Error("Invalid JSON structure");
-    }
+function parseJsonWithFallback(raw) {
+  const parsed = safeJsonParse(raw);
+  if (parsed) return parsed;
+  throw new Error("Invalid JSON structure");
+}
 
     let parsedCards = [];
     try {

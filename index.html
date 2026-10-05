@@ -4,11 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Tanka - AI Autonomous Study Platform</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#19231f" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Tanka" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- KaTeX CSS for publication-grade mathematical formulas -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
     <style>
       :root {
         --ink: #18211e;
@@ -793,9 +802,15 @@
         max-width: 100% !important;
         margin: 0.4em 0 !important;
       }
-      .katex-display > .katex {
-        max-width: 100% !important;
-        text-align: center !important;
+      /* Hide KaTeX MathML visually while keeping accessible tree */
+      .katex .katex-mathml {
+        position: absolute;
+        clip: rect(1px, 1px, 1px, 1px);
+        padding: 0;
+        border: 0;
+        height: 1px;
+        width: 1px;
+        overflow: hidden;
       }
 
       /* Publication-grade Literary Book & Novel Reader Mode */
@@ -1729,14 +1744,22 @@
       @media print {
         @page {
           size: A4 portrait;
-          margin: 14mm 12mm 14mm 12mm;
+          margin: 18mm 16mm 18mm 16mm;
+        }
+
+        /* Hilangkan margin bawaan & paksa A4 */
+        html, body {
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #ffffff !important;
         }
 
         .print-only {
           display: block !important;
         }
 
-        html, body, #root, .app-shell, .workspace-shell, .figma-grid, .lesson-panel-box, .main-content-area, .content-scroll {
+        html, body, #root, .app-shell, .workspace-shell, .figma-grid, .lesson-panel-box, .main-content-area, .content-scroll, .main-scroll-section, div[style*="overflow: hidden"], div[style*="overflow:hidden"], div[style*="maxHeight: 100vh"], div[style*="height: 100vh"] {
           height: auto !important;
           min-height: auto !important;
           max-height: none !important;
@@ -1763,10 +1786,38 @@
         .desktop-only,
         .mobile-only,
         .drawer-overlay,
+        .mobile-bottom-nav,
+        .sticky-reader-toolbar,
+        .metrics-grid,
+        .mindmap-toolbar,
         button,
         .formula-actions,
         .print-hidden {
           display: none !important;
+        }
+
+        /* Sembunyikan header web atas yang redundan saat print di tab materi */
+        .tab-title-area,
+        .learning-card-white > div:first-child,
+        .material-header-panel {
+          display: none !important;
+        }
+
+        .markdown-body, .book-reader {
+          text-align: justify !important;
+          text-justify: inter-word !important;
+        }
+
+        /* Saat print di tab Materi, jika sedang di mode chapters, tampilkan dokumen lengkap utuh */
+        .reader-chapter-card {
+          display: none !important;
+        }
+
+        .print-full-document {
+          display: block !important;
+          border: none !important;
+          margin-top: 0 !important;
+          padding-top: 0 !important;
         }
 
         .app-shell,
@@ -1944,5 +1995,14 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.warn('SW registration failed:', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

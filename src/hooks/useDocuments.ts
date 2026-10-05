@@ -51,11 +51,17 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
 
   const fetchDocuments = useCallback(async () => {
     try {
+      // Baca query param ?id= jika user membuka tautan langsung ke dokumen tertentu
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlDocId = urlParams.get("id");
+
       const res = await fetch("/api/documents");
       const data = await res.json();
       if (data.documents) {
         setDocuments(data.documents);
-        if (data.documents.length > 0 && !activeDocId) {
+        if (urlDocId && data.documents.some((d: any) => d.id === urlDocId)) {
+          loadDocument(urlDocId);
+        } else if (data.documents.length > 0 && !activeDocId) {
           loadDocument(data.documents[0].id);
         }
       }

@@ -299,6 +299,7 @@ export default function App() {
     handleCancelStaging,
     handleConfirmStagedUpload
   } = useUploadStaging({
+    selectedModel,
     fetchDocuments,
     loadDocument,
     setActiveTab,

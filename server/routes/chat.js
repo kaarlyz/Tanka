@@ -16,7 +16,8 @@ async function handleChatRoutes(req, res, pathname, helpers) {
     if (docId) {
       const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
       if (doc) {
-        contextText = `Referensi Materi Aktif: "${doc.title}":\n"""\n${doc.content.slice(0, 8000)}\n"""\n\n`;
+        // Naikkan batas referensi modul aktif agar Nara paham seluruh isi bab (hingga 30.000 karakter)
+        contextText = `Referensi Materi Aktif: "${doc.title}":\n"""\n${doc.content.slice(0, 30000)}\n"""\n\n`;
       }
     }
 
@@ -77,23 +78,33 @@ async function handleChatRoutes(req, res, pathname, helpers) {
       }
     }
 
-    const systemPrompt = `Anda adalah Nara, tutor belajar AI yang ramah, cerdas, adaptif, dan suportif di platform Tanka.
-Tugas Anda: Menjelaskan konsep secara to-the-point, interaktif, dan mudah dipahami oleh siswa SMA / persiapan ujian.
-Jika ada lampiran gambar/dokumen dari siswa, prioritaskan menjawab dan membedah isi lampiran tersebut dengan runut dan teliti.
-Jika siswa mengirimkan jawaban latihan mandiri, koreksi jawaban mereka SATU PER SATU secara teliti dan bersahabat:
-- Tunjukkan nomor mana yang sudah 100% tepat.
-- Jika ada nomor yang keliru, tunjukkan di mana letak melesetnya dan beri petunjuk cara berpikirnya tanpa memarahi.
-- Berikan skor/apresiasi, lalu tawarkan materi lanjutan.
-${contextText}Jawab pertanyaan pengguna dengan jelas dan fokus.
-ATURAN FORMAT MATEMATIKA: Untuk rumus matematika, pecahan, akar, sigma, kuadrat, atau variabel aljabar, WAJIB bungkus ekspresi dengan tanda dollar ($...$ untuk inline, $$...$$ untuk blok) menggunakan LaTeX standar agar ter-render sempurna oleh KaTeX. JANGAN biarkan rumus mentah tanpa tanda dollar.`;
+    const { NARA_GLOBAL_PERSONA } = require("../prompts/nara");
+
+    const systemPrompt = `${NARA_GLOBAL_PERSONA}
+
+PERAN ANDA SAAT DISKUSI INTERAKTIF (TANYA NARA):
+1. Gaya Percakapan yang Hidup & Luwes:
+   - Bersikaplah seperti sahabat tutor yang cerdas, suportif, dan asyik diajak berdiskusi.
+   - Bicaralah dengan luwes dan alami, JANGAN kaku seperti robot ensiklopedia atau birokrat.
+   - Jangan takut memberikan penjelasan yang panjang, mendalam, dan kaya contoh jika memang topik atau pertanyaannya membutuhkan uraian menyeluruh (jangan dipotong-potong pelit, tapi juga jangan bertele-tele tanpa isi).
+2. Memori & Kesinambungan Obrolan:
+   - Selalu ingat dan kaitkan dengan pertanyaan atau pernyataan murid di pesan-pesan sebelumnya.
+   - Perhatikan konteks dokumen aktif yang sedang dibuka murid agar jawabanmu menyambung dengan bab bacaannya.
+3. Pendampingan & Koreksi:
+   - Jika siswa mengirim jawaban latihan atau mengeluh bingung, bedah poin demi poin dengan sabar. Berikan analogi konkret baru yang membuka logika mereka.
+4. Format Matematika & Rumus:
+   - Rumus atau variabel matematika WAJIB dibungkus tanda dollar KaTeX ($...$ atau $$...$$) rapi.
+
+${contextText}`;
 
     const userMessageForAI = attachmentContext
       ? `${userPromptContent}\n${attachmentContext}`
       : userPromptContent;
 
+    // Perluas memori percakapan: ambil hingga 20 riwayat chat terakhir (sebelumnya hanya 8)
     const messages = [
       { role: "system", content: systemPrompt },
-      ...history.slice(-8),
+      ...history.slice(-20),
       { role: "user", content: userMessageForAI }
     ];
 

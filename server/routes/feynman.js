@@ -1,5 +1,6 @@
 const { db } = require("../db");
 const { callRouter } = require("../ai");
+const { safeJsonParse } = require("../utils/jsonParser");
 
 async function handleFeynmanRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
@@ -64,22 +65,9 @@ Format output WAJIB HANYA berupa JSON valid tanpa teks tambahan:
       { role: "user", content: prompt }
     ], model, 0.2);
 
-    let cleanJSON = reply.trim();
-    if (cleanJSON.startsWith("```json")) cleanJSON = cleanJSON.slice(7);
-    else if (cleanJSON.startsWith("```")) cleanJSON = cleanJSON.slice(3);
-    if (cleanJSON.endsWith("```")) cleanJSON = cleanJSON.slice(0, -3);
-    cleanJSON = cleanJSON.trim();
-
-    let evalResult = {};
-    try {
-      evalResult = JSON.parse(cleanJSON);
-    } catch (e) {
-      const objMatch = cleanJSON.match(/\{[\s\S]*\}/);
-      if (objMatch) {
-        evalResult = JSON.parse(objMatch[0]);
-      } else {
-        return sendJSON(res, { error: "Format evaluasi model AI tidak valid", raw: reply }, 500);
-      }
+    let evalResult = safeJsonParse(reply);
+    if (!evalResult) {
+      return sendJSON(res, { error: "Format evaluasi model AI tidak valid", raw: reply }, 500);
     }
 
     // Deterministic rubric-based score calculation in code (not hallucinatory LLM integers)

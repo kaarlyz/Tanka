@@ -282,8 +282,31 @@ export function FlashcardsTab({
 
                     {/* Spaced Repetition Grading Actions */}
                     <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#ffffff", borderRadius: 12, border: "1px solid #dde1da", boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#6f7975", textAlign: "center", marginBottom: 10 }}>
-                        Beri Nilai Pemahaman Untuk Algoritma Pengulangan
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#6f7975" }}>
+                          Beri Nilai Pemahaman Untuk Lanjut ke Kartu Berikutnya:
+                        </span>
+                        {currentCardIndex < flashcards.length - 1 && (
+                          <button
+                            onClick={() => {
+                              setIsFlipped(false);
+                              setCurrentCardIndex(currentCardIndex + 1);
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#4b6623",
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 2
+                            }}
+                          >
+                            Lewati / Langsung Next <ChevronRight size={13} />
+                          </button>
+                        )}
                       </div>
                       <div className="spaced-rep-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
                         <button

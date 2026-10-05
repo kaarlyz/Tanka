@@ -112,21 +112,27 @@ export function MaterialTab({
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
   const [isRestructuring, setIsRestructuring] = React.useState(false);
   const [restructureNotice, setRestructureNotice] = React.useState<string | null>(null);
+  const [isTailorOpen, setIsTailorOpen] = React.useState(false);
+  const [tailorInput, setTailorInput] = React.useState("");
 
-  const handleRestructureCurriculum = async () => {
+  const handleRestructureCurriculum = async (instruction?: string) => {
     if (!activeDocId) return;
     setIsRestructuring(true);
-    setRestructureNotice("AI sedang membedah dan menyusun materi menjadi bab-bab terstruktur...");
+    setRestructureNotice("AI sedang merevisi dan menyusun ulang materi bab...");
     try {
       const res = await fetch(`/api/documents/${activeDocId}/restructure`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({})
+        body: JSON.stringify({
+          instruction: instruction || tailorInput || ""
+        })
       });
       const data = await res.json();
       if (data.success && data.content) {
         setActiveDocContent(data.content);
-        setRestructureNotice("Modul materi berhasil disusun ulang menjadi bab-bab terstruktur!");
+        setTailorInput("");
+        setIsTailorOpen(false);
+        setRestructureNotice("Modul materi berhasil disesuaikan!");
         setTimeout(() => setRestructureNotice(null), 3500);
       } else {
         setRestructureNotice(data.error || "Gagal menyusun ulang materi");
@@ -199,6 +205,14 @@ export function MaterialTab({
       const cleanIntro = intro.content.replace(/\n*---\s*$/, "").trim();
       list[0].content = cleanIntro ? cleanIntro + "\n\n---\n\n" + list[0].content : list[0].content;
       list.forEach((c, idx) => { c.id = idx + 1; });
+    }
+
+    // Bersihkan header judul dokumen "# Judul" dan ringkasan pengantar yang bocor ke dalam badan Bab 1
+    if (list.length > 0 && list[0].content) {
+      list[0].content = list[0].content
+        .replace(/^#\s+[^\n]+\n+/, "")
+        .replace(/^>\s+[^\n]+(?:\n>[^\n]+)*\n+(?:---\s*\n+)?/, "")
+        .trim();
     }
 
     return list.length > 0 ? list : [{ id: 1, title: activeDocTitle || "Modul Utama", shortTitle: "Materi Utama", content: text }];
@@ -312,7 +326,7 @@ export function MaterialTab({
               <div className="tab-pane-animate material-book-layout">
                 {activeDocId ? (
                   <div className="material-outer-box">
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+                    <div className="material-header-panel" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
                       <div style={{ flex: 1, minWidth: 260 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <span
@@ -414,12 +428,12 @@ export function MaterialTab({
                         </button>
 
                         <button
-                          onClick={handleRestructureCurriculum}
+                          onClick={() => setIsTailorOpen(!isTailorOpen)}
                           disabled={isRestructuring}
                           style={{
-                            backgroundColor: "#f4fbeb",
+                            backgroundColor: isTailorOpen ? "#22370c" : "#f4fbeb",
                             border: "1px solid #c2e28f",
-                            color: "#273f15",
+                            color: isTailorOpen ? "#c8f064" : "#273f15",
                             borderRadius: 8,
                             padding: "6px 12px",
                             fontSize: 12,
@@ -429,10 +443,10 @@ export function MaterialTab({
                             alignItems: "center",
                             gap: 6
                           }}
-                          title="Susun ulang materi ini menjadi kurikulum bab demi bab terpadu dengan AI"
+                          title="Sesuaikan, tambah materi yang kurang, atau susun ulang bab dengan instruksi khusus"
                         >
-                          <Sparkles size={14} color="#4b6623" />
-                          <span>{isRestructuring ? "Menyusun Kurikulum..." : "Susun Bab Terpadu (AI)"}</span>
+                          <Sparkles size={14} color={isTailorOpen ? "#c8f064" : "#4b6623"} />
+                          <span>{isRestructuring ? "Memproses..." : "Sesuaikan Bab / Revisi (AI)"}</span>
                         </button>
 
                         <button
@@ -476,6 +490,71 @@ export function MaterialTab({
                         </button>
                       </div>
                     </div>
+
+                    {/* Panel Interaktif: Sesuaikan / Tambah Materi Bab dengan AI */}
+                    {isTailorOpen && (
+                      <div
+                        style={{
+                          padding: "16px",
+                          backgroundColor: "#f4fbeb",
+                          border: "1px solid #c2e28f",
+                          borderRadius: 12,
+                          marginBottom: 16
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "#22370c", display: "flex", alignItems: "center", gap: 6 }}>
+                            <Sparkles size={15} color="#4b6623" />
+                            Instruksi Revisi & Penyesuaian Bab Materi
+                          </span>
+                          <button
+                            onClick={() => setIsTailorOpen(false)}
+                            style={{ background: "none", border: "none", fontSize: 11, color: "#56615d", cursor: "pointer" }}
+                          >
+                            Tutup
+                          </button>
+                        </div>
+                        <div style={{ fontSize: 11.5, color: "#56615d", marginBottom: 10 }}>
+                          Kamu bisa menyuruh AI menambahkan materi yang kurang, memecah bab, atau memperdalam konsep tertentu (misal: "tambahkan sub-bab kesenjangan budaya / Cultural Lag", atau "buat penjelasan rumus lebih ramah pemula").
+                        </div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <input
+                            type="text"
+                            value={tailorInput}
+                            onChange={(e) => setTailorInput(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleRestructureCurriculum()}
+                            placeholder="Ketik instruksi revisi materi di sini..."
+                            disabled={isRestructuring}
+                            style={{
+                              flex: "1 1 240px",
+                              padding: "9px 12px",
+                              borderRadius: 8,
+                              border: "1px solid #b7dc7f",
+                              fontSize: 13,
+                              outline: "none",
+                              backgroundColor: "#ffffff",
+                              color: "#18221f"
+                            }}
+                          />
+                          <button
+                            onClick={() => handleRestructureCurriculum()}
+                            disabled={isRestructuring}
+                            style={{
+                              backgroundColor: "#18221f",
+                              color: "#c8f064",
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "9px 16px",
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              cursor: isRestructuring ? "wait" : "pointer"
+                            }}
+                          >
+                            {isRestructuring ? "Memproses..." : "Terapkan Revisi"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {restructureNotice && (
                       <div style={{ padding: "10px 16px", backgroundColor: "#eef8db", border: "1px solid #c2e28f", borderRadius: 8, fontSize: 12.5, color: "#22370c", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
@@ -997,26 +1076,43 @@ export function MaterialTab({
                       </div>
                     )}
 
-                    {/* View Mode 3: Dokumen Lengkap */}
-                    {materialViewMode === "full" && (
-                      <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid #dde1da" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
-                            📖 Bahan Bacaan Modul Baku
+                    {/* View Mode 3: Dokumen Lengkap (Selalu dicetak utuh saat mode Print/PDF) */}
+                    <div 
+                      className={`print-full-document ${materialViewMode !== "full" ? "print-only" : ""}`}
+                      style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid #dde1da" }}
+                    >
+                      <div className="print-hidden" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+                          📖 Bahan Bacaan Modul Baku
+                        </span>
+                      </div>
+
+                      {/* Header Resmi khusus cetak PDF */}
+                      <div className="print-only" style={{ borderBottom: "2px solid #18221f", paddingBottom: 14, marginBottom: 20 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                          <span style={{ fontSize: "16pt", fontWeight: 900, color: "#18221f", letterSpacing: "-0.5px" }}>TANKA</span>
+                          <span style={{ fontSize: "9pt", fontWeight: 700, color: "#45544e", textTransform: "uppercase", letterSpacing: "1px" }}>
+                            MODUL PEMBELAJARAN TERPADU
                           </span>
                         </div>
-
-                        <div className="markdown-body" style={{ fontSize: 14.5, lineHeight: 1.7, color: "#1f2b26" }}>
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm, remarkMath]}
-                            rehypePlugins={[rehypeKatex]}
-                            components={markdownComponents}
-                          >
-                            {formattedContent}
-                          </ReactMarkdown>
+                        <h1 style={{ fontSize: "20pt", fontWeight: 800, color: "#111a17", margin: "10pt 0 4pt", lineHeight: 1.25 }}>
+                          {activeDocTitle}
+                        </h1>
+                        <div style={{ fontSize: "9pt", color: "#66706b" }}>
+                          Dokumen Studi Mandiri • Dicetak pada {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
                         </div>
                       </div>
-                    )}
+
+                      <div className="markdown-body" style={{ fontSize: 14.5, lineHeight: 1.7, color: "#1f2b26" }}>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                          components={markdownComponents}
+                        >
+                          {(formattedContent || activeDocContent || "").replace(/^#\s+[^\n]+\n+/, "")}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
 
                     {/* Collapsible Raw Text Editor */}
                     {showRawText && (

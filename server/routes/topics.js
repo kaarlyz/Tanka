@@ -1,6 +1,7 @@
 const { db } = require("../db");
 const { callRouter, multiSourceAcademicSearch } = require("../ai");
 const { NARA_GLOBAL_PERSONA } = require("../prompts/nara");
+const { safeJsonParse } = require("../utils/jsonParser");
 
 function normalizeTopicQuery(raw) {
   let s = (raw || "").trim();
@@ -18,10 +19,11 @@ Permintaan Mentah Murid: "${rawTopic}"
 
 Aturan:
 1. "topik_kanonik": Judul resmi materi sesuai silabus Kurikulum Merdeka / SMA / SMP (Contoh: "Bentuk Aljabar", "Fotosintesis", "Hukum Newton", "G30S/PKI 1965", "Elastisitas Permintaan dan Penawaran"). Buang kata basa-basi percakapan seperti "aku ingin belajar", "tolong", "pengen ngerti".
-2. "mapel": Mata pelajaran sekolah resmi (Matematika, Biologi, Fisika, Kimia, Ekonomi, Sosiologi, Geografi, Sejarah, Bahasa Indonesia, Bahasa Inggris).
+2. "mapel": Mata pelajaran sekolah resmi (Matematika, Biologi, Fisika, Kimia, Ekonomi, Sosiologi, Geografi, Sejarah, Bahasa Indonesia, Bahasa Inggris, dll).
 3. "jenjang": "SMA" (Kelas 10-12) atau "SMP" jika materi dasar (misal Bentuk Aljabar Dasar = SMP Kelas 7).
 4. "query_pencarian": Array berisi 2-3 query pencarian web bertarget kurikulum sekolah (misal: ["bentuk aljabar kurikulum merdeka", "unsur dan operasi hitung bentuk aljabar"]).
-5. "ambigu": Boolean (true jika istilah terlalu umum tanpa konteks, false jika spesifik).
+5. "ambigu": Boolean. Set bernilai true HANYA JIKA kata/topik memiliki makna ganda di dua mata pelajaran berbeda atau terlalu umum tanpa konteks jelas (Contoh: "diferensiasi" bisa Matematika Turunan atau Sosiologi Sosial; "translasi" bisa Matematika Geometri, Biologi Protein, atau Bahasa Terjemahan; "gelombang" bisa Fisika atau Geografi Kelautan). Jika sudah jelas, set false.
+6. "opsi_cabang": Jika ambigu bernilai true, berikan array 2-3 string pilihan cabang spesifik beserta mapelnya (Contoh untuk "diferensiasi": ["Diferensiasi / Turunan Fungsi Aljabar (Matematika SMA)", "Diferensiasi Sosial dan Stratifikasi (Sosiologi SMA)"]). Jika ambigu bernilai false, kosongkan array ini ([]).
 
 Kembalikan HANYA format JSON valid berikut:
 {
@@ -29,7 +31,8 @@ Kembalikan HANYA format JSON valid berikut:
   "mapel": "...",
   "jenjang": "...",
   "query_pencarian": ["...", "..."],
-  "ambigu": false
+  "ambigu": false,
+  "opsi_cabang": []
 }`;
 
   try {
@@ -37,11 +40,10 @@ Kembalikan HANYA format JSON valid berikut:
       { role: "system", content: "You are an expert Indonesian curriculum coordinator. Output strictly valid JSON." },
       { role: "user", content: prompt }
     ], userModel, 0.1);
-    let s = res.trim();
-    if (s.startsWith("```json")) s = s.slice(7);
-    else if (s.startsWith("```")) s = s.slice(3);
-    if (s.endsWith("```")) s = s.slice(0, -3);
-    return JSON.parse(s.trim());
+    
+    const parsed = safeJsonParse(res);
+    if (!parsed) throw new Error("Gagal parsing query intelligence JSON");
+    return parsed;
   } catch (err) {
     const cleaned = normalizeTopicQuery(rawTopic);
     return {
@@ -56,6 +58,15 @@ Kembalikan HANYA format JSON valid berikut:
 
 async function handleTopicsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
+
+  // 0. POST /api/ai/topic-understand - Step 0 Query Intelligence (Fast Ambiguity Check)
+  if (req.method === "POST" && pathname === "/api/ai/topic-understand") {
+    const { topic, model = "ag/gemini-3.8-flash-low" } = await getBody(req);
+    if (!topic || !topic.trim()) return sendJSON(res, { error: "Topic required" }, 400);
+
+    const qIntel = await understandTopicQuery(topic, model);
+    return sendJSON(res, { success: true, ...qIntel });
+  }
 
   // 1. POST /api/ai/topic-clarify - ask diagnostic questions before generating a topic
   if (req.method === "POST" && pathname === "/api/ai/topic-clarify") {
@@ -98,16 +109,10 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
       { role: "user", content: prompt }
     ], model, 0.2);
 
-    let cleanJSON = reply.trim();
-    if (cleanJSON.startsWith("```json")) cleanJSON = cleanJSON.slice(7);
-    else if (cleanJSON.startsWith("```")) cleanJSON = cleanJSON.slice(3);
-    if (cleanJSON.endsWith("```")) cleanJSON = cleanJSON.slice(0, -3);
-    cleanJSON = cleanJSON.trim();
-
-    try {
-      const parsed = JSON.parse(cleanJSON);
+    const parsed = safeJsonParse(reply);
+    if (parsed) {
       return sendJSON(res, { success: true, ...parsed });
-    } catch (e) {
+    } else {
       return sendJSON(res, {
         success: true,
         subject: "Umum",
@@ -137,9 +142,14 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
     
     // Step 0: Run Query Intelligence (Curriculum Normalizer & Ambiguity Detector)
     console.log(`[topics] Running Step 0 Query Intelligence on "${topic}"...`);
-    const qIntel = await understandTopicQuery(topic, model);
-    const title = (formalTitle || qIntel.topik_kanonik || normalizeTopicQuery(topic)).trim();
-    const effectiveSubject = (subject || qIntel.mapel || "Umum").trim();
+    const customUserContext = (answers && answers.custom_context ? answers.custom_context.trim() : "");
+    const combinedTopic = customUserContext ? `${topic} (${customUserContext})` : topic;
+    const qIntel = await understandTopicQuery(combinedTopic, model);
+
+    // Prioritize canonical topic and curriculum subject from Step 0 to avoid polite chatter or "Umum" subject contamination
+    const isTopicClean = formalTitle && formalTitle !== topic && formalTitle !== "Umum";
+    const title = (isTopicClean ? formalTitle : (qIntel.topik_kanonik || formalTitle || normalizeTopicQuery(topic))).trim();
+    const effectiveSubject = (subject && subject !== "Umum" ? subject : (qIntel.mapel || "Umum")).trim();
     const searchQueries = qIntel.query_pencarian || [];
 
     // 1. INGESTION: Multi-Source Web Search across Curricular & Academic Sources
@@ -175,25 +185,31 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
     }
 
     // 2. PASS 1: CANONICAL CONCEPT & OUTLINE EXTRACTION FROM RAW WEB SEGMENTS
-    const outline = await extractConceptsAndOutline(title, rawContext, segments, model);
+    const effectiveJenjang = qIntel.jenjang || "SMA";
+    const outline = await extractConceptsAndOutline(title, rawContext, segments, model, effectiveJenjang);
 
     if (outline && Array.isArray(outline.concepts)) {
       const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
       for (const c of outline.concepts) {
         const conceptId = `${docId}_${c.id || Math.random().toString(36).slice(2, 6)}`;
-        const def = c.definisi_baku || c.definition || "";
+        const def = c.definisi_baku || c.definisi || c.definition || "";
         const extra = JSON.stringify({
           rumus: c.rumus || "",
           tokoh: c.tokoh || [],
           salah_kaprah: c.salah_kaprah || "",
-          sumber_ref: c.sumber_ref || "web_search"
+          sumber_ref: c.segmen_id || c.sumber_ref || "web_search",
+          jenjang: effectiveJenjang,
+          level: c.level || "pahami",
+          prasyarat: c.prasyarat || [],
+          bukti_kutipan: c.bukti_kutipan || "",
+          verified_by_engine: !!c.verified_by_engine
         });
         insertConcept.run(conceptId, docId, c.name, def, extra, c.origin || "source", Date.now());
       }
     }
 
     // 3. PASS 2: GENERATE NARA'S STUDY MODULE GROUNDED IN CANONICAL OUTLINE & SOURCE CHUNKS
-    const content = await generateNaraModule(outline, rawContext, segments, model);
+    const content = await generateNaraModule(outline, rawContext, segments, model, effectiveJenjang);
 
     db.prepare("INSERT INTO documents (id, title, content, summary, created_at) VALUES (?, ?, ?, ?, ?)")
       .run(docId, title, content, outline.executiveSummary || "", Date.now());

@@ -21,7 +21,7 @@ if (!process.env.ROUTER_KEY) {
 const ROUTER_URL = process.env.ROUTER_URL || "http://127.0.0.1:20128/v1";
 const ROUTER_KEY = process.env.ROUTER_KEY || "";
 
-async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperature = 0.3) {
+async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperature = 0.3, maxTokens = null) {
   const url = `${ROUTER_URL}/chat/completions`;
   const primaryModel = model || "ag/gemini-3.8-flash-low";
 
@@ -29,7 +29,17 @@ async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperatu
     const curModel = attempt === 0 ? primaryModel : "ag/gemini-3.8-flash-low";
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 45000);
+      const timer = setTimeout(() => controller.abort(), 60000);
+
+      const payload = {
+        model: curModel,
+        messages,
+        temperature,
+        stream: false,
+      };
+      if (maxTokens && Number.isInteger(maxTokens)) {
+        payload.max_tokens = maxTokens;
+      }
 
       const res = await fetch(url, {
         method: "POST",
@@ -37,12 +47,7 @@ async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperatu
           "Content-Type": "application/json",
           Authorization: `Bearer ${ROUTER_KEY}`,
         },
-        body: JSON.stringify({
-          model: curModel,
-          messages,
-          temperature,
-          stream: false,
-        }),
+        body: JSON.stringify(payload),
         signal: controller.signal
       });
       clearTimeout(timer);
@@ -90,7 +95,7 @@ async function search9Router(query, maxResults = 8) {
   return "";
 }
 
-function scoreAcademicRelevance(title, topic, subject = "") {
+function scoreAcademicRelevance(title, topic, subject = "", extraAliases = []) {
   const tLower = (title || "").toLowerCase();
   const topLower = (topic || "").toLowerCase().trim();
   const subLower = (subject || "").toLowerCase().trim();
@@ -106,11 +111,43 @@ function scoreAcademicRelevance(title, topic, subject = "") {
     }
   }
 
+  // Database sinonim & akronim istilah pelajaran nasional agar pencarian tidak meleset
+  const ACADEMIC_SYNONYMS = {
+    "g30s": ["gerakan 30 september", "gestapu", "gestok", "g30s/pki", "pki 1965", "lubang buaya"],
+    "pki": ["partai komunis indonesia", "g30s"],
+    "voc": ["vereenigde oostindische compagnie", "kongsi dagang belanda"],
+    "bpupki": ["badan penyelidik usaha", "dokuritsu junbi cosakai"],
+    "ppki": ["panitia persiapan kemerdekaan", "dokuritsu junbi inkai"],
+    "dna": ["asam deoksiribonukleat", "genetika"],
+    "rna": ["asam ribonukleat"],
+    "atp": ["adenosina trifosfat"],
+    "kpk": ["kelipatan persekutuan terkecil"],
+    "fpb": ["faktor persekutuan terbesar"],
+    "spldv": ["sistem persamaan linear dua variabel"],
+    "spltv": ["sistem persamaan linear tiga variabel"],
+    "glb": ["gerak lurus beraturan"],
+    "glbb": ["gerak lurus berubah beraturan"],
+    "kimia": ["hukum dasar kimia", "stoikiometri", "lavoisier", "proust", "dalton", "gay lussac", "avogadro"]
+  };
+
   const stopWords = new Set([
     "dan", "yang", "di", "ke", "dari", "untuk", "pada", "adalah", "ini", "itu", "tentang", "kelas", "sma", "smp", "sd",
     "aku", "saya", "kamu", "ingin", "mau", "pengen", "belajar", "tahu", "paham", "tolong", "bikin", "buat", "materi", "soal", "pelajaran"
   ]);
-  const keywords = topLower.split(/[^a-zA-Z0-9]+/).filter(w => w.length > 2 && !stopWords.has(w));
+
+  // Ekstrak keyword dari topik utama + alias dari query pencarian
+  const rawWordTokens = [topLower, ...extraAliases.map(a => (a || "").toLowerCase())].join(" ");
+  const keywords = Array.from(new Set(
+    rawWordTokens.split(/[^a-zA-Z0-9]+/).filter(w => w.length > 2 && !stopWords.has(w))
+  ));
+
+  // Kembangkan daftar kata kunci dengan sinonim resmi
+  const expandedSynonyms = new Set();
+  for (const kw of keywords) {
+    if (ACADEMIC_SYNONYMS[kw]) {
+      ACADEMIC_SYNONYMS[kw].forEach(syn => expandedSynonyms.add(syn));
+    }
+  }
 
   let score = 0;
   let matchedKwCount = 0;
@@ -122,19 +159,29 @@ function scoreAcademicRelevance(title, topic, subject = "") {
     }
   }
 
+  // Berikan skor tinggi jika judul artikel memuat sinonim resmi (misal: judul "Gerakan 30 September" untuk query "G30S")
+  for (const syn of expandedSynonyms) {
+    if (tLower.includes(syn)) {
+      score += 35;
+      matchedKwCount += 2;
+      break;
+    }
+  }
+
   // Reject false positives that only match 1 single generic word when topic has 2+ keywords
-  if (keywords.length >= 2 && matchedKwCount < 2 && !tLower.includes(topLower)) {
+  if (keywords.length >= 2 && matchedKwCount < 2 && !tLower.includes(topLower) && !Array.from(expandedSynonyms).some(s => tLower.includes(s))) {
     return 0;
   }
 
   if (tLower.includes(topLower)) score += 35;
 
   if (subLower) {
-    if (tLower.includes(subLower)) score += 25;
-    const allSubjects = ["ekonomi", "sosiologi", "geografi", "sejarah", "matematika", "fisika", "kimia", "biologi"];
+    if (tLower.includes(subLower)) score += 30;
+    const allSubjects = ["ekonomi", "sosiologi", "geografi", "sejarah", "matematika", "fisika", "kimia", "biologi", "bahasa indonesia", "bahasa inggris"];
     for (const s of allSubjects) {
       if (s !== subLower && tLower.includes(s)) {
-        score -= 40;
+        // Hard filter: jika judul terang-terangan memuat mapel lain yang berbeda, langsung diskualifikasi
+        return 0;
       }
     }
   }
@@ -169,6 +216,8 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
   const cleanSubject = (subject || "").trim();
   if (!cleanTopic) return "";
 
+  const isExactScience = /^(?:matematika|fisika)$/i.test(cleanSubject);
+
   const allQueries = [cleanTopic];
   if (Array.isArray(extraQueries)) {
     extraQueries.forEach(q => {
@@ -179,18 +228,19 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
 
   // 1. Wikipedia Indonesia
   try {
+    const maxWiki = isExactScience ? 1 : 3;
     for (const q of allQueries) {
-      if (findings.encyclopedia.length >= 3) break;
+      if (findings.encyclopedia.length >= maxWiki) break;
       const sUrl = `https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=8&format=json`;
       const sRes = await fetch(sUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
       if (sRes.ok) {
         const sData = await sRes.json();
         const hits = (sData.query?.search || [])
-          .map(h => ({ title: h.title, score: scoreAcademicRelevance(h.title, cleanTopic, cleanSubject) }))
+          .map(h => ({ title: h.title, score: scoreAcademicRelevance(h.title, cleanTopic, cleanSubject, allQueries) }))
           .filter(h => h.score > 0)
           .sort((a, b) => b.score - a.score);
 
-        for (const h of hits.slice(0, 3)) {
+        for (const h of hits.slice(0, maxWiki)) {
           const extUrl = `https://id.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(h.title)}&format=json`;
           const extRes = await fetch(extUrl, { headers: { "User-Agent": "TankaAcademicBot/1.0" } });
           if (extRes.ok) {
@@ -247,7 +297,15 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
         while ((m = cardRegex.exec(rHtml)) !== null) {
           const url = m[1];
           const title = m[2].replace(/<[^>]+>/g, "").replace(/&#038;/g, "&").trim();
-          const score = scoreAcademicRelevance(title, cleanTopic, cleanSubject);
+          
+          // Tolak artikel kompilasi/rangkuman kurikulum satu semester yang terlalu umum
+          if (title.toLowerCase().includes("rangkuman materi matematika kelas") || 
+              title.toLowerCase().includes("kumpulan materi") ||
+              title.toLowerCase().includes("daftar materi")) {
+            continue;
+          }
+
+          const score = scoreAcademicRelevance(title, cleanTopic, cleanSubject, allQueries);
           if (score > 0 && !rArticles.has(url)) {
             rArticles.set(url, { url, title, score });
           }
@@ -255,8 +313,9 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
       }
     }
 
+    const maxRuangGuru = isExactScience ? 1 : 4;
     const sortedArticles = Array.from(rArticles.values()).sort((a, b) => b.score - a.score);
-    for (const art of sortedArticles.slice(0, 3)) {
+    for (const art of sortedArticles.slice(0, maxRuangGuru)) {
       try {
         const artRes = await fetch(art.url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } });
         if (artRes.ok) {
@@ -295,7 +354,7 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
         for (const it of items) {
           const title = it.title?.[0];
           if (!title) continue;
-          const score = scoreAcademicRelevance(title, cleanTopic, cleanSubject);
+          const score = scoreAcademicRelevance(title, cleanTopic, cleanSubject, allQueries);
           if (score < 25) continue; // REJECT unrelated journals like Si Pitung or random theses
           const rawSnippet = it.abstract ? it.abstract.replace(/<[^>]+>/g, "").slice(0, 1500) : "";
           const snippet = cleanSegmentText(rawSnippet);
@@ -308,14 +367,17 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
   }
 
   // 5. 9Router Search (Deep Web Search - Free, Unrestricted Queries)
-  try {
-    const [resRaw, resDeep] = await Promise.all([
-      search9Router(cleanTopic, 8),
-      search9Router(`${cleanTopic} ${cleanSubject} konsep materi penjelasan lengkap`, 8)
-    ]);
-    if (resRaw) findings.web.push(resRaw);
-    if (resDeep && resDeep !== resRaw) findings.web.push(resDeep);
-  } catch (err) {}
+  // Skip external deep web search for exact sciences (Math/Physics) to avoid fractal/thesis noise
+  if (!isExactScience) {
+    try {
+      const [resRaw, resDeep] = await Promise.all([
+        search9Router(cleanTopic, 8),
+        search9Router(`${cleanTopic} ${cleanSubject} konsep materi penjelasan lengkap`, 8)
+      ]);
+      if (resRaw) findings.web.push(resRaw);
+      if (resDeep && resDeep !== resRaw) findings.web.push(resDeep);
+    } catch (err) {}
+  }
 
   let bundle = "";
   const sourceItems = [];
@@ -402,19 +464,20 @@ PENTING:
   return fallback;
 }
 
-async function extractTextWithAIVision(base64Data, mimeType = "image/jpeg") {
-  const prompt = `Anda adalah asisten akademik cerdas yang ahli dalam membaca dokumen dan catatan belajar.
+async function extractTextWithAIVision(base64Data, mimeType = "image/jpeg", model = "ag/gemini-3.8-flash-high") {
+  const prompt = `Anda adalah asisten OCR akademik presisi tinggi untuk buku pelajaran, lembar soal, dan catatan belajar siswa.
 Tugas Anda: Baca dan transkripsikan SELURUH konten pada gambar ini dengan sangat teliti dan akurat.
-Gambar ini bisa berupa:
-- Tulisan tangan (catatan buku, coretan rumus, ringkasan belajar)
-- Teks cetak buku pelajaran, lembar soal, atau modul
-- Rumus matematika atau lambang eksak (WAJIB gunakan notasi LaTeX/KaTeX rapi seperti $x^2$, $\\frac{a}{b}$, $\\sqrt{x}$)
-- Diagram, bagan alur, atau mindmap (transkripsikan dalam bentuk teks hierarkis/poin berurutan)
 
-Aturan:
-1. Jika tulisan tangan agak miring atau sulit dibaca, gunakan konteks kalimat akademik untuk mengenali kata yang paling tepat. Jangan halusinasi.
-2. Jika ada soal latihan, transkripsikan pertanyaan beserta semua pilihan gandanya (A, B, C, D, E) jika ada.
-3. HANYA berikan teks transkripsi materi yang terbaca. Jangan tambahkan kata pengantar seperti "Berikut adalah hasil transkripsi" atau kalimat penutup.`;
+JENIS KONTEN YANG HARUS DITRANSKRIPSI:
+1. Teks Cetak & Tulisan Tangan: Transkripsikan kata per kata sesuai susunan visual aslinya. Jika tulisan tangan miring atau buram, gunakan konteks kalimat akademik tanpa mengarang.
+2. Rumus Matematika / Eksak: WAJIB gunakan notasi KaTeX rapi ($...$ untuk sebaris, $$...$$ untuk blok rumus, misal $x^2$, $\\frac{a}{b}$, $\\sqrt{x}$). Untuk koma desimal Indonesia dalam rumus, gunakan format kurung kurawal seperti $0{,}5$.
+3. Soal Latihan & Pilihan Ganda: Tuliskan nomor soal, teks pertanyaan, lalu letakkan masing-masing opsi jawaban (A, B, C, D, E) pada baris baru yang terpisah.
+4. Tabel: Transkripsikan dalam format Markdown Table rapi (| Kolom 1 | Kolom 2 |).
+5. Diagram / Bagan Alur: Transkripsikan hubungan alur secara hierarkis menggunakan tanda panah (➔) atau poin bersarang.
+
+ATURAN KELUARAN:
+- HANYA berikan teks transkripsi materi yang terbaca.
+- DILARANG menambahkan kata pengantar seperti "Berikut adalah hasil transkripsi" atau kalimat penutup.`;
 
   const messages = [
     {
@@ -432,11 +495,18 @@ Aturan:
   ];
 
   try {
-    const result = await callRouter(messages, "ag/gemini-3.8-flash-low", 0.1);
+    const targetModel = model || "ag/gemini-3.8-flash-high";
+    const result = await callRouter(messages, targetModel, 0.1);
     return result ? result.trim() : "";
   } catch (err) {
     console.error("AI Vision extraction failed:", err.message);
-    return "";
+    // Fallback to flash-low if flash-high errors out
+    try {
+      const fallbackResult = await callRouter(messages, "ag/gemini-3.8-flash-low", 0.1);
+      return fallbackResult ? fallbackResult.trim() : "";
+    } catch (e2) {
+      return "";
+    }
   }
 }
 

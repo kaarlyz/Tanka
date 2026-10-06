@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { RotateCw, X, Sparkles, Brain, Camera, Image, FileText, Send } from "lucide-react";
+import { RotateCw, X, Sparkles, Brain, Camera, Image, FileText, Send, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -45,6 +45,15 @@ export function TanyaNaraPanel({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
+  const [copiedMsgId, setCopiedMsgId] = React.useState<string | null>(null);
+
+  const handleCopy = (id: string, text: string) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+      setCopiedMsgId(id);
+      setTimeout(() => setCopiedMsgId(null), 1800);
+    }
+  };
 
   React.useEffect(() => {
     if (chatEndRef.current) {
@@ -266,6 +275,40 @@ export function TanyaNaraPanel({
                   ) : (
                     <div>{m.content}</div>
                   )}
+
+                  {/* Copy Button */}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(m.id, m.content)}
+                      title="Salin pesan"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: m.role === "user" ? "rgba(239, 245, 236, 0.6)" : "#8a9691",
+                        fontSize: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 3,
+                        padding: "2px 4px",
+                        borderRadius: 4,
+                        transition: "color 0.15s ease"
+                      }}
+                    >
+                      {copiedMsgId === m.id ? (
+                        <>
+                          <Check size={11} color={m.role === "user" ? "#a8c99e" : "#4b6623"} />
+                          <span style={{ color: m.role === "user" ? "#a8c99e" : "#4b6623", fontWeight: 600 }}>Disalin</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={11} />
+                          <span>Salin</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

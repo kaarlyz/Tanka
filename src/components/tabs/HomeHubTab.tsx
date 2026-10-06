@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2, Video } from "lucide-react";
+import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2, Video, X } from "lucide-react";
 import { ActiveTab, DocumentItem, QuizQuestion, Flashcard, MistakeItem } from "../../types";
 import { MathView, getSubjectBadge } from "../common/MathView";
 
@@ -12,6 +12,7 @@ export interface HomeHubTabProps {
   activeDocContent: string;
   loadDocument: (id: string) => void;
   handleDeleteDocument: (id: string, e?: React.MouseEvent) => void;
+  handleDeleteAllDocuments?: () => void;
   homeSearchQuery: string;
   setHomeSearchQuery: (val: string) => void;
   homeSubjectFilter: string;
@@ -39,6 +40,7 @@ export function HomeHubTab({
   activeDocContent,
   loadDocument,
   handleDeleteDocument,
+  handleDeleteAllDocuments,
   homeSearchQuery,
   setHomeSearchQuery,
   homeSubjectFilter,
@@ -446,34 +448,105 @@ export function HomeHubTab({
                       <span style={{ fontSize: 12, color: "#6f7975", fontFamily: "'DM Mono', monospace" }}>
                         ({documents.length})
                       </span>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      {["Semua", "Sosiologi", "Ekonomi", "Matematika", "Sains", "Bahasa"].map((cat) => (
+                      {documents.length > 0 && handleDeleteAllDocuments && (
                         <button
-                          key={cat}
-                          onClick={() => setHomeSubjectFilter(cat)}
+                          type="button"
+                          onClick={handleDeleteAllDocuments}
+                          title="Hapus Semua Modul Materi"
                           style={{
-                            backgroundColor: homeSubjectFilter === cat ? "#18221f" : "#ffffff",
-                            color: homeSubjectFilter === cat ? "#c8f064" : "#6f7975",
-                            border: homeSubjectFilter === cat ? "1px solid #18221f" : "1px solid #dce1da",
-                            padding: "5px 12px",
-                            borderRadius: 7,
-                            fontSize: 12,
+                            backgroundColor: "rgba(239, 68, 68, 0.08)",
+                            color: "#dc2626",
+                            border: "1px solid rgba(239, 68, 68, 0.25)",
+                            borderRadius: 6,
+                            padding: "3px 8px",
+                            fontSize: 11,
                             fontWeight: 600,
                             cursor: "pointer",
-                            transition: "all 0.15s ease"
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                            marginLeft: 4
                           }}
                         >
-                          {cat}
+                          <Trash2 size={12} /> Hapus Semua
                         </button>
-                      ))}
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      {/* Search Bar Modul di Home */}
+                      <div style={{ position: "relative", minWidth: 180 }}>
+                        <Search size={12} color="#8a9691" style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }} />
+                        <input
+                          type="text"
+                          value={homeSearchQuery}
+                          onChange={(e) => setHomeSearchQuery(e.target.value)}
+                          placeholder="Cari materi..."
+                          style={{
+                            width: "100%",
+                            backgroundColor: "#ffffff",
+                            border: "1px solid #dce1da",
+                            borderRadius: 7,
+                            padding: "5px 24px 5px 27px",
+                            fontSize: 11.5,
+                            color: "#17201d",
+                            outline: "none",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                        {homeSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setHomeSearchQuery("")}
+                            style={{
+                              position: "absolute",
+                              right: 6,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              background: "none",
+                              border: "none",
+                              color: "#8a9691",
+                              cursor: "pointer",
+                              padding: 2,
+                              display: "flex"
+                            }}
+                          >
+                            <X size={11} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        {["Semua", "Sosiologi", "Ekonomi", "Matematika", "Sains", "Bahasa"].map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => setHomeSubjectFilter(cat)}
+                            style={{
+                              backgroundColor: homeSubjectFilter === cat ? "#18221f" : "#ffffff",
+                              color: homeSubjectFilter === cat ? "#c8f064" : "#6f7975",
+                              border: homeSubjectFilter === cat ? "1px solid #18221f" : "1px solid #dce1da",
+                              padding: "5px 12px",
+                              borderRadius: 7,
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              transition: "all 0.15s ease"
+                            }}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
                   {/* 2-Column Responsive Grid of Documents */}
                   {(() => {
                     const filteredDocs = documents.filter((doc) => {
+                      if (homeSearchQuery && homeSearchQuery.trim()) {
+                        const q = homeSearchQuery.toLowerCase().trim();
+                        if (!doc.title.toLowerCase().includes(q)) return false;
+                      }
                       if (homeSubjectFilter === "Semua") return true;
                       if (homeSubjectFilter === "Bahasa") return doc.title.toLowerCase().includes("indo") || doc.title.toLowerCase().includes("inggris") || doc.title.toLowerCase().includes("english");
                       return doc.title.toLowerCase().includes(homeSubjectFilter.toLowerCase());
@@ -492,10 +565,10 @@ export function HomeHubTab({
                         >
                           <BookOpen size={24} color="#8a9691" style={{ margin: "0 auto 8px" }} />
                           <div style={{ fontSize: 14, fontWeight: 700, color: "#17201d" }}>
-                            Belum ada modul untuk kategori ini
+                            {homeSearchQuery ? `Tidak ada modul yang cocok dengan "${homeSearchQuery}"` : "Belum ada modul untuk kategori ini"}
                           </div>
                           <div style={{ fontSize: 12, color: "#8a9691", marginTop: 4 }}>
-                            Gunakan kotak pencarian di atas untuk membuat modul topik baru atau unggah berkas.
+                            {homeSearchQuery ? "Coba kata kunci lain atau bersihkan pencarian." : "Gunakan kotak pencarian di atas untuk membuat modul topik baru atau unggah berkas."}
                           </div>
                         </div>
                       );

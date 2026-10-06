@@ -89,6 +89,31 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     }
   }, [activeDocId, fetchDocuments, showNotice]);
 
+  const [docSearchQuery, setDocSearchQuery] = useState("");
+
+  const handleDeleteAllDocuments = useCallback(async (resetCallback?: () => void) => {
+    if (!confirm("Peringatan: Apakah Anda yakin ingin MENGHAPUS SEMUA MODUL belajar beserta seluruh kuis, kartu flashcard, catatan kesalahan, dan riwayat obrolan? Tindakan ini tidak dapat dibatalkan.")) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/documents", { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        showNotice("Seluruh modul berhasil dihapus bersih");
+        setActiveDocId(null);
+        setActiveDocTitle("");
+        setActiveDocContent("");
+        setActiveDocSummary("");
+        if (resetCallback) resetCallback();
+        await fetchDocuments();
+      } else {
+        showNotice(data.error || "Gagal menghapus seluruh modul");
+      }
+    } catch {
+      showNotice("Koneksi ke server gagal");
+    }
+  }, [fetchDocuments, showNotice]);
+
   const handleSaveDocument = useCallback(async (title: string, content: string, onSuccess?: (id: string) => void) => {
     if (!title.trim() || !content.trim()) {
       showNotice("Judul dan isi materi tidak boleh kosong");
@@ -157,6 +182,9 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     fetchDocuments,
     loadDocument,
     handleDeleteDocument,
+    handleDeleteAllDocuments,
+    docSearchQuery,
+    setDocSearchQuery,
     handleSaveDocument,
     handleAutoDetectTitle
   };

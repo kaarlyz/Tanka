@@ -154,6 +154,19 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     return sendJSON(res, { documents: docs });
   }
 
+  // 1b. DELETE /api/documents - bulk delete ALL documents and cascading records
+  if (req.method === "DELETE" && pathname === "/api/documents") {
+    db.prepare("DELETE FROM flashcards").run();
+    db.prepare("DELETE FROM mistake_notebook").run();
+    db.prepare("DELETE FROM quizzes").run();
+    db.prepare("DELETE FROM chat_messages").run();
+    db.prepare("DELETE FROM formula_cheatsheets").run();
+    db.prepare("DELETE FROM document_concepts").run();
+    db.prepare("DELETE FROM document_segments").run();
+    db.prepare("DELETE FROM documents").run();
+    return sendJSON(res, { success: true, message: "Semua modul berhasil dihapus" });
+  }
+
   // 1b. POST /api/documents/youtube-info - preview video title, author, thumbnail, transcript
   if (req.method === "POST" && pathname === "/api/documents/youtube-info") {
     const { url } = await getBody(req);

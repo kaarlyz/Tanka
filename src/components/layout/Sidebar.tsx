@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, Trash2, Upload, Camera, Compass, X, Video } from "lucide-react";
+import { Plus, Trash2, Upload, Camera, Compass, X, Video, Search } from "lucide-react";
 import { ActiveTab, DocumentItem, QuizQuestion, MistakeItem, Flashcard, UserAccount } from "../../types";
 
 export interface SidebarProps {
@@ -12,6 +12,9 @@ export interface SidebarProps {
   activeDocId: string | null;
   loadDocument: (id: string) => void;
   handleDeleteDocument: (id: string, e?: React.MouseEvent) => void;
+  handleDeleteAllDocuments?: () => void;
+  docSearchQuery?: string;
+  setDocSearchQuery?: (val: string) => void;
   quizQuestions?: QuizQuestion[];
   activeDocMistakes?: MistakeItem[];
   mistakes?: MistakeItem[];
@@ -40,6 +43,9 @@ export function Sidebar({
   activeDocId,
   loadDocument,
   handleDeleteDocument,
+  handleDeleteAllDocuments,
+  docSearchQuery,
+  setDocSearchQuery,
   quizQuestions,
   activeDocMistakes,
   mistakes,
@@ -136,78 +142,157 @@ export function Sidebar({
               <span style={{ fontSize: 10, fontWeight: 700, color: "#86938e", fontFamily: "'DM Mono', monospace", letterSpacing: 1.2 }}>
                 MATERI TERSIMPAN ({documents.length})
               </span>
-              <button
-                onClick={() => {
-                  setIsMobileDrawerOpen(false);
-                  if (handleCreateNewDoc) handleCreateNewDoc();
-                }}
-                style={{
-                  backgroundColor: "#25322e",
-                  color: "#d6f58d",
-                  border: "1px solid #34413c",
-                  borderRadius: 6,
-                  padding: "2px 8px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 3
-                }}
-              >
-                <Plus size={11} /> Baru
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                {documents.length > 0 && handleDeleteAllDocuments && (
+                  <button
+                    onClick={handleDeleteAllDocuments}
+                    title="Hapus Semua Modul Materi"
+                    style={{
+                      backgroundColor: "rgba(239, 68, 68, 0.12)",
+                      color: "#f87171",
+                      border: "1px solid rgba(239, 68, 68, 0.25)",
+                      borderRadius: 6,
+                      padding: "2px 6px",
+                      fontSize: 10,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2
+                    }}
+                  >
+                    <Trash2 size={10} /> Hapus Semua
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    if (handleCreateNewDoc) handleCreateNewDoc();
+                  }}
+                  style={{
+                    backgroundColor: "#25322e",
+                    color: "#d6f58d",
+                    border: "1px solid #34413c",
+                    borderRadius: 6,
+                    padding: "2px 8px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3
+                  }}
+                >
+                  <Plus size={11} /> Baru
+                </button>
+              </div>
             </div>
 
+            {/* Kotak Pencarian Modul */}
+            {documents.length > 0 && (
+              <div style={{ position: "relative", marginBottom: 8 }}>
+                <Search size={11} color="#7a8a84" style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)" }} />
+                <input
+                  type="text"
+                  value={docSearchQuery || ""}
+                  onChange={(e) => setDocSearchQuery && setDocSearchQuery(e.target.value)}
+                  placeholder="Cari modul..."
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#18221f",
+                    border: "1px solid #2e3a35",
+                    borderRadius: 6,
+                    padding: "5px 24px 5px 25px",
+                    fontSize: 11,
+                    color: "#eff5ec",
+                    outline: "none",
+                    boxSizing: "border-box"
+                  }}
+                />
+                {docSearchQuery && (
+                  <button
+                    onClick={() => setDocSearchQuery && setDocSearchQuery("")}
+                    style={{
+                      position: "absolute",
+                      right: 6,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      color: "#7a8a84",
+                      cursor: "pointer",
+                      padding: 2,
+                      display: "flex"
+                    }}
+                  >
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Document list */}
-            <div className="no-scrollbar" style={{ maxHeight: 200, overflowY: "auto", paddingRight: 2 }}>
-              {documents.length === 0 ? (
-                <div style={{ padding: "18px 8px", color: "#6e7c77", fontSize: 12.5, textAlign: "center" }}>
-                  Belum ada dokumen. Unggah atau buat modul baru.
-                </div>
-              ) : (
-                documents.map((doc) => {
-                  const isSelected = doc.id === activeDocId;
-                  return (
-                    <div
-                      key={doc.id}
-                      onClick={() => {
-                        loadDocument(doc.id);
-                        setIsMobileDrawerOpen(false);
-                      }}
-                      style={{
-                        padding: "9px 12px",
-                        borderRadius: 8,
-                        marginBottom: 5,
-                        backgroundColor: isSelected ? "#25322e" : "transparent",
-                        border: isSelected ? "1px solid #34413c" : "1px solid transparent",
-                        cursor: "pointer",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        transition: "all 0.15s ease"
-                      }}
-                    >
-                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginRight: 8 }}>
-                        <div style={{ fontSize: 13, fontWeight: isSelected ? 700 : 500, color: isSelected ? "#f5f8f3" : "#aeb9b4" }}>
-                          {doc.title}
-                        </div>
-                        <div style={{ fontSize: 11, color: "#7a8a84", fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-                          {doc.flashcard_count || 0} kartu
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => handleDeleteDocument(doc.id, e)}
-                        style={{ background: "none", border: "none", color: "#7a8a84", cursor: "pointer", padding: 4 }}
-                        title="Hapus dokumen"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+            {(() => {
+              const filteredDocs = documents.filter((doc) => {
+                if (!docSearchQuery) return true;
+                return doc.title.toLowerCase().includes(docSearchQuery.toLowerCase());
+              });
+
+              return (
+                <div className="no-scrollbar" style={{ maxHeight: 200, overflowY: "auto", paddingRight: 2 }}>
+                  {documents.length === 0 ? (
+                    <div style={{ padding: "18px 8px", color: "#6e7c77", fontSize: 12.5, textAlign: "center" }}>
+                      Belum ada dokumen. Unggah atau buat modul baru.
                     </div>
-                  );
-                })
-              )}
-            </div>
+                  ) : filteredDocs.length === 0 ? (
+                    <div style={{ padding: "14px 8px", color: "#6e7c77", fontSize: 11.5, textAlign: "center" }}>
+                      Tidak ada modul "{docSearchQuery}".
+                    </div>
+                  ) : (
+                    filteredDocs.map((doc) => {
+                      const isSelected = doc.id === activeDocId;
+                      return (
+                        <div
+                          key={doc.id}
+                          onClick={() => {
+                            loadDocument(doc.id);
+                            setIsMobileDrawerOpen(false);
+                          }}
+                          style={{
+                            padding: "9px 12px",
+                            borderRadius: 8,
+                            marginBottom: 5,
+                            backgroundColor: isSelected ? "#25322e" : "transparent",
+                            border: isSelected ? "1px solid #34413c" : "1px solid transparent",
+                            cursor: "pointer",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginRight: 8 }}>
+                            <div style={{ fontSize: 13, fontWeight: isSelected ? 700 : 500, color: isSelected ? "#f5f8f3" : "#aeb9b4" }}>
+                              {doc.title}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#7a8a84", fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
+                              {doc.flashcard_count || 0} kartu
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => handleDeleteDocument(doc.id, e)}
+                            style={{ background: "none", border: "none", color: "#7a8a84", cursor: "pointer", padding: 4 }}
+                            title="Hapus dokumen"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Quick Action Buttons */}
             {/* Action Grid: Upload, Camera, Topic AI, YouTube */}

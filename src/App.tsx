@@ -108,6 +108,9 @@ export default function App() {
     fetchDocuments,
     loadDocument,
     handleDeleteDocument,
+    handleDeleteAllDocuments,
+    docSearchQuery,
+    setDocSearchQuery,
     handleSaveDocument: baseSaveDocument,
     handleAutoDetectTitle
   } = useDocuments({
@@ -568,6 +571,12 @@ export default function App() {
           setFlashcards([]);
           setQuizQuestions([]);
         })}
+        handleDeleteAllDocuments={() => handleDeleteAllDocuments(() => {
+          setFlashcards([]);
+          setQuizQuestions([]);
+        })}
+        docSearchQuery={docSearchQuery}
+        setDocSearchQuery={setDocSearchQuery}
       />
 
       {/* Main View Area */}
@@ -620,6 +629,10 @@ export default function App() {
                   activeDocContent={activeDocContent}
                   loadDocument={loadDocument}
                   handleDeleteDocument={(id, e) => handleDeleteDocument(id, e)}
+                  handleDeleteAllDocuments={() => handleDeleteAllDocuments(() => {
+                    setFlashcards([]);
+                    setQuizQuestions([]);
+                  })}
                   homeSearchQuery={homeSearchQuery}
                   setHomeSearchQuery={setHomeSearchQuery}
                   homeSubjectFilter={homeSubjectFilter}

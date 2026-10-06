@@ -15,6 +15,7 @@ export interface ChatTabProps {
   stagedAttachment?: StagedChatFile | null;
   handleAttachFile?: (file: File) => Promise<void>;
   handleClearAttachment?: () => void;
+  handleClearChat?: () => Promise<void> | void;
 }
 
 export function ChatTab({
@@ -28,6 +29,7 @@ export function ChatTab({
   stagedAttachment,
   handleAttachFile,
   handleClearAttachment,
+  handleClearChat,
 }: ChatTabProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -63,8 +65,33 @@ export function ChatTab({
           <BookOpen size={13} color="#4b6623" />
           <span>Materi: <strong style={{ color: "#17201d" }}>{activeDocTitle || "Tutor Belajar Umum"}</strong></span>
         </div>
-        <div className="desktop-only" style={{ fontSize: 11, color: "#8a9691", fontFamily: "'DM Mono', monospace" }}>
-          Engine: {selectedModel}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {messages.length > 0 && handleClearChat && (
+            <button
+              type="button"
+              onClick={handleClearChat}
+              title="Bersihkan riwayat percakapan sesi ini"
+              style={{
+                background: "rgba(220, 38, 38, 0.08)",
+                border: "1px solid rgba(220, 38, 38, 0.2)",
+                color: "#dc2626",
+                cursor: "pointer",
+                padding: "4px 8px",
+                borderRadius: 6,
+                fontSize: 11,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 5
+              }}
+            >
+              <Trash2 size={12} />
+              <span>Bersihkan Chat</span>
+            </button>
+          )}
+          <div className="desktop-only" style={{ fontSize: 11, color: "#8a9691", fontFamily: "'DM Mono', monospace" }}>
+            Engine: {selectedModel}
+          </div>
         </div>
       </div>
 

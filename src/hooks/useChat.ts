@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { ChatMessage, ChatAttachment } from "../types";
 
 export interface StagedChatFile {
@@ -16,11 +16,86 @@ export interface UseChatProps {
 }
 
 export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const currentSessionId = activeDocId || "global";
+
+  // Inisialisasi state awal langsung dari localStorage sesi aktif agar tidak ada jeda kosong
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const cached = localStorage.getItem(`tanka_chat_${currentSessionId}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
   const [chatInput, setChatInput] = useState("");
   const [isChatSending, setIsChatSending] = useState(false);
   const [stagedAttachment, setStagedAttachment] = useState<StagedChatFile | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Isolasi sesi percakapan: Setiap kali berpindah dokumen, muat riwayat sesi terkait
+  useEffect(() => {
+    const sessionId = currentSessionId;
+    const storageKey = `tanka_chat_${sessionId}`;
+
+    // 1. Baca cache lokal seketika
+    try {
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          setMessages(parsed);
+        } else {
+          setMessages([]);
+        }
+      } else {
+        setMessages([]);
+      }
+    } catch {
+      setMessages([]);
+    }
+
+    setStagedAttachment(null);
+    setChatInput("");
+
+    // 2. Sinkronkan dengan database SQLite backend
+    let isCancelled = false;
+    fetch(`/api/documents/${sessionId}/chat`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isCancelled) return;
+        if (data && Array.isArray(data.messages)) {
+          const mapped: ChatMessage[] = data.messages.map((m: any) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+            timestamp: m.created_at
+          }));
+          setMessages(mapped);
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(mapped));
+          } catch {}
+        }
+      })
+      .catch(() => {
+        // Abaikan jika offline / request gagal, tetap pakai state localStorage
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentSessionId]);
+
+  const handleClearChat = useCallback(async () => {
+    const sessionId = currentSessionId;
+    setMessages([]);
+    try {
+      localStorage.removeItem(`tanka_chat_${sessionId}`);
+      await fetch(`/api/documents/${sessionId}/chat`, { method: "DELETE" });
+    } catch {}
+  }, [currentSessionId]);
 
   const handleAttachFile = useCallback(async (file: File) => {
     if (!file) return;
@@ -139,10 +214,16 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
       id: "msg_" + Date.now(),
       role: "user",
       content: text,
+      timestamp: Date.now(),
       attachment: attachmentMeta
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const nextUserMessages = [...messages, userMsg];
+    setMessages(nextUserMessages);
+    try {
+      localStorage.setItem(`tanka_chat_${currentSessionId}`, JSON.stringify(nextUserMessages));
+    } catch {}
+
     setIsChatSending(true);
     setTimeout(() => {
       if (chatEndRef.current) {
@@ -168,14 +249,19 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
       });
       const data = await res.json();
       if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: "reply_" + Date.now(),
-            role: "assistant",
-            content: data.reply
-          }
-        ]);
+        const assistantMsg: ChatMessage = {
+          id: "reply_" + Date.now(),
+          role: "assistant",
+          content: data.reply,
+          timestamp: Date.now()
+        };
+        setMessages((prev) => {
+          const finalMessages = [...prev, assistantMsg];
+          try {
+            localStorage.setItem(`tanka_chat_${currentSessionId}`, JSON.stringify(finalMessages));
+          } catch {}
+          return finalMessages;
+        });
         setTimeout(() => {
           if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -189,7 +275,7 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
     } finally {
       setIsChatSending(false);
     }
-  }, [activeDocId, chatInput, stagedAttachment, isChatSending, selectedModel, messages, showNotice]);
+  }, [currentSessionId, activeDocId, chatInput, stagedAttachment, isChatSending, selectedModel, messages, showNotice]);
 
   return {
     messages,
@@ -202,6 +288,7 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
     setStagedAttachment,
     handleAttachFile,
     handleClearAttachment,
-    handleSendMessage
+    handleSendMessage,
+    handleClearChat
   };
 }

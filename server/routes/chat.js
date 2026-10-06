@@ -117,10 +117,12 @@ ${contextText}`;
       ? `[📎 ${attachment.fileName}]\n${userPromptContent}`
       : userPromptContent;
 
+    const targetDocId = (docId && docId !== "global") ? docId : "global";
+
     db.prepare("INSERT INTO chat_messages (id, doc_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .run(msgId, docId || null, "user", storedUserContent, model, Date.now());
+      .run(msgId, targetDocId, "user", storedUserContent, model, Date.now());
     db.prepare("INSERT INTO chat_messages (id, doc_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .run(msgId + "_r", docId || null, "assistant", reply, model, Date.now());
+      .run(msgId + "_r", targetDocId, "assistant", reply, model, Date.now());
 
     return sendJSON(res, { reply, model });
   }
@@ -129,14 +131,23 @@ ${contextText}`;
   const chatHistMatch = pathname.match(/^\/api\/documents\/([^/]+)\/chat$/);
   if (chatHistMatch && req.method === "GET") {
     const docId = chatHistMatch[1];
-    const rows = db.prepare("SELECT * FROM chat_messages WHERE doc_id = ? ORDER BY created_at ASC").all(docId);
+    let rows;
+    if (docId === "global") {
+      rows = db.prepare("SELECT * FROM chat_messages WHERE doc_id = 'global' OR doc_id IS NULL OR doc_id = '' ORDER BY created_at ASC").all();
+    } else {
+      rows = db.prepare("SELECT * FROM chat_messages WHERE doc_id = ? ORDER BY created_at ASC").all(docId);
+    }
     return sendJSON(res, { messages: rows });
   }
 
   // 3. DELETE /api/documents/:id/chat - clear chat history
   if (chatHistMatch && req.method === "DELETE") {
     const docId = chatHistMatch[1];
-    db.prepare("DELETE FROM chat_messages WHERE doc_id = ?").run(docId);
+    if (docId === "global") {
+      db.prepare("DELETE FROM chat_messages WHERE doc_id = 'global' OR doc_id IS NULL OR doc_id = ''").run();
+    } else {
+      db.prepare("DELETE FROM chat_messages WHERE doc_id = ?").run(docId);
+    }
     return sendJSON(res, { success: true });
   }
 

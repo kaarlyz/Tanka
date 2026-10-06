@@ -22,6 +22,7 @@ export interface TanyaNaraPanelProps {
   stagedAttachment?: StagedChatFile | null;
   handleAttachFile?: (file: File) => Promise<void>;
   handleClearAttachment?: () => void;
+  handleClearChat?: () => Promise<void> | void;
 }
 
 export function TanyaNaraPanel({
@@ -39,6 +40,7 @@ export function TanyaNaraPanel({
   stagedAttachment,
   handleAttachFile,
   handleClearAttachment,
+  handleClearChat,
 }: TanyaNaraPanelProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -112,8 +114,8 @@ export function TanyaNaraPanel({
                 </span>
                 {messages.length > 0 && (
                   <button
-                    onClick={() => setMessages([])}
-                    title="Bersihkan riwayat percakapan"
+                    onClick={handleClearChat || (() => setMessages([]))}
+                    title="Bersihkan riwayat percakapan sesi ini"
                     style={{
                       background: "none",
                       border: "none",

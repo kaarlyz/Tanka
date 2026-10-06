@@ -46,6 +46,7 @@ async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperatu
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${ROUTER_KEY}`,
+          "x-9router-token-saver": "off",
         },
         body: JSON.stringify(payload),
         signal: controller.signal

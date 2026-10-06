@@ -23,7 +23,8 @@ import {
   ChevronUp,
   ChevronDown,
   Compass,
-  ListOrdered
+  ListOrdered,
+  Video
 } from "lucide-react";
 import { ActiveTab, Flashcard, QuizQuestion } from "../../types";
 import { MathView } from "../common/MathView";
@@ -58,6 +59,7 @@ export interface MaterialTabProps {
   topicInput: string;
   setTopicInput: (val: string) => void;
   setIsTopicModalOpen: (val: boolean) => void;
+  setIsYouTubeModalOpen?: (val: boolean) => void;
   handleStartTopicClarify: (topic?: string) => void;
   isEnriching: boolean;
   showRawText: boolean;
@@ -97,6 +99,7 @@ export function MaterialTab({
   topicInput,
   setTopicInput,
   setIsTopicModalOpen,
+  setIsYouTubeModalOpen,
   handleStartTopicClarify,
   isEnriching,
   showRawText,
@@ -1205,17 +1208,24 @@ export function MaterialTab({
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {[
                           { id: "upload", label: "Unggah Berkas", icon: Upload },
+                          { id: "youtube", label: "Video YouTube", icon: Video },
                           { id: "topic", label: "Buat Topik AI", icon: Compass },
                           { id: "manual", label: "Tulis Catatan", icon: FileText }
                         ].map((t) => (
                           <button
                             key={t.id}
                             type="button"
-                            onClick={() => setMaterialCreationTab(t.id as any)}
+                            onClick={() => {
+                              if (t.id === "youtube") {
+                                if (setIsYouTubeModalOpen) setIsYouTubeModalOpen(true);
+                              } else {
+                                setMaterialCreationTab(t.id as any);
+                              }
+                            }}
                             style={{
                               backgroundColor: materialCreationTab === t.id ? "#18221f" : "#fafbf8",
-                              color: materialCreationTab === t.id ? "#c8f064" : "#56615d",
-                              border: `1px solid ${materialCreationTab === t.id ? "#18221f" : "#dce1da"}`,
+                              color: materialCreationTab === t.id ? "#c8f064" : (t.id === "youtube" ? "#b91c1c" : "#56615d"),
+                              border: `1px solid ${materialCreationTab === t.id ? "#18221f" : (t.id === "youtube" ? "#fca5a5" : "#dce1da")}`,
                               borderRadius: 7,
                               padding: "6px 12px",
                               fontSize: 12,
@@ -1226,7 +1236,7 @@ export function MaterialTab({
                               gap: 5
                             }}
                           >
-                            <t.icon size={12} />
+                            <t.icon size={12} color={t.id === "youtube" ? "#dc2626" : undefined} />
                             <span>{t.label}</span>
                           </button>
                         ))}

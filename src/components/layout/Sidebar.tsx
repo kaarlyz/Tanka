@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, Trash2, Upload, Camera, Compass, X } from "lucide-react";
+import { Plus, Trash2, Upload, Camera, Compass, X, Video } from "lucide-react";
 import { ActiveTab, DocumentItem, QuizQuestion, MistakeItem, Flashcard, UserAccount } from "../../types";
 
 export interface SidebarProps {
@@ -21,6 +21,7 @@ export interface SidebarProps {
   isUploading?: boolean;
   handleStageFiles: (files: FileList | File[]) => void;
   setIsTopicModalOpen: (val: boolean) => void;
+  setIsYouTubeModalOpen?: (val: boolean) => void;
   setIsStagingModalOpen?: (val: boolean) => void;
   handleCreateNewDoc?: () => void;
   setTopicStep?: (step: 1 | 2 | 3) => void;
@@ -48,6 +49,7 @@ export function Sidebar({
   isUploading,
   handleStageFiles,
   setIsTopicModalOpen,
+  setIsYouTubeModalOpen,
   setIsStagingModalOpen,
   handleCreateNewDoc,
   setTopicStep,
@@ -208,7 +210,8 @@ export function Sidebar({
             </div>
 
             {/* Quick Action Buttons */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 8, marginBottom: 6 }}>
+            {/* Action Grid: Upload, Camera, Topic AI, YouTube */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
               <button
                 onClick={() => {
                   setIsMobileDrawerOpen(false);
@@ -257,33 +260,54 @@ export function Sidebar({
                 <Camera size={12} />
                 <span>Foto Soal</span>
               </button>
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  setIsTopicModalOpen(true);
+                  if (setTopicStep) setTopicStep(1);
+                }}
+                style={{
+                  backgroundColor: "#212d29",
+                  border: "1px solid #34413c",
+                  color: "#c8f064",
+                  borderRadius: 8,
+                  padding: "7px 6px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4
+                }}
+              >
+                <Compass size={12} />
+                <span>Topik AI</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  if (setIsYouTubeModalOpen) setIsYouTubeModalOpen(true);
+                }}
+                style={{
+                  backgroundColor: "#212d29",
+                  border: "1px solid #4a2828",
+                  color: "#fca5a5",
+                  borderRadius: 8,
+                  padding: "7px 6px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4
+                }}
+              >
+                <Video size={12} color="#ef4444" />
+                <span>YouTube</span>
+              </button>
             </div>
-
-            <button
-              onClick={() => {
-                setIsMobileDrawerOpen(false);
-                setIsTopicModalOpen(true);
-                if (setTopicStep) setTopicStep(1);
-              }}
-              style={{
-                backgroundColor: "#212d29",
-                border: "1px dashed #657358",
-                color: "#c8f064",
-                borderRadius: 8,
-                padding: "7px 10px",
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 5,
-                marginBottom: 8
-              }}
-            >
-              <Compass size={13} />
-              <span>Cari / Buat Topik AI</span>
-            </button>
 
             <input
               type="file"

@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2 } from "lucide-react";
+import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2, Video } from "lucide-react";
 import { ActiveTab, DocumentItem, QuizQuestion, Flashcard, MistakeItem } from "../../types";
 import { MathView, getSubjectBadge } from "../common/MathView";
 
@@ -18,6 +18,7 @@ export interface HomeHubTabProps {
   setHomeSubjectFilter: (val: string) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   setIsTopicModalOpen: (val: boolean) => void;
+  setIsYouTubeModalOpen?: (val: boolean) => void;
   setIsStagingModalOpen: (val: boolean) => void;
   handleStageFiles?: (files: FileList | File[] | File) => void;
   quizQuestions: QuizQuestion[];
@@ -44,6 +45,7 @@ export function HomeHubTab({
   setHomeSubjectFilter,
   fileInputRef,
   setIsTopicModalOpen,
+  setIsYouTubeModalOpen,
   setIsStagingModalOpen,
   handleStageFiles,
   quizQuestions,
@@ -81,11 +83,11 @@ export function HomeHubTab({
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <button
                         type="button"
-                        onClick={() => setIsStagingModalOpen(true)}
+                        onClick={() => fileInputRef.current?.click()}
                         style={{
-                          backgroundColor: "#f8f9f5",
+                          backgroundColor: "#f4f6f1",
                           border: "1px solid #dce1da",
-                          color: "#17201d",
+                          color: "#28342f",
                           borderRadius: 8,
                           padding: "8px 14px",
                           fontSize: 13,
@@ -96,8 +98,31 @@ export function HomeHubTab({
                           gap: 6
                         }}
                       >
-                        <Upload size={14} color="#4b6623" />
+                        <Upload size={14} />
                         <span>Unggah File</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (setIsYouTubeModalOpen) setIsYouTubeModalOpen(true);
+                        }}
+                        style={{
+                          backgroundColor: "#fef2f2",
+                          border: "1px solid #fecaca",
+                          color: "#991b1b",
+                          borderRadius: 8,
+                          padding: "8px 14px",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6
+                        }}
+                      >
+                        <Video size={14} color="#dc2626" />
+                        <span>Video YouTube</span>
                       </button>
 
                       <button

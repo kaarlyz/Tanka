@@ -67,6 +67,28 @@ function segmentDocumentText(rawText, sourceType = "text") {
   return segments;
 }
 
+function detectDomainCategory(title = "", text = "") {
+  const combined = (title + " " + text.slice(0, 4000)).toLowerCase();
+  const academicTerms = [
+    "rumus", "persamaan", "koordinat", "reaksi", "sel", "mitokondria", "vektor",
+    "matriks", "diferensial", "integral", "stoikiometri", "enzim", "fotosintesis",
+    "kurva", "parabola", "orde baru", "kolonial", "hukum newton", "termodinamika",
+    "trigonometri", "logaritma", "kinematika", "translasi", "refleksi", "dilatasi",
+    "pancasila", "uud 1945", "geometri", "biologi", "fisika", "kimia"
+  ];
+  const academicScore = academicTerms.filter((t) => combined.includes(t)).length;
+  const growthTerms = [
+    "umur", "usia", "kebiasaan", "habit", "finansial", "investasi", "mindset", "karir",
+    "podcast", "disiplin", "produktivitas", "bisnis", "gaji", "mental", "psikologi",
+    "sukses", "gagal", "pengalaman hidup", "nasihat", "relasi", "komunikasi", "waktu",
+    "tonton ini", "pelajaran hidup", "anak muda", "quarter life"
+  ];
+  const growthScore = growthTerms.filter((t) => combined.includes(t)).length;
+  if (growthScore >= 2 && academicScore === 0) return "practical_growth";
+  if (growthScore > academicScore * 2) return "practical_growth";
+  return "academic_school";
+}
+
 /**
  * Step 1: Extract canonical concepts and dynamic curriculum outline without hardcoded 5 chapters.
  */
@@ -89,18 +111,29 @@ async function extractConceptsAndOutline(docTitle, fullText, segments = [], mode
     segmentOverview = `[S1] (dokumen_sumber):\n${fullText.slice(0, 50000)}`;
   }
 
-  const prompt = `Anda adalah perancang kurikulum ahli yang menyusun kerangka belajar mandiri adaptif untuk siswa Indonesia.
-Tugas Anda: Analisis bahan sumber berikut, ekstrak konsep kunci kanonikal berbukti, dan susun alur bab yang mengalir secara alami.
+  const isGrowth = detectDomainCategory(docTitle, fullText) === "practical_growth";
 
-Judul Materi: "${docTitle}"
-Target Jenjang: ${jenjang} (Kurikulum Nasional Indonesia)
+  const rolePrompt = isGrowth
+    ? `Anda adalah mentor pembelajaran mandiri dan analis strategis yang menyusun intisari wawasan, pola pikir, dan prinsip praktis berbobot untuk anak muda usia 15-20 tahun.`
+    : `Anda adalah perancang kurikulum ahli yang menyusun kerangka belajar mandiri adaptif untuk siswa Indonesia.`;
 
-Bahan Sumber (masing-masing diberi label kode [S1], [S2], dst):
-"""
-${segmentOverview}
-"""
+  const targetCategory = isGrowth
+    ? `Target Kategori: Pengembangan Diri, Mindset, & Strategi Nyata Kehidupan (Usia 15-20 Tahun)`
+    : `Target Jenjang: ${jenjang} (Kurikulum Nasional Indonesia)`;
 
-PRINSIP PERANCANGAN KURIKULUM:
+  const principlesPrompt = isGrowth
+    ? `PRINSIP PERANCANGAN INTISARI PRAKTIS:
+1. EKSTRAK MENTAL MODEL & PRINSIP KUNCI
+- Ekstrak 3-6 prinsip atau kebiasaan kunci yang diajarkan pembicara/penulis. Dilarang membuang poin inti yang ditekankan.
+- "definisi": Tuliskan esensi prinsip secara lugas, tajam, dan realistis (bukan hafalan kaku).
+- "salah_kaprah": Tuliskan ilusi atau jebakan yang sering dialami anak muda pemula pada topik ini.
+- "rumus": Kosongkan ("").
+- "level": Tentukan tingkat kedalaman kognitif ("pahami", "terapkan", "analisis").
+
+2. ALUR BAB TEMATIK & ACTIONABLE
+- Bagi materi menjadi 2-4 bab tematik yang runtut (dari paradigma/realita keras, pembongkaran jebakan, hingga strategi aksi nyata).
+- Setiap bab wajib memiliki "pertanyaanPemantik" (situasi nyata pengungkit rasa ingin tahu) dan "keyConceptIds".`
+    : `PRINSIP PERANCANGAN KURIKULUM:
 
 1. KESESUAIAN JENJANG & INTEGRITAS FAKTA
 - Sesuaikan kedalaman dengan jenjang "${jenjang}" (Kurikulum Merdeka).
@@ -124,7 +157,20 @@ PRINSIP PERANCANGAN KURIKULUM:
 - Bab adalah satu unit belajar 10-15 menit yang memayungi 1 hingga 4 konsep kunci yang saling bersandar.
 - Tentukan jumlah bab secara alami berdasarkan kepadatan materi (materi ringkas cukup 2 bab, materi luas bisa 3-5 bab).
 - Urutkan bab dari konsep fondasi (konkret/definisi), lanjut ke mekanisme/cara kerja/rumus, hingga ke penerapan/perbandingan.
-- Setiap bab wajib memiliki "pertanyaanPemantik" (situasi nyata pengungkit rasa ingin tahu) dan "keyConceptIds" yang menjadi fokusnya.
+- Setiap bab wajib memiliki "pertanyaanPemantik" (situasi nyata pengungkit rasa ingin tahu) dan "keyConceptIds" yang menjadi fokusnya.`;
+
+  const prompt = `${rolePrompt}
+Tugas Anda: Analisis bahan sumber berikut, ekstrak konsep/prinsip kunci berbukti, dan susun alur bab yang mengalir secara alami.
+
+Judul Materi: "${docTitle}"
+${targetCategory}
+
+Bahan Sumber (masing-masing diberi label kode [S1], [S2], dst):
+"""
+${segmentOverview}
+"""
+
+${principlesPrompt}
 
 Kembalikan HANYA format JSON valid berikut:
 {
@@ -220,7 +266,47 @@ async function generateNaraModule(outline, fullText, segments = [], model = "ag/
     ? segments.map((s) => `--- Bagian ${s.index} (${s.sourceType}) ---\n${s.text}`).join("\n\n")
     : fullText;
 
-  const prompt = `${NARA_GLOBAL_PERSONA}
+  const isGrowth = detectDomainCategory(outline.title, fullText) === "practical_growth";
+
+  let prompt;
+  if (isGrowth) {
+    prompt = `${NARA_GLOBAL_PERSONA}
+
+Tugas Anda: Susun modul intisari pembelajaran mendalam untuk anak muda usia 15-20 tahun berdasarkan kerangka (outline) dan teks transkrip pembicara berikut.
+
+Judul: "${outline.title}"
+Rencana Bab:
+${JSON.stringify(outline.chapters, null, 2)}
+
+Daftar Prinsip Kunci:
+${JSON.stringify(outline.concepts, null, 2)}
+
+Teks Sumber Asli:
+"""
+${sourceContext.slice(0, 24000)}
+"""
+
+PETUNJUK PENULISAN (MODUL PENGEMBANGAN DIRI & REALITA KEHIDUPAN):
+1. Mulai dengan judul markdown: # ${outline.title}
+2. Tuliskan ringkasan eksekutif / tesis utama dalam blockquote:
+   > 📌 **Tesis Utama & Esensi Video:** [Saring omong kosong filler 5 menit pertama; tuliskan 2-3 kalimat tajam inti pesan pembicara]
+3. Tulis pembatas horizontal sebelum bab pertama: ---
+4. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab):
+   Setiap sub-bab (### [Prinsip / Topik]) WAJIB memuat:
+   a. **Realita Lapangan & Pengalaman Nyata:** Cerita riil atau latar belakang mengapa pembicara menekankan hal ini (fokus pada argumen substantif, buang basa-basi).
+   b. **Prinsip Kunci (Mental Model):**
+      > 💡 **Prinsip Inti:** [Pernyataan prinsip hidup/kerja yang padat, aplikatif, dan membumi]
+   c. **Filter Realita (Bedah Objektif):** Pisahkan antara poin yang benar-benar bisa diterapkan anak muda umur 15-20 dengan bumbu motivasi/clickbait berlebihan. Tunjukkan batas realistisnya.
+   d. **Peringatan Jebakan Pemula (Pitfall):** Kesalahan umum, ilusi instan, atau jebakan overthinking yang sering bikin orang gagal mempraktikkannya.
+5. Bab Penutup / Bab Terakhir WAJIB berupa panduan aksi nyata:
+   ## Playbook: Rencana Tindakan Terukur (Action Checklist)
+   - Berikan 4-5 checklist aksi nyata yang bisa dieksekusi anak muda umur 15-20 tahun mulai hari ini (konkret, terukur, tanpa biaya mahal).
+   - Berikan 2-3 pertanyaan refleksi diri jujur untuk mengevaluasi kebiasaan harian.
+6. LARANGAN:
+   - DILARANG membuat rumus KaTeX atau contoh soal latihan ujian/UTBK.
+   - DILARANG menggunakan gaya motivator klise basi; gunakan gaya Nara yang santai, cerdas, realistis, dan berpihak pada masa depan anak muda.`;
+  } else {
+    prompt = `${NARA_GLOBAL_PERSONA}
 
 Tugas Anda: Susun materi pembelajaran lengkap untuk siswa jenjang ${jenjang} (Kurikulum Nasional Indonesia) berdasarkan kerangka (outline) dan teks sumber berikut.
 
@@ -266,6 +352,7 @@ PETUNJUK PENULISAN:
 6. Jika ada contoh kasus atau analogi di luar teks sumber, wajib tandai dengan:
    > 💡 **Insight Nara (Pengayaan):** [Uraian contoh/analogi...]
 7. Jika ada rumus eksak/matematika, WAJIB gunakan format KaTeX rapi ($rumus$ atau $$blok$$).`;
+  }
 
   const content = await callRouter(
     [

@@ -12,6 +12,7 @@ import { FormulaDrawer } from "./components/modals/FormulaDrawer";
 import { TopicModal } from "./components/modals/TopicModal";
 import { EnrichModal } from "./components/modals/EnrichModal";
 import { StagingUploadModal } from "./components/modals/StagingUploadModal";
+import { YouTubeModal } from "./components/modals/YouTubeModal";
 import { TimerAlarmModal } from "./components/modals/TimerAlarmModal";
 
 // Tabs
@@ -38,6 +39,7 @@ import { useChat } from "./hooks/useChat";
 import { useFormulas } from "./hooks/useFormulas";
 import { useTopicGenerator } from "./hooks/useTopicGenerator";
 import { useDocumentEnrich } from "./hooks/useDocumentEnrich";
+import { useYouTubeModal } from "./hooks/useYouTubeModal";
 import { useUploadStaging } from "./hooks/useUploadStaging";
 import { useFlashcards } from "./hooks/useFlashcards";
 import { useFeynman } from "./hooks/useFeynman";
@@ -310,6 +312,32 @@ export default function App() {
     showNotice
   });
 
+  // 14b. Domain Hook: YouTube Video Material Ingestion
+  const {
+    isYouTubeModalOpen,
+    setIsYouTubeModalOpen,
+    ytUrl,
+    setYtUrl,
+    ytGoal,
+    setYtGoal,
+    ytInstruction,
+    setYtInstruction,
+    isCheckingUrl,
+    isGeneratingYt,
+    ytInfo,
+    ytError,
+    setYtError,
+    handleCheckUrl,
+    handleGenerateDocument: handleGenerateYtDocument,
+    handleReset: handleResetYt
+  } = useYouTubeModal({
+    selectedModel,
+    fetchDocuments,
+    loadDocument,
+    setActiveTab,
+    showNotice
+  });
+
   // 15. Domain Hook: Chat Tutor (Tanya Nara)
   const {
     messages,
@@ -514,6 +542,7 @@ export default function App() {
         setIsAiPanelOpen={setIsAiPanelOpen}
         handleCreateNewDoc={handleCreateNewDoc}
         setIsTopicModalOpen={setIsTopicModalOpen}
+        setIsYouTubeModalOpen={setIsYouTubeModalOpen}
         setTopicStep={setTopicStep}
         fileInputRef={fileInputRef}
         cameraInputRef={cameraInputRef}
@@ -596,6 +625,7 @@ export default function App() {
                   setHomeSubjectFilter={setHomeSubjectFilter}
                   fileInputRef={fileInputRef}
                   setIsTopicModalOpen={setIsTopicModalOpen}
+                  setIsYouTubeModalOpen={setIsYouTubeModalOpen}
                   setIsStagingModalOpen={setIsStagingModalOpen}
                   handleStageFiles={handleStageFiles}
                   quizQuestions={quizQuestions}
@@ -636,6 +666,7 @@ export default function App() {
                   topicInput={topicInput}
                   setTopicInput={setTopicInput}
                   setIsTopicModalOpen={setIsTopicModalOpen}
+                  setIsYouTubeModalOpen={setIsYouTubeModalOpen}
                   handleStartTopicClarify={handleStartTopicClarify}
                   isEnriching={isEnriching}
                   showRawText={showRawText}
@@ -881,6 +912,26 @@ export default function App() {
         handleCancelStaging={handleCancelStaging}
         handleRemoveStagedFile={handleRemoveStagedFile}
         handleConfirmStagedUpload={handleConfirmStagedUpload}
+      />
+
+      {/* YouTube Video Learning Ingestion Modal */}
+      <YouTubeModal
+        isYouTubeModalOpen={isYouTubeModalOpen}
+        setIsYouTubeModalOpen={setIsYouTubeModalOpen}
+        ytUrl={ytUrl}
+        setYtUrl={setYtUrl}
+        ytGoal={ytGoal}
+        setYtGoal={setYtGoal}
+        ytInstruction={ytInstruction}
+        setYtInstruction={setYtInstruction}
+        isCheckingUrl={isCheckingUrl}
+        isGeneratingYt={isGeneratingYt}
+        ytInfo={ytInfo}
+        ytError={ytError}
+        setYtError={setYtError}
+        handleCheckUrl={handleCheckUrl}
+        handleGenerateDocument={handleGenerateYtDocument}
+        handleReset={handleResetYt}
       />
 
       {/* Mobile Bottom Navigation Bar (With integrated Tanya Nara center button, no floating FAB overlay) */}

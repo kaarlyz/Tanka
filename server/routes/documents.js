@@ -139,13 +139,146 @@ function detectFileExtension(fileName, base64Data) {
   return ".txt";
 }
 
+function getPythonBin() {
+  const venvPy = path.join(__dirname, "..", "..", ".venv", "bin", "python");
+  if (fs.existsSync(venvPy)) return venvPy;
+  return "python3";
+}
+
 async function handleDocumentsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
   // 1. GET /api/documents - list all documents
   if (req.method === "GET" && pathname === "/api/documents") {
-    const docs = db.prepare("SELECT id, title, created_at, substr(content, 1, 150) as preview FROM documents ORDER BY created_at DESC").all();
+    const docs = db.prepare("SELECT * FROM documents ORDER BY created_at DESC").all();
     return sendJSON(res, { documents: docs });
+  }
+
+  // 1b. POST /api/documents/youtube-info - preview video title, author, thumbnail, transcript
+  if (req.method === "POST" && pathname === "/api/documents/youtube-info") {
+    const { url } = await getBody(req);
+    if (!url || typeof url !== "string") {
+      return sendJSON(res, { error: "Tautan video YouTube wajib diisi" }, 400);
+    }
+    const scriptPath = path.join(__dirname, "..", "..", "extract_youtube.py");
+    try {
+      const output = execFileSync(getPythonBin(), [scriptPath, url.trim()], {
+        encoding: "utf8",
+        maxBuffer: 15 * 1024 * 1024,
+        timeout: 20000
+      });
+      const parsed = JSON.parse(output.trim());
+      if (!parsed.success) {
+        return sendJSON(res, { error: parsed.error || "Gagal memproses video YouTube", videoId: parsed.videoId, title: parsed.title }, 400);
+      }
+      return sendJSON(res, {
+        success: true,
+        videoId: parsed.videoId,
+        title: parsed.title,
+        author: parsed.author,
+        thumbnail: parsed.thumbnail,
+        language: parsed.language,
+        snippetCount: parsed.snippetCount,
+        textPreview: parsed.text ? parsed.text.slice(0, 300) + "..." : ""
+      });
+    } catch (err) {
+      console.error("[YouTube Info Error]:", err.message);
+      return sendJSON(res, { error: "Gagal mengambil data video YouTube: " + err.message }, 500);
+    }
+  }
+
+  // 1c. POST /api/documents/youtube - extract transcript & generate full Nara curriculum
+  if (req.method === "POST" && pathname === "/api/documents/youtube") {
+    const body = await getBody(req);
+    const { url, title: userTitle, goal = "theory", instruction = "", model = "ag/gemini-3.8-flash-low" } = body;
+    if (!url || typeof url !== "string") {
+      return sendJSON(res, { error: "Tautan video YouTube wajib diisi" }, 400);
+    }
+
+    const scriptPath = path.join(__dirname, "..", "..", "extract_youtube.py");
+    let pyResult;
+    try {
+      console.log(`[YouTube Extraction] Memproses video: ${url}...`);
+      const output = execFileSync(getPythonBin(), [scriptPath, url.trim()], {
+        encoding: "utf8",
+        maxBuffer: 25 * 1024 * 1024,
+        timeout: 30000
+      });
+      pyResult = JSON.parse(output.trim());
+    } catch (err) {
+      console.error("[YouTube Script Error]:", err.message);
+      return sendJSON(res, { error: "Gagal memproses transkrip video YouTube: " + err.message }, 500);
+    }
+
+    if (!pyResult.success || !pyResult.text) {
+      return sendJSON(res, { error: pyResult.error || "Transkrip video YouTube tidak tersedia atau tidak dapat diakses." }, 400);
+    }
+
+    const videoId = pyResult.videoId;
+    const authorName = pyResult.author || "YouTube";
+    const rawTranscript = pyResult.text;
+
+    let cleanTitle = (userTitle && userTitle.trim()) || pyResult.title || "";
+    if (!cleanTitle || cleanTitle.startsWith("Materi Video YouTube (") || cleanTitle.startsWith("Video YouTube (")) {
+      cleanTitle = await detectDocumentTitle(rawTranscript.slice(0, 3000), "Video Pembelajaran " + authorName);
+    }
+
+    const sourceContext = `> 📺 **Sumber Belajar:** [${cleanTitle} - ${authorName}](https://www.youtube.com/watch?v=${videoId})\n> 🗣️ **Kreator / Pembicara:** ${authorName}\n\n${rawTranscript}`;
+
+    const id = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+    const createdAt = Date.now();
+    db.prepare("INSERT INTO documents (id, title, content, created_at) VALUES (?, ?, ?, ?)").run(id, cleanTitle, sourceContext, createdAt);
+
+    // Simpan segmen
+    const segments = segmentDocumentText(rawTranscript, "youtube_transcript");
+    try {
+      const insertSeg = db.prepare("INSERT INTO document_segments (id, doc_id, segment_index, source_type, raw_text, normalized_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+      for (const seg of segments) {
+        insertSeg.run(`seg_${id}_${seg.index}`, id, seg.index, "youtube_transcript", seg.text, seg.text, createdAt);
+      }
+    } catch (segErr) {
+      console.warn("[tanka] Failed to persist youtube segments:", segErr.message);
+    }
+
+    // Two-Pass Pipeline (Pass 1 outline + Pass 2 modul Nara)
+    let finalContent = sourceContext;
+    try {
+      console.log(`[Curriculum Pipeline] Menyusun modul Nara dari video YouTube: "${cleanTitle}"...`);
+      const dynamicOutline = await extractConceptsAndOutline(cleanTitle, rawTranscript, segments, model);
+
+      if (dynamicOutline && Array.isArray(dynamicOutline.concepts)) {
+        const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        for (const c of dynamicOutline.concepts) {
+          const conceptId = `${id}_${c.id || Math.random().toString(36).slice(2, 6)}`;
+          const def = c.definisi_baku || c.definition || "";
+          const extra = JSON.stringify({
+            rumus: c.rumus || "",
+            tokoh: c.tokoh || [],
+            salah_kaprah: c.salah_kaprah || ""
+          });
+          insertConcept.run(conceptId, id, c.name, def, extra, "youtube", createdAt);
+        }
+      }
+
+      const naraContent = await generateNaraModule(dynamicOutline, rawTranscript, segments, model, "SMA");
+      if (naraContent && naraContent.length > 300) {
+        finalContent = `> 📺 **Referensi Video YouTube:** [${cleanTitle} (${authorName})](https://www.youtube.com/watch?v=${videoId})\n\n` + naraContent;
+        db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(finalContent, id);
+        console.log(`[Curriculum Pipeline] Sukses menyusun modul YouTube Nara (${finalContent.length} karakter).`);
+      }
+    } catch (e) {
+      console.warn("[tanka] YouTube curriculum pipeline error:", e.message);
+    }
+
+    return sendJSON(res, {
+      success: true,
+      id,
+      title: cleanTitle,
+      content: finalContent,
+      author: authorName,
+      videoId,
+      created_at: createdAt
+    });
   }
 
   // 2. POST /api/documents/upload - handle file & image uploads
@@ -225,7 +358,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
             const tmpFilePath = path.join(scratchDir, `upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
             try {
               fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
-              const scriptOutput = execFileSync("python3", [scriptPath, tmpFilePath], {
+              const scriptOutput = execFileSync(getPythonBin(), [scriptPath, tmpFilePath], {
                 encoding: "utf8",
                 maxBuffer: 25 * 1024 * 1024
               }).trim();

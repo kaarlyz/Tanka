@@ -26,6 +26,7 @@ import {
   ListOrdered,
   Video
 } from "lucide-react";
+import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, Flashcard, QuizQuestion } from "../../types";
 import { MathView } from "../common/MathView";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText } from "../common/DiagramRenderer";
@@ -1208,7 +1209,7 @@ export function MaterialTab({
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {[
                           { id: "upload", label: "Unggah Berkas", icon: Upload },
-                          { id: "youtube", label: "Video YouTube", icon: Video },
+                          { id: "youtube", label: "Video YouTube", icon: YouTubeIcon },
                           { id: "topic", label: "Buat Topik AI", icon: Compass },
                           { id: "manual", label: "Tulis Catatan", icon: FileText }
                         ].map((t) => (
@@ -1224,8 +1225,8 @@ export function MaterialTab({
                             }}
                             style={{
                               backgroundColor: materialCreationTab === t.id ? "#18221f" : "#fafbf8",
-                              color: materialCreationTab === t.id ? "#c8f064" : (t.id === "youtube" ? "#b91c1c" : "#56615d"),
-                              border: `1px solid ${materialCreationTab === t.id ? "#18221f" : (t.id === "youtube" ? "#fca5a5" : "#dce1da")}`,
+                              color: materialCreationTab === t.id ? "#c8f064" : "#56615d",
+                              border: `1px solid ${materialCreationTab === t.id ? "#18221f" : "#dce1da"}`,
                               borderRadius: 7,
                               padding: "6px 12px",
                               fontSize: 12,
@@ -1236,7 +1237,7 @@ export function MaterialTab({
                               gap: 5
                             }}
                           >
-                            <t.icon size={12} color={t.id === "youtube" ? "#dc2626" : undefined} />
+                            <t.icon size={12} color={materialCreationTab === t.id ? "#c8f064" : "#607068"} />
                             <span>{t.label}</span>
                           </button>
                         ))}

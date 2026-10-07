@@ -67,36 +67,33 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
         recorder.onstop = async () => {
           if (audioChunksRef.current.length > 0) {
             const audioBlob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
-            // If browser has no live SpeechRecognition or transcript is empty, send to backend STT
-            if (!SpeechRecognition || !feynmanExplanation.trim()) {
-              setIsTranscribing(true);
-              try {
-                const reader = new FileReader();
-                reader.readAsDataURL(audioBlob);
-                reader.onloadend = async () => {
-                  try {
-                    const base64Data = (reader.result as string).split(",")[1];
-                    const res = await fetch("/api/ai/transcribe-audio", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ audioBase64: base64Data, language: "id" })
-                    });
-                    const data = await res.json();
-                    if (data.success && data.text) {
-                      setFeynmanExplanation((prev) => (prev ? prev.trim() + " " : "") + data.text.trim());
-                      showNotice("Transkripsi suara berhasil!");
-                    } else {
-                      showNotice("Tidak ada suara terdeteksi dalam rekaman.");
-                    }
-                  } catch {
-                    showNotice("Gagal memproses transkripsi audio");
-                  } finally {
-                    setIsTranscribing(false);
+            setIsTranscribing(true);
+            try {
+              const reader = new FileReader();
+              reader.readAsDataURL(audioBlob);
+              reader.onloadend = async () => {
+                try {
+                  const base64Data = (reader.result as string).split(",")[1];
+                  const res = await fetch("/api/ai/transcribe-audio", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ audioBase64: base64Data, language: "id" })
+                  });
+                  const data = await res.json();
+                  if (data.success && data.text) {
+                    setFeynmanExplanation(data.text.trim());
+                    showNotice("Transkripsi suara berhasil!");
+                  } else {
+                    showNotice("Tidak ada suara terdeteksi dalam rekaman.");
                   }
-                };
-              } catch {
-                setIsTranscribing(false);
-              }
+                } catch {
+                  showNotice("Gagal memproses transkripsi audio");
+                } finally {
+                  setIsTranscribing(false);
+                }
+              };
+            } catch {
+              setIsTranscribing(false);
             }
           }
         };
@@ -114,18 +111,30 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 16000
+        }
+      });
       feynmanMediaStreamRef.current = stream;
       audioChunksRef.current = [];
 
-      // Setup MediaRecorder for robust universal browser recording (Firefox, Safari, Chromium)
+      // MediaRecorder setup - prioritize wav/webm with clean audio bitrate
       if (typeof MediaRecorder !== "undefined") {
-        const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : MediaRecorder.isTypeSupported("audio/webm")
           ? "audio/webm"
           : MediaRecorder.isTypeSupported("audio/ogg")
           ? "audio/ogg"
           : "";
-        const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        const options: MediaRecorderOptions = { audioBitsPerSecond: 128000 };
+        if (mimeType) options.mimeType = mimeType;
+        const recorder = new MediaRecorder(stream, options);
         recorder.ondataavailable = (e) => {
           if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
         };

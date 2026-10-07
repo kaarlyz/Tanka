@@ -67,7 +67,44 @@ db.exec(`
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     name TEXT,
+    bio TEXT DEFAULT '',
+    school_class TEXT DEFAULT '',
+    avatar_color TEXT DEFAULT '#10b981',
+    target_weekly_days INTEGER DEFAULT 5,
+    streak_count INTEGER DEFAULT 1,
+    last_active_date TEXT DEFAULT '',
+    active_days_json TEXT DEFAULT '[]',
+    total_study_minutes INTEGER DEFAULT 0,
+    quizzes_completed INTEGER DEFAULT 0,
+    quiz_correct_count INTEGER DEFAULT 0,
+    xp INTEGER DEFAULT 100,
     created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS study_rooms (
+    id TEXT PRIMARY KEY,
+    doc_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    host_user_id TEXT NOT NULL,
+    host_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'waiting',
+    quiz_count INTEGER DEFAULT 5,
+    questions_json TEXT,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS room_participants (
+    id TEXT PRIMARY KEY,
+    room_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    school_class TEXT DEFAULT '',
+    avatar_color TEXT DEFAULT '#10b981',
+    is_ready INTEGER DEFAULT 0,
+    score INTEGER DEFAULT 0,
+    correct_answers INTEGER DEFAULT 0,
+    total_answered INTEGER DEFAULT 0,
+    joined_at INTEGER NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS document_segments (

@@ -47,6 +47,7 @@ export interface TopBarProps {
   currentUser?: UserAccount | null;
   onOpenAuthModal?: () => void;
   onLogout?: () => void;
+  onOpenProfileModal?: () => void;
 }
 
 export function TopBar({
@@ -77,7 +78,8 @@ export function TopBar({
   setSelectedModel,
   currentUser,
   onOpenAuthModal,
-  onLogout
+  onLogout,
+  onOpenProfileModal
 }: TopBarProps) {
   const timerMins = Math.floor(timerSeconds / 60);
   const timerSecs = timerSeconds % 60;
@@ -133,7 +135,7 @@ export function TopBar({
                 textTransform: "uppercase"
               }}
             >
-              {currentUser ? `Hai, ${currentUser.name || currentUser.username}` : (activeTab === "home" ? "TANKA STUDY" : "MODUL")}
+              {currentUser ? currentUser.name || currentUser.username : "TANKA"}
             </span>
             {currentUser && (
               <span
@@ -160,7 +162,7 @@ export function TopBar({
               lineHeight: 1.2
             }}
           >
-            {activeTab === "home" ? "Beranda Belajar" : (activeDocTitle || "Pilih Materi")}
+            {activeTab === "home" ? "Beranda" : (activeDocTitle || "Pilih Materi")}
           </h1>
         </div>
       </div>
@@ -348,25 +350,38 @@ export function TopBar({
         {/* User Account Button */}
         {currentUser ? (
           <button
-            onClick={onLogout}
+            onClick={() => {
+              if (onOpenProfileModal) {
+                onOpenProfileModal();
+              } else if (onLogout) {
+                onLogout();
+              }
+            }}
             style={{
-              backgroundColor: "#f3f5ef",
-              border: "1px solid #dce4d6",
-              color: "#18211e",
+              backgroundColor: "#1e2622",
+              border: "1px solid #33403a",
+              color: "#e6ece9",
               borderRadius: 8,
-              padding: "5px 8px",
+              padding: "5px 10px",
               fontSize: 11.5,
               fontWeight: 700,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 4
+              gap: 6
             }}
-            title="Klik untuk Keluar Akun"
+            title="Klik untuk melihat & mengedit profil"
           >
-            <User size={12} color="#4b6623" />
+            <div
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: "50%",
+                backgroundColor: currentUser.avatar_color || "#10b981",
+                display: "inline-block"
+              }}
+            />
             <span className="desktop-only">{currentUser.name || currentUser.username}</span>
-            <LogOut size={11} color="#9ca3af" />
           </button>
         ) : (
           <button

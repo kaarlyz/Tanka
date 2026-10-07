@@ -214,7 +214,9 @@ Kembalikan HANYA format JSON valid berikut:
         { role: "user", content: prompt }
       ],
       model,
-      0.15
+      0.15,
+      null,
+      180000
     );
 
     const parsed = safeJsonParse(response);
@@ -331,9 +333,12 @@ PETUNJUK PENULISAN:
 1. Mulai dengan judul markdown: # ${outline.title}
 2. Tuliskan ringkasan eksekutif dokumen dalam blockquote: > [Ringkasan singkat bertutur 2-3 kalimat]
 3. Tulis pembatas horizontal sebelum bab pertama: ---
-4. MANDAT CAKUPAN LENGKAP & ANTI-PENGHAPUSAN MATERI UJIAN:
+4. MANDAT CAKUPAN LENGKAP & KEDALAMAN ADAPTIF KONTEKSTUAL:
    - DILARANG MERANGKUM DANGKAL ATAU MEMANGKAS ISI DOKUMEN ASLI!
    - Ingat bahwa materi upload ini seringkali merupakan bahan kisi-kisi ujian asli siswa. Jika materi dipotong atau diringkas terlalu pendek, siswa akan kehilangan poin materi yang keluar saat ujian.
+   - JANGAN SENGAJA MEMPERSEMPIT MATERI YANG KAYA: Jika bahan sumber memuat materi yang luas (seperti sejarah seni rupa, pergerakan estetika, ragam kriya mancanegara, tokoh perintis, teknik material, atau bab sosiologi/sejarah yang padat), DILARANG MEMADATKANNYA menjadi poin kurus atau deretan angka telanjang (1, 1, 2, 3, 4, 5). Jelaskan secara luas, filosofis, tekniknya, dan ragam karyanya agar pemahaman siswa benar-benar luas dan mendalam.
+   - JANGAN MEMANJANG-MANJANGKAN TANPA ARTI (ANTI-FLUFF): Sebaliknya, jika suatu materi memang sederhana atau ringkas, jangan dipaksakan berbunga-bunga kosong. Sesuaikan kedalaman dan volume penjelasan secara proporsional dengan bobot konteks aslinya.
+   - BERSIHKAN SAMPAH SLIDE/OCR: Jangan biarkan angka urutan slide mentah (seperti "1", "2", "3") atau penanda teknis "--- Slide X ---" mengotori modul. Ubah menjadi narasi bab dan sub-bab yang berkelas, mengalir, dan hidup.
    - Bahasakan dengan mengalir, santai, dan mudah dipahami, TAPI PASTIKAN SETIAP POIN PENTING, SUB-BAB, DAN RINCIAN OPERASIONAL DARI SUMBER ASLI TERTAMPUNG DAN DIJELASKAN SECARA TUNTAS.
 5. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab). Gunakan "pertanyaanPemantik" yang ada pada rencana bab sebagai pintu masuk pengait situasi nyata di awal setiap bab.
    PERINGATAN FORMAT: Jangan pernah mengulang penulisan "# Judul" atau ringkasan dokumen di dalam Bab 1. Bab 1 harus langsung dimulai dengan "## Bab 1: [Judul Bab]".
@@ -371,7 +376,9 @@ PETUNJUK PENULISAN:
       { role: "user", content: prompt }
     ],
     model,
-    0.25
+    0.25,
+    null,
+    240000
   );
 
   return content ? content.trim() : fullText;

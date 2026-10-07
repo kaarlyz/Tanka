@@ -4,9 +4,28 @@ import os
 
 def transcribe(audio_path, language="id"):
     from faster_whisper import WhisperModel
-    # Using tiny model with int8 quantization for ultra-fast CPU inference (< 1.5s)
-    model = WhisperModel("tiny", device="cpu", compute_type="int8")
-    segments, info = model.transcribe(audio_path, language=language, beam_size=1)
+    # Model 'large-v3-turbo' (800M+ params, model speech terkini OpenAI):
+    # Akurasi tertinggi untuk bahasa Indonesia percakapan santai, analogi, istilah ilmiah, maupun bahasa sehari-hari.
+    model = WhisperModel("large-v3-turbo", device="cpu", compute_type="int8")
+    
+    # Prompt terbuka: mencakup analogi sehari-hari, cara bicara santai, hingga istilah teknis/ilmiah tanpa disaring kaku
+    natural_prompt = (
+        "Transkripsi percakapan lisan bahasa Indonesia apa adanya. "
+        "Mencakup gaya bertutur santai, analogi, contoh sehari-hari, bahasa gaul wajar, "
+        "maupun istilah ilmiah dan logika yang sedang dijelaskan dengan bahasa sendiri."
+    )
+    
+    segments, info = model.transcribe(
+        audio_path,
+        language=language,
+        initial_prompt=natural_prompt,
+        beam_size=5,
+        best_of=5,
+        temperature=0.0,
+        vad_filter=True,
+        vad_parameters=dict(min_silence_duration_ms=400),
+        condition_on_previous_text=False
+    )
     text = " ".join([seg.text.strip() for seg in segments])
     return text.strip()
 

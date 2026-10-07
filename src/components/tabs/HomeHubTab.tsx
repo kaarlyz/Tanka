@@ -1,6 +1,7 @@
 import React from "react";
-import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2, Video, X } from "lucide-react";
-import { ActiveTab, DocumentItem, QuizQuestion, Flashcard, MistakeItem } from "../../types";
+import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2, Video, X, Camera, Compass, Flame } from "lucide-react";
+import { YouTubeIcon } from "../common/YouTubeIcon";
+import { ActiveTab, DocumentItem, QuizQuestion, Flashcard, MistakeItem, UserAccount } from "../../types";
 import { MathView, getSubjectBadge } from "../common/MathView";
 
 export interface HomeHubTabProps {
@@ -18,6 +19,8 @@ export interface HomeHubTabProps {
   homeSubjectFilter: string;
   setHomeSubjectFilter: (val: string) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  cameraInputRef?: React.RefObject<HTMLInputElement | null>;
+  currentUser?: UserAccount | null;
   setIsTopicModalOpen: (val: boolean) => void;
   setIsYouTubeModalOpen?: (val: boolean) => void;
   setIsStagingModalOpen: (val: boolean) => void;
@@ -46,6 +49,8 @@ export function HomeHubTab({
   homeSubjectFilter,
   setHomeSubjectFilter,
   fileInputRef,
+  cameraInputRef,
+  currentUser,
   setIsTopicModalOpen,
   setIsYouTubeModalOpen,
   setIsStagingModalOpen,
@@ -63,29 +68,36 @@ export function HomeHubTab({
               <div className="tab-pane-animate" style={{ maxWidth: 1160, margin: "0 auto", paddingBottom: 48 }}>
                 {/* 1. TOP ACTION & SEARCH CARD */}
                 <div
+                  className="home-search-panel"
                   style={{
                     backgroundColor: "#ffffff",
                     borderRadius: 12,
-                    padding: "20px 24px",
+                    padding: "16px 20px",
                     border: "1px solid #dce1da",
                     boxShadow: "0 2px 12px rgba(27, 39, 35, 0.03)",
-                    marginBottom: 20
+                    marginBottom: 16
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 12 }}>
+                  <div className="desktop-only" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 12 }}>
                     <div>
-                      <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.02em" }}>
-                        Pusat Belajar Mandiri
+                      <h1 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.02em" }}>
+                        Materi & Modul
                       </h1>
-                      <div style={{ fontSize: 13, color: "#6f7975", marginTop: 3 }}>
-                        Eksplorasi materi terstruktur, kuis pemahaman, dan evaluasi hasil belajar.
+                      <div style={{ fontSize: 12.5, color: "#6f7975", marginTop: 2 }}>
+                        Eksplorasi konsep terstruktur, kuis adaptif, dan active recall.
                       </div>
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => {
+                          if (fileInputRef.current) {
+                            fileInputRef.current.click();
+                          } else {
+                            setIsStagingModalOpen(true);
+                          }
+                        }}
                         style={{
                           backgroundColor: "#f4f6f1",
                           border: "1px solid #dce1da",
@@ -110,9 +122,9 @@ export function HomeHubTab({
                           if (setIsYouTubeModalOpen) setIsYouTubeModalOpen(true);
                         }}
                         style={{
-                          backgroundColor: "#fef2f2",
-                          border: "1px solid #fecaca",
-                          color: "#991b1b",
+                          backgroundColor: "#f4f6f1",
+                          border: "1px solid #dce1da",
+                          color: "#28342f",
                           borderRadius: 8,
                           padding: "8px 14px",
                           fontSize: 13,
@@ -123,7 +135,7 @@ export function HomeHubTab({
                           gap: 6
                         }}
                       >
-                        <Video size={14} color="#dc2626" />
+                        <YouTubeIcon size={15} color="#556930" />
                         <span>Video YouTube</span>
                       </button>
 
@@ -209,11 +221,66 @@ export function HomeHubTab({
                       <ArrowRight size={14} />
                     </button>
                   </form>
+
+                  {/* Mobile Quick Action Strip (Compact Tool Bar) */}
+                  <div className="mobile-only home-mobile-action-strip">
+                    <button
+                      type="button"
+                      onClick={() => setIsTopicModalOpen(true)}
+                      className="home-action-btn primary"
+                    >
+                      <Compass size={15} color="#c8f064" />
+                      <span>Buat Topik AI</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.click();
+                        } else {
+                          setIsStagingModalOpen(true);
+                        }
+                      }}
+                      className="home-action-btn"
+                    >
+                      <Upload size={14} />
+                      <span>Unggah</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (cameraInputRef && cameraInputRef.current) {
+                          cameraInputRef.current.click();
+                        } else if (fileInputRef.current) {
+                          fileInputRef.current.click();
+                        } else {
+                          setIsStagingModalOpen(true);
+                        }
+                      }}
+                      className="home-action-btn"
+                    >
+                      <Camera size={14} />
+                      <span>Foto</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setIsYouTubeModalOpen) setIsYouTubeModalOpen(true);
+                      }}
+                      className="home-action-btn"
+                    >
+                      <YouTubeIcon size={14} color="#556930" />
+                      <span>YouTube</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* 2. THREE BENTO STATUS COUNTERS */}
                 <div
-                  className="bento-grid"
+                  className="bento-grid home-stats-carousel"
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(3, 1fr)",
@@ -222,6 +289,7 @@ export function HomeHubTab({
                   }}
                 >
                   <div
+                    className="home-stat-card"
                     style={{
                       backgroundColor: "#ffffff",
                       borderRadius: 12,
@@ -250,6 +318,7 @@ export function HomeHubTab({
                   </div>
 
                   <div
+                    className="home-stat-card"
                     style={{
                       backgroundColor: "#ffffff",
                       borderRadius: 12,
@@ -278,6 +347,7 @@ export function HomeHubTab({
                   </div>
 
                   <div
+                    className="home-stat-card"
                     onClick={() => setActiveTab("mistakes")}
                     style={{
                       backgroundColor: mistakes.length > 0 ? "#faece8" : "#ffffff",
@@ -315,6 +385,7 @@ export function HomeHubTab({
                   const badge = getSubjectBadge(targetDoc.title);
                   return (
                     <div
+                      className="home-last-session-card"
                       style={{
                         backgroundColor: "#ffffff",
                         border: "1px solid #dce1da",
@@ -354,12 +425,13 @@ export function HomeHubTab({
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", width: "100%", marginTop: 4 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", width: "100%", marginTop: 4 }} className="home-last-session-actions">
                         <button
                           onClick={() => {
                             loadDocument(targetDoc.id);
                             setActiveTab("material");
                           }}
+                          className="last-session-main-btn"
                           style={{
                             flex: "1 1 auto",
                             minWidth: 95,
@@ -473,9 +545,9 @@ export function HomeHubTab({
                       )}
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }} className="home-search-filter-wrap">
                       {/* Search Bar Modul di Home */}
-                      <div style={{ position: "relative", minWidth: 180 }}>
+                      <div style={{ position: "relative", minWidth: 180 }} className="home-search-subbar">
                         <Search size={12} color="#8a9691" style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }} />
                         <input
                           type="text"
@@ -516,7 +588,7 @@ export function HomeHubTab({
                         )}
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }} className="home-filter-scroll">
                         {["Semua", "Sosiologi", "Ekonomi", "Matematika", "Sains", "Bahasa"].map((cat) => (
                           <button
                             key={cat}
@@ -576,6 +648,7 @@ export function HomeHubTab({
 
                     return (
                       <div
+                        className="home-docs-grid"
                         style={{
                           display: "grid",
                           gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
@@ -651,7 +724,10 @@ export function HomeHubTab({
                                 </div>
                               </div>
 
-                              <div style={{ display: "flex", alignItems: "center", gap: 6, borderTop: "1px solid #f0f2ee", paddingTop: 10 }}>
+                              <div
+                                className="home-doc-card-actions"
+                                style={{ display: "flex", alignItems: "center", gap: 6, borderTop: "1px solid #f0f2ee", paddingTop: 10 }}
+                              >
                                 <button
                                   onClick={() => {
                                     loadDocument(doc.id);

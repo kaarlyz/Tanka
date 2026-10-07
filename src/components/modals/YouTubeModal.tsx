@@ -9,6 +9,7 @@ import {
   Sparkles,
   Play
 } from "lucide-react";
+import { YouTubeIcon } from "../common/YouTubeIcon";
 
 export interface YouTubeModalProps {
   isYouTubeModalOpen: boolean;
@@ -106,16 +107,16 @@ export function YouTubeModal({
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div
               style={{
-                backgroundColor: "#fee2e2",
-                border: "1px solid #fca5a5",
+                backgroundColor: "#22312b",
+                border: "1px solid #32433b",
                 borderRadius: 8,
-                padding: 6,
+                padding: "6px 8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center"
               }}
             >
-              <Video size={17} color="#dc2626" />
+              <YouTubeIcon size={17} color="#c8f064" />
             </div>
             <div>
               <h3
@@ -297,7 +298,8 @@ export function YouTubeModal({
                     style={{
                       width: 110,
                       height: 64,
-                      backgroundColor: "#fee2e2",
+                      backgroundColor: "#19231f",
+                      border: "1px solid #2d3d36",
                       borderRadius: 6,
                       display: "flex",
                       alignItems: "center",
@@ -305,7 +307,7 @@ export function YouTubeModal({
                       flexShrink: 0
                     }}
                   >
-                    <Play size={20} color="#dc2626" />
+                    <Play size={20} color="#c8f064" fill="#c8f064" />
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -568,10 +570,10 @@ export function YouTubeModal({
               padding: "8px 18px",
               borderRadius: 8,
               border: "none",
-              backgroundColor: !ytUrl.trim() || isCheckingUrl || isGeneratingYt ? "#d5dbd3" : "#25342d",
-              color: "#ffffff",
+              backgroundColor: !ytUrl.trim() || isCheckingUrl || isGeneratingYt ? "#d5dbd3" : "#19231f",
+              color: !ytUrl.trim() || isCheckingUrl || isGeneratingYt ? "#89938f" : "#c8f064",
               fontSize: "0.8rem",
-              fontWeight: 650,
+              fontWeight: 700,
               cursor: !ytUrl.trim() || isCheckingUrl || isGeneratingYt ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",

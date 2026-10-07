@@ -146,4 +146,42 @@ export interface UserAccount {
   id: string;
   username: string;
   name: string;
+  bio?: string;
+  school_class?: string;
+  avatar_color?: string;
+  target_weekly_days?: number;
+  streak_count?: number;
+  active_days_this_week?: number[];
+  total_study_minutes?: number;
+  quizzes_completed?: number;
+  quiz_correct_count?: number;
+  xp?: number;
+  level?: number;
+  created_at?: number;
+}
+
+export interface RoomParticipant {
+  id: string;
+  room_id: string;
+  user_id: string;
+  user_name: string;
+  school_class?: string;
+  avatar_color?: string;
+  is_ready: number;
+  score: number;
+  correct_answers: number;
+  total_answered: number;
+  joined_at: number;
+}
+
+export interface StudyRoom {
+  id: string;
+  docId: string;
+  title: string;
+  hostUserId: string;
+  hostName: string;
+  status: "waiting" | "active" | "finished" | "archived";
+  quizCount: number;
+  createdAt: number;
+  participant_count?: number;
 }

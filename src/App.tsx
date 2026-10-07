@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { CheckCircle2, MessageSquare } from "lucide-react";
 import { ActiveTab, QuizQuestion } from "./types";
 import { normalizeDiagramsInMarkdown } from "./components/common/DiagramRenderer";
@@ -29,6 +29,8 @@ import { ChatTab } from "./components/tabs/ChatTab";
 import { useAppRoute } from "./hooks/useAppRoute";
 import { useAuth } from "./hooks/useAuth";
 import { AuthModal } from "./components/modals/AuthModal";
+import { ProfileModal } from "./components/modals/ProfileModal";
+import { RoomModal } from "./components/modals/RoomModal";
 import { useDocuments } from "./hooks/useDocuments";
 import { useQuiz } from "./hooks/useQuiz";
 import { useMistakes } from "./hooks/useMistakes";
@@ -74,8 +76,17 @@ export default function App() {
     setAuthError,
     handleRegister,
     handleLogin,
-    handleLogout
+    handleLogout,
+    isProfileModalOpen,
+    setIsProfileModalOpen,
+    profileModalTab,
+    setProfileModalTab,
+    updateProfile,
+    recordActivity
   } = useAuth(showNotice);
+
+  // 2.6 Multiplayer Room Modal
+  const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
 
   // 3. UI State
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -376,6 +387,33 @@ export default function App() {
     applyTimerDuration
   } = useStudyTimer(showNotice);
 
+  // Auto record activity on quiz completion
+  useEffect(() => {
+    if (isQuizCompleted && quizQuestions.length > 0) {
+      let correct = 0;
+      quizQuestions.forEach((q, idx) => {
+        if (userAnswers[idx] === q.correctIndex) correct++;
+      });
+      recordActivity({
+        activityType: "quiz",
+        quizScore: score,
+        correctAnswers: correct,
+        docId: activeDocId || "global"
+      });
+    }
+  }, [isQuizCompleted]);
+
+  // Auto record study activity on pomodoro timer completion
+  useEffect(() => {
+    if (isAlarmActive && timerMode === "focus") {
+      recordActivity({
+        activityType: "pomodoro",
+        minutes: timerDurationMinutes,
+        docId: activeDocId || "global"
+      });
+    }
+  }, [isAlarmActive]);
+
   // 17. Domain Hook: Speech Audio & Clipboard
   const { isSpeaking, toggleSpeech } = useAudioSpeech(showNotice);
   const { copiedId, copyToClipboard, downloadAsMarkdown } = useClipboardAndDownload(showNotice);
@@ -523,6 +561,34 @@ export default function App() {
         onRegister={handleRegister}
       />
 
+      {/* User Profile, Weekly Target, & Leaderboard Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        currentUser={currentUser}
+        activeTab={profileModalTab}
+        setActiveTab={setProfileModalTab}
+        onUpdateProfile={updateProfile}
+        onLogout={handleLogout}
+        onOpenRoomModal={() => setIsRoomModalOpen(true)}
+      />
+
+      {/* Multiplayer Study Room & Challenge Modal */}
+      <RoomModal
+        isOpen={isRoomModalOpen}
+        onClose={() => setIsRoomModalOpen(false)}
+        currentUser={currentUser}
+        activeDocId={activeDocId}
+        activeDocTitle={activeDocTitle}
+        documents={documents}
+        showNotice={showNotice}
+        onOpenAuthModal={() => {
+          setAuthMode("register");
+          setAuthError("");
+          setIsAuthModalOpen(true);
+        }}
+      />
+
       {/* Backdrop overlay for mobile drawer */}
       {isMobileDrawerOpen && (
         <div
@@ -577,6 +643,11 @@ export default function App() {
         })}
         docSearchQuery={docSearchQuery}
         setDocSearchQuery={setDocSearchQuery}
+        onOpenProfileModal={(tab) => {
+          if (tab) setProfileModalTab(tab);
+          setIsProfileModalOpen(true);
+        }}
+        onOpenRoomModal={() => setIsRoomModalOpen(true)}
       />
 
       {/* Main View Area */}
@@ -614,6 +685,10 @@ export default function App() {
             setIsAuthModalOpen(true);
           }}
           onLogout={handleLogout}
+          onOpenProfileModal={() => {
+            setProfileModalTab("profile");
+            setIsProfileModalOpen(true);
+          }}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
@@ -638,6 +713,8 @@ export default function App() {
                   homeSubjectFilter={homeSubjectFilter}
                   setHomeSubjectFilter={setHomeSubjectFilter}
                   fileInputRef={fileInputRef}
+                  cameraInputRef={cameraInputRef}
+                  currentUser={currentUser}
                   setIsTopicModalOpen={setIsTopicModalOpen}
                   setIsYouTubeModalOpen={setIsYouTubeModalOpen}
                   setIsStagingModalOpen={setIsStagingModalOpen}

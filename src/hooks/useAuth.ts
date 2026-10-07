@@ -21,6 +21,33 @@ export function useAuth(showNotice: (msg: string) => void) {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
 
+  // Profile modal state
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileModalTab, setProfileModalTab] = useState<"profile" | "stats" | "leaderboard" | "room">("profile");
+
+  // Fetch full live profile on startup if user is logged in
+  const refreshProfile = useCallback(async (userId?: string) => {
+    const targetId = userId || currentUser?.id;
+    if (!targetId) return;
+
+    try {
+      const res = await fetch(`/api/users/profile?id=${encodeURIComponent(targetId)}`);
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setCurrentUser(data.user);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+      }
+    } catch (err) {
+      console.warn("[useAuth] Failed to refresh user profile:", err);
+    }
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      refreshProfile(currentUser.id);
+    }
+  }, [currentUser?.id, refreshProfile]);
+
   const handleRegister = useCallback(async () => {
     if (!authUsername.trim() || !authPassword.trim()) {
       setAuthError("Username dan password wajib diisi");
@@ -94,8 +121,59 @@ export function useAuth(showNotice: (msg: string) => void) {
   const handleLogout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setCurrentUser(null);
+    setIsProfileModalOpen(false);
     showNotice("Anda telah keluar akun.");
   }, [showNotice]);
+
+  const updateProfile = useCallback(async (fields: Partial<UserAccount>) => {
+    if (!currentUser?.id) return false;
+    try {
+      const res = await fetch("/api/users/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: currentUser.id, ...fields })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setCurrentUser(data.user);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+        showNotice("Profil berhasil diperbarui.");
+        return true;
+      } else {
+        showNotice(data.error || "Gagal memperbarui profil");
+        return false;
+      }
+    } catch {
+      showNotice("Koneksi ke server gagal");
+      return false;
+    }
+  }, [currentUser?.id, showNotice]);
+
+  const recordActivity = useCallback(async (activity: {
+    activityType: string;
+    minutes?: number;
+    quizScore?: number;
+    correctAnswers?: number;
+    docId?: string;
+  }) => {
+    if (!currentUser?.id) return;
+    try {
+      const res = await fetch("/api/users/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          ...activity
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        refreshProfile(currentUser.id);
+      }
+    } catch (err) {
+      console.warn("[useAuth] Failed to record activity:", err);
+    }
+  }, [currentUser?.id, refreshProfile]);
 
   return {
     currentUser,
@@ -114,6 +192,13 @@ export function useAuth(showNotice: (msg: string) => void) {
     setAuthError,
     handleRegister,
     handleLogin,
-    handleLogout
+    handleLogout,
+    isProfileModalOpen,
+    setIsProfileModalOpen,
+    profileModalTab,
+    setProfileModalTab,
+    updateProfile,
+    recordActivity,
+    refreshProfile
   };
 }

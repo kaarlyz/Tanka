@@ -40,9 +40,27 @@ async function handleAuthRoutes(req, res, pathname, { sendJSON, getBody }) {
         now
       );
 
+      const safeUser = {
+        id,
+        username,
+        name,
+        bio: "",
+        school_class: "Kelas XII",
+        avatar_color: "#10b981",
+        target_weekly_days: 5,
+        streak_count: 1,
+        active_days_this_week: [(new Date().getDay() + 6) % 7],
+        total_study_minutes: 0,
+        quizzes_completed: 0,
+        quiz_correct_count: 0,
+        xp: 100,
+        level: 1,
+        created_at: now
+      };
+
       return sendJSON(res, {
         success: true,
-        user: { id, username, name }
+        user: safeUser
       });
     } catch (err) {
       console.error("[auth-register] error:", err);
@@ -70,9 +88,32 @@ async function handleAuthRoutes(req, res, pathname, { sendJSON, getBody }) {
         return sendJSON(res, { error: "Username atau password salah" }, 401);
       }
 
+      let activeDays = [];
+      try { activeDays = JSON.parse(user.active_days_json || "[]"); } catch {}
+      const curDay = (new Date().getDay() + 6) % 7;
+      if (!activeDays.includes(curDay)) activeDays.push(curDay);
+
+      const safeUser = {
+        id: user.id,
+        username: user.username,
+        name: user.name || user.username,
+        bio: user.bio || "",
+        school_class: user.school_class || "Kelas XII",
+        avatar_color: user.avatar_color || "#10b981",
+        target_weekly_days: user.target_weekly_days || 5,
+        streak_count: user.streak_count || 1,
+        active_days_this_week: activeDays,
+        total_study_minutes: user.total_study_minutes || 0,
+        quizzes_completed: user.quizzes_completed || 0,
+        quiz_correct_count: user.quiz_correct_count || 0,
+        xp: user.xp || 100,
+        level: Math.floor((user.xp || 100) / 100),
+        created_at: user.created_at
+      };
+
       return sendJSON(res, {
         success: true,
-        user: { id: user.id, username: user.username, name: user.name }
+        user: safeUser
       });
     } catch (err) {
       console.error("[auth-login] error:", err);

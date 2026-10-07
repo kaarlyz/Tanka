@@ -144,10 +144,12 @@ async function extractConceptsAndOutline(docTitle, fullText, segments = [], mode
 - KHUSUS MATEMATIKA: Bab 1 wajib memetakan seluruh cakupan topik besar secara menyeluruh (misal pada Transformasi Geometri: petakan 4 pilarnya yaitu Translasi, Refleksi, Rotasi, dan Dilatasi agar siswa melihat peta besarnya sebelum membedah sub-bab).
 - KHUSUS SOSIOLOGI & HUMANIORA: Susun rencana bab secara bertingkat dan struktural, diawali dari latar belakang fundamental dan akar masalah sosial mengapa fenomena tersebut lahir sebelum masuk ke bab klasifikasi/faktor.
 
-2. KONSEP KUNCI LENGKAP & ANTI-PENGHAPUSAN (EXHAUSTIVE COVERAGE)
-- JIKA BAHAN MEMUAT DAFTAR BUTIR/FAKTOR/KLASIFIKASI: Dilarang memangkas atau membuang butir-butir penting yang tertulis di teks sumber! Setiap faktor atau pilar utama (misal: semua faktor pendorong atau penghambat) wajib diekstrak menjadi konsep tersendiri agar materi tidak buntung.
+2. KONSEP KUNCI LENGKAP & ANTI-PENGHAPUSAN (EXHAUSTIVE COVERAGE MUTLAK)
+- DOKUMEN UPLOAD SERINGKALI ADALAH MATERI/KISI-KISI UJIAN SEBENARNYA! Dilarang keras memangkas, meringkas dangkal, atau menghilangkan butir-butir materi dari teks sumber!
+- Bahasa boleh disederhanakan dan dimudahkan agar ramah siswa, TETAPI ESENSI DAN SELURUH POIN MATERI DARI SUMBER ASLI HARUS MENCAKUP 100% TANPA ADA YANG TERPOTONG.
+- JIKA BAHAN MEMUAT DAFTAR BUTIR/FAKTOR/KLASIFIKASI: Setiap butir, pilar, atau klasifikasi yang tertulis di teks sumber WAJIB diekstrak menjadi konsep tersendiri agar materi ujian tidak buntung.
 - Jangan menggabungkan dua butir berbeda secara serakah hanya untuk memperpendek daftar konsep.
-- Masukkan konsep inti yang didukung bahan sumber ("origin": "source").
+- Masukkan seluruh konsep inti yang didukung bahan sumber ("origin": "source").
 - "bukti_kutipan": Kutip klausa teks asli dari bahan (maksimal 20 kata) beserta kode segmennya (misal: "S1").
 - "definisi": Tuliskan dalam kalimat utuh baku yang lugas dan presisi, bukan sekadar kata kunci telegram.
 - "prasyarat": Daftar ID konsep lain yang wajib dipahami lebih dulu sebelum konsep ini dipelajari.
@@ -322,16 +324,20 @@ ${JSON.stringify(outline.concepts, null, 2)}
 
 Teks Sumber Asli:
 """
-${sourceContext.slice(0, 24000)}
+${sourceContext.slice(0, 50000)}
 """
 
 PETUNJUK PENULISAN:
 1. Mulai dengan judul markdown: # ${outline.title}
 2. Tuliskan ringkasan eksekutif dokumen dalam blockquote: > [Ringkasan singkat bertutur 2-3 kalimat]
 3. Tulis pembatas horizontal sebelum bab pertama: ---
-4. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab). Gunakan "pertanyaanPemantik" yang ada pada rencana bab sebagai pintu masuk pengait situasi nyata di awal setiap bab.
+4. MANDAT CAKUPAN LENGKAP & ANTI-PENGHAPUSAN MATERI UJIAN:
+   - DILARANG MERANGKUM DANGKAL ATAU MEMANGKAS ISI DOKUMEN ASLI!
+   - Ingat bahwa materi upload ini seringkali merupakan bahan kisi-kisi ujian asli siswa. Jika materi dipotong atau diringkas terlalu pendek, siswa akan kehilangan poin materi yang keluar saat ujian.
+   - Bahasakan dengan mengalir, santai, dan mudah dipahami, TAPI PASTIKAN SETIAP POIN PENTING, SUB-BAB, DAN RINCIAN OPERASIONAL DARI SUMBER ASLI TERTAMPUNG DAN DIJELASKAN SECARA TUNTAS.
+5. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab). Gunakan "pertanyaanPemantik" yang ada pada rencana bab sebagai pintu masuk pengait situasi nyata di awal setiap bab.
    PERINGATAN FORMAT: Jangan pernah mengulang penulisan "# Judul" atau ringkasan dokumen di dalam Bab 1. Bab 1 harus langsung dimulai dengan "## Bab 1: [Judul Bab]".
-5. KONTRAK STRUKTUR SUB-BAB (WAJIB DIPATUHI PER KONSEP):
+6. KONTRAK STRUKTUR SUB-BAB (WAJIB DIPATUHI PER KONSEP):
    Setiap sub-bab (### [Nama Konsep]) WAJIB memuat urutan ini:
    a. Situasi / Intuisi konkret sehari-hari (1-2 paragraf pendek):
       - Untuk Sosiologi & Humaniora: Ceritakan latar belakang fundamental mengapa fenomena tersebut lahir di masyarakat, akar masalahnya, baru sambungkan ke konsep.

@@ -141,6 +141,8 @@ async function extractConceptsAndOutline(docTitle, fullText, segments = [], mode
 - Jika jenjang = "SMA": Gunakan kedalaman kurikulum SMA (Fase E/F) untuk penalaran ujian/UTBK.
 - Jangan memasukkan materi tingkat perguruan tinggi di luar silabus sekolah.
 - Jika bahan sumber kurang relevan atau tidak memadai, tandai "status": "sumber_tidak_memadai".
+- KHUSUS MATEMATIKA: Bab 1 wajib memetakan seluruh cakupan topik besar secara menyeluruh (misal pada Transformasi Geometri: petakan 4 pilarnya yaitu Translasi, Refleksi, Rotasi, dan Dilatasi agar siswa melihat peta besarnya sebelum membedah sub-bab).
+- KHUSUS SOSIOLOGI & HUMANIORA: Susun rencana bab secara bertingkat dan struktural, diawali dari latar belakang fundamental dan akar masalah sosial mengapa fenomena tersebut lahir sebelum masuk ke bab klasifikasi/faktor.
 
 2. KONSEP KUNCI LENGKAP & ANTI-PENGHAPUSAN (EXHAUSTIVE COVERAGE)
 - JIKA BAHAN MEMUAT DAFTAR BUTIR/FAKTOR/KLASIFIKASI: Dilarang memangkas atau membuang butir-butir penting yang tertulis di teks sumber! Setiap faktor atau pilar utama (misal: semua faktor pendorong atau penghambat) wajib diekstrak menjadi konsep tersendiri agar materi tidak buntung.
@@ -331,20 +333,23 @@ PETUNJUK PENULISAN:
    PERINGATAN FORMAT: Jangan pernah mengulang penulisan "# Judul" atau ringkasan dokumen di dalam Bab 1. Bab 1 harus langsung dimulai dengan "## Bab 1: [Judul Bab]".
 5. KONTRAK STRUKTUR SUB-BAB (WAJIB DIPATUHI PER KONSEP):
    Setiap sub-bab (### [Nama Konsep]) WAJIB memuat urutan ini:
-   a. Situasi / Intuisi konkret sehari-hari (1-2 paragraf pendek).
+   a. Situasi / Intuisi konkret sehari-hari (1-2 paragraf pendek):
+      - Untuk Sosiologi & Humaniora: Ceritakan latar belakang fundamental mengapa fenomena tersebut lahir di masyarakat, akar masalahnya, baru sambungkan ke konsep.
+      - Untuk Matematika: Gambarkan fenomena visual/geometris atau masalah nyata secara singkat.
    b. Kotak Definisi Baku resmi dalam blockquote:
-      > 📖 **Definisi Baku:** [Tuliskan definisi baku kurikulum/buku teks di sini secara presisi tanpa diubah jadi dongeng]
-   c. Penjelasan Mekanisme & Sebab-Akibat.
-   d. Rumus & Contoh Hitungan Konkret:
+      > 📖 **Definisi Baku:** [Tuliskan definisi baku kurikulum/buku teks di sini secara presisi. KHUSUS MATEMATIKA: Tulis definisi SEDIKIT & PADAT saja (1-2 kalimat), dilarang dongeng panjang!]
+   c. Penjelasan Mekanisme & Sebab-Akibat yang runtut dan struktural.
+   d. Rumus, Tabel Pemetaan, & Operasional Konkret:
       - HANYA berlaku untuk materi hitung kuantitatif resmi (Matematika, Fisika, Kimia Stoikiometri, dan Ekonomi Hitung/Kurva).
-      - KHUSUS MATEMATIKA (PONDASI GEOMETRI & ALJABAR):
-        * Jangan langsung melompat ke rumus akhir. Jelaskan PONDASI DASARNYA terlebih dahulu (misal: mengapa titik bergeser, apa makna geometris koordinat, mengapa bentuk kurva $y = f(x)$ berubah).
-        * Jika materi membahas suatu transformasi (seperti Translasi), letakkan dalam peta besar transformasi geometri (Translasi, Refleksi, Rotasi, Dilatasi) dan jelaskan apa yang terjadi jika diterapkan pada kurva/garis, bukan hanya titik tunggal.
-        * Sertakan langkah substitusi balik ($x = x' - a, y = y' - b$) secara gamblang saat menurunkan bayangan persamaan kurva.
+      - KHUSUS MATEMATIKA (PONDASI, TABEL RUMUS, & ALJABAR OPERASIONAL):
+        * Bedah seluruh cakupannya di awal topik agar siswa melihat peta besarnya.
+        * WAJIB MENYAJIKAN TABEL RUMUS / TABEL PEMETAAN KaTeX yang rapi dan terstruktur (misal untuk Refleksi: buatkan tabel pemetaan titik $(x, y) \rightarrow (x', y')$ dan matriks transformasinya untuk cermin sumbu-x, sumbu-y, garis $y = x$, garis $y = -x$, titik asal $(0,0)$, garis $x = h$, dan garis $y = k$).
+        * Jelaskan bagaimana rumus/matriks tersebut diterapkan pada kurva/garis $y = f(x)$, bukan hanya titik koordinat tunggal.
+        * Tunjukkan langkah substitusi balik ($x = x' - a, y = y' - b$) secara gamblang saat menurunkan persamaan bayangan kurva.
       - DILARANG KERAS memaksakan rumus matematis/biofisika/kalkulus pada Biologi SMA (seperti anatomi jaringan, transpirasi, organ, sel), Sosiologi, Sejarah, dan Bahasa. Pada materi Biologi, fokuskan pada mekanisme biologis, regulasi organel, dan reaksi biokimia kualitatif tanpa hitungan fluks buatan.
       - Jika bukan materi hitung kuantitatif resmi, LEWATKAN poin rumus ini secara alami.
-   e. Contoh Soal Taktis & Bedah Kasus Ujian (Worked Example):
-      - Berikan 1 contoh soal representatif UTBK/Ujian beserta pembongkaran langkah penyelesaiannya secara runtut (bukan sekadar hasil akhir). Tunjukkan cara mengeliminasi jebakan umum.
+   e. Contoh Soal Taktis & Bedah Langkah Pengerjaan (Worked Example):
+      - Berikan 1 contoh soal representatif UTBK/Ujian beserta pembongkaran pengerjaan langkah demi langkah secara runtut (bukan sekadar hasil akhir). Tunjukkan cara mengeliminasi jebakan umum aljabar (seperti tanda minus atau kelalaian perkalian distributif).
    f. Peringatan Salah Kaprah (Pitfall): Kesalahan umum siswa di ujian.
 5. LARANGAN MUTLAK ANTI-HALUSINASI:
    - DILARANG KERAS MENCIPTAKAN RUMUS FISIKA/MATEMATIKA PADA TOPIK BIOLOGI KONSEPTUAL ATAU ILMU SOSIAL/HUMANIORA.

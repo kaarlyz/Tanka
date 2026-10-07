@@ -71,6 +71,19 @@ export function TanyaNaraPanel({
     }
   };
 
+  const activeTabLabel =
+    activeTab === "quiz"
+      ? "Kuis"
+      : activeTab === "flashcards"
+      ? "Kartu"
+      : activeTab === "summary"
+      ? "Rangkuman"
+      : activeTab === "feynman"
+      ? "Feynman"
+      : activeTab === "home"
+      ? "Umum"
+      : "Materi";
+
   return (
     <>
       {isAiPanelOpen && (
@@ -102,95 +115,149 @@ export function TanyaNaraPanel({
             maxHeight: "100%",
             width: "100%",
             minHeight: 0,
-            overflow: "hidden"
+            overflow: "hidden",
+            backgroundColor: "#fbfcf9"
           }}
         >
-          {/* 1. Header (Always pinned to top) */}
-          <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-            <div className="mobile-sheet-pill mobile-only" />
-            <div className="ai-heading-box" style={{ padding: "8px 12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div className="ai-orbit-box" style={{ width: 28, height: 28, fontSize: 13 }}>N</div>
-                <div>
-                  <h2 style={{ fontSize: 13, fontWeight: 800, margin: 0, color: "#17201d", letterSpacing: "-0.01em" }}>Tanya Nara</h2>
-                  <p style={{ fontSize: 9.5, color: "#727d78", margin: 0, fontWeight: 500 }}>Tutor Belajar Pribadi</p>
+          {/* 1. Header (Flush, Clean, Minimal) */}
+          <div
+            style={{
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "max(12px, env(safe-area-inset-top)) 14px 10px 14px",
+              backgroundColor: "#ffffff",
+              borderBottom: "1px solid #e8ede5",
+              gap: 10
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+              {/* Avatar with subtle online indicator */}
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    backgroundColor: "#18221f",
+                    color: "#ffffff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    fontFamily: "monospace"
+                  }}
+                >
+                  N
                 </div>
+                <span
+                  style={{
+                    position: "absolute",
+                    bottom: -1,
+                    right: -1,
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: "#10b981",
+                    border: "2px solid #ffffff"
+                  }}
+                />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span className="online-label-box" style={{ padding: "2px 6px", fontSize: 9.5 }}>
-                  <i />
-                  Online
-                </span>
-                {messages.length > 0 && (
-                  <button
-                    onClick={handleClearChat || (() => setMessages([]))}
-                    title="Bersihkan riwayat percakapan sesi ini"
+
+              {/* Title & Context */}
+              <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <h2
                     style={{
-                      background: "none",
-                      border: "none",
-                      color: "#8a9691",
-                      cursor: "pointer",
-                      padding: "3px 4px",
-                      borderRadius: 4,
-                      display: "flex",
-                      alignItems: "center"
+                      fontSize: 13.5,
+                      fontWeight: 700,
+                      margin: 0,
+                      color: "#17201d",
+                      letterSpacing: "-0.01em"
                     }}
                   >
-                    <RotateCw size={12} />
-                  </button>
-                )}
-                {/* Fullscreen Toggle (Mobile) */}
-                <button
-                  className="mobile-only"
-                  onClick={() => {
-                    const el = document.querySelector('.ai-panel-box');
-                    if (el) el.classList.toggle('fullscreen');
-                  }}
-                  title="Toggle Fullscreen"
+                    Tanya Nara
+                  </h2>
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 600,
+                      color: "#54655e",
+                      backgroundColor: "#f1f4ee",
+                      border: "1px solid #dfe5db",
+                      padding: "1px 6px",
+                      borderRadius: 4
+                    }}
+                  >
+                    {activeTabLabel}
+                  </span>
+                </div>
+                <span
                   style={{
-                    background: "none",
-                    border: "none",
-                    color: "#8a9691",
-                    cursor: "pointer",
-                    padding: "3px 4px",
-                    borderRadius: 4,
-                    display: "flex",
-                    alignItems: "center"
+                    fontSize: 10,
+                    color: "#728078",
+                    margin: 0,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: 200
                   }}
+                  title={activeDocTitle || "Tutor AI SMA & UTBK"}
                 >
-                  <div style={{ width: 12, height: 12, border: "2px solid currentColor", borderRadius: 2 }} />
-                </button>
-                <button
-                  onClick={() => setIsAiPanelOpen(false)}
-                  title="Tutup panel Tanya Nara"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#8a9691",
-                    cursor: "pointer",
-                    padding: "3px 4px",
-                    borderRadius: 4,
-                    display: "flex",
-                    alignItems: "center"
-                  }}
-                >
-                  <X size={14} />
-                </button>
+                  {activeDocTitle ? activeDocTitle : "Tutor AI SMA & UTBK"}
+                </span>
               </div>
             </div>
 
-            <div className="ai-context-indicator" style={{ padding: "4px 8px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
-                <Sparkles size={11} color="#4b6623" />
-                <span className="ctx-title" style={{ fontSize: 10.5 }}>{activeDocTitle || "Tutor Bebas (Tanpa Modul)"}</span>
-              </div>
-              <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "#56645e" }}>
-                {activeTab === "quiz" ? "Kuis" : activeTab === "flashcards" ? "Kartu" : activeTab === "summary" ? "Rangkuman" : activeTab === "home" ? "Umum" : "Materi"}
-              </span>
+            {/* Header Action Buttons */}
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearChat || (() => setMessages([]))}
+                  title="Bersihkan riwayat percakapan sesi ini"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#728078",
+                    cursor: "pointer",
+                    padding: "6px",
+                    borderRadius: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "background 0.15s, color 0.15s"
+                  }}
+                >
+                  <RotateCw size={14} />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setIsAiPanelOpen(false)}
+                title="Tutup panel"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#728078",
+                  cursor: "pointer",
+                  padding: "6px",
+                  borderRadius: 6,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.15s, color 0.15s"
+                }}
+              >
+                <X size={16} />
+              </button>
             </div>
           </div>
 
-          {/* 2. Messages Container (Takes remaining height, only scrollable element) */}
+          {/* 2. Messages Container (Full bleed scrollable area) */}
           <div
             className="chat-window-box no-scrollbar"
             style={{
@@ -199,132 +266,232 @@ export function TanyaNaraPanel({
               overflowY: "auto",
               display: "flex",
               flexDirection: "column",
-              gap: 8,
-              padding: "6px 0",
-              margin: "4px 0"
+              gap: 10,
+              padding: "12px 14px",
+              boxSizing: "border-box"
             }}
           >
-            <div className="ai-note-box" style={{ padding: "8px 10px", fontSize: 11 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3, fontWeight: 700, color: "#17201d", fontSize: 11 }}>
-                <Brain size={12} color="#18221f" />
-                <span>Asisten Belajar Tanka</span>
-              </div>
-              Tanyakan materi apa saja, unggah foto soal latihan, ambil foto kamera, atau lampirkan berkas PDF untuk dibedah Nara langkah demi langkah.
-            </div>
-
-            {messages.map((m) => (
+            {messages.length === 0 ? (
               <div
-                key={m.id}
                 style={{
+                  margin: "auto 0",
+                  padding: "18px 12px",
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: m.role === "user" ? "flex-end" : "flex-start",
-                  gap: 3
+                  alignItems: "center",
+                  textAlign: "center",
+                  gap: 8
                 }}
               >
-                {/* Render attachment preview if present */}
-                {m.attachment && (
-                  <div
-                    style={{
-                      maxWidth: "85%",
-                      padding: "4px 8px",
-                      borderRadius: 8,
-                      backgroundColor: m.role === "user" ? "#22312d" : "#e8eee5",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: 11,
-                      color: m.role === "user" ? "#d2e4cb" : "#243321"
-                    }}
-                  >
-                    {m.attachment.type === "image" && m.attachment.url ? (
-                      <img
-                        src={m.attachment.url}
-                        alt="Lampiran"
-                        style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 4, border: "1px solid rgba(255,255,255,0.2)" }}
-                      />
-                    ) : (
-                      <FileText size={14} color={m.role === "user" ? "#a8c99e" : "#446128"} />
-                    )}
-                    <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {m.attachment.name}
-                    </span>
-                  </div>
-                )}
-
                 <div
                   style={{
-                    maxWidth: "90%",
-                    padding: m.role === "user" ? "8px 12px" : "10px 13px",
-                    borderRadius: m.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                    backgroundColor: m.role === "user" ? "#18221f" : "#ffffff",
-                    color: m.role === "user" ? "#eff5ec" : "#17201d",
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                    border: m.role === "user" ? "none" : "1px solid #dde1da",
-                    boxShadow: m.role === "user" ? "0 2px 8px rgba(24, 34, 31, 0.12)" : "0 2px 8px rgba(27, 39, 35, 0.02)"
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: "#eef2e9",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#37473f"
                   }}
                 >
-                  {m.role === "assistant" ? (
-                    <div className="nara-md-response" style={{ fontSize: 12, lineHeight: 1.5 }}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
-                        {m.content}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    <div>{m.content}</div>
-                  )}
-
-                  {/* Copy Button */}
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+                  <Brain size={18} />
+                </div>
+                <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, color: "#17201d" }}>
+                  Mulai Diskusi Bareng Nara
+                </h3>
+                <p style={{ fontSize: 11, color: "#6c7a73", margin: 0, lineHeight: 1.5, maxWidth: 260 }}>
+                  Tanyakan rumus, konsep sulit, atau unggah foto soal latihan untuk dibedah langkah demi langkah.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", maxWidth: 270, marginTop: 6 }}>
+                  {[
+                    "💡 Ringkas poin penting topik ini",
+                    "📐 Beri contoh soal & pembahasan taktis",
+                    "❓ Uji pemahamanku dengan kuis kilat"
+                  ].map((preset) => (
                     <button
+                      key={preset}
                       type="button"
-                      onClick={() => handleCopy(m.id, m.content)}
-                      title="Salin pesan"
+                      onClick={() => handleSendMessage(preset)}
+                      disabled={isChatSending}
                       style={{
-                        background: "none",
-                        border: "none",
+                        padding: "7px 10px",
+                        fontSize: 11,
+                        color: "#35443d",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #dde3da",
+                        borderRadius: 8,
+                        textAlign: "left",
                         cursor: "pointer",
-                        color: m.role === "user" ? "rgba(239, 245, 236, 0.6)" : "#8a9691",
-                        fontSize: 10,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 3,
-                        padding: "2px 4px",
-                        borderRadius: 4,
-                        transition: "color 0.15s ease"
+                        transition: "background 0.15s, border-color 0.15s"
                       }}
                     >
-                      {copiedMsgId === m.id ? (
-                        <>
-                          <Check size={11} color={m.role === "user" ? "#a8c99e" : "#4b6623"} />
-                          <span style={{ color: m.role === "user" ? "#a8c99e" : "#4b6623", fontWeight: 600 }}>Disalin</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={11} />
-                          <span>Salin</span>
-                        </>
-                      )}
+                      {preset}
                     </button>
-                  </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            ) : (
+              messages.map((m) => (
+                <div
+                  key={m.id}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: m.role === "user" ? "flex-end" : "flex-start",
+                    gap: 3
+                  }}
+                >
+                  {/* Attachment preview if present */}
+                  {m.attachment && (
+                    <div
+                      style={{
+                        maxWidth: "85%",
+                        padding: "4px 8px",
+                        borderRadius: 6,
+                        backgroundColor: m.role === "user" ? "#22312d" : "#e8eee5",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 10.5,
+                        color: m.role === "user" ? "#d2e4cb" : "#243321"
+                      }}
+                    >
+                      {m.attachment.type === "image" && m.attachment.url ? (
+                        <img
+                          src={m.attachment.url}
+                          alt="Lampiran"
+                          style={{
+                            width: 32,
+                            height: 32,
+                            objectFit: "cover",
+                            borderRadius: 4,
+                            border: "1px solid rgba(255,255,255,0.2)"
+                          }}
+                        />
+                      ) : (
+                        <FileText size={13} color={m.role === "user" ? "#a8c99e" : "#446128"} />
+                      )}
+                      <span
+                        style={{
+                          fontWeight: 600,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        {m.attachment.name}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Speech Bubble */}
+                  <div
+                    style={{
+                      maxWidth: m.role === "user" ? "85%" : "92%",
+                      padding: m.role === "user" ? "8px 12px" : "10px 13px",
+                      borderRadius: m.role === "user" ? "12px 12px 3px 12px" : "12px 12px 12px 3px",
+                      backgroundColor: m.role === "user" ? "#18221f" : "#ffffff",
+                      color: m.role === "user" ? "#f4f7f2" : "#17201d",
+                      fontSize: 12.5,
+                      lineHeight: 1.55,
+                      border: m.role === "user" ? "none" : "1px solid #dde1da",
+                      boxShadow:
+                        m.role === "user"
+                          ? "0 1px 3px rgba(24, 34, 31, 0.12)"
+                          : "0 1px 3px rgba(27, 39, 35, 0.03)"
+                    }}
+                  >
+                    {m.role === "assistant" ? (
+                      <div className="nara-md-response" style={{ fontSize: 12.5, lineHeight: 1.55 }}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+                          {m.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div style={{ whiteSpace: "pre-wrap" }}>{m.content}</div>
+                    )}
+
+                    {/* Copy to Clipboard Button */}
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(m.id, m.content)}
+                        title="Salin pesan"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: m.role === "user" ? "rgba(244, 247, 242, 0.6)" : "#8a9691",
+                          fontSize: 9.5,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 3,
+                          padding: "2px 4px",
+                          borderRadius: 4,
+                          transition: "color 0.15s ease"
+                        }}
+                      >
+                        {copiedMsgId === m.id ? (
+                          <>
+                            <Check size={11} color={m.role === "user" ? "#a8c99e" : "#4b6623"} />
+                            <span style={{ color: m.role === "user" ? "#a8c99e" : "#4b6623", fontWeight: 600 }}>
+                              Disalin
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={11} />
+                            <span>Salin</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+
             {isChatSending && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, color: "#607069", fontStyle: "italic", padding: "4px 6px" }}>
-                <Sparkles size={11} color="#18221f" />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 11,
+                  color: "#5b6d65",
+                  fontStyle: "italic",
+                  padding: "4px 8px"
+                }}
+              >
+                <Sparkles size={12} color="#18221f" />
                 <span>Nara sedang menyusun penjelasan...</span>
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          {/* 3. Footer (Always pinned to bottom) */}
-          <div style={{ flexShrink: 0, paddingTop: 6, borderTop: "1px solid #eef1eb", marginTop: "auto" }}>
+          {/* 3. Footer (Input & Attachment Bar) */}
+          <div
+            style={{
+              flexShrink: 0,
+              padding: "8px 12px max(8px, env(safe-area-inset-bottom))",
+              borderTop: "1px solid #e8ede5",
+              backgroundColor: "#ffffff"
+            }}
+          >
             {/* Contextual Quick Suggestion Chips */}
-            <div className="prompt-chips-box" style={{ marginBottom: 5 }}>
+            <div
+              className="prompt-chips-box no-scrollbar"
+              style={{
+                display: "flex",
+                gap: 5,
+                overflowX: "auto",
+                paddingBottom: 6,
+                marginBottom: 2
+              }}
+            >
               {(activeTab === "quiz"
                 ? ["Bahas soal ini", "Kenapa jawaban itu benar?", "Rumus terkait"]
                 : activeTab === "flashcards"
@@ -335,10 +502,21 @@ export function TanyaNaraPanel({
               ).map((chip) => (
                 <button
                   key={chip}
-                  className="prompt-chip-btn"
+                  type="button"
                   onClick={() => handleSendMessage(chip)}
                   disabled={isChatSending}
-                  style={{ fontSize: 9.5, padding: "2px 7px" }}
+                  style={{
+                    fontSize: 10,
+                    padding: "3px 9px",
+                    backgroundColor: "#f4f6f2",
+                    border: "1px solid #dde3da",
+                    borderRadius: 999,
+                    color: "#46554e",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    transition: "background 0.15s, border-color 0.15s"
+                  }}
                 >
                   {chip}
                 </button>
@@ -352,12 +530,12 @@ export function TanyaNaraPanel({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  backgroundColor: "#eff5eb",
-                  border: "1px solid #c9d8c3",
-                  borderRadius: 8,
+                  backgroundColor: "#f0f4ee",
+                  border: "1px solid #cdd8cb",
+                  borderRadius: 6,
                   padding: "4px 8px",
                   marginBottom: 6,
-                  fontSize: 11,
+                  fontSize: 10.5,
                   color: "#273b18"
                 }}
               >
@@ -366,12 +544,26 @@ export function TanyaNaraPanel({
                     <img
                       src={stagedAttachment.previewUrl}
                       alt="Preview"
-                      style={{ width: 22, height: 22, objectFit: "cover", borderRadius: 4, border: "1px solid #b6c9af" }}
+                      style={{
+                        width: 22,
+                        height: 22,
+                        objectFit: "cover",
+                        borderRadius: 4,
+                        border: "1px solid #b6c9af"
+                      }}
                     />
                   ) : (
-                    <FileText size={15} color="#446128" />
+                    <FileText size={14} color="#446128" />
                   )}
-                  <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180 }}>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      maxWidth: 190
+                    }}
+                  >
                     {stagedAttachment.name}
                   </span>
                   <span style={{ fontSize: 9.5, color: "#6e806a" }}>
@@ -386,18 +578,18 @@ export function TanyaNaraPanel({
                     border: "none",
                     cursor: "pointer",
                     color: "#6e806a",
-                    padding: "2px",
+                    padding: 2,
                     display: "flex",
                     alignItems: "center"
                   }}
                   title="Hapus lampiran"
                 >
-                  <X size={13} />
+                  <X size={12} />
                 </button>
               </div>
             )}
 
-            {/* Hidden Inputs for Camera, Image Gallery, and Documents */}
+            {/* Hidden File Inputs */}
             <input
               type="file"
               ref={cameraInputRef}
@@ -436,8 +628,8 @@ export function TanyaNaraPanel({
               }}
             />
 
+            {/* Form Input Bar */}
             <form
-              className="chat-form-box"
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSendMessage();
@@ -447,10 +639,13 @@ export function TanyaNaraPanel({
                 display: "flex",
                 alignItems: "center",
                 gap: 4,
-                padding: "3px 4px 3px 6px"
+                backgroundColor: "#f4f6f2",
+                border: "1px solid #dce2d8",
+                borderRadius: 16,
+                padding: "3px 4px 3px 8px"
               }}
             >
-              {/* Option 1: Camera button (Ambil Foto Langsung) */}
+              {/* Option 1: Camera */}
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
@@ -458,21 +653,21 @@ export function TanyaNaraPanel({
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#5b6d65",
+                  color: "#62736b",
                   cursor: "pointer",
                   padding: "4px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 6,
-                  transition: "background 0.15s, color 0.15s"
+                  borderRadius: 4,
+                  transition: "color 0.15s"
                 }}
-                title="Ambil Foto Soal / Catatan via Kamera"
+                title="Ambil foto via kamera"
               >
                 <Camera size={15} />
               </button>
 
-              {/* Option 2: Image Gallery button (Foto Galeri) */}
+              {/* Option 2: Gallery */}
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
@@ -480,21 +675,21 @@ export function TanyaNaraPanel({
                 style={{
                   background: "none",
                   border: "none",
-                  color: stagedAttachment?.type === "image" ? "#446128" : "#5b6d65",
+                  color: stagedAttachment?.type === "image" ? "#3b5821" : "#62736b",
                   cursor: "pointer",
                   padding: "4px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 6,
-                  transition: "background 0.15s, color 0.15s"
+                  borderRadius: 4,
+                  transition: "color 0.15s"
                 }}
-                title="Unggah Foto / Gambar dari Galeri"
+                title="Unggah gambar dari galeri"
               >
                 <Image size={15} />
               </button>
 
-              {/* Option 3: Document button (PDF / Dokumen) */}
+              {/* Option 3: Document */}
               <button
                 type="button"
                 onClick={() => docInputRef.current?.click()}
@@ -502,23 +697,27 @@ export function TanyaNaraPanel({
                 style={{
                   background: "none",
                   border: "none",
-                  color: stagedAttachment?.type === "document" ? "#446128" : "#5b6d65",
+                  color: stagedAttachment?.type === "document" ? "#3b5821" : "#62736b",
                   cursor: "pointer",
                   padding: "4px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 6,
-                  transition: "background 0.15s, color 0.15s"
+                  borderRadius: 4,
+                  transition: "color 0.15s"
                 }}
-                title="Unggah Dokumen PDF / DOCX / PPTX / TXT"
+                title="Unggah PDF / Dokumen"
               >
                 <FileText size={15} />
               </button>
 
               <input
                 type="text"
-                placeholder={stagedAttachment ? `Bahas ${stagedAttachment.name}... (atau Enter)` : "Tanya Nara, paste gambar..."}
+                placeholder={
+                  stagedAttachment
+                    ? `Bahas ${stagedAttachment.name}... (Enter)`
+                    : "Tanya Nara, paste gambar..."
+                }
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 disabled={isChatSending}
@@ -528,7 +727,7 @@ export function TanyaNaraPanel({
                   border: "none",
                   outline: "none",
                   background: "transparent",
-                  fontSize: 12,
+                  fontSize: 13,
                   padding: "4px 2px",
                   color: "#18221f"
                 }}
@@ -541,11 +740,17 @@ export function TanyaNaraPanel({
                 style={{
                   width: 28,
                   height: 28,
-                  borderRadius: 6,
+                  borderRadius: "50%",
                   border: "none",
-                  backgroundColor: (!chatInput.trim() && !stagedAttachment) || isChatSending ? "#d0d7cf" : "#18221f",
+                  backgroundColor:
+                    (!chatInput.trim() && !stagedAttachment) || isChatSending
+                      ? "#d2dad0"
+                      : "#18221f",
                   color: "#ffffff",
-                  cursor: (!chatInput.trim() && !stagedAttachment) || isChatSending ? "not-allowed" : "pointer",
+                  cursor:
+                    (!chatInput.trim() && !stagedAttachment) || isChatSending
+                      ? "not-allowed"
+                      : "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -553,13 +758,9 @@ export function TanyaNaraPanel({
                   transition: "background 0.15s"
                 }}
               >
-                <Send size={13} />
+                <Send size={12} />
               </button>
             </form>
-
-            <p style={{ margin: "5px 0 0", fontSize: 9, color: "#8a9691", textAlign: "center" }}>
-              Bisa foto kamera, unggah gambar/PDF, atau paste (Ctrl+V) langsung.
-            </p>
           </div>
         </div>
       </aside>

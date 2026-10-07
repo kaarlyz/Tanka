@@ -21,7 +21,7 @@ if (!process.env.ROUTER_KEY) {
 const ROUTER_URL = process.env.ROUTER_URL || "http://127.0.0.1:20128/v1";
 const ROUTER_KEY = process.env.ROUTER_KEY || "";
 
-async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperature = 0.3, maxTokens = null) {
+async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperature = 0.3, maxTokens = null, timeoutMs = 180000) {
   const url = `${ROUTER_URL}/chat/completions`;
   const primaryModel = model || "ag/gemini-3.8-flash-low";
 
@@ -29,7 +29,7 @@ async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperatu
     const curModel = attempt === 0 ? primaryModel : "ag/gemini-3.8-flash-low";
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 60000);
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       const payload = {
         model: curModel,
@@ -63,8 +63,30 @@ async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperatu
         throw new Error(`9Router error (${res.status}): ${errText}`);
       }
 
-      const data = await res.json();
-      return data.choices?.[0]?.message?.content || "";
+      const rawText = await res.text();
+      let fullContent = "";
+      if (rawText.trim().startsWith("data:")) {
+        for (const line of rawText.split("\n")) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const dataStr = trimmed.slice(5).trim();
+          if (dataStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(dataStr);
+            const delta = parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.message?.content || "";
+            fullContent += delta;
+          } catch {}
+        }
+      } else {
+        try {
+          const parsed = JSON.parse(rawText);
+          fullContent = parsed.choices?.[0]?.message?.content || "";
+        } catch {
+          fullContent = rawText;
+        }
+      }
+
+      return fullContent.trim();
     } catch (err) {
       if (attempt === 0) {
         console.warn(`callRouter attempt 1 threw error with ${curModel}, retrying...`, err.message);

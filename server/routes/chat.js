@@ -13,11 +13,12 @@ async function handleChatRoutes(req, res, pathname, helpers) {
     if (!message && !attachment) return sendJSON(res, { error: "Pesan atau lampiran berkas wajib diisi" }, 400);
 
     let contextText = "";
-    if (docId) {
-      const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
-      if (doc) {
+    let activeDocObj = null;
+    if (docId && docId !== "global") {
+      activeDocObj = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
+      if (activeDocObj) {
         // Naikkan batas referensi modul aktif agar Nara paham seluruh isi bab (hingga 30.000 karakter)
-        contextText = `Referensi Materi Aktif: "${doc.title}":\n"""\n${doc.content.slice(0, 30000)}\n"""\n\n`;
+        contextText = `Referensi Materi Aktif: "${activeDocObj.title}":\n"""\n${activeDocObj.content.slice(0, 30000)}\n"""\n\n`;
       }
     }
 
@@ -80,18 +81,29 @@ async function handleChatRoutes(req, res, pathname, helpers) {
 
     const { NARA_GLOBAL_PERSONA } = require("../prompts/nara");
 
+    const modeInstruction = contextText
+      ? `MODE SAAT INI: DISKUSI MODUL AKTIF ("${activeDocObj ? activeDocObj.title : ""}")
+- Siswa sedang membuka modul materi ini.
+- Gunakan teks referensi di bawah sebagai bahan rujukan utama jika pertanyaan siswa berkaitan dengan isi modul.
+- Namun jika siswa bertanya topik lain atau hal umum di luar modul, jawablah dengan luwes dan alami tanpa memaksakan kaitan yang aneh.`
+      : `MODE SAAT INI: KONSULTASI BEBAS / TUTOR UMUM (SEMUA MAPEL SMA & UTBK)
+- SISWA TIDAK SEDANG MEMILIH ATAU MEMBUKA MODUL MATERI APAPUN.
+- DILARANG KERAS mengasumsikan, mengarang, atau menyebut frasa seperti "di dokumen kita tadi", "sesuai materi tadi", "pada modul kita", atau rujukan fiktif sejenisnya!
+- Jawablah pertanyaan siswa murni berdasarkan sains, matematika, sosial, bahasa, atau pengetahuan umum yang ditanyakan.
+- Bersikaplah sebagai tutor cerdas yang siap membahas topik apa pun secara runtut, logis, dan mudah dipahami.`;
+
     const systemPrompt = `Kamu adalah Nara, tutor belajar dan teman diskusi pribadi siswa SMA.
 Karaktermu: hangat, cerdas, komunikatif, dan sabar menjelaskan duduk perkara sampai murid benar-benar paham logikanya.
 
 TUGAS UTAMA: MENJELASKAN DAN MEMBIMBING
 1. Gaya Percakapan yang Mengalir & Manusiawi:
    - JANGAN PERNAH menjawab kaku seperti robot ensiklopedia, mesin pencari, atau komandan militer (DILARANG hanya menulis "Bisa.", "Tidak.", atau poin-poin telegraf kering).
-   - Selalu buka dengan respon ramah dan bertutur: "Bisa banget kok! Konsep dasarnya gini...", "Sebenarnya bisa, asalkan kamu paham polanya nih:...", atau "Kalau di dokumen materi kita tadi, gak dicantumkan angka pasti rupiahnya nih, tapi yang ditekankan itu...".
+   - Selalu buka dengan respon ramah dan bertutur: "Bisa banget kok! Konsep dasarnya gini...", "Sebenarnya kuncinya ada di dua hal nih:...", atau "Pertanyaan bagus! Yuk kita bedah pelan-pelan:..."
 2. Menjelaskan Logika & Duduk Perkara:
    - Tugas utamamu adalah MENJELASKAN. Uraikan mengapa suatu hal terjadi, bagaimana alur kerjanya di dunia nyata, dan apa konsekuensinya bagi siswa.
    - Berikan contoh konkret atau analogi sehari-hari yang gampang dibayangkan.
-3. Jujur Berpijak pada Fakta:
-   - Tetap objektif dan akurat sesuai bahan rujukan tanpa mengarang data fiktif, namun sampaikan dengan nada seorang mentor yang suportif.
+3. Integritas Konteks & Kejujuran Fakta:
+${modeInstruction}
 4. Jembatan Diskusi Interaktif:
    - Di akhir jawaban, berikan satu pertanyaan lanjutan atau ajakan berpikir agar murid terus penasaran dan aktif mengeksplorasi.
 5. Format Rumus:

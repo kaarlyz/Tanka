@@ -23,6 +23,9 @@ export interface TanyaNaraPanelProps {
   handleAttachFile?: (file: File) => Promise<void>;
   handleClearAttachment?: () => void;
   handleClearChat?: () => Promise<void> | void;
+  isFreeMode?: boolean;
+  setIsFreeMode?: (val: boolean) => void;
+  effectiveDocId?: string | null;
 }
 
 export function TanyaNaraPanel({
@@ -41,6 +44,9 @@ export function TanyaNaraPanel({
   handleAttachFile,
   handleClearAttachment,
   handleClearChat,
+  isFreeMode,
+  setIsFreeMode,
+  effectiveDocId,
 }: TanyaNaraPanelProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -194,20 +200,88 @@ export function TanyaNaraPanel({
                     {activeTabLabel}
                   </span>
                 </div>
-                <span
-                  style={{
-                    fontSize: 10,
-                    color: "#728078",
-                    margin: 0,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    maxWidth: 200
-                  }}
-                  title={activeDocTitle || "Tutor AI SMA & UTBK"}
-                >
-                  {activeDocTitle ? activeDocTitle : "Tutor AI SMA & UTBK"}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2, flexWrap: "nowrap" }}>
+                  {effectiveDocId && activeDocTitle ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+                      <span
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: 700,
+                          color: "#166534",
+                          backgroundColor: "#f0fdf4",
+                          border: "1px solid #bbf7d0",
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          maxWidth: 140,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}
+                        title={`Terkait modul aktif: ${activeDocTitle}`}
+                      >
+                        📄 {activeDocTitle}
+                      </span>
+                      {setIsFreeMode && (
+                        <button
+                          type="button"
+                          onClick={() => setIsFreeMode(true)}
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 600,
+                            color: "#475569",
+                            backgroundColor: "#f1f5f9",
+                            border: "1px solid #cbd5e1",
+                            borderRadius: 4,
+                            padding: "1px 5px",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap"
+                          }}
+                          title="Klik untuk beralih ke Mode Bebas (tanpa terikat modul ini)"
+                        >
+                          ✕ Bebas
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+                      <span
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: 700,
+                          color: "#0369a1",
+                          backgroundColor: "#f0f9ff",
+                          border: "1px solid #bae6fd",
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          whiteSpace: "nowrap"
+                        }}
+                        title="Tanya topik apa saja secara bebas tanpa terikat modul spesifik"
+                      >
+                        🌐 Mode Bebas (Semua Mapel)
+                      </span>
+                      {activeDocTitle && setIsFreeMode && (
+                        <button
+                          type="button"
+                          onClick={() => setIsFreeMode(false)}
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 600,
+                            color: "#166534",
+                            backgroundColor: "#f0fdf4",
+                            border: "1px solid #bbf7d0",
+                            borderRadius: 4,
+                            padding: "1px 5px",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap"
+                          }}
+                          title={`Kaitkan obrolan dengan modul "${activeDocTitle}"`}
+                        >
+                          + Kaitkan
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

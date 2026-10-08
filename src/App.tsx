@@ -364,7 +364,10 @@ export default function App() {
     handleAttachFile,
     handleClearAttachment,
     handleSendMessage,
-    handleClearChat
+    handleClearChat,
+    isFreeMode,
+    setIsFreeMode,
+    effectiveDocId
   } = useChat({ activeDocId, selectedModel, showNotice });
 
   // 16. Domain Hook: Study Timer & Pomodoro
@@ -933,6 +936,9 @@ export default function App() {
             handleAttachFile={handleAttachFile}
             handleClearAttachment={handleClearAttachment}
             handleClearChat={handleClearChat}
+            isFreeMode={isFreeMode}
+            setIsFreeMode={setIsFreeMode}
+            effectiveDocId={effectiveDocId}
           />
         </div>
       </div>

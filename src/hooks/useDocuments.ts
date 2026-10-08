@@ -61,8 +61,6 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
         setDocuments(data.documents);
         if (urlDocId && data.documents.some((d: any) => d.id === urlDocId)) {
           loadDocument(urlDocId);
-        } else if (data.documents.length > 0 && !activeDocId) {
-          loadDocument(data.documents[0].id);
         }
       }
     } catch (err) {

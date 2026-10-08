@@ -146,7 +146,7 @@ function cleanOrphanedRecords() {
     db.prepare("DELETE FROM mistake_notebook WHERE doc_id NOT IN (SELECT id FROM documents)").run();
     db.prepare("DELETE FROM flashcards WHERE doc_id NOT IN (SELECT id FROM documents)").run();
     db.prepare("DELETE FROM quizzes WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    db.prepare("DELETE FROM chat_messages WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+    db.prepare("DELETE FROM chat_messages WHERE doc_id != 'global' AND doc_id IS NOT NULL AND doc_id NOT IN (SELECT id FROM documents)").run();
     db.prepare("DELETE FROM formula_cheatsheets WHERE doc_id NOT IN (SELECT id FROM documents)").run();
   } catch (e) {
     console.warn("[tanka-db] Orphan cleanup notice:", e.message);

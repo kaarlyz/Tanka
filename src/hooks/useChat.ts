@@ -16,7 +16,18 @@ export interface UseChatProps {
 }
 
 export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps) {
-  const currentSessionId = activeDocId || "global";
+  const [isFreeMode, setIsFreeMode] = useState<boolean>(!activeDocId);
+  const effectiveDocId = isFreeMode ? null : activeDocId;
+  const currentSessionId = effectiveDocId || "global";
+
+  // Otomatis sinkronkan mode ketika dokumen aktif berubah
+  useEffect(() => {
+    if (activeDocId) {
+      setIsFreeMode(false);
+    } else {
+      setIsFreeMode(true);
+    }
+  }, [activeDocId]);
 
   // Inisialisasi state awal langsung dari localStorage sesi aktif agar tidak ada jeda kosong
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -236,7 +247,7 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          docId: activeDocId || null,
+          docId: effectiveDocId || null,
           message: text,
           attachment: currentAttachment ? {
             fileName: currentAttachment.name,
@@ -275,7 +286,7 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
     } finally {
       setIsChatSending(false);
     }
-  }, [currentSessionId, activeDocId, chatInput, stagedAttachment, isChatSending, selectedModel, messages, showNotice]);
+  }, [currentSessionId, effectiveDocId, chatInput, stagedAttachment, isChatSending, selectedModel, messages, showNotice]);
 
   return {
     messages,
@@ -289,6 +300,9 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
     handleAttachFile,
     handleClearAttachment,
     handleSendMessage,
-    handleClearChat
+    handleClearChat,
+    isFreeMode,
+    setIsFreeMode,
+    effectiveDocId
   };
 }

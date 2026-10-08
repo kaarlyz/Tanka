@@ -111,12 +111,12 @@ PRIORITAS: Alokasikan 1 atau 2 butir soal variasi baru yang menyasar konsep di a
     let factsContext = "";
     if (concepts && concepts.length > 0) {
       factsContext = "DAFTAR KONSEP KANONIKAL RESMI (SUMBER UTAMA):\n" +
-        concepts.map((c, i) => `${i + 1}. [${c.name}]: ${c.definition} ${c.prerequisites ? `(Detail: ${c.prerequisites})` : ""}`).join("\n") + "\n\n";
+        concepts.map((c, i) => `${i + 1}. [${c.name}]: ${c.definition}`).join("\n") + "\n\n";
     }
     if (segments && segments.length > 0) {
-      factsContext += "SUMBER FAKTA ASLI:\n" + segments.map(s => s.raw_text).join("\n\n").slice(0, 15000);
+      factsContext += "SUMBER FAKTA ASLI:\n" + segments.map(s => s.raw_text).join("\n\n").slice(0, 5000);
     } else {
-      factsContext += "TEKS MATERI:\n" + doc.content.slice(0, 15000);
+      factsContext += "TEKS MATERI:\n" + doc.content.slice(0, 5000);
     }
 
     const mathRule = isMathDomain
@@ -171,10 +171,11 @@ Fakta & Konsep Sumber:
 ${factsContext}
 """`;
 
+      const tokenBudget = Math.min(8192, Math.max(2048, batchCount * 800));
       const reply = await callRouter([
         { role: "system", content: "You are an expert exam question generator that strictly outputs valid JSON arrays." },
         { role: "user", content: prompt }
-      ], model, 0.2, 16384);
+      ], model, 0.2, tokenBudget);
 
       const parsed = safeJsonParse(reply);
       if (Array.isArray(parsed) && parsed.length > 0) {

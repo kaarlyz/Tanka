@@ -173,6 +173,16 @@ function runMigrations() {
   } catch (err) {
     console.warn("[tanka-db] mistake_notebook migration notice:", err.message);
   }
+
+  try {
+    const roomColumns = db.prepare("PRAGMA table_info(study_rooms)").all().map(c => c.name);
+    if (!roomColumns.includes("max_participants")) {
+      db.prepare("ALTER TABLE study_rooms ADD COLUMN max_participants INTEGER DEFAULT 0").run();
+      console.log("[tanka-db] Added max_participants column to study_rooms table");
+    }
+  } catch (err) {
+    console.warn("[tanka-db] study_rooms migration notice:", err.message);
+  }
 }
 runMigrations();
 

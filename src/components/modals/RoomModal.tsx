@@ -40,6 +40,7 @@ export function RoomModal({
   // Create room inputs
   const [selectedDocId, setSelectedDocId] = useState<string>(activeDocId || "");
   const [roomTitle, setRoomTitle] = useState<string>("");
+  const [maxParticipants, setMaxParticipants] = useState<number>(0);
   const [isCreating, setIsCreating] = useState(false);
 
   // Join room input
@@ -373,7 +374,8 @@ export function RoomModal({
           userName: currentUser.name || currentUser.username,
           schoolClass: currentUser.school_class || "Kelas XII",
           avatarColor: currentUser.avatar_color || "#10b981",
-          quizCount: 5
+          quizCount: 5,
+          maxParticipants
         })
       });
       const data = await res.json();
@@ -693,6 +695,33 @@ export function RoomModal({
                     />
                   </div>
 
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                      BATAS KAPASITAS PESERTA
+                    </label>
+                    <select
+                      value={maxParticipants}
+                      onChange={e => setMaxParticipants(Number(e.target.value))}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: 8,
+                        backgroundColor: "#1e2622",
+                        border: "1px solid #33403a",
+                        color: "#ffffff",
+                        fontSize: 13,
+                        boxSizing: "border-box"
+                      }}
+                    >
+                      <option value={0}>Bebas (Tanpa Batas Maksimal)</option>
+                      <option value={5}>Maksimal 5 Peserta (Grup Kecil)</option>
+                      <option value={10}>Maksimal 10 Peserta</option>
+                      <option value={20}>Maksimal 20 Peserta</option>
+                      <option value={36}>Maksimal 36 Peserta (1 Kelas)</option>
+                      <option value={50}>Maksimal 50 Peserta</option>
+                    </select>
+                  </div>
+
                   <div style={{ marginTop: 8 }}>
                     <button
                       type="submit"
@@ -946,7 +975,7 @@ export function RoomModal({
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#8a9691" }}>
-                    PESERTA YANG BERGABUNG ({participants.length})
+                    PESERTA YANG BERGABUNG ({participants.length}{currentRoom.maxParticipants ? `/${currentRoom.maxParticipants}` : ""})
                   </span>
                   <span style={{ fontSize: 11, color: "#71807a" }}>
                     Status otomatis diperbarui

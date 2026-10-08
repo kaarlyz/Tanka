@@ -14,7 +14,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
   if (pathname === "/api/rooms" && req.method === "POST") {
     try {
       const body = await getBody(req);
-      const { docId, title, userId, userName, schoolClass, avatarColor, quizCount = 5 } = body;
+      const { docId, title, userId, userName, schoolClass, avatarColor, quizCount = 5, maxParticipants = 0 } = body;
 
       if (!userId || !userName) {
         return sendJSON(res, { error: "User ID dan nama diperlukan untuk membuat room" }, 400);
@@ -112,11 +112,12 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
       const roomId = generateRoomCode();
       const roomTitle = title || "Kompetisi Kuis Cepat";
       const now = Date.now();
+      const maxLimit = Math.max(0, parseInt(maxParticipants, 10) || 0);
 
       db.prepare(`
-        INSERT INTO study_rooms (id, doc_id, title, host_user_id, host_name, status, quiz_count, questions_json, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(roomId, docId || "global", roomTitle, userId, userName, "waiting", questions.length, JSON.stringify(questions), now);
+        INSERT INTO study_rooms (id, doc_id, title, host_user_id, host_name, status, quiz_count, max_participants, questions_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(roomId, docId || "global", roomTitle, userId, userName, "waiting", questions.length, maxLimit, JSON.stringify(questions), now);
 
       // Add Host as first participant (ready = 1)
       const partId = `part_${roomId}_${userId}`;
@@ -137,6 +138,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
           hostName: userName,
           status: "waiting",
           quizCount: questions.length,
+          maxParticipants: maxLimit,
           createdAt: now
         },
         participants
@@ -199,6 +201,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
           hostName: room.host_name,
           status: room.status,
           quizCount: room.quiz_count,
+          maxParticipants: room.max_participants || 0,
           createdAt: room.created_at
         },
         participants,
@@ -218,6 +221,14 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
         }
 
         const existing = db.prepare("SELECT * FROM room_participants WHERE room_id = ? AND user_id = ?").get(roomId, userId);
+
+        if (!existing && room.max_participants > 0) {
+          const count = db.prepare("SELECT COUNT(*) as cnt FROM room_participants WHERE room_id = ?").get(roomId).cnt;
+          if (count >= room.max_participants) {
+            return sendJSON(res, { error: `Room sudah penuh (maksimal ${room.max_participants} peserta)` }, 403);
+          }
+        }
+
         if (!existing) {
           const partId = `part_${roomId}_${userId}`;
           db.prepare(`
@@ -238,6 +249,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
             hostName: room.host_name,
             status: room.status,
             quizCount: room.quiz_count,
+            maxParticipants: room.max_participants || 0,
             createdAt: room.created_at
           },
           participants

@@ -156,10 +156,12 @@ const server = http.createServer(async (req, res) => {
         "Content-Type": mimeTypes[ext] || "application/octet-stream",
         "Cache-Control": isHashedAsset
           ? "public, max-age=31536000, immutable"
-          : "no-store, no-cache, must-revalidate, proxy-revalidate",
-        "Pragma": isHtml ? "no-cache" : "public",
-        "Expires": isHtml ? "0" : undefined
+          : "no-store, no-cache, must-revalidate, proxy-revalidate"
       };
+      if (isHtml) {
+        headers["Pragma"] = "no-cache";
+        headers["Expires"] = "0";
+      }
       res.writeHead(200, headers);
       return fs.createReadStream(filePath).pipe(res);
     }

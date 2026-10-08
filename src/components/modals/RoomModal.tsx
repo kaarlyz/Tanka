@@ -163,6 +163,12 @@ export function RoomModal({
           })
           .catch(console.error);
       }
+    } else {
+      // Clean reset when no initialRoomId provided (standard Hub mode)
+      setCurrentRoom(null);
+      setParticipants([]);
+      setQuestions([]);
+      setViewState(initialViewState || "hub");
     }
   }, [initialRoomId, initialViewState, currentUser, showNotice]);
 
@@ -682,19 +688,53 @@ export function RoomModal({
               </span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#8a9691",
-              cursor: "pointer",
-              padding: 6,
-              borderRadius: 8
-            }}
-          >
-            <X size={18} />
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {(viewState === "result" || viewState === "lobby") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setViewState("hub");
+                  setCurrentRoom(null);
+                  setParticipants([]);
+                  setQuestions([]);
+                }}
+                style={{
+                  background: "#202a24",
+                  border: "1px solid #314037",
+                  color: "#c8f064",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: "5px 10px",
+                  borderRadius: 6
+                }}
+                title="Keluar ke menu pembuatan/pencarian room baru"
+              >
+                ← Menu Room
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (viewState === "result") {
+                  setViewState("hub");
+                  setCurrentRoom(null);
+                  setParticipants([]);
+                  setQuestions([]);
+                }
+                onClose();
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#8a9691",
+                cursor: "pointer",
+                padding: 6,
+                borderRadius: 8
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* BODY CONTENT */}
@@ -1647,7 +1687,12 @@ export function RoomModal({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setViewState("hub")}
+                    onClick={() => {
+                      setViewState("hub");
+                      setCurrentRoom(null);
+                      setParticipants([]);
+                      setQuestions([]);
+                    }}
                     style={{
                       flex: 1,
                       padding: "10px 0",
@@ -1660,11 +1705,17 @@ export function RoomModal({
                       cursor: "pointer"
                     }}
                   >
-                    Daftar Room
+                    Daftar Room / Buat Baru
                   </button>
                   <button
                     type="button"
-                    onClick={onClose}
+                    onClick={() => {
+                      setViewState("hub");
+                      setCurrentRoom(null);
+                      setParticipants([]);
+                      setQuestions([]);
+                      onClose();
+                    }}
                     style={{
                       flex: 1,
                       padding: "10px 0",

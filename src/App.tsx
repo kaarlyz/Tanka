@@ -296,6 +296,28 @@ export default function App() {
     showNotice(`⚔️ Room ${room.id} dimulai! Tryout serentak ${formatted.length} soal berjalan.`);
   }, [setQuizQuestions, setQuizQuestionCount, setQuizMode, setCurrentQuestionIndex, setUserAnswers, setSelectedOption, setIsAnswerSubmitted, setIsQuizCompleted, setExamSubmitted, setExamDurationSeconds, setExamTimeLeft, setIsExamTimerRunning, setActiveTab, showNotice]);
 
+  // Handler to close multiplayer room modal and cleanly reset session & URL params
+  const handleCloseRoomModal = useCallback(() => {
+    setIsRoomModalOpen(false);
+    setRoomModalRoomId(null);
+    setRoomModalInitialView("hub");
+    try {
+      if (window.location.search.includes("room=") || window.location.search.includes("join=")) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("room");
+        url.searchParams.delete("join");
+        window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
+      }
+    } catch {}
+  }, []);
+
+  // Handler to open multiplayer room directly to Hub (create or join new room)
+  const handleOpenRoomHub = useCallback(() => {
+    setRoomModalRoomId(null);
+    setRoomModalInitialView("hub");
+    setIsRoomModalOpen(true);
+  }, []);
+
   // 8. Domain Hook: Flashcards
   const {
     flashcards,
@@ -668,13 +690,13 @@ export default function App() {
         setActiveTab={setProfileModalTab}
         onUpdateProfile={updateProfile}
         onLogout={handleLogout}
-        onOpenRoomModal={() => setIsRoomModalOpen(true)}
+        onOpenRoomModal={handleOpenRoomHub}
       />
 
       {/* Multiplayer Study Room & Challenge Modal */}
       <RoomModal
         isOpen={isRoomModalOpen}
-        onClose={() => setIsRoomModalOpen(false)}
+        onClose={handleCloseRoomModal}
         currentUser={currentUser}
         activeDocId={activeDocId}
         activeDocTitle={activeDocTitle}
@@ -749,7 +771,7 @@ export default function App() {
           if (tab) setProfileModalTab(tab);
           setIsProfileModalOpen(true);
         }}
-        onOpenRoomModal={() => setIsRoomModalOpen(true)}
+        onOpenRoomModal={handleOpenRoomHub}
       />
 
       {/* Main View Area */}

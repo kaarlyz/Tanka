@@ -631,93 +631,169 @@ export function WebSearchProgressView({
   const [activeStep, setActiveStep] = useState(0);
   const [progress, setProgress] = useState(18);
 
+  const isMathDomain = useMemo(() => {
+    const text = `${topic} ${subject || ""}`.toLowerCase();
+    return /matematika|trigonometri|aljabar|kalkulus|integral|turunan|persamaan|matriks|vektor|peluang|statistika|eksponen|logaritma|dimensi tiga|geometri|pythagoras|fungsi/i.test(text);
+  }, [topic, subject]);
+
   const sources = useMemo(
-    () => [
-      {
-        id: "wikipedia",
-        name: "Wikipedia Indonesia",
-        domain: "id.wikipedia.org",
-        category: "Ensiklopedi Bebas",
-        action: "Mencari definisi baku, taksonomi teori, dan konteks sejarah",
-        color: "#2b4c7e",
-        bg: "#edf4fc",
-        badge: "Konsep Baku",
-        icon: (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill="#2b4c7e" />
-            <path d="M6 16.5L9.2 7.5H10.8L12.5 12L14.2 7.5H15.8L18 16.5H16.4L15 11L13.5 15.5H12L10.5 11L9.1 16.5H6Z" fill="#ffffff" />
-          </svg>
-        )
-      },
-      {
-        id: "ruangguru",
-        name: "Ruangguru Silabus",
-        domain: "ruangguru.com/blog",
-        category: "Kurikulum Sekolah & SMA",
-        action: "Membedah kurikulum ajar, analogi ramah siswa, dan contoh kasus riil",
-        color: "#0284c7",
-        bg: "#e0f2fe",
-        badge: "Silabus Resmi",
-        icon: (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill="#0284c7" />
-            <path d="M12 5L4 9L12 13L20 9L12 5Z" stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" />
-            <path d="M6 11V16C6 17.5 8.7 19 12 19C15.3 19 18 17.5 18 16V11" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        )
-      },
-      {
-        id: "wikibooks",
-        name: "Wikibuku Indonesia",
-        domain: "id.wikibooks.org",
-        category: "Buku Teks Terbuka",
-        action: "Mengambil struktur bab ajar, taksonomi materi, dan kaidah esensial",
-        color: "#166534",
-        bg: "#f0fdf4",
-        badge: "Buku Teks",
-        icon: (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill="#166534" />
-            <path d="M6 6.5C6 5.67 6.67 5 7.5 5H11V19H7.5C6.67 19 6 18.33 6 17.5V6.5Z" fill="#ffffff" fillOpacity="0.85" />
-            <path d="M18 6.5C18 5.67 17.33 5 16.5 5H13V19H16.5C17.33 19 18 18.33 18 17.5V6.5Z" fill="#ffffff" />
-          </svg>
-        )
-      },
-      {
-        id: "crossref",
-        name: "CrossRef Academic Research",
-        domain: "api.crossref.org",
-        category: "Jurnal Riset Kurikulum",
-        action: "Memvalidasi referensi akademik resmi dan metodologi pembelajaran",
-        color: "#92400e",
-        bg: "#fef3c7",
-        badge: "Jurnal Riset",
-        icon: (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill="#92400e" />
-            <circle cx="12" cy="12" r="5.5" stroke="#ffffff" strokeWidth="2" strokeDasharray="2 2" />
-            <path d="M12 9V15M9 12H15" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        )
-      },
-      {
-        id: "synthesis",
-        name: "Penyusunan Materi Belajar Tanka",
-        domain: "Kurikulum Terpadu",
-        category: "Penyusunan Modul Belajar",
-        action: "Merapikan rangkuman konsep, rumus penting, dan latihan soal",
-        color: "#3f6212",
-        bg: "#f7fee7",
-        badge: "Modul Siap",
-        icon: (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill="#18221f" />
-            <path d="M7 12L10.5 15.5L17 8.5" stroke="#c8f064" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )
+    () => {
+      if (isMathDomain) {
+        return [
+          {
+            id: "syllabus",
+            name: "Silabus Matematika Nasional",
+            domain: "Silabus Nasional (Fase E/F)",
+            category: "Aksioma & Prasyarat",
+            action: "Memetakan cakupan pilar materi, prasyarat, dan batasan kurikulum SMA/UTBK",
+            color: "#059669",
+            bg: "#ecfdf5",
+            badge: "Kurikulum Merdeka",
+            icon: (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <rect width="24" height="24" rx="6" fill="#059669" />
+                <path d="M7 17L12 7L17 17M9 13H15" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )
+          },
+          {
+            id: "formulas",
+            name: "Generator Matriks & Rumus KaTeX",
+            domain: "Pure First-Principles AI",
+            category: "Formulasi Eksak",
+            action: "Menyusun tabel pemetaan rumus lengkap dengan notasi KaTeX ($...$ & $$...$$)",
+            color: "#2563eb",
+            bg: "#eff6ff",
+            badge: "KaTeX LaTeX",
+            icon: (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <rect width="24" height="24" rx="6" fill="#2563eb" />
+                <path d="M7 7H17M12 7V17M9 17H15" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )
+          },
+          {
+            id: "worked_examples",
+            name: "Penurunan Rumus & Worked Examples",
+            domain: "Langkah Analitik Bertahap",
+            category: "Contoh Taktis Ujian",
+            action: "Menyusun pembuktian analitik dan contoh soal taktis (tanpa sulap jawaban)",
+            color: "#7c3aed",
+            bg: "#f5f3ff",
+            badge: "Worked Examples",
+            icon: (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <rect width="24" height="24" rx="6" fill="#7c3aed" />
+                <path d="M6 12L10 16L18 8" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )
+          },
+          {
+            id: "synthesis",
+            name: "Sintesis Modul Eksak Tanka",
+            domain: "Bebas Noise & Halusinasi Web",
+            category: "Modul Siap Ujian",
+            action: "Mengunci definisi padat 1-2 kalimat dan modul siap dipelajari",
+            color: "#166534",
+            bg: "#f0fdf4",
+            badge: "Modul Siap",
+            icon: (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <rect width="24" height="24" rx="6" fill="#18221f" />
+                <path d="M7 12L10.5 15.5L17 8.5" stroke="#c8f064" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )
+          }
+        ];
       }
-    ],
-    []
+
+      return [
+        {
+          id: "wikipedia",
+          name: "Wikipedia Indonesia",
+          domain: "id.wikipedia.org",
+          category: "Ensiklopedi Bebas",
+          action: "Mencari definisi baku, taksonomi teori, dan konteks sejarah",
+          color: "#2b4c7e",
+          bg: "#edf4fc",
+          badge: "Konsep Baku",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect width="24" height="24" rx="6" fill="#2b4c7e" />
+              <path d="M6 16.5L9.2 7.5H10.8L12.5 12L14.2 7.5H15.8L18 16.5H16.4L15 11L13.5 15.5H12L10.5 11L9.1 16.5H6Z" fill="#ffffff" />
+            </svg>
+          )
+        },
+        {
+          id: "ruangguru",
+          name: "Ruangguru Silabus",
+          domain: "ruangguru.com/blog",
+          category: "Kurikulum Sekolah & SMA",
+          action: "Membedah kurikulum ajar, analogi ramah siswa, dan contoh kasus riil",
+          color: "#0284c7",
+          bg: "#e0f2fe",
+          badge: "Silabus Resmi",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect width="24" height="24" rx="6" fill="#0284c7" />
+              <path d="M12 5L4 9L12 13L20 9L12 5Z" stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" />
+              <path d="M6 11V16C6 17.5 8.7 19 12 19C15.3 19 18 17.5 18 16V11" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          )
+        },
+        {
+          id: "wikibooks",
+          name: "Wikibuku Indonesia",
+          domain: "id.wikibooks.org",
+          category: "Buku Teks Terbuka",
+          action: "Mengambil struktur bab ajar, taksonomi materi, dan kaidah esensial",
+          color: "#166534",
+          bg: "#f0fdf4",
+          badge: "Buku Teks",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect width="24" height="24" rx="6" fill="#166534" />
+              <path d="M6 6.5C6 5.67 6.67 5 7.5 5H11V19H7.5C6.67 19 6 18.33 6 17.5V6.5Z" fill="#ffffff" fillOpacity="0.85" />
+              <path d="M18 6.5C18 5.67 17.33 5 16.5 5H13V19H16.5C17.33 19 18 18.33 18 17.5V6.5Z" fill="#ffffff" />
+            </svg>
+          )
+        },
+        {
+          id: "crossref",
+          name: "CrossRef Academic Research",
+          domain: "api.crossref.org",
+          category: "Jurnal Riset Kurikulum",
+          action: "Memvalidasi referensi akademik resmi dan metodologi pembelajaran",
+          color: "#92400e",
+          bg: "#fef3c7",
+          badge: "Jurnal Riset",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect width="24" height="24" rx="6" fill="#92400e" />
+              <circle cx="12" cy="12" r="5.5" stroke="#ffffff" strokeWidth="2" strokeDasharray="2 2" />
+              <path d="M12 9V15M9 12H15" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          )
+        },
+        {
+          id: "synthesis",
+          name: "Penyusunan Materi Belajar Tanka",
+          domain: "Kurikulum Terpadu",
+          category: "Penyusunan Modul Belajar",
+          action: "Merapikan rangkuman konsep, rumus penting, dan latihan soal",
+          color: "#3f6212",
+          bg: "#f7fee7",
+          badge: "Modul Siap",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect width="24" height="24" rx="6" fill="#18221f" />
+              <path d="M7 12L10.5 15.5L17 8.5" stroke="#c8f064" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )
+        }
+      ];
+    },
+    [isMathDomain]
   );
 
   useEffect(() => {

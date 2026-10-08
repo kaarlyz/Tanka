@@ -152,36 +152,65 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
     const effectiveSubject = (subject && subject !== "Umum" ? subject : (qIntel.mapel || "Umum")).trim();
     const searchQueries = qIntel.query_pencarian || [];
 
-    // 1. INGESTION: Multi-Source Web Search across Curricular & Academic Sources
-    let webRes = null;
-    try {
-      webRes = await multiSourceAcademicSearch(title, effectiveSubject, searchQueries);
-    } catch (err) {
-      console.error("[topics] Multi-source academic search failed:", err);
-    }
-
     const { segmentDocumentText, extractConceptsAndOutline, generateNaraModule } = require("../services/curriculumPipeline");
 
     let segments = [];
     let rawContext = "";
-
     const insertSeg = db.prepare("INSERT INTO document_segments (id, doc_id, segment_index, source_type, raw_text, normalized_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-    if (webRes && webRes.sources && webRes.sources.length > 0) {
-      webRes.sources.forEach((src, idx) => {
-        const segId = `seg_${docId}_${idx}`;
-        const header = `[Sumber: ${src.title}${src.url ? ` (${src.url})` : ""}]`;
-        const textWithHeader = `${header}\n${src.text}`;
-        insertSeg.run(segId, docId, idx, src.sourceType || "web_search", textWithHeader, textWithHeader, Date.now());
-        segments.push({ id: segId, index: idx, title: src.title, text: textWithHeader, sourceType: src.sourceType });
-        rawContext += `\n\n${textWithHeader}`;
+    // Deteksi domain matematika murni & sains eksak hitung
+    const isMathDomain = /matematika/i.test(effectiveSubject) || 
+                         /matematika/i.test(title) || 
+                         /trigonometri|aljabar|kalkulus|integral|turunan|persamaan|matriks|vektor|peluang|statistika|eksponen|logaritma|dimensi tiga|geometri|pythagoras|fungsi kuadrat|barisan dan deret|lingkaran|limit fungsi|kombinatorika/i.test(title);
+
+    if (isMathDomain) {
+      console.log(`[topics] Topik Matematika terdeteksi ("${title}"). Bypass mode web research untuk mencegah halusinasi & noise teks; menggunakan Pure First-Principles AI.`);
+      
+      const mathPrompt = `Anda adalah pakar kurikulum matematika SMA/UTBK (Kurikulum Merdeka).
+Tugas: Buatkan teks materi fondasi kanonikal untuk topik: "${title}" (${effectiveSubject}) jenjang ${qIntel.jenjang || "SMA"}.
+
+SYARAT MUTLAK (MATEMATIKA EKSAK & ANTI-SLOP):
+1. PETA CAKUPAN LENGKAP: Bedah seluruh pilar/cabang topik ini secara menyeluruh di awal.
+2. DEFINISI PADAT & PRESISI: Definisi konsep hanya 1-2 kalimat to-the-point tanpa dongeng bertele-tele.
+3. TABEL PEMETAAN RUMUS LENGKAP (KaTeX): Sajikan semua rumus operasional dalam format tabel Markdown rapi dengan notasi KaTeX ($...$ atau $$...$$). Sertakan keterangan variabel dan kondisi batas.
+4. TEOREMA, IDENTITAS, DAN SIFAT OPERASIONAL: Tuliskan sifat-sifat matematis yang berlaku mutlak.
+5. WORKED EXAMPLES (CONTOH PENGERJAAN TAKTIS): Tuliskan 2 contoh soal standar ujian lengkap dengan langkah penurunan aljabar/geometris bertahap (diketahui, ditanya, langkah analitik, kesimpulan).`;
+
+      const pureMathContent = await callRouter([
+        { role: "system", content: "You are a master mathematics educator. Output dense, formula-rich, KaTeX-formatted pedagogical content without conversational fluff." },
+        { role: "user", content: mathPrompt }
+      ], model, 0.15, 6000);
+
+      rawContext = pureMathContent || title;
+      segments = segmentDocumentText(rawContext, "pure_ai_math");
+      segments.forEach((seg) => {
+        insertSeg.run(`seg_${docId}_${seg.index}`, docId, seg.index, "pure_ai_math", seg.text, seg.text, Date.now());
       });
     } else {
-      rawContext = (webRes && webRes.bundle) || (typeof webRes === "string" ? webRes : title);
-      segments = segmentDocumentText(rawContext, "web_search");
-      segments.forEach((seg) => {
-        insertSeg.run(`seg_${docId}_${seg.index}`, docId, seg.index, "web_search", seg.text, seg.text, Date.now());
-      });
+      // 1. INGESTION: Multi-Source Web Search across Curricular & Academic Sources (untuk Ilmu Sosial/Humaniora/Umum)
+      let webRes = null;
+      try {
+        webRes = await multiSourceAcademicSearch(title, effectiveSubject, searchQueries);
+      } catch (err) {
+        console.error("[topics] Multi-source academic search failed:", err);
+      }
+
+      if (webRes && webRes.sources && webRes.sources.length > 0) {
+        webRes.sources.forEach((src, idx) => {
+          const segId = `seg_${docId}_${idx}`;
+          const header = `[Sumber: ${src.title}${src.url ? ` (${src.url})` : ""}]`;
+          const textWithHeader = `${header}\n${src.text}`;
+          insertSeg.run(segId, docId, idx, src.sourceType || "web_search", textWithHeader, textWithHeader, Date.now());
+          segments.push({ id: segId, index: idx, title: src.title, text: textWithHeader, sourceType: src.sourceType });
+          rawContext += `\n\n${textWithHeader}`;
+        });
+      } else {
+        rawContext = (webRes && webRes.bundle) || (typeof webRes === "string" ? webRes : title);
+        segments = segmentDocumentText(rawContext, "web_search");
+        segments.forEach((seg) => {
+          insertSeg.run(`seg_${docId}_${seg.index}`, docId, seg.index, "web_search", seg.text, seg.text, Date.now());
+        });
+      }
     }
 
     // 2. PASS 1: CANONICAL CONCEPT & OUTLINE EXTRACTION FROM RAW WEB SEGMENTS

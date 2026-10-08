@@ -40,6 +40,8 @@ export function RoomModal({
   // Create room inputs
   const [selectedDocId, setSelectedDocId] = useState<string>(activeDocId || "");
   const [roomTitle, setRoomTitle] = useState<string>("");
+  const [quizCount, setQuizCount] = useState<number>(5);
+  const [quizType, setQuizType] = useState<string>("conceptual");
   const [maxParticipants, setMaxParticipants] = useState<number>(0);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -420,7 +422,8 @@ export function RoomModal({
           userName: currentUser.name || currentUser.username,
           schoolClass: currentUser.school_class || "Kelas XII",
           avatarColor: currentUser.avatar_color || "#10b981",
-          quizCount: 5,
+          quizCount,
+          quizType,
           maxParticipants
         })
       });
@@ -742,7 +745,14 @@ export function RoomModal({
                     </label>
                     <select
                       value={selectedDocId}
-                      onChange={e => setSelectedDocId(e.target.value)}
+                      onChange={e => {
+                        const newDocId = e.target.value;
+                        setSelectedDocId(newDocId);
+                        const found = documents.find(d => d.id === newDocId);
+                        if (found && (!roomTitle || roomTitle.startsWith("Kompetisi:"))) {
+                          setRoomTitle(`Kompetisi: ${found.title}`);
+                        }
+                      }}
                       style={{
                         width: "100%",
                         padding: "10px 14px",
@@ -761,6 +771,9 @@ export function RoomModal({
                         </option>
                       ))}
                     </select>
+                    <p style={{ margin: "5px 0 0", fontSize: 11, color: "#6f7975" }}>
+                      Butir soal room akan diambil & di-generate secara eksklusif dari materi yang dipilih.
+                    </p>
                   </div>
 
                   <div>
@@ -783,6 +796,58 @@ export function RoomModal({
                         boxSizing: "border-box"
                       }}
                     />
+                  </div>
+
+                  {/* Settings Grid: Tipe Soal & Jumlah Soal */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                        TIPE / KUALITAS SOAL
+                      </label>
+                      <select
+                        value={quizType}
+                        onChange={e => setQuizType(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          backgroundColor: "#1e2622",
+                          border: "1px solid #33403a",
+                          color: "#ffffff",
+                          fontSize: 12.5,
+                          boxSizing: "border-box"
+                        }}
+                      >
+                        <option value="conceptual">Standar Ujian (Konseptual)</option>
+                        <option value="hots">HOTS (Analisis & Kasus Kritis)</option>
+                        <option value="beginner">Pemula & Fondasi Bertahap</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                        JUMLAH SOAL
+                      </label>
+                      <select
+                        value={quizCount}
+                        onChange={e => setQuizCount(Number(e.target.value))}
+                        style={{
+                          width: "100%",
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          backgroundColor: "#1e2622",
+                          border: "1px solid #33403a",
+                          color: "#ffffff",
+                          fontSize: 12.5,
+                          boxSizing: "border-box"
+                        }}
+                      >
+                        <option value={5}>5 Soal (Duel Cepat)</option>
+                        <option value={10}>10 Soal (Standar Ujian)</option>
+                        <option value={15}>15 Soal (Kompetisi Seru)</option>
+                        <option value={20}>20 Soal (Tryout Penuh)</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>

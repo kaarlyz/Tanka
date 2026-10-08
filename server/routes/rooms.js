@@ -1,4 +1,5 @@
 const { db } = require("../db");
+const { generateQuestionsCore } = require("../services/quizGenerator");
 
 function generateRoomCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -14,7 +15,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
   if (pathname === "/api/rooms" && req.method === "POST") {
     try {
       const body = await getBody(req);
-      const { docId, title, userId, userName, schoolClass, avatarColor, quizCount = 5, maxParticipants = 0 } = body;
+      const { docId, title, userId, userName, schoolClass, avatarColor, quizCount = 5, quizType = "conceptual", maxParticipants = 0 } = body;
 
       if (!userId || !userName) {
         return sendJSON(res, { error: "User ID dan nama diperlukan untuk membuat room" }, 400);
@@ -59,15 +60,68 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
       };
 
       if (docId && docId !== "global") {
-        const rows = db.prepare("SELECT * FROM quizzes WHERE doc_id = ?").all(docId);
-        if (rows && rows.length > 0) {
-          questions = extractQuestionsFromRows(rows).slice(0, quizCount);
+        const targetDoc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
+        if (targetDoc) {
+          // 1. Ambil dari bank soal yang sudah tersimpan khusus untuk materi ini
+          const rows = db.prepare("SELECT * FROM quizzes WHERE doc_id = ?").all(docId);
+          if (rows && rows.length > 0) {
+            const extracted = extractQuestionsFromRows(rows);
+            if (extracted.length >= quizCount) {
+              questions = extracted.slice(0, quizCount);
+            } else if (extracted.length > 0) {
+              questions = extracted;
+            }
+          }
+
+          // 2. Jika belum ada kuis untuk materi ini (atau kurang), GENERATE KHUSUS DARI MATERI INI!
+          // DILARANG KERAS MENGAMBIL MATERI LAIN / PREVIOUS MATERIAL!
+          if (questions.length === 0) {
+            try {
+              console.log(`[rooms] Men-generate ${quizCount} butir soal baru khusus dokumen: ${targetDoc.title} (${docId})`);
+              const freshQuestions = await generateQuestionsCore({
+                docId,
+                count: quizCount,
+                quizType: quizType || "conceptual"
+              });
+              if (Array.isArray(freshQuestions) && freshQuestions.length > 0) {
+                questions = freshQuestions;
+                const quizId = "quiz_" + Date.now();
+                db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")
+                  .run(quizId, docId, JSON.stringify(questions), Date.now());
+                console.log(`[rooms] Berhasil menyimpan ${questions.length} soal untuk materi ${targetDoc.title}`);
+              }
+            } catch (genErr) {
+              console.error(`[rooms] Gagal auto-generate soal materi ${docId}:`, genErr);
+            }
+          }
+
+          // 3. Fallback cerdas dari Canonical Concepts dokumen ITU SENDIRI (anti-lintas materi)
+          if (questions.length === 0) {
+            const concepts = db.prepare("SELECT * FROM document_concepts WHERE doc_id = ? LIMIT 10").all(docId);
+            if (concepts && concepts.length >= 2) {
+              questions = concepts.slice(0, quizCount).map((c, idx) => {
+                const distractors = concepts.filter(other => other.id !== c.id).map(o => o.definition).slice(0, 4);
+                const allOpts = [c.definition, ...distractors];
+                const shuffled = [...allOpts].sort(() => Math.random() - 0.5);
+                const correctIdx = shuffled.indexOf(c.definition);
+                return {
+                  id: idx + 1,
+                  question: `Berdasarkan materi ${targetDoc.title}, manakah penjelasan yang paling tepat mengenai konsep "${c.name}"?`,
+                  options: shuffled,
+                  answer: ["A", "B", "C", "D", "E"][correctIdx >= 0 ? correctIdx : 0],
+                  correctIndex: correctIdx >= 0 ? correctIdx : 0,
+                  correct_index: correctIdx >= 0 ? correctIdx : 0,
+                  explanation: `Konsep "${c.name}" didefinisikan secara resmi sebagai: ${c.definition}.`
+                };
+              });
+            }
+          }
         }
       }
 
-      // Fallback if no questions in DB for docId
-      if (questions.length === 0) {
-        const randomQuizzes = db.prepare("SELECT * FROM quizzes ORDER BY created_at DESC LIMIT 10").all();
+      // Fallback HANYA jika memang user memilih "global" atau tanpa dokumen spesifik:
+      if (questions.length === 0 && (!docId || docId === "global")) {
+        const randomQuizzes = db.prepare("SELECT * FROM quizzes ORDER BY created_at DESC LIMIT 5").all();
         if (randomQuizzes.length > 0) {
           questions = extractQuestionsFromRows(randomQuizzes).slice(0, quizCount);
         }

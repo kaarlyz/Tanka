@@ -182,6 +182,7 @@ export interface StudyRoom {
   hostName: string;
   status: "waiting" | "active" | "finished" | "archived";
   quizCount: number;
+  quizType?: string;
   maxParticipants?: number;
   createdAt: number;
   participant_count?: number;

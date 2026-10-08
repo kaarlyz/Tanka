@@ -87,6 +87,9 @@ export default function App() {
 
   // 2.6 Multiplayer Room Modal
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+  const [activeRoomSession, setActiveRoomSession] = useState<{ roomId: string; title: string; quizCount: number } | null>(null);
+  const [roomModalInitialView, setRoomModalInitialView] = useState<"hub" | "lobby" | "playing" | "result">("hub");
+  const [roomModalRoomId, setRoomModalRoomId] = useState<string | null>(null);
 
   // 3. UI State
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -146,6 +149,32 @@ export default function App() {
     handleClearMistakes
   } = useMistakes({ activeDocId, activeDocTitle, showNotice });
 
+  // Callback when exam finishes (submits score to active multiplayer room if any)
+  const handleRoomExamComplete = useCallback(async (result: { finalScore: number; correctCount: number; totalQuestions: number }) => {
+    if (activeRoomSession && currentUser) {
+      try {
+        const res = await fetch(`/api/rooms/${activeRoomSession.roomId}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            score: result.finalScore,
+            correctAnswers: result.correctCount,
+            totalAnswered: result.totalQuestions
+          })
+        });
+        if (res.ok) {
+          setRoomModalInitialView("result");
+          setRoomModalRoomId(activeRoomSession.roomId);
+          setIsRoomModalOpen(true);
+          showNotice(`Skor ${result.finalScore} terkirim ke Room ${activeRoomSession.roomId}! Peringkat diperbarui.`);
+        }
+      } catch (err) {
+        console.error("Submit room score failed:", err);
+      }
+    }
+  }, [activeRoomSession, currentUser, showNotice]);
+
   // 7. Domain Hook: Quiz & Interactive Drills
   const {
     quizQuestions,
@@ -198,8 +227,47 @@ export default function App() {
     quizType,
     showNotice,
     recordMistake,
-    activeDocContent
+    activeDocContent,
+    onExamComplete: handleRoomExamComplete
   });
+
+  // Handler to launch multiplayer challenge directly into Quiz / Tryout tab
+  const handleStartRoomExam = useCallback((room: any, questions: any[]) => {
+    const formatted: QuizQuestion[] = (questions || []).map((q: any, idx: number) => {
+      let correctIdx = 0;
+      if (typeof q.correctIndex === "number") correctIdx = q.correctIndex;
+      else if (typeof q.correct_index === "number") correctIdx = q.correct_index;
+      else if (typeof q.answer === "string" && ["A", "B", "C", "D", "E"].includes(q.answer.trim().toUpperCase())) {
+        correctIdx = ["A", "B", "C", "D", "E"].indexOf(q.answer.trim().toUpperCase());
+      }
+      return {
+        id: q.id || idx + 1,
+        question: q.question,
+        options: Array.isArray(q.options) ? q.options : [],
+        correctIndex: correctIdx,
+        correct_index: correctIdx,
+        explanation: q.explanation || ""
+      };
+    });
+
+    setQuizQuestions(formatted);
+    setQuizQuestionCount(formatted.length);
+    setQuizMode("exam");
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setSelectedOption(null);
+    setIsAnswerSubmitted(false);
+    setIsQuizCompleted(false);
+    setExamSubmitted(false);
+    const durationSec = Math.max(180, formatted.length * 60);
+    setExamDurationSeconds(durationSec);
+    setExamTimeLeft(durationSec);
+    setIsExamTimerRunning(true);
+    setActiveRoomSession({ roomId: room.id, title: room.title, quizCount: formatted.length });
+    setActiveTab("quiz");
+    setIsRoomModalOpen(false);
+    showNotice(`⚔️ Room ${room.id} dimulai! Tryout serentak ${formatted.length} soal berjalan.`);
+  }, [setQuizQuestions, setQuizQuestionCount, setQuizMode, setCurrentQuestionIndex, setUserAnswers, setSelectedOption, setIsAnswerSubmitted, setIsQuizCompleted, setExamSubmitted, setExamDurationSeconds, setExamTimeLeft, setIsExamTimerRunning, setActiveTab, showNotice]);
 
   // 8. Domain Hook: Flashcards
   const {
@@ -590,6 +658,9 @@ export default function App() {
           setAuthError("");
           setIsAuthModalOpen(true);
         }}
+        onStartRoomExam={handleStartRoomExam}
+        initialRoomId={roomModalRoomId}
+        initialViewState={roomModalInitialView}
       />
 
       {/* Backdrop overlay for mobile drawer */}
@@ -825,6 +896,12 @@ export default function App() {
                   mistakes={mistakes}
                   selectedModel={selectedModel}
                   setQuizQuestions={setQuizQuestions}
+                  activeRoomSession={activeRoomSession}
+                  onOpenRoomLeaderboard={() => {
+                    setRoomModalInitialView("result");
+                    if (activeRoomSession) setRoomModalRoomId(activeRoomSession.roomId);
+                    setIsRoomModalOpen(true);
+                  }}
                 />
               )}
 

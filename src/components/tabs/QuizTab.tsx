@@ -15,6 +15,7 @@ import {
   Play,
   Pause,
   Award,
+  Trophy,
   BookOpen,
   Target,
   Send,
@@ -158,6 +159,8 @@ export interface QuizTabProps {
   mistakes: MistakeItem[];
   selectedModel?: string;
   setQuizQuestions?: (val: any) => void;
+  activeRoomSession?: { roomId: string; title: string; quizCount: number } | null;
+  onOpenRoomLeaderboard?: () => void;
 }
 
 export function QuizTab({
@@ -210,7 +213,9 @@ export function QuizTab({
   activeDocMistakes,
   mistakes,
   selectedModel,
-  setQuizQuestions
+  setQuizQuestions,
+  activeRoomSession,
+  onOpenRoomLeaderboard
 }: QuizTabProps) {
   const [isTailoring, setIsTailoring] = React.useState(false);
 
@@ -348,6 +353,93 @@ export function QuizTab({
                       <Sparkles size={13} />
                       {isGeneratingQuiz ? "Menyusun Soal..." : `Buat Soal Baru`}
                     </button>
+                  </div>
+                )}
+
+                {/* Active Multiplayer Room Banner */}
+                {activeRoomSession && (
+                  <div
+                    style={{
+                      backgroundColor: "#18181b",
+                      color: "#ffffff",
+                      borderRadius: 10,
+                      padding: "12px 16px",
+                      marginBottom: 16,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      border: "1px solid #27272a",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                      flexWrap: "wrap",
+                      gap: 10
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>⚔️</span>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span
+                            style={{
+                              fontFamily: "'DM Mono', monospace",
+                              fontSize: 10,
+                              fontWeight: 800,
+                              color: "#a1a1aa",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.08em"
+                            }}
+                          >
+                            ARENA KOMPETISI STUDY ROOM
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: "'DM Mono', monospace",
+                              fontSize: 10.5,
+                              fontWeight: 800,
+                              backgroundColor: "#27272a",
+                              color: "#c8f064",
+                              padding: "1px 6px",
+                              borderRadius: 4
+                            }}
+                          >
+                            {activeRoomSession.roomId}
+                          </span>
+                        </div>
+                        <h4 style={{ margin: "2px 0 0", fontSize: 13.5, fontWeight: 700, color: "#ffffff" }}>
+                          {activeRoomSession.title}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span
+                        style={{
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 11,
+                          color: "#4ade80",
+                          fontWeight: 700
+                        }}
+                      >
+                        {quizQuestions.length} SOAL SERENTAK
+                      </span>
+                      {onOpenRoomLeaderboard && (
+                        <button
+                          type="button"
+                          onClick={onOpenRoomLeaderboard}
+                          style={{
+                            backgroundColor: "#27272a",
+                            color: "#ffffff",
+                            border: "1px solid #3f3f46",
+                            borderRadius: 6,
+                            padding: "5px 10px",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            cursor: "pointer"
+                          }}
+                        >
+                          Lihat Room / Peringkat 🏆
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -722,6 +814,35 @@ export function QuizTab({
                         Paket Soal Baru
                       </button>
                     </div>
+
+                    {/* Active Multiplayer Room Leaderboard CTA */}
+                    {activeRoomSession && onOpenRoomLeaderboard && (
+                      <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed #dce1da" }}>
+                        <button
+                          type="button"
+                          onClick={onOpenRoomLeaderboard}
+                          style={{
+                            width: "100%",
+                            padding: "12px 18px",
+                            backgroundColor: "#18181b",
+                            color: "#c8f064",
+                            border: "none",
+                            borderRadius: 10,
+                            fontSize: 13,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 8,
+                            boxShadow: "0 4px 14px rgba(0,0,0,0.1)"
+                          }}
+                        >
+                          <Trophy size={16} />
+                          <span>Lihat Peringkat & Leaderboard Room {activeRoomSession.roomId} 🏆</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   /* Active Question Card */

@@ -22,39 +22,91 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
 
       // Check document & get questions
       let questions = [];
-      if (docId) {
+      const extractQuestionsFromRows = (rows) => {
+        let extracted = [];
+        for (const row of rows) {
+          if (!row || !row.questions) continue;
+          try {
+            const parsed = JSON.parse(row.questions);
+            if (Array.isArray(parsed)) {
+              for (const q of parsed) {
+                if (!q || !q.question) continue;
+                let options = Array.isArray(q.options) ? q.options : [];
+                let correctIdx = 0;
+                if (typeof q.correctIndex === "number") correctIdx = q.correctIndex;
+                else if (typeof q.correct_index === "number") correctIdx = q.correct_index;
+                else if (typeof q.answer === "string" && ["A", "B", "C", "D", "E"].includes(q.answer.trim().toUpperCase())) {
+                  correctIdx = ["A", "B", "C", "D", "E"].indexOf(q.answer.trim().toUpperCase());
+                }
+                extracted.push({
+                  id: q.id || `q_${Math.random().toString(36).slice(2, 8)}`,
+                  question: q.question,
+                  options,
+                  answer: q.answer || ["A", "B", "C", "D", "E"][correctIdx],
+                  correctIndex: correctIdx,
+                  correct_index: correctIdx,
+                  explanation: q.explanation || "",
+                  formula: q.formula || "",
+                  steps: q.steps || []
+                });
+              }
+            }
+          } catch (e) {
+            console.error("[rooms] parse questions json error:", e);
+          }
+        }
+        return extracted;
+      };
+
+      if (docId && docId !== "global") {
         const rows = db.prepare("SELECT * FROM quizzes WHERE doc_id = ?").all(docId);
         if (rows && rows.length > 0) {
-          questions = rows.slice(0, quizCount).map(r => {
-            let options = [];
-            try { options = JSON.parse(r.options); } catch { options = []; }
-            return {
-              id: r.id,
-              question: r.question,
-              options,
-              answer: r.answer,
-              explanation: r.explanation || ""
-            };
-          });
+          questions = extractQuestionsFromRows(rows).slice(0, quizCount);
         }
       }
 
       // Fallback if no questions in DB for docId
       if (questions.length === 0) {
-        const randomQuizzes = db.prepare("SELECT * FROM quizzes LIMIT 10").all();
+        const randomQuizzes = db.prepare("SELECT * FROM quizzes ORDER BY created_at DESC LIMIT 10").all();
         if (randomQuizzes.length > 0) {
-          questions = randomQuizzes.slice(0, quizCount).map(r => {
-            let options = [];
-            try { options = JSON.parse(r.options); } catch { options = []; }
-            return {
-              id: r.id,
-              question: r.question,
-              options,
-              answer: r.answer,
-              explanation: r.explanation || ""
-            };
-          });
+          questions = extractQuestionsFromRows(randomQuizzes).slice(0, quizCount);
         }
+      }
+
+      // Ultimate fallback if database has zero quizzes
+      if (questions.length === 0) {
+        questions = [
+          {
+            id: "q_room_1",
+            question: "Manakah prinsip utama dari active recall dalam metode pembelajaran mandiri?",
+            options: [
+              "A. Membaca ulang materi berulang kali hingga hafal secara pasif",
+              "B. Menguji daya ingat secara mandiri tanpa melihat contekan atau ringkasan",
+              "C. Menulis catatan dengan pulpen warna-warni tanpa evaluasi pemahaman",
+              "D. Mendengarkan rekaman suara sambil beristirahat",
+              "E. Menghafal seluruh kamus istilah dalam satu malam sebelum ujian"
+            ],
+            answer: "B",
+            correctIndex: 1,
+            correct_index: 1,
+            explanation: "Active recall memaksa otak merekonstruksi ingatan dari memori jangka panjang tanpa bantuan visual contekan."
+          },
+          {
+            id: "q_room_2",
+            question: "Teknik Feynman menekankan bahwa tolak ukur penguasaan suatu konsep adalah...",
+            options: [
+              "A. Kemampuan menggunakan jargon akademik yang rumit di depan audiens",
+              "B. Kecepatan menulis rumus di atas papan tulis",
+              "C. Kemampuan menjelaskan konsep secara sederhana menggunakan bahasa orang awam",
+              "D. Menghafal seluruh teorema tanpa memahami analogi dasarnya",
+              "E. Mengumpulkan nilai sempurna pada ujian pilihan ganda"
+            ],
+            answer: "C",
+            correctIndex: 2,
+            correct_index: 2,
+            explanation: "Richard Feynman merumuskan bahwa jika kita tidak dapat menjelaskan suatu konsep kepada anak berusia 9 tahun, kita belum benar-benar memahaminya."
+          }
+        ];
       }
 
       const roomId = generateRoomCode();

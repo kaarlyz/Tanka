@@ -8,9 +8,10 @@ export interface UseQuizProps {
   showNotice: (msg: string) => void;
   recordMistake: (question: QuizQuestion, userAnswerIdx: number) => void;
   activeDocContent?: string;
+  onExamComplete?: (result: { finalScore: number; correctCount: number; totalQuestions: number }) => void;
 }
 
-export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, recordMistake, activeDocContent }: UseQuizProps) {
+export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, recordMistake, activeDocContent, onExamComplete }: UseQuizProps) {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -168,7 +169,10 @@ export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, reco
     const finalScore = Math.round((correctCount / (quizQuestions.length || 1)) * 100);
     setScore(finalScore);
     showNotice(`Tryout Selesai! Skor Anda: ${finalScore} / 100 (${correctCount} Benar dari ${quizQuestions.length} Soal)`);
-  }, [quizQuestions, userAnswers, recordMistake, showNotice]);
+    if (onExamComplete) {
+      onExamComplete({ finalScore, correctCount, totalQuestions: quizQuestions.length });
+    }
+  }, [quizQuestions, userAnswers, recordMistake, showNotice, onExamComplete]);
 
   useEffect(() => {
     let timer: any = null;

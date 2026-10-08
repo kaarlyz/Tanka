@@ -14,6 +14,9 @@ export interface RoomModalProps {
   documents: Array<{ id: string; title: string }>;
   showNotice: (msg: string) => void;
   onOpenAuthModal: () => void;
+  onStartRoomExam?: (room: StudyRoom, questions: any[]) => void;
+  initialRoomId?: string | null;
+  initialViewState?: "hub" | "lobby" | "playing" | "result";
 }
 
 export function RoomModal({
@@ -24,9 +27,12 @@ export function RoomModal({
   activeDocTitle,
   documents,
   showNotice,
-  onOpenAuthModal
+  onOpenAuthModal,
+  onStartRoomExam,
+  initialRoomId,
+  initialViewState
 }: RoomModalProps) {
-  const [viewState, setViewState] = useState<"hub" | "lobby" | "playing" | "result">("hub");
+  const [viewState, setViewState] = useState<"hub" | "lobby" | "playing" | "result">(initialViewState || "hub");
   const [hubTab, setHubTab] = useState<"create" | "join">("create");
   
   // Create room inputs
@@ -63,9 +69,28 @@ export function RoomModal({
     }
   }, [activeDocTitle]);
 
-  // Polling room status when in lobby
+  // Synchronize initial room ID and view state
   useEffect(() => {
-    if (!isOpen || !currentRoom?.id || viewState === "result") return;
+    if (initialViewState) {
+      setViewState(initialViewState);
+    }
+    if (initialRoomId) {
+      fetch(`/api/rooms/${initialRoomId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.room) {
+            setCurrentRoom(data.room);
+            setParticipants(data.participants || []);
+            if (data.questions) setQuestions(data.questions);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [initialRoomId, initialViewState]);
+
+  // Polling room status when in lobby or viewing result
+  useEffect(() => {
+    if (!isOpen || !currentRoom?.id) return;
 
     const interval = setInterval(async () => {
       try {
@@ -75,8 +100,13 @@ export function RoomModal({
           setCurrentRoom(data.room);
           setParticipants(data.participants || []);
           if (data.room.status === "active" && viewState === "lobby" && data.questions?.length > 0) {
-            setQuestions(data.questions);
-            setViewState("playing");
+            if (onStartRoomExam) {
+              onStartRoomExam(data.room, data.questions);
+              onClose();
+            } else {
+              setQuestions(data.questions);
+              setViewState("playing");
+            }
           } else if (data.room.status === "finished" && viewState === "playing") {
             setViewState("result");
           }
@@ -84,10 +114,10 @@ export function RoomModal({
       } catch (e) {
         console.warn("Poll room error:", e);
       }
-    }, 2500);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [isOpen, currentRoom?.id, viewState]);
+  }, [isOpen, currentRoom?.id, viewState, onStartRoomExam, onClose]);
 
   if (!isOpen) return null;
 
@@ -280,11 +310,16 @@ export function RoomModal({
       const data = await res.json();
       if (res.ok && data.room) {
         setCurrentRoom(data.room);
-        setQuestions(data.questions || []);
-        setCurrentQIndex(0);
-        setSelectedAnswers({});
-        setViewState("playing");
         showNotice("Kompetisi kuis dimulai! Selamat berjuang!");
+        if (onStartRoomExam && data.questions?.length > 0) {
+          onStartRoomExam(data.room, data.questions);
+          onClose();
+        } else {
+          setQuestions(data.questions || []);
+          setCurrentQIndex(0);
+          setSelectedAnswers({});
+          setViewState("playing");
+        }
       } else {
         showNotice(data.error || "Gagal memulai");
       }

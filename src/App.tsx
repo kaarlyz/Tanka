@@ -82,6 +82,7 @@ export default function App() {
     profileModalTab,
     setProfileModalTab,
     updateProfile,
+    quickRegisterGuest,
     recordActivity
   } = useAuth(showNotice);
 
@@ -90,6 +91,23 @@ export default function App() {
   const [activeRoomSession, setActiveRoomSession] = useState<{ roomId: string; title: string; quizCount: number } | null>(null);
   const [roomModalInitialView, setRoomModalInitialView] = useState<"hub" | "lobby" | "playing" | "result">("hub");
   const [roomModalRoomId, setRoomModalRoomId] = useState<string | null>(null);
+
+  // Auto-detect ?room= or ?join= in URL for shared links
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomParam = urlParams.get("room") || urlParams.get("join");
+      if (roomParam) {
+        const cleanCode = roomParam.trim().toUpperCase();
+        setRoomModalRoomId(cleanCode);
+        setRoomModalInitialView("lobby");
+        setIsRoomModalOpen(true);
+        showNotice(`Tautan undangan room ${cleanCode} terdeteksi!`);
+      }
+    } catch (e) {
+      console.warn("Parse room URL param error:", e);
+    }
+  }, [showNotice]);
 
   // 3. UI State
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -661,6 +679,7 @@ export default function App() {
         onStartRoomExam={handleStartRoomExam}
         initialRoomId={roomModalRoomId}
         initialViewState={roomModalInitialView}
+        onQuickRegisterGuest={quickRegisterGuest}
       />
 
       {/* Backdrop overlay for mobile drawer */}

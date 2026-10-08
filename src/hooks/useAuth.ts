@@ -125,6 +125,33 @@ export function useAuth(showNotice: (msg: string) => void) {
     showNotice("Anda telah keluar akun.");
   }, [showNotice]);
 
+  const quickRegisterGuest = useCallback(async (displayName: string): Promise<UserAccount | null> => {
+    const cleanName = displayName.trim() || "Teman Belajar";
+    const guestUser = "guest_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
+    const guestPass = "pass_" + Math.random().toString(36).slice(2, 8);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: guestUser,
+          password: guestPass,
+          name: cleanName
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setCurrentUser(data.user);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+        showNotice(`Selamat bergabung, ${data.user.name}!`);
+        return data.user;
+      }
+    } catch (e) {
+      console.error("quickRegisterGuest failed:", e);
+    }
+    return null;
+  }, [showNotice]);
+
   const updateProfile = useCallback(async (fields: Partial<UserAccount>) => {
     if (!currentUser?.id) return false;
     try {
@@ -198,6 +225,7 @@ export function useAuth(showNotice: (msg: string) => void) {
     profileModalTab,
     setProfileModalTab,
     updateProfile,
+    quickRegisterGuest,
     recordActivity,
     refreshProfile
   };

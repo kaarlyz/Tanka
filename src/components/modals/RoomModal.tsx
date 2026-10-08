@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   X, Swords, Users, Copy, Check, Play, Trophy, 
-  Sparkles, Award, ArrowRight, Share2, RefreshCw, CheckCircle2, AlertCircle
+  Sparkles, Award, ArrowRight, Share2, RefreshCw, CheckCircle2, AlertCircle, Link2
 } from "lucide-react";
 import { UserAccount, StudyRoom, RoomParticipant } from "../../types";
 
@@ -17,6 +17,7 @@ export interface RoomModalProps {
   onStartRoomExam?: (room: StudyRoom, questions: any[]) => void;
   initialRoomId?: string | null;
   initialViewState?: "hub" | "lobby" | "playing" | "result";
+  onQuickRegisterGuest?: (displayName: string) => Promise<UserAccount | null>;
 }
 
 export function RoomModal({
@@ -30,7 +31,8 @@ export function RoomModal({
   onOpenAuthModal,
   onStartRoomExam,
   initialRoomId,
-  initialViewState
+  initialViewState,
+  onQuickRegisterGuest
 }: RoomModalProps) {
   const [viewState, setViewState] = useState<"hub" | "lobby" | "playing" | "result">(initialViewState || "hub");
   const [hubTab, setHubTab] = useState<"create" | "join">("create");
@@ -54,8 +56,11 @@ export function RoomModal({
   const [selectedAnswers, setSelectedAnswers] = useState<{ [qIndex: number]: number }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Copied feedback
+  // Guest quick join & Share feedback
+  const [guestName, setGuestName] = useState("");
+  const [isGuestJoining, setIsGuestJoining] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isCopiedLink, setIsCopiedLink] = useState(false);
 
   useEffect(() => {
     if (activeDocId) {
@@ -69,24 +74,48 @@ export function RoomModal({
     }
   }, [activeDocTitle]);
 
-  // Synchronize initial room ID and view state
+  // Synchronize initial room ID and view state (with auto-join for logged in users)
   useEffect(() => {
     if (initialViewState) {
       setViewState(initialViewState);
     }
     if (initialRoomId) {
-      fetch(`/api/rooms/${initialRoomId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.room) {
-            setCurrentRoom(data.room);
-            setParticipants(data.participants || []);
-            if (data.questions) setQuestions(data.questions);
-          }
+      if (currentUser) {
+        fetch(`/api/rooms/${initialRoomId}/join`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            userName: currentUser.name || currentUser.username,
+            schoolClass: currentUser.school_class || "Kelas XII",
+            avatarColor: currentUser.avatar_color || "#6366f1"
+          })
         })
-        .catch(console.error);
+          .then(res => res.json())
+          .then(data => {
+            if (data.room) {
+              setCurrentRoom(data.room);
+              setParticipants(data.participants || []);
+              if (data.questions) setQuestions(data.questions);
+              setViewState("lobby");
+              showNotice(`Berhasil masuk ke Room ${initialRoomId}!`);
+            }
+          })
+          .catch(console.error);
+      } else {
+        fetch(`/api/rooms/${initialRoomId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.room) {
+              setCurrentRoom(data.room);
+              setParticipants(data.participants || []);
+              if (data.questions) setQuestions(data.questions);
+            }
+          })
+          .catch(console.error);
+      }
     }
-  }, [initialRoomId, initialViewState]);
+  }, [initialRoomId, initialViewState, currentUser, showNotice]);
 
   // Polling room status when in lobby or viewing result
   useEffect(() => {
@@ -119,6 +148,84 @@ export function RoomModal({
     return () => clearInterval(interval);
   }, [isOpen, currentRoom?.id, viewState, onStartRoomExam, onClose]);
 
+  const copyRoomCode = () => {
+    if (!currentRoom) return;
+    navigator.clipboard.writeText(currentRoom.id);
+    setIsCopied(true);
+    showNotice(`Kode room ${currentRoom.id} disalin! Kirim ke temanmu.`);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const copyRoomLink = () => {
+    if (!currentRoom) return;
+    const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/?room=${currentRoom.id}` : `/?room=${currentRoom.id}`;
+    const shareText = `Yuk tanding kuis bareng di Tanka! Klik link ini untuk langsung masuk:\n${shareUrl}\n(Kode Room: ${currentRoom.id})`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareText);
+      setIsCopiedLink(true);
+      showNotice(`Tautan undangan Room ${currentRoom.id} disalin! Kirim ke WhatsApp/Telegram teman.`);
+      setTimeout(() => setIsCopiedLink(false), 2500);
+    }
+  };
+
+  const shareRoomNative = async () => {
+    if (!currentRoom) return;
+    const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/?room=${currentRoom.id}` : `/?room=${currentRoom.id}`;
+    const shareText = `Yuk tanding kuis bareng di Tanka! Klik tautan ini untuk langsung masuk:`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Tanka Study Room: ${currentRoom.title || currentRoom.id}`,
+          text: shareText,
+          url: shareUrl
+        });
+        showNotice("Tautan berhasil dibagikan!");
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          copyRoomLink();
+        }
+      }
+    } else {
+      copyRoomLink();
+    }
+  };
+
+  const handleGuestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanName = guestName.trim() || "Teman Belajar";
+    setIsGuestJoining(true);
+    try {
+      if (onQuickRegisterGuest) {
+        const newUser = await onQuickRegisterGuest(cleanName);
+        if (newUser && initialRoomId) {
+          const res = await fetch(`/api/rooms/${initialRoomId}/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: newUser.id,
+              userName: newUser.name || newUser.username,
+              schoolClass: newUser.school_class || "Kelas XII",
+              avatarColor: newUser.avatar_color || "#10b981"
+            })
+          });
+          const data = await res.json();
+          if (res.ok && data.room) {
+            setCurrentRoom(data.room);
+            setParticipants(data.participants || []);
+            if (data.questions) setQuestions(data.questions);
+            setViewState("lobby");
+            showNotice(`Selamat bergabung ke Room ${initialRoomId}!`);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Guest submit failed:", err);
+      showNotice("Gagal bergabung sebagai tamu");
+    } finally {
+      setIsGuestJoining(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   if (!currentUser) {
@@ -141,10 +248,9 @@ export function RoomModal({
             backgroundColor: "#161b19",
             color: "#e6ece9",
             borderRadius: 20,
-            maxWidth: 420,
+            maxWidth: 440,
             width: "100%",
             padding: 24,
-            textAlign: "center",
             boxShadow: "0 25px 60px rgba(0,0,0,0.55)",
             border: "1.5px solid #2a3430"
           }}
@@ -164,43 +270,88 @@ export function RoomModal({
           >
             <Swords size={26} />
           </div>
-          <h3 style={{ margin: "0 0 6px", fontSize: 17, fontWeight: 700 }}>Masuk Akun Diperlukan</h3>
-          <p style={{ margin: "0 0 20px", fontSize: 13, color: "#8a9691" }}>
-            Kamu harus masuk atau membuat akun terlebih dahulu untuk membuat atau bergabung ke room kompetisi kuis.
+          <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 800, textAlign: "center" }}>
+            {initialRoomId ? `Undangan Room: ${initialRoomId}` : "Masuk Arena Multiplayer"}
+          </h3>
+          <p style={{ margin: "0 0 18px", fontSize: 13, color: "#8a9691", textAlign: "center", lineHeight: 1.5 }}>
+            {initialRoomId 
+              ? "Temanmu mengundangmu ikut kuis bersama! Cukup masukkan nama panggilanmu untuk langsung bertanding:"
+              : "Masukkan nama panggilanmu untuk langsung bertanding kuis bersama teman tanpa ribet:"}
           </p>
-          <div style={{ display: "flex", gap: 10 }}>
+
+          <form onSubmit={handleGuestSubmit} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            <input
+              type="text"
+              placeholder="Ketik nama panggilanmu (contoh: Nadine / Glen)..."
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              autoFocus
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                borderRadius: 10,
+                backgroundColor: "#202824",
+                border: "1.5px solid #303c36",
+                color: "#ffffff",
+                fontSize: 14,
+                outline: "none",
+                boxSizing: "border-box"
+              }}
+            />
             <button
+              type="submit"
+              disabled={isGuestJoining}
+              style={{
+                width: "100%",
+                padding: "12px 0",
+                borderRadius: 10,
+                backgroundColor: "#c8f064",
+                color: "#161b19",
+                border: "none",
+                fontWeight: 800,
+                fontSize: 14,
+                cursor: isGuestJoining ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8
+              }}
+            >
+              <span>{isGuestJoining ? "Menyiapkan Arena..." : "Langsung Masuk & Bertanding 🚀"}</span>
+            </button>
+          </form>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 14, borderTop: "1px solid #252e2a" }}>
+            <button
+              type="button"
               onClick={onClose}
               style={{
-                flex: 1,
-                padding: "10px 0",
-                borderRadius: 8,
-                backgroundColor: "#202824",
-                border: "1px solid #303c36",
-                color: "#a1ada8",
-                fontWeight: 600,
+                background: "none",
+                border: "none",
+                color: "#8a9691",
+                fontSize: 12,
                 cursor: "pointer"
               }}
             >
-              Batal
+              Tutup
             </button>
             <button
+              type="button"
               onClick={() => {
                 onClose();
                 onOpenAuthModal();
               }}
               style={{
-                flex: 1,
-                padding: "10px 0",
-                borderRadius: 8,
-                backgroundColor: "#c8f064",
+                background: "none",
                 border: "none",
-                color: "#161b19",
+                color: "#c8f064",
+                fontSize: 12,
                 fontWeight: 700,
-                cursor: "pointer"
+                cursor: "pointer",
+                textDecoration: "underline"
               }}
             >
-              Masuk / Daftar
+              Sudah punya akun? Masuk
             </button>
           </div>
         </div>
@@ -364,14 +515,6 @@ export function RoomModal({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const copyRoomCode = () => {
-    if (!currentRoom) return;
-    navigator.clipboard.writeText(currentRoom.id);
-    setIsCopied(true);
-    showNotice(`Kode room ${currentRoom.id} disalin! Kirim ke temanmu.`);
-    setTimeout(() => setIsCopied(false), 2000);
   };
 
   return (
@@ -622,43 +765,122 @@ export function RoomModal({
           {/* VIEW: LOBBY */}
           {viewState === "lobby" && currentRoom && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {/* Invite Code Box */}
+              {/* Room Code & Direct Invite Link Box */}
               <div
                 style={{
                   backgroundColor: "#1e2823",
                   border: "1.5px dashed #3a4c42",
                   borderRadius: 14,
-                  padding: "14px 18px",
+                  padding: "16px 18px",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between"
+                  flexDirection: "column",
+                  gap: 12
                 }}
               >
-                <div>
-                  <span style={{ fontSize: 11, color: "#8a9691", fontWeight: 600 }}>KODE ROOM UNDANGAN:</span>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#c8f064", letterSpacing: 3, fontFamily: "'DM Mono', monospace" }}>
-                    {currentRoom.id}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                  <div>
+                    <span style={{ fontSize: 11, color: "#8a9691", fontWeight: 700, letterSpacing: "0.05em" }}>
+                      KODE ROOM UNDANGAN:
+                    </span>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: "#c8f064", letterSpacing: 3, fontFamily: "'DM Mono', monospace" }}>
+                      {currentRoom.id}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={copyRoomCode}
+                    style={{
+                      backgroundColor: isCopied ? "#22c55e" : "#2a3932",
+                      color: isCopied ? "#ffffff" : "#c8f064",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    {isCopied ? <Check size={14} /> : <Copy size={14} />}
+                    {isCopied ? "Kode Tersalin!" : "Salin Kode"}
+                  </button>
+                </div>
+
+                {/* Direct Link Preview */}
+                <div style={{
+                  padding: "10px 12px",
+                  backgroundColor: "#161b19",
+                  borderRadius: 8,
+                  border: "1px dashed #2a3932",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 8,
+                  flexWrap: "wrap"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <Link2 size={14} color="#8a9691" style={{ flexShrink: 0 }} />
+                    <span style={{
+                      fontSize: 12,
+                      color: "#cbd5e1",
+                      fontFamily: "'DM Mono', monospace",
+                      wordBreak: "break-all"
+                    }}>
+                      {typeof window !== "undefined" ? `${window.location.origin}/?room=${currentRoom.id}` : `/?room=${currentRoom.id}`}
+                    </span>
                   </div>
                 </div>
-                <button
-                  onClick={copyRoomCode}
-                  style={{
-                    backgroundColor: isCopied ? "#22c55e" : "#2a3932",
-                    color: isCopied ? "#ffffff" : "#c8f064",
-                    border: "none",
-                    borderRadius: 8,
-                    padding: "8px 14px",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                >
-                  {isCopied ? <Check size={14} /> : <Copy size={14} />}
-                  {isCopied ? "Tersalin!" : "Salin Kode"}
-                </button>
+
+                {/* Share Action Buttons */}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={copyRoomLink}
+                    style={{
+                      flex: 1,
+                      backgroundColor: isCopiedLink ? "#22c55e" : "#c8f064",
+                      color: isCopiedLink ? "#ffffff" : "#161b19",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "10px 14px",
+                      fontWeight: 700,
+                      fontSize: 12.5,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
+                    }}
+                  >
+                    {isCopiedLink ? <Check size={15} /> : <Copy size={15} />}
+                    <span>{isCopiedLink ? "Tautan Tersalin! ✓" : "Salin Tautan Undangan"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={shareRoomNative}
+                    style={{
+                      backgroundColor: "#2a3932",
+                      color: "#ffffff",
+                      border: "1px solid #3d5248",
+                      borderRadius: 8,
+                      padding: "10px 14px",
+                      fontWeight: 700,
+                      fontSize: 12.5,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Share2 size={15} color="#c8f064" />
+                    <span>Bagikan (WA / Telegram)</span>
+                  </button>
+                </div>
               </div>
 
               {/* Participants List */}

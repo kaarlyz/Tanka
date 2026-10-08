@@ -168,18 +168,29 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
     if (isMathDomain) {
       console.log(`[topics] Topik Matematika terdeteksi ("${title}"). Bypass mode web research untuk mencegah halusinasi & noise teks; menggunakan Pure First-Principles AI.`);
       
-      const mathPrompt = `Anda adalah pakar kurikulum matematika SMA/UTBK (Kurikulum Merdeka).
+      const mathPrompt = `Anda adalah Master Tutor Matematika SMA/UTBK Indonesia (Kurikulum Merdeka).
 Tugas: Buatkan teks materi fondasi kanonikal untuk topik: "${title}" (${effectiveSubject}) jenjang ${qIntel.jenjang || "SMA"}.
 
-SYARAT MUTLAK (MATEMATIKA EKSAK & ANTI-SLOP):
-1. PETA CAKUPAN LENGKAP: Bedah seluruh pilar/cabang topik ini secara menyeluruh di awal.
-2. DEFINISI PADAT & PRESISI: Definisi konsep hanya 1-2 kalimat to-the-point tanpa dongeng bertele-tele.
-3. TABEL PEMETAAN RUMUS LENGKAP (KaTeX): Sajikan semua rumus operasional dalam format tabel Markdown rapi dengan notasi KaTeX ($...$ atau $$...$$). Sertakan keterangan variabel dan kondisi batas.
-4. TEOREMA, IDENTITAS, DAN SIFAT OPERASIONAL: Tuliskan sifat-sifat matematis yang berlaku mutlak.
-5. WORKED EXAMPLES (CONTOH PENGERJAAN TAKTIS): Tuliskan 2 contoh soal standar ujian lengkap dengan langkah penurunan aljabar/geometris bertahap (diketahui, ditanya, langkah analitik, kesimpulan).`;
+SYARAT PEDAGOGIS MATEMATIKA UTBK (TAKTIK, RUMUS PADAT, & MUDAH DIPAHAMI):
+1. PETA CAKUPAN MATERI:
+   - Buatkan diagram alur teks/peta cabang materi yang jelas di awal agar siswa tahu posisi bab ini dalam matematika sekolah.
+2. BAHASA TUTOR LUGAS & ANTI-JARGON PERGURUAN TINGGI:
+   - Gunakan terminologi kurikulum SMA/SMP Indonesia (misal: "sifat komutatif/asosiatif/distributif", "lawan bilangan", "nilai mutlak", "titik puncak", "faktor skala").
+   - DILARANG KERAS menggunakan istilah abstrak matematika murni tingkat universitas (seperti: gelanggang, grup, topologi, ruang metrik, magnitudo absolut, pemetaan affine).
+   - Definisi konsep harus 1-2 kalimat ringkas, to the point, dan langsung mengaitkan ke fungsinya.
+3. TABEL PEMETAAN RUMUS LENGKAP (KaTeX):
+   - Sajikan semua rumus operasional dalam format tabel Markdown rapi dengan notasi KaTeX ($...$ atau $$...$$).
+   - Sertakan kolom: "Kapan Digunakan / Syarat Batas" agar siswa tahu kapan harus memilih rumus tersebut.
+4. SIFAT-SIFAT OPERASIONAL & TEOREMA CEPAT:
+   - Tuliskan sifat matematis yang sering jadi kunci pemecahan soal ujian.
+5. WORKED EXAMPLES (DILENGKAPI CATATAN TRIK ALJABAR):
+   - Tuliskan 2 contoh soal standar UTBK/Ujian Sekolah dengan penurunan langkah demi langkah (Diketahui, Ditanya, Langkah Kerja, Kesimpulan).
+   - Di samping setiap langkah aljabar penting, berikan catatan trik singkat (misal: "(Tips: faktorkan koefisien a terlebih dahulu)", "(Perhatian: jika kedua ruas dikali minus, tanda pertidaksamaan berbalik)").
+6. JEBAKAN SOAL (PITFALL):
+   - Tuliskan 1-2 kesalahan fatal yang sering dialami siswa saat menghitung materi ini.`;
 
       const pureMathContent = await callRouter([
-        { role: "system", content: "You are a master mathematics educator. Output dense, formula-rich, KaTeX-formatted pedagogical content without conversational fluff." },
+        { role: "system", content: "You are an elite Indonesian mathematics tutor for high school and UTBK-SNBT. Output dense, formula-rich, KaTeX-formatted pedagogical content that is crisp, intuitive, free of university-level jargon, and without conversational fluff." },
         { role: "user", content: mathPrompt }
       ], model, 0.15, 6000);
 

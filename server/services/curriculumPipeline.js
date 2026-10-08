@@ -332,7 +332,7 @@ PETUNJUK PENULISAN (MODUL PENGEMBANGAN DIRI & REALITA KEHIDUPAN):
   } else if (isMath) {
     prompt = `${NARA_GLOBAL_PERSONA}
 
-Tugas Anda: Susun materi pembelajaran MATEMATIKA EKSAK kanonikal berstandar tinggi untuk siswa jenjang ${jenjang} (Kurikulum Nasional / Persiapan UTBK-SNBT).
+Tugas Anda: Susun materi pembelajaran MATEMATIKA EKSAK kanonikal berstandar Master Tutor UTBK untuk siswa jenjang ${jenjang} (Kurikulum Nasional / Persiapan UTBK-SNBT).
 
 Judul: "${outline.title}"
 Target Jenjang: ${jenjang}
@@ -347,27 +347,28 @@ Bahan Fondasi Eksak:
 ${sourceContext.slice(0, 45000)}
 """
 
-PETUNJUK PENULISAN MATEMATIKA EKSAK (FORMULA-DENSE, OPERASIONAL, & BEBAS FLUFF):
+PETUNJUK PENULISAN MATEMATIKA TAKTIS (FORMULA-DENSE, MUDAH DIPAHAMI, & BEBAS JARGON UNIVERSITAS):
 1. Mulai dengan judul markdown: # ${outline.title}
-2. Tuliskan ringkasan eksekutif dokumen dalam blockquote: > [Ringkasan padat 2-3 kalimat cakupan materi & kompetensi hitung/aljabar yang ditargetkan]
+2. Tuliskan ringkasan modul dalam blockquote: > [Ringkasan taktis 2-3 kalimat cakupan materi & kompetensi hitung/aljabar yang ditargetkan]
 3. Tulis pembatas horizontal sebelum bab pertama: ---
-4. MANDAT MUTLAK MATEMATIKA (BANYAK RUMUS, DEFINISI SEDIKIT, BEBAS CERITA BASA-BASI):
-   - DILARANG mendongeng atau menulis paragraf analogi kehidupan sehari-hari bertele-tele (bukan pelajaran bahasa atau sastra). Cukup 1 kalimat pengantar visual/grafik yang ringkas jika perlu.
-   - DEFINISI WAJIB SANGAT PADAT: Tulis definisi konsep secara atomik (maksimal 1-2 kalimat presisi).
+4. GAYA BAHASA & PEDAGOGI (LEVEL TUTOR UTBK/SMA TERBAIK):
+   - DILARANG mendongeng atau menulis paragraf analogi kehidupan sehari-hari bertele-tele (bukan pelajaran bahasa atau cerpen). Cukup 1 kalimat pengantar intuisi visual/geometris jika perlu.
+   - DILARANG menggunakan istilah abstrak matematika universitas (seperti: gelanggang komutatif, grup, ruang metrik, isomorfisme, magnitudo absolut, pemetaan affine). Gunakan istilah baku SMA: "sifat komutatif/asosiatif/distributif", "lawan bilangan / negatif", "nilai mutlak", "titik balik", "faktor skala".
+   - DEFINISI WAJIB SANGAT PADAT: Tulis definisi konsep secara atomik (maksimal 1-2 kalimat presisi yang mudah dibayangkan).
    - LEBIH BANYAK FORMULA & TABEL RUMUS KaTeX: Setiap sub-bab WAJIB memuat tabel Markdown komprehensif berisi seluruh rumus operasional, matriks, bentuk umum, dan kondisi batas dalam format KaTeX ($...$ atau $$...$$).
-   - TEOREMA & SIFAT MATEMATIS: Paparkan seluruh sifat aljabar/geometri yang berlaku mutlak beserta penurunan identitasnya.
+   - KAPAN RUMUS DIPAKAI: Jelaskan kapan menggunakan rumus A vs rumus B secara praktis.
 5. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab):
    Setiap sub-bab (### [Nama Sub-Materi / Konsep]) WAJIB memuat urutan terstruktur ini:
-   a. **Definisi Baku & Notasi:**
+   a. **Definisi Baku & Intuisi Singkat:**
       > 📖 **Definisi:** [Definisi baku padat 1-2 kalimat tanpa dongeng]
    b. **Tabel Formula & Notasi Operasional (KaTeX):**
       Sajikan tabel Markdown komprehensif berisi semua rumus, pemetaan variabel, dan syarat batas.
-   c. **Sifat Matematis, Teorema, & Identitas Aljabar:**
+   c. **Sifat Matematis, Teorema, & Trik Aljabar:**
       Daftar bernomor sifat-sifat matematis operasional beserta rumus KaTeX.
    d. **Contoh Soal Taktis & Bedah Penurunan Analitik (Worked Example):**
       Sajikan 1 contoh soal representatif tipe UTBK/Ujian Sekolah dengan langkah penurunan bertahap:
       - *Diketahui & Ditanya:*
-      - *Langkah Analitik & Substitusi:* (setiap baris langkah hitung ditulis dengan notasi KaTeX)
+      - *Langkah Analitik & Substitusi:* (setiap baris langkah hitung ditulis dengan notasi KaTeX, sertakan catatan trik manipulasi aljabar di samping langkah)
       - *Kesimpulan:*
    e. **Peringatan Salah Kaprah (Pitfall):**
       > ⚠️ **Jebakan Soal (Pitfall):** [Miskonsepsi hitung/tanda minus/kondisi syarat batas yang sering membuat siswa salah di ujian]

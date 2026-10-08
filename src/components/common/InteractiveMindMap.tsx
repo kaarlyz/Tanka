@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { 
   ZoomIn, ZoomOut, RotateCcw, Layers, X, Sparkles, 
-  Compass, ArrowDown, ChevronRight, CheckCircle2, BookOpen
+  Compass, ChevronRight, Check, ArrowDown
 } from "lucide-react";
 
 export interface MindMapColor {
@@ -11,13 +11,36 @@ export interface MindMapColor {
   text: string;
 }
 
-export interface MindMapNode {
+export interface MindMapConcept {
   id: string;
   title: string;
+  conceptNumber: string;
   desc?: string;
+}
+
+export interface MindMapSubModule {
+  id: string;
+  title: string;
+  subNumber: string;
+  desc?: string;
+  children: MindMapConcept[];
+}
+
+export interface MindMapStage {
+  id: string;
+  title: string;
+  shortTitle: string;
+  stageNumber: number;
+  desc?: string;
+  children: MindMapSubModule[];
+  color: MindMapColor;
+}
+
+export interface MindMapTree {
+  id: string;
+  title: string;
   color?: MindMapColor;
-  children?: MindMapNode[];
-  stageNumber?: number;
+  children: MindMapStage[];
 }
 
 interface LayoutItem {
@@ -49,32 +72,29 @@ interface Connection {
 }
 
 const PALETTE: MindMapColor[] = [
-  { primary: "#10b981", light: "#ecfdf5", border: "#a7f3d0", text: "#065f46" },
-  { primary: "#3b82f6", light: "#eff6ff", border: "#bfdbfe", text: "#1e40af" },
-  { primary: "#8b5cf6", light: "#f5f3ff", border: "#ddd6fe", text: "#5b21b6" },
-  { primary: "#f59e0b", light: "#fffbeb", border: "#fde68a", text: "#92400e" },
-  { primary: "#ec4899", light: "#fdf2f8", border: "#fbcfe8", text: "#9d174d" },
-  { primary: "#14b8a6", light: "#f0fdfa", border: "#99f6e4", text: "#115e59" },
-  { primary: "#6366f1", light: "#eef2ff", border: "#c7d2fe", text: "#3730a3" },
-  { primary: "#0ea5e9", light: "#f0f9ff", border: "#bae6fd", text: "#0369a1" },
-  { primary: "#eab308", light: "#fefce8", border: "#fef08a", text: "#854d0e" },
+  { primary: "#18221f", light: "#f4f6f3", border: "#d5ded3", text: "#18221f" },
+  { primary: "#2563eb", light: "#eff6ff", border: "#bfdbfe", text: "#1e40af" },
+  { primary: "#059669", light: "#ecfdf5", border: "#a7f3d0", text: "#065f46" },
+  { primary: "#d97706", light: "#fffbeb", border: "#fde68a", text: "#92400e" },
+  { primary: "#7c3aed", light: "#f5f3ff", border: "#ddd6fe", text: "#5b21b6" },
+  { primary: "#0891b2", light: "#ecfeff", border: "#a5f3fc", text: "#155e75" },
 ];
 
 /**
  * Robust & Pedagogy-Aware Markdown to Mind Map Parser
  * Excludes quiz questions, worked examples, steps, and options.
- * Organizes by: Root -> Chapters (Stages) -> Sub-topics -> Core Concepts with Definitions.
+ * Organizes cleanly into: Root -> Stages (Chapters) -> Sub-Modules -> Atomic Concepts.
  */
-export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: string): MindMapNode {
+export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: string): MindMapTree {
   if (!markdown || !markdown.trim()) {
     return { id: "root", title: fallbackTitle || "Peta Konsep", children: [] };
   }
 
   const lines = markdown.split("\n");
   let rootTitle = fallbackTitle || "Peta Konsep Materi";
-  const branches: MindMapNode[] = [];
-  let currentBranch: MindMapNode | null = null;
-  let currentSub: MindMapNode | null = null;
+  const stages: MindMapStage[] = [];
+  let currentStage: MindMapStage | null = null;
+  let currentSub: MindMapSubModule | null = null;
   let inQuizOrWorkedExample = false;
 
   for (let rawLine of lines) {
@@ -93,16 +113,19 @@ export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: stri
     if (line.startsWith("## ")) {
       inQuizOrWorkedExample = false;
       const title = line.replace(/^##\s+/, "").replace(/[*_#]/g, "").trim();
-      const stageNumber = branches.length + 1;
-      const color = PALETTE[branches.length % PALETTE.length];
-      currentBranch = {
-        id: "b_" + branches.length,
+      const stageNumber = stages.length + 1;
+      const shortTitle = title.replace(/^Bab\s+\d+:\s*/i, "").trim();
+      const color = PALETTE[(stageNumber - 1) % PALETTE.length];
+      
+      currentStage = {
+        id: "stage_" + stageNumber,
         title,
-        color,
+        shortTitle,
         stageNumber,
+        color,
         children: []
       };
-      branches.push(currentBranch);
+      stages.push(currentStage);
       currentSub = null;
       continue;
     }
@@ -111,24 +134,25 @@ export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: stri
     if (line.startsWith("### ")) {
       inQuizOrWorkedExample = false;
       const title = line.replace(/^###\s+/, "").replace(/[*_#]/g, "").trim();
-      if (!currentBranch) {
-        currentBranch = {
-          id: "b_0",
-          title: "Fondasi Materi",
-          color: PALETTE[0],
+      if (!currentStage) {
+        currentStage = {
+          id: "stage_1",
+          title: "Bab 1: Fondasi Materi",
+          shortTitle: "Fondasi Materi",
           stageNumber: 1,
+          color: PALETTE[0],
           children: []
         };
-        branches.push(currentBranch);
+        stages.push(currentStage);
       }
+      const subIndex = currentStage.children.length + 1;
       currentSub = {
-        id: `${currentBranch.id}_s${currentBranch.children?.length || 0}`,
+        id: `${currentStage.id}_s${subIndex}`,
         title,
-        color: currentBranch.color,
+        subNumber: `${currentStage.stageNumber}.${subIndex}`,
         children: []
       };
-      currentBranch.children = currentBranch.children || [];
-      currentBranch.children.push(currentSub);
+      currentStage.children.push(currentSub);
       continue;
     }
 
@@ -176,18 +200,19 @@ export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: stri
         .replace(/.*?\*\*Definisi Baku:\*\*\s*/, "")
         .replace(/[*_>]/g, "")
         .trim();
-      currentSub.desc = defText.slice(0, 200);
+      currentSub.desc = defText.slice(0, 260);
       continue;
     }
 
     // In Practical Growth mode: capture section headers like #### Filter Realita, #### Actionable Playbook
     if (line.startsWith("#### ") && !inQuizOrWorkedExample) {
       const subHeader = line.replace(/^####\s+/, "").replace(/[*_#]/g, "").trim();
-      if (currentSub && (currentSub.children?.length || 0) < 5) {
-        currentSub.children = currentSub.children || [];
+      if (currentSub && currentSub.children.length < 5) {
+        const cIndex = currentSub.children.length + 1;
         currentSub.children.push({
-          id: `leaf_${Math.random().toString(36).slice(2, 8)}`,
+          id: `concept_${Math.random().toString(36).slice(2, 8)}`,
           title: subHeader,
+          conceptNumber: `${currentSub.subNumber}.${cIndex}`,
           desc: "Poin pembelajaran esensial dan filter realita dari topik ini."
         });
       }
@@ -216,21 +241,16 @@ export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: stri
         continue;
       }
 
-      const leaf: MindMapNode = {
-        id: "leaf_" + Math.random().toString(36).slice(2, 8),
-        title: conceptName,
-        desc: conceptDesc.slice(0, 220)
-      };
-
       if (currentSub) {
-        if ((currentSub.children?.length || 0) < 6) {
-          currentSub.children = currentSub.children || [];
+        const cIndex = currentSub.children.length + 1;
+        const leaf: MindMapConcept = {
+          id: "concept_" + Math.random().toString(36).slice(2, 8),
+          title: conceptName,
+          conceptNumber: `${currentSub.subNumber}.${cIndex}`,
+          desc: conceptDesc.slice(0, 280)
+        };
+        if (currentSub.children.length < 6) {
           currentSub.children.push(leaf);
-        }
-      } else if (currentBranch) {
-        if ((currentBranch.children?.length || 0) < 6) {
-          currentBranch.children = currentBranch.children || [];
-          currentBranch.children.push(leaf);
         }
       }
       continue;
@@ -241,10 +261,7 @@ export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: stri
     id: "root",
     title: rootTitle,
     color: { primary: "#18221f", light: "#f8faf6", border: "#34413c", text: "#ffffff" },
-    children: branches.length > 0 ? branches : [
-      { id: "b_0", title: "Ringkasan Konsep", color: PALETTE[0], stageNumber: 1, children: [] },
-      { id: "b_1", title: "Poin-Poin Utama", color: PALETTE[1], stageNumber: 2, children: [] }
-    ]
+    children: stages
   };
 }
 
@@ -261,18 +278,19 @@ export function InteractiveMindMap({
   onAskNara,
   height = "640px"
 }: InteractiveMindMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  // View Mode: "flow" (structured sequential roadmap) or "mindmap" (spatial canvas)
+  const [viewMode, setViewMode] = useState<"flow" | "mindmap">("flow");
 
-  // View Mode: "mindmap" (radial/two-sided) or "flow" (step-by-step roadmap sequence)
-  const [viewMode, setViewMode] = useState<"mindmap" | "flow">("mindmap");
+  // Track completed stages locally for user gamification / progress
+  const [completedStages, setCompletedStages] = useState<Record<string, boolean>>({});
 
-  // Transform State (Pan & Zoom)
+  // Transform State for Mind Map Canvas (Pan & Zoom)
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  // Node collapse and inspection state
+  // Node collapse and inspection state in Mind Map
   const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({});
   const [selectedNode, setSelectedNode] = useState<{
     id: string;
@@ -286,7 +304,23 @@ export function InteractiveMindMap({
   // Parse markdown into pedagogical tree
   const tree = useMemo(() => parseMarkdownToMindMapTree(markdown, title), [markdown, title]);
 
-  // Toggle Collapse
+  // Total atomic concepts across all stages
+  const totalConcepts = useMemo(() => {
+    let count = 0;
+    tree.children.forEach((st) => {
+      st.children.forEach((sub) => {
+        count += sub.children.length;
+      });
+    });
+    return count;
+  }, [tree]);
+
+  // Toggle stage completion in Roadmap flow
+  const toggleStageDone = useCallback((stageId: string) => {
+    setCompletedStages((prev) => ({ ...prev, [stageId]: !prev[stageId] }));
+  }, []);
+
+  // Mind map collapse toggles
   const toggleCollapse = useCallback((id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setCollapsedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -298,19 +332,15 @@ export function InteractiveMindMap({
 
   const collapseAll = useCallback(() => {
     const newCollapsed: Record<string, boolean> = {};
-    if (tree.children) {
-      tree.children.forEach((branch) => {
-        if (branch.children && branch.children.length > 0) {
-          branch.children.forEach((sub) => {
-            newCollapsed[sub.id] = true;
-          });
-        }
+    tree.children.forEach((stage) => {
+      stage.children.forEach((sub) => {
+        newCollapsed[sub.id] = true;
       });
-    }
+    });
     setCollapsedNodes(newCollapsed);
   }, [tree]);
 
-  // Calculate layout for Two-Sided Mind Map Canvas
+  // Layout calculation for Mind Map Canvas
   const { nodes, connections } = useMemo(() => {
     const items: LayoutItem[] = [];
     const conns: Connection[] = [];
@@ -326,40 +356,42 @@ export function InteractiveMindMap({
       depth: 0,
       side: "root",
       color: tree.color || { primary: "#18221f", light: "#f8faf6", border: "#34413c", text: "#ffffff" },
-      hasChildren: (tree.children?.length || 0) > 0,
+      hasChildren: tree.children.length > 0,
       isCollapsed: false
     };
     items.push(rootItem);
 
-    const children = tree.children || [];
-    if (children.length === 0) return { nodes: items, connections: conns };
+    if (tree.children.length === 0) return { nodes: items, connections: conns };
 
-    const rightBranches: MindMapNode[] = [];
-    const leftBranches: MindMapNode[] = [];
-    children.forEach((c, idx) => {
+    const rightBranches: MindMapStage[] = [];
+    const leftBranches: MindMapStage[] = [];
+    tree.children.forEach((c, idx) => {
       if (idx % 2 === 0) rightBranches.push(c);
       else leftBranches.push(c);
     });
 
-    const getSubtreeHeight = (node: MindMapNode): number => {
-      if (collapsedNodes[node.id] || !node.children || node.children.length === 0) {
-        return 56;
-      }
-      return node.children.reduce((acc, child) => acc + getSubtreeHeight(child), 0);
+    const getStageHeight = (stage: MindMapStage): number => {
+      if (collapsedNodes[stage.id] || stage.children.length === 0) return 56;
+      let h = 0;
+      stage.children.forEach((sub) => {
+        if (collapsedNodes[sub.id] || sub.children.length === 0) h += 46;
+        else h += 46 + sub.children.length * 34;
+      });
+      return Math.max(56, h);
     };
 
-    const layoutSide = (branches: MindMapNode[], side: "left" | "right") => {
-      const totalSideHeight = branches.reduce((acc, b) => acc + getSubtreeHeight(b), 0);
+    const layoutSide = (branches: MindMapStage[], side: "left" | "right") => {
+      const totalSideHeight = branches.reduce((acc, b) => acc + getStageHeight(b), 0);
       let currentY = -totalSideHeight / 2;
 
       branches.forEach((b) => {
-        const bHeight = getSubtreeHeight(b);
+        const bHeight = getStageHeight(b);
         const bCenterY = currentY + bHeight / 2;
-        const bWidth = Math.min(230, Math.max(140, b.title.length * 8 + 36));
+        const bWidth = Math.min(240, Math.max(150, b.title.length * 7.5 + 36));
         const bX = side === "right" ? 180 : -180 - bWidth;
         const bY = bCenterY - 22;
 
-        const branchItem: LayoutItem = {
+        items.push({
           id: b.id,
           title: b.title,
           desc: b.desc,
@@ -371,13 +403,12 @@ export function InteractiveMindMap({
           depth: 1,
           side,
           color: b.color || PALETTE[0],
-          hasChildren: (b.children?.length || 0) > 0,
+          hasChildren: b.children.length > 0,
           isCollapsed: !!collapsedNodes[b.id],
           parentId: "root",
           parentX: side === "right" ? rootWidth / 2 : -rootWidth / 2,
           parentY: 0
-        };
-        items.push(branchItem);
+        });
 
         conns.push({
           id: `root->${b.id}`,
@@ -385,22 +416,21 @@ export function InteractiveMindMap({
           fromY: 0,
           toX: side === "right" ? bX : bX + bWidth,
           toY: bY + 22,
-          color: b.color?.primary || "#10b981"
+          color: b.color?.primary || "#18221f"
         });
 
-        // Sub-topics
-        if (!collapsedNodes[b.id] && b.children && b.children.length > 0) {
-          const subHeight = b.children.reduce((acc, sub) => acc + getSubtreeHeight(sub), 0);
-          let subY = bCenterY - subHeight / 2;
+        // Sub-modules
+        if (!collapsedNodes[b.id] && b.children.length > 0) {
+          let subY = bCenterY - bHeight / 2 + 10;
 
           b.children.forEach((sub) => {
-            const leafHeight = getSubtreeHeight(sub);
-            const subCenterY = subY + leafHeight / 2;
-            const subWidth = Math.min(210, Math.max(120, sub.title.length * 7.5 + 30));
+            const subUnitHeight = 44 + (collapsedNodes[sub.id] ? 0 : sub.children.length * 34);
+            const subCenterY = subY + subUnitHeight / 2;
+            const subWidth = Math.min(220, Math.max(130, sub.title.length * 7 + 30));
             const subX = side === "right" ? bX + bWidth + 60 : bX - 60 - subWidth;
             const itemY = subCenterY - 18;
 
-            const subItem: LayoutItem = {
+            items.push({
               id: sub.id,
               title: sub.title,
               desc: sub.desc,
@@ -411,13 +441,12 @@ export function InteractiveMindMap({
               depth: 2,
               side,
               color: b.color || PALETTE[0],
-              hasChildren: (sub.children?.length || 0) > 0,
+              hasChildren: sub.children.length > 0,
               isCollapsed: !!collapsedNodes[sub.id],
               parentId: b.id,
               parentX: side === "right" ? bX + bWidth : bX,
               parentY: bY + 22
-            };
-            items.push(subItem);
+            });
 
             conns.push({
               id: `${b.id}->${sub.id}`,
@@ -425,14 +454,14 @@ export function InteractiveMindMap({
               fromY: bY + 22,
               toX: side === "right" ? subX : subX + subWidth,
               toY: itemY + 19,
-              color: b.color?.primary || "#10b981"
+              color: b.color?.primary || "#18221f"
             });
 
-            // Core concept leaves
-            if (!collapsedNodes[sub.id] && sub.children && sub.children.length > 0) {
-              let leafY = subCenterY - (sub.children.length * 36) / 2;
+            // Atomic concepts
+            if (!collapsedNodes[sub.id] && sub.children.length > 0) {
+              let leafY = subCenterY - (sub.children.length * 34) / 2;
               sub.children.forEach((leaf) => {
-                const lWidth = Math.min(190, Math.max(100, leaf.title.length * 7 + 24));
+                const lWidth = Math.min(190, Math.max(110, leaf.title.length * 7 + 24));
                 const lX = side === "right" ? subX + subWidth + 50 : subX - 50 - lWidth;
                 const lItemY = leafY + 2;
 
@@ -443,7 +472,7 @@ export function InteractiveMindMap({
                   x: lX,
                   y: lItemY,
                   width: lWidth,
-                  height: 32,
+                  height: 30,
                   depth: 3,
                   side,
                   color: b.color || PALETTE[0],
@@ -459,15 +488,15 @@ export function InteractiveMindMap({
                   fromX: side === "right" ? subX + subWidth : subX,
                   fromY: itemY + 19,
                   toX: side === "right" ? lX : lX + lWidth,
-                  toY: lItemY + 16,
-                  color: b.color?.primary || "#10b981"
+                  toY: lItemY + 15,
+                  color: b.color?.border || "#94a3b8"
                 });
 
-                leafY += 36;
+                leafY += 34;
               });
             }
 
-            subY += leafHeight;
+            subY += subUnitHeight;
           });
         }
 
@@ -487,7 +516,8 @@ export function InteractiveMindMap({
     setPan({ x: 0, y: 0 });
   }, []);
 
-  // Touch & Pinch gestures for mobile
+  // Canvas container ref (ONLY for Mind Map mode)
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const panRef = useRef(pan);
   panRef.current = pan;
   const zoomRef = useRef(zoom);
@@ -495,8 +525,10 @@ export function InteractiveMindMap({
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const pinchStartRef = useRef<{ dist: number; zoom: number } | null>(null);
 
+  // Attach touch pan/zoom ONLY when in "mindmap" mode
   useEffect(() => {
-    const el = containerRef.current;
+    if (viewMode !== "mindmap") return;
+    const el = canvasContainerRef.current;
     if (!el) return;
 
     const onTouchStart = (e: TouchEvent) => {
@@ -514,7 +546,7 @@ export function InteractiveMindMap({
         );
         pinchStartRef.current = { dist, zoom: zoomRef.current };
         touchStartRef.current = null;
-        setIsDragging(false);
+        setIsDragging(true);
       }
     };
 
@@ -561,16 +593,17 @@ export function InteractiveMindMap({
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, []);
+  }, [viewMode]);
 
-  // Desktop Mouse Pan interaction handlers
+  // Desktop Mouse Handlers for Mind Map
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (viewMode !== "mindmap") return;
     setIsDragging(true);
     setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
+    if (viewMode !== "mindmap" || !isDragging) return;
     setPan({
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y
@@ -578,11 +611,11 @@ export function InteractiveMindMap({
   };
 
   const handleMouseUp = () => {
-    setIsDragging(false);
+    if (viewMode === "mindmap") setIsDragging(false);
   };
 
-  // Wheel zoom
   const handleWheel = (e: React.WheelEvent) => {
+    if (viewMode !== "mindmap") return;
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.08 : 0.92;
     setZoom((prev) => Math.min(2.2, Math.max(0.35, prev * factor)));
@@ -590,120 +623,115 @@ export function InteractiveMindMap({
 
   return (
     <div
-      ref={containerRef}
       style={{
         position: "relative",
         width: "100%",
-        height,
-        backgroundColor: "#f8faf6",
-        backgroundImage: "radial-gradient(#dce3d8 1px, transparent 1px)",
-        backgroundSize: "24px 24px",
-        borderRadius: 14,
-        border: "1px solid #dce2da",
-        overflow: "hidden",
-        userSelect: "none"
+        backgroundColor: "#ffffff",
+        borderRadius: 12,
+        border: "1px solid #e4e4e7",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+        overflow: "hidden"
       }}
     >
-      {/* Top Bar: Mode Switch & Controls */}
+      {/* 1. Header Toolbar (Editorial & Monospace) */}
       <div
         style={{
-          position: "absolute",
-          top: 12,
-          left: 12,
-          right: 12,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          gap: 8,
-          zIndex: 20,
-          pointerEvents: "none"
+          padding: "10px 16px",
+          backgroundColor: "#fafafa",
+          borderBottom: "1px solid #e4e4e7",
+          gap: 12,
+          flexWrap: "wrap"
         }}
       >
-        {/* Left: View Mode Toggle Segmented Control */}
-        <div
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.94)",
-            backdropFilter: "blur(6px)",
-            border: "1px solid #dce2da",
-            borderRadius: 10,
-            padding: "3px",
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-            pointerEvents: "auto"
-          }}
-        >
-          <button
-            onClick={() => setViewMode("mindmap")}
+        {/* Left: View Mode Segmented Control */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
             style={{
-              padding: "5px 10px",
-              borderRadius: 7,
-              border: "none",
-              backgroundColor: viewMode === "mindmap" ? "#18221f" : "transparent",
-              color: viewMode === "mindmap" ? "#c8f064" : "#45544e",
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: "pointer",
+              backgroundColor: "#f4f4f5",
+              border: "1px solid #e4e4e7",
+              borderRadius: 8,
+              padding: 2,
               display: "flex",
               alignItems: "center",
-              gap: 5,
-              transition: "all 0.15s ease"
+              gap: 2
             }}
           >
-            <Layers size={13} />
-            <span>Peta Konsep</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("flow")}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 6,
+                border: "none",
+                backgroundColor: viewMode === "flow" ? "#18181b" : "transparent",
+                color: viewMode === "flow" ? "#ffffff" : "#52525b",
+                fontSize: 11.5,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                transition: "all 0.15s ease"
+              }}
+            >
+              <Compass size={13} />
+              <span>Alur Belajar (Roadmap)</span>
+            </button>
 
-          <button
-            onClick={() => setViewMode("flow")}
+            <button
+              type="button"
+              onClick={() => setViewMode("mindmap")}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 6,
+                border: "none",
+                backgroundColor: viewMode === "mindmap" ? "#18181b" : "transparent",
+                color: viewMode === "mindmap" ? "#ffffff" : "#52525b",
+                fontSize: 11.5,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                transition: "all 0.15s ease"
+              }}
+            >
+              <Layers size={13} />
+              <span>Peta Konsep (Radial)</span>
+            </button>
+          </div>
+
+          <span
             style={{
-              padding: "5px 10px",
-              borderRadius: 7,
-              border: "none",
-              backgroundColor: viewMode === "flow" ? "#18221f" : "transparent",
-              color: viewMode === "flow" ? "#c8f064" : "#45544e",
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              transition: "all 0.15s ease"
+              fontSize: 10.5,
+              fontFamily: "'DM Mono', monospace",
+              fontWeight: 600,
+              color: "#71717a",
+              textTransform: "uppercase"
             }}
           >
-            <Compass size={13} />
-            <span>Alur Belajar</span>
-          </button>
+            {tree.children.length} Tahap • {totalConcepts} Konsep Atomik
+          </span>
         </div>
 
-        {/* Right: Controls based on active mode */}
-        <div
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.94)",
-            backdropFilter: "blur(6px)",
-            border: "1px solid #dce2da",
-            borderRadius: 10,
-            padding: "3px 6px",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-            pointerEvents: "auto"
-          }}
-        >
+        {/* Right: Actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {viewMode === "mindmap" ? (
             <>
               <button
+                type="button"
                 onClick={handleResetView}
                 title="Posisikan ke tengah layar (Fit View)"
                 style={{
-                  background: "none",
-                  border: "none",
-                  padding: "5px 8px",
+                  background: "#ffffff",
+                  border: "1px solid #e4e4e7",
+                  padding: "4px 8px",
                   borderRadius: 6,
                   cursor: "pointer",
-                  color: "#283912",
+                  color: "#18181b",
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
@@ -711,20 +739,19 @@ export function InteractiveMindMap({
                   fontWeight: 700
                 }}
               >
-                <RotateCcw size={12} />
+                <RotateCcw size={11} />
                 <span>Fit</span>
               </button>
-              <div style={{ width: 1, height: 14, backgroundColor: "#dce2da" }} />
               <button
+                type="button"
                 onClick={expandAll}
-                title="Buka Semua Cabang"
                 style={{
-                  background: "none",
-                  border: "none",
-                  padding: "5px 8px",
+                  background: "#ffffff",
+                  border: "1px solid #e4e4e7",
+                  padding: "4px 8px",
                   borderRadius: 6,
                   cursor: "pointer",
-                  color: "#45544e",
+                  color: "#52525b",
                   fontSize: 11,
                   fontWeight: 700
                 }}
@@ -732,15 +759,15 @@ export function InteractiveMindMap({
                 Buka
               </button>
               <button
+                type="button"
                 onClick={collapseAll}
-                title="Tutup Cabang Luar"
                 style={{
-                  background: "none",
-                  border: "none",
-                  padding: "5px 8px",
+                  background: "#ffffff",
+                  border: "1px solid #e4e4e7",
+                  padding: "4px 8px",
                   borderRadius: 6,
                   cursor: "pointer",
-                  color: "#45544e",
+                  color: "#52525b",
                   fontSize: 11,
                   fontWeight: 700
                 }}
@@ -749,22 +776,537 @@ export function InteractiveMindMap({
               </button>
             </>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 6px", fontSize: 11, fontWeight: 700, color: "#2d3c34" }}>
-              <BookOpen size={13} color="#10b981" />
-              <span>{tree.children?.length || 0} Tahap Materi</span>
-            </div>
+            <span
+              style={{
+                fontSize: 10.5,
+                fontFamily: "'DM Mono', monospace",
+                fontWeight: 600,
+                color: "#166534",
+                backgroundColor: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                padding: "2px 8px",
+                borderRadius: 4
+              }}
+            >
+              Pedagogy Stepper Active
+            </span>
           )}
         </div>
       </div>
 
-      {/* VIEW 1: RADIAL / TWO-SIDED MIND MAP */}
-      {viewMode === "mindmap" ? (
+      {/* 2. MODE A: ALUR BELAJAR BERURUTAN (REAL TIMELINE SPINE & MATURE HIERARCHY) */}
+      {viewMode === "flow" && (
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            cursor: isDragging ? "grabbing" : "grab",
-            touchAction: "none"
+            width: "100%",
+            maxHeight: "820px",
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
+            touchAction: "pan-y",
+            padding: "24px 16px 48px",
+            userSelect: "text",
+            backgroundColor: "#ffffff"
+          }}
+        >
+          <div style={{ maxWidth: 760, margin: "0 auto" }}>
+            {/* Curriculum Header Scope */}
+            <div
+              style={{
+                borderBottom: "1px solid #e4e4e7",
+                paddingBottom: 20,
+                marginBottom: 32
+              }}
+            >
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  color: "#71717a",
+                  marginBottom: 6
+                }}
+              >
+                <span>KURIKULUM KOGNITIF TANKA</span>
+                <span>•</span>
+                <span>URUTAN MATERI LINEAR</span>
+              </div>
+              <h2
+                style={{
+                  margin: "0 0 8px",
+                  fontSize: 21,
+                  fontWeight: 800,
+                  color: "#09090b",
+                  letterSpacing: "-0.02em"
+                }}
+              >
+                {tree.title}
+              </h2>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  color: "#52525b",
+                  lineHeight: 1.55
+                }}
+              >
+                Alur belajar ini disusun berdasarkan prasyarat konseptual. Kuasai setiap tahap secara berurutan agar pemahaman materi tidak terfragmentasi.
+              </p>
+            </div>
+
+            {/* Continuous Vertical Timeline Stepper */}
+            <div style={{ position: "relative", paddingLeft: 46 }}>
+              {/* Unbroken Vertical Timeline Spine running down the left */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 8,
+                  bottom: 24,
+                  left: 17,
+                  width: 2,
+                  backgroundColor: "#e4e4e7",
+                  zIndex: 1
+                }}
+              />
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
+                {tree.children.map((stage, sIdx) => {
+                  const isDone = !!completedStages[stage.id];
+                  const isLast = sIdx === tree.children.length - 1;
+
+                  return (
+                    <div key={stage.id} style={{ position: "relative" }}>
+                      {/* 1. Milestone Node Anchor on the Vertical Spine */}
+                      <div
+                        onClick={() => toggleStageDone(stage.id)}
+                        title={isDone ? "Tandai belum selesai" : "Tandai selesai"}
+                        style={{
+                          position: "absolute",
+                          left: -46,
+                          top: 0,
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          backgroundColor: isDone ? "#059669" : "#18181b",
+                          color: "#ffffff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 13,
+                          fontWeight: 800,
+                          boxShadow: "0 0 0 4px #ffffff, 0 2px 6px rgba(0,0,0,0.12)",
+                          cursor: "pointer",
+                          zIndex: 3,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {isDone ? <Check size={16} strokeWidth={3} /> : `0${stage.stageNumber}`}
+                      </div>
+
+                      {/* 2. Stage Section Header (Open, Mature Editorial Typography - No nested card box!) */}
+                      <div style={{ marginBottom: 16 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            flexWrap: "wrap",
+                            gap: 8
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span
+                              style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 10,
+                                fontWeight: 800,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.08em",
+                                color: isDone ? "#059669" : "#71717a"
+                              }}
+                            >
+                              TAHAP 0{stage.stageNumber} // {isDone ? "TUNTAS" : "FONDASI WAJIB"}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontFamily: "'DM Mono', monospace",
+                                color: "#a1a1aa",
+                                fontWeight: 600
+                              }}
+                            >
+                              • {stage.children.length} Sub-Modul
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleStageDone(stage.id)}
+                            style={{
+                              backgroundColor: isDone ? "#dcfce7" : "#ffffff",
+                              color: isDone ? "#166534" : "#52525b",
+                              border: `1px solid ${isDone ? "#86efac" : "#e4e4e7"}`,
+                              borderRadius: 5,
+                              padding: "3px 9px",
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4
+                            }}
+                          >
+                            {isDone ? <Check size={11} strokeWidth={3} /> : null}
+                            <span>{isDone ? "Selesai" : "Tandai Selesai"}</span>
+                          </button>
+                        </div>
+
+                        <h3
+                          style={{
+                            margin: "4px 0 0",
+                            fontSize: 17,
+                            fontWeight: 800,
+                            color: "#09090b",
+                            letterSpacing: "-0.015em"
+                          }}
+                        >
+                          {stage.shortTitle || stage.title}
+                        </h3>
+                      </div>
+
+                      {/* 3. Sub-modules with Step Branch Dots on the Spine */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                        {stage.children.map((sub, subIdx) => (
+                          <div
+                            key={sub.id}
+                            style={{
+                              position: "relative",
+                              borderLeft: "2px solid #e4e4e7",
+                              paddingLeft: 16,
+                              marginLeft: -10
+                            }}
+                          >
+                            {/* Branch Tick Node connecting left spine */}
+                            <div
+                              style={{
+                                position: "absolute",
+                                left: -6,
+                                top: 8,
+                                width: 10,
+                                height: 10,
+                                borderRadius: "50%",
+                                backgroundColor: "#ffffff",
+                                border: "2px solid #71717a"
+                              }}
+                            />
+
+                            {/* Sub-module Title Bar */}
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: 8,
+                                marginBottom: 6
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
+                                <span
+                                  style={{
+                                    fontFamily: "'DM Mono', monospace",
+                                    fontSize: 10.5,
+                                    fontWeight: 800,
+                                    color: "#09090b"
+                                  }}
+                                >
+                                  {sub.subNumber}
+                                </span>
+                                <h4
+                                  style={{
+                                    margin: 0,
+                                    fontSize: 14,
+                                    fontWeight: 700,
+                                    color: "#18181b"
+                                  }}
+                                >
+                                  {sub.title}
+                                </h4>
+                              </div>
+
+                              {onAskNara && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    onAskNara(
+                                      `Bimbing saya memahami modul "${sub.title}" pada ${stage.title}. Berikan analogi konkret dan contoh aplikasinya.`
+                                    )
+                                  }
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: "#059669",
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 3,
+                                    padding: 0,
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  <span>Tanya Nara</span>
+                                  <Sparkles size={11} />
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Definisi Baku / Intisari Callout */}
+                            {sub.desc && (
+                              <div
+                                style={{
+                                  borderLeft: "2px solid #18181b",
+                                  backgroundColor: "#fafafa",
+                                  padding: "8px 12px",
+                                  marginBottom: 10,
+                                  fontSize: 12,
+                                  lineHeight: 1.5,
+                                  color: "#3f3f46"
+                                }}
+                              >
+                                <strong style={{ color: "#09090b", fontWeight: 700 }}>
+                                  Definisi Baku:{" "}
+                                </strong>
+                                <span>{sub.desc}</span>
+                              </div>
+                            )}
+
+                            {/* Concept Matrix / Knowledge Ledger (Structured Rows - No Generic Pill Clutter!) */}
+                            {sub.children.length > 0 && (
+                              <div
+                                style={{
+                                  border: "1px solid #f0f0f2",
+                                  borderRadius: 6,
+                                  overflow: "hidden",
+                                  backgroundColor: "#ffffff"
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    padding: "4px 10px",
+                                    backgroundColor: "#f9fafb",
+                                    borderBottom: "1px solid #f0f0f2",
+                                    fontFamily: "'DM Mono', monospace",
+                                    fontSize: 9.5,
+                                    fontWeight: 800,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.06em",
+                                    color: "#71717a"
+                                  }}
+                                >
+                                  <span>Konsep Kunci ({sub.children.length})</span>
+                                  <span>Aksi</span>
+                                </div>
+
+                                {sub.children.map((concept, cIdx) => (
+                                  <div
+                                    key={concept.id}
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "flex-start",
+                                      padding: "8px 10px",
+                                      borderBottom:
+                                        cIdx === sub.children.length - 1 ? "none" : "1px solid #f4f4f5",
+                                      gap: 12
+                                    }}
+                                  >
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                                        <span
+                                          style={{
+                                            fontFamily: "'DM Mono', monospace",
+                                            fontSize: 9.5,
+                                            fontWeight: 800,
+                                            color: "#71717a"
+                                          }}
+                                        >
+                                          {concept.conceptNumber}
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontSize: 12.5,
+                                            fontWeight: 700,
+                                            color: "#18181b"
+                                          }}
+                                        >
+                                          {concept.title}
+                                        </span>
+                                      </div>
+                                      {concept.desc && (
+                                        <p
+                                          style={{
+                                            margin: "3px 0 0 20px",
+                                            fontSize: 11.5,
+                                            color: "#52525b",
+                                            lineHeight: 1.45
+                                          }}
+                                        >
+                                          {concept.desc}
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    {onAskNara && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          onAskNara(
+                                            `Jelaskan konsep "${concept.title}" dalam materi "${sub.title}" (${stage.title}) beserta kemungkinan jebakan soalnya.`
+                                          )
+                                        }
+                                        title="Diskusi konsep ini dengan Nara"
+                                        style={{
+                                          background: "#ffffff",
+                                          border: "1px solid #e4e4e7",
+                                          borderRadius: 4,
+                                          padding: "3px 7px",
+                                          fontSize: 10,
+                                          fontWeight: 700,
+                                          color: "#3f3f46",
+                                          cursor: "pointer",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: 3,
+                                          flexShrink: 0
+                                        }}
+                                      >
+                                        <span>Tanya</span>
+                                        <ChevronRight size={10} />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 4. Prerequisite Progression Connector between Stages */}
+                      {!isLast && (
+                        <div
+                          style={{
+                            marginTop: 20,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: "#71717a",
+                            backgroundColor: "#f4f4f5",
+                            padding: "3px 8px",
+                            borderRadius: 4
+                          }}
+                        >
+                          <ArrowDown size={11} />
+                          <span>Prasyarat selesai • Lanjut ke Tahap 0{stage.stageNumber + 1}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Final Mastery Checkpoint */}
+            <div
+              style={{
+                marginTop: 40,
+                padding: "16px 20px",
+                backgroundColor: "#18181b",
+                color: "#ffffff",
+                borderRadius: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: "#a1a1aa",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em"
+                  }}
+                >
+                  AKHIR ALUR KURIKULUM
+                </span>
+                <h4 style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 700 }}>
+                  Semua {tree.children.length} Tahap Telah Dipetakan Utuh
+                </h4>
+              </div>
+
+              {onAskNara && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onAskNara(
+                      `Buat 3 soal studi kasus integratif yang menggabungkan konsep dari Tahap 01 sampai Tahap 0${tree.children.length} pada materi "${tree.title}".`
+                    )
+                  }
+                  style={{
+                    backgroundColor: "#ffffff",
+                    color: "#18181b",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "8px 14px",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                  }}
+                >
+                  <Sparkles size={13} />
+                  <span>Uji Latihan Kasus Integratif</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. MODE B: PETA KONSEP CANVAS SPATIAL (MIND MAP RADIAL) */}
+      {viewMode === "mindmap" && (
+        <div
+          ref={canvasContainerRef}
+          style={{
+            position: "relative",
+            width: "100%",
+            height,
+            backgroundColor: "#fafafa",
+            backgroundImage: "radial-gradient(#d4d4d8 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+            overflow: "hidden",
+            userSelect: "none",
+            touchAction: "none",
+            cursor: isDragging ? "grabbing" : "grab"
           }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -772,7 +1314,7 @@ export function InteractiveMindMap({
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
         >
-          {/* Mind Map Canvas (SVG + HTML Nodes) */}
+          {/* Canvas Element with Pan & Zoom */}
           <div
             style={{
               position: "absolute",
@@ -783,7 +1325,7 @@ export function InteractiveMindMap({
               transition: isDragging ? "none" : "transform 0.1s ease-out"
             }}
           >
-            {/* SVG Bezier Connection Lines */}
+            {/* SVG Bezier Lines */}
             <svg
               style={{
                 position: "absolute",
@@ -815,15 +1357,15 @@ export function InteractiveMindMap({
                     strokeWidth={
                       selectedNode?.id && (c.id.includes(selectedNode.id) || selectedNode.id === c.id)
                         ? "2.5"
-                        : "1.8"
+                        : "1.6"
                     }
-                    strokeOpacity={selectedNode ? (c.id.includes(selectedNode.id) ? 0.95 : 0.45) : 0.75}
+                    strokeOpacity={selectedNode ? (c.id.includes(selectedNode.id) ? 0.95 : 0.4) : 0.65}
                   />
                 );
               })}
             </svg>
 
-            {/* HTML Interactive Node Cards */}
+            {/* Spatial Interactive Node Cards */}
             {nodes.map((node) => {
               const isSelected = selectedNode?.id === node.id;
               const isRoot = node.depth === 0;
@@ -848,17 +1390,17 @@ export function InteractiveMindMap({
                     top: node.y,
                     width: node.width,
                     minHeight: node.height,
-                    backgroundColor: isRoot ? "#18221f" : node.color.light,
+                    backgroundColor: isRoot ? "#18181b" : "#ffffff",
                     border: `1.5px solid ${
-                      isRoot ? "#34413c" : isSelected ? node.color.primary : node.color.border
+                      isRoot ? "#27272a" : isSelected ? "#18181b" : "#e4e4e7"
                     }`,
-                    borderRadius: isRoot ? 14 : node.depth === 1 ? 10 : 8,
+                    borderRadius: isRoot ? 10 : 6,
                     boxShadow: isSelected
-                      ? `0 0 0 3px ${node.color.primary}33, 0 6px 20px rgba(0,0,0,0.08)`
+                      ? "0 0 0 3px rgba(24, 24, 27, 0.15), 0 4px 14px rgba(0,0,0,0.06)"
                       : isRoot
-                      ? "0 8px 24px rgba(24, 34, 31, 0.25)"
-                      : "0 2px 8px rgba(0,0,0,0.03)",
-                    padding: isRoot ? "10px 16px" : node.depth === 1 ? "8px 12px" : "6px 10px",
+                      ? "0 6px 20px rgba(0,0,0,0.15)"
+                      : "0 1px 3px rgba(0,0,0,0.02)",
+                    padding: isRoot ? "10px 16px" : node.depth === 1 ? "8px 12px" : "5px 9px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -869,17 +1411,17 @@ export function InteractiveMindMap({
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flex: 1 }}>
-                    {/* Stage number badge for Level 1 (Chapters) */}
                     {node.depth === 1 && node.stageNumber && (
                       <span
                         style={{
+                          fontFamily: "'DM Mono', monospace",
                           fontSize: 9.5,
                           fontWeight: 800,
-                          backgroundColor: node.color.primary,
+                          backgroundColor: "#18181b",
                           color: "#ffffff",
                           width: 18,
                           height: 18,
-                          borderRadius: "50%",
+                          borderRadius: 4,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -893,8 +1435,8 @@ export function InteractiveMindMap({
                     <span
                       style={{
                         fontSize: isRoot ? 13 : node.depth === 1 ? 11.5 : 10.5,
-                        fontWeight: isRoot || node.depth === 1 ? 800 : 600,
-                        color: isRoot ? "#ffffff" : node.depth === 1 ? node.color.text : "#2d3748",
+                        fontWeight: isRoot || node.depth === 1 ? 700 : 600,
+                        color: isRoot ? "#ffffff" : "#18181b",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -905,17 +1447,17 @@ export function InteractiveMindMap({
                     </span>
                   </div>
 
-                  {/* Collapse / Expand Toggle Button for parent nodes */}
                   {node.hasChildren && (
                     <button
+                      type="button"
                       onClick={(e) => toggleCollapse(node.id, e)}
                       style={{
                         width: 16,
                         height: 16,
-                        borderRadius: "50%",
+                        borderRadius: 3,
                         border: "none",
-                        backgroundColor: isRoot ? "#32443e" : node.color.primary,
-                        color: "#ffffff",
+                        backgroundColor: isRoot ? "#3f3f46" : "#f4f4f5",
+                        color: isRoot ? "#ffffff" : "#71717a",
                         fontSize: 10,
                         fontWeight: 900,
                         cursor: "pointer",
@@ -934,54 +1476,54 @@ export function InteractiveMindMap({
             })}
           </div>
 
-          {/* Bottom Left: Touch & Mouse Gesture Hint */}
+          {/* Touch Gesture Help Hint */}
           <div
             style={{
               position: "absolute",
               bottom: 12,
               left: 12,
               fontSize: 10,
-              color: "#6b7a74",
-              backgroundColor: "rgba(255, 255, 255, 0.8)",
-              backdropFilter: "blur(4px)",
+              fontFamily: "'DM Mono', monospace",
+              color: "#71717a",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              border: "1px solid #e4e4e7",
               padding: "4px 8px",
               borderRadius: 6,
-              border: "1px solid #e2e8e0",
               pointerEvents: "none",
               zIndex: 10
             }}
           >
-            💡 Geser layar untuk menggeser · Cubit / scroll untuk zoom
+            PAN: DRAG CANVAS • ZOOM: SCROLL / PINCH
           </div>
 
-          {/* Bottom Right: Zoom Controls */}
+          {/* Zoom Controls */}
           <div
             style={{
               position: "absolute",
               bottom: 12,
               right: 12,
-              backgroundColor: "rgba(255, 255, 255, 0.92)",
-              backdropFilter: "blur(6px)",
-              border: "1px solid #dce2da",
+              backgroundColor: "#ffffff",
+              border: "1px solid #e4e4e7",
               borderRadius: 8,
               padding: "3px 6px",
               display: "flex",
               alignItems: "center",
               gap: 4,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
               zIndex: 10
             }}
           >
             <button
+              type="button"
               onClick={() => setZoom((z) => Math.max(0.28, z * 0.85))}
               title="Perkecil (Zoom Out)"
               style={{
                 background: "none",
                 border: "none",
                 padding: "5px 7px",
-                borderRadius: 5,
+                borderRadius: 4,
                 cursor: "pointer",
-                color: "#45544e",
+                color: "#52525b",
                 display: "flex",
                 alignItems: "center"
               }}
@@ -993,7 +1535,7 @@ export function InteractiveMindMap({
                 fontSize: 10,
                 fontFamily: "'DM Mono', monospace",
                 fontWeight: 700,
-                color: "#45544e",
+                color: "#18181b",
                 minWidth: 32,
                 textAlign: "center"
               }}
@@ -1001,15 +1543,16 @@ export function InteractiveMindMap({
               {Math.round(zoom * 100)}%
             </span>
             <button
+              type="button"
               onClick={() => setZoom((z) => Math.min(2.2, z * 1.15))}
               title="Perbesar (Zoom In)"
               style={{
                 background: "none",
                 border: "none",
                 padding: "5px 7px",
-                borderRadius: 5,
+                borderRadius: 4,
                 cursor: "pointer",
-                color: "#45544e",
+                color: "#52525b",
                 display: "flex",
                 alignItems: "center"
               }}
@@ -1018,261 +1561,9 @@ export function InteractiveMindMap({
             </button>
           </div>
         </div>
-      ) : (
-        /* VIEW 2: ALUR BELAJAR BERURUTAN (ROADMAP SEQUENCE FLOW) */
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            overflowY: "auto",
-            padding: "60px 16px 24px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            userSelect: "text"
-          }}
-        >
-          {/* Roadmap Header Card */}
-          <div
-            style={{
-              maxWidth: 620,
-              width: "100%",
-              backgroundColor: "#18221f",
-              color: "#ffffff",
-              padding: "16px 20px",
-              borderRadius: 14,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-              marginBottom: 16,
-              textAlign: "center",
-              border: "1.5px solid #2b3a34"
-            }}
-          >
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                backgroundColor: "#273831",
-                color: "#c8f064",
-                padding: "3px 10px",
-                borderRadius: 999,
-                fontSize: 10,
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                marginBottom: 8
-              }}
-            >
-              <Compass size={12} /> Roadmap Pembelajaran
-            </div>
-            <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 800, color: "#ffffff" }}>
-              {tree.title}
-            </h3>
-            <p style={{ margin: 0, fontSize: 12, color: "#a5b5ad", lineHeight: 1.5 }}>
-              Pelajari materi secara bertahap dari bab awal hingga mahakarya konsep di bab akhir.
-            </p>
-          </div>
-
-          {/* Sequential Stage Cards */}
-          <div style={{ maxWidth: 620, width: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
-            {tree.children?.map((branch, bIdx) => {
-              const color = branch.color || PALETTE[bIdx % PALETTE.length];
-              const isLast = bIdx === (tree.children?.length || 0) - 1;
-
-              return (
-                <div key={branch.id} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  {/* Stage Card */}
-                  <div
-                    style={{
-                      width: "100%",
-                      backgroundColor: "#ffffff",
-                      border: `1.5px solid ${color.border}`,
-                      borderRadius: 14,
-                      padding: "16px 18px",
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
-                      transition: "transform 0.15s ease",
-                      position: "relative"
-                    }}
-                  >
-                    {/* Stage Header */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span
-                          style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: "50%",
-                            backgroundColor: color.primary,
-                            color: "#ffffff",
-                            fontSize: 12,
-                            fontWeight: 900,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            boxShadow: `0 2px 8px ${color.primary}44`
-                          }}
-                        >
-                          {branch.stageNumber || bIdx + 1}
-                        </span>
-                        <div>
-                          <span
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 800,
-                              textTransform: "uppercase",
-                              color: color.text,
-                              letterSpacing: "0.05em"
-                            }}
-                          >
-                            Tahap {branch.stageNumber || bIdx + 1}
-                          </span>
-                          <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#17201d" }}>
-                            {branch.title}
-                          </h4>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() =>
-                          setSelectedNode({
-                            id: branch.id,
-                            title: branch.title,
-                            desc: branch.desc || "Tahap pembelajaran ini membedah fondasi utama konsep pada bab terkait.",
-                            depth: 1,
-                            color,
-                            stageNumber: branch.stageNumber
-                          })
-                        }
-                        style={{
-                          backgroundColor: color.light,
-                          color: color.text,
-                          border: `1px solid ${color.border}`,
-                          padding: "4px 8px",
-                          borderRadius: 6,
-                          fontSize: 10,
-                          fontWeight: 700,
-                          cursor: "pointer"
-                        }}
-                      >
-                        Detail
-                      </button>
-                    </div>
-
-                    {/* Sub-topics list inside this chapter */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-                      {branch.children?.map((sub, sIdx) => (
-                        <div
-                          key={sub.id}
-                          style={{
-                            backgroundColor: "#f9faf8",
-                            border: "1px solid #e2e8e0",
-                            borderRadius: 10,
-                            padding: "10px 12px"
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <CheckCircle2 size={13} color={color.primary} />
-                              <strong style={{ fontSize: 12.5, color: "#1c2522" }}>
-                                {sub.title}
-                              </strong>
-                            </div>
-                            <button
-                              onClick={() =>
-                                setSelectedNode({
-                                  id: sub.id,
-                                  title: sub.title,
-                                  desc: sub.desc || "Sub-bab materi penting.",
-                                  depth: 2,
-                                  color
-                                })
-                              }
-                              style={{
-                                background: "none",
-                                border: "none",
-                                color: "#60726a",
-                                fontSize: 10,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 2
-                              }}
-                            >
-                              <span>Buka</span> <ChevronRight size={11} />
-                            </button>
-                          </div>
-
-                          {/* Definisi Baku Snippet */}
-                          {sub.desc && (
-                            <p style={{ margin: "2px 0 8px 18px", fontSize: 11, color: "#4d5d56", lineHeight: 1.45 }}>
-                              {sub.desc}
-                            </p>
-                          )}
-
-                          {/* Atomic Concepts pills */}
-                          {sub.children && sub.children.length > 0 && (
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginLeft: 18, marginTop: 4 }}>
-                              {sub.children.map((leaf) => (
-                                <button
-                                  key={leaf.id}
-                                  onClick={() =>
-                                    setSelectedNode({
-                                      id: leaf.id,
-                                      title: leaf.title,
-                                      desc: leaf.desc || "Konsep kunci penting.",
-                                      depth: 3,
-                                      color
-                                    })
-                                  }
-                                  style={{
-                                    backgroundColor: "#ffffff",
-                                    border: `1px solid ${color.border}`,
-                                    color: color.text,
-                                    borderRadius: 6,
-                                    padding: "3px 8px",
-                                    fontSize: 10.5,
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 4
-                                  }}
-                                >
-                                  <span>•</span>
-                                  <span>{leaf.title}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Connecting Arrow between Stages */}
-                  {!isLast && (
-                    <div
-                      style={{
-                        height: 28,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: color.primary,
-                        opacity: 0.85
-                      }}
-                    >
-                      <ArrowDown size={18} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
       )}
 
-      {/* Node Detail Popup / Inspector Drawer (Shared across both modes) */}
+      {/* 4. Detail Inspector Drawer on Node Selection */}
       {selectedNode && (
         <div
           onClick={(e) => e.stopPropagation()}
@@ -1283,9 +1574,9 @@ export function InteractiveMindMap({
             maxWidth: 360,
             width: "calc(100% - 32px)",
             backgroundColor: "#ffffff",
-            border: `1.5px solid ${selectedNode.color.border}`,
-            borderRadius: 14,
-            boxShadow: "0 12px 36px rgba(0,0,0,0.15)",
+            border: "1px solid #e4e4e7",
+            borderRadius: 10,
+            boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
             padding: "16px",
             animation: "fadeIn 0.2s ease-out",
             zIndex: 100
@@ -1298,9 +1589,9 @@ export function InteractiveMindMap({
                 fontWeight: 800,
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                color: selectedNode.color.text,
-                backgroundColor: selectedNode.color.light,
-                border: `1px solid ${selectedNode.color.border}`,
+                color: "#52525b",
+                backgroundColor: "#f4f4f5",
+                border: "1px solid #e4e4e7",
                 padding: "2px 8px",
                 borderRadius: 4,
                 fontFamily: "'DM Mono', monospace"
@@ -1309,17 +1600,18 @@ export function InteractiveMindMap({
               {selectedNode.depth === 0
                 ? "Topik Utama"
                 : selectedNode.depth === 1
-                ? `Tahap ${selectedNode.stageNumber || 1} • Bab`
+                ? `Tahap 0${selectedNode.stageNumber || 1} • Bab`
                 : selectedNode.depth === 2
-                ? "Sub-Bab Materi"
-                : "Konsep Inti"}
+                ? "Sub-Modul Materi"
+                : "Konsep Atomik"}
             </span>
             <button
+              type="button"
               onClick={() => setSelectedNode(null)}
               style={{
                 background: "none",
                 border: "none",
-                color: "#8a9691",
+                color: "#a1a1aa",
                 cursor: "pointer",
                 padding: 2
               }}
@@ -1328,16 +1620,17 @@ export function InteractiveMindMap({
             </button>
           </div>
 
-          <h4 style={{ fontSize: 14.5, fontWeight: 800, color: "#17201d", margin: "0 0 6px" }}>
+          <h4 style={{ fontSize: 14.5, fontWeight: 800, color: "#09090b", margin: "0 0 6px" }}>
             {selectedNode.title}
           </h4>
 
-          <p style={{ fontSize: 12, color: "#45544e", lineHeight: 1.5, margin: "0 0 12px" }}>
+          <p style={{ fontSize: 12, color: "#52525b", lineHeight: 1.5, margin: "0 0 12px" }}>
             {selectedNode.desc || "Konsep ini merupakan salah satu cabang penting dari alur belajar materi ini."}
           </p>
 
           {onAskNara && (
             <button
+              type="button"
               onClick={() => {
                 onAskNara(`Jelaskan konsep "${selectedNode.title}" beserta contoh aplikasinya dalam ujian.`);
                 setSelectedNode(null);
@@ -1345,10 +1638,10 @@ export function InteractiveMindMap({
               style={{
                 width: "100%",
                 padding: "8px 12px",
-                backgroundColor: "#18221f",
-                color: "#c8f064",
+                backgroundColor: "#18181b",
+                color: "#ffffff",
                 border: "none",
-                borderRadius: 8,
+                borderRadius: 6,
                 fontSize: 11.5,
                 fontWeight: 700,
                 cursor: "pointer",
@@ -1358,7 +1651,7 @@ export function InteractiveMindMap({
                 gap: 6
               }}
             >
-              <Sparkles size={12} color="#c8f064" />
+              <Sparkles size={12} />
               <span>Tanya Nara tentang konsep ini</span>
             </button>
           )}

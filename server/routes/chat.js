@@ -5,11 +5,13 @@ const { db } = require("../db");
 const { callRouter, extractTextWithAIVision } = require("../ai");
 
 async function handleChatRoutes(req, res, pathname, helpers) {
-  const { sendJSON, getBody } = helpers;
+  const { sendJSON, getBody, getUserId } = helpers;
 
   // 1. POST /api/ai/chat - conversational grounded tutor with image & document upload support
   if (req.method === "POST" && pathname === "/api/ai/chat") {
-    const { docId, message, attachment, history = [], model = "ag/gemini-3.8-flash-low" } = await getBody(req);
+    const body = await getBody(req);
+    const { docId, message, attachment, history = [], model = "ag/gemini-3.8-flash-low" } = body;
+    const userId = getUserId ? getUserId(req, body) : (body.userId || "anon");
     if (!message && !attachment) return sendJSON(res, { error: "Pesan atau lampiran berkas wajib diisi" }, 400);
 
     let contextText = "";
@@ -131,10 +133,10 @@ ${contextText}`;
 
     const targetDocId = (docId && docId !== "global") ? docId : "global";
 
-    db.prepare("INSERT INTO chat_messages (id, doc_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .run(msgId, targetDocId, "user", storedUserContent, model, Date.now());
-    db.prepare("INSERT INTO chat_messages (id, doc_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .run(msgId + "_r", targetDocId, "assistant", reply, model, Date.now());
+    db.prepare("INSERT INTO chat_messages (id, doc_id, user_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run(msgId, targetDocId, userId, "user", storedUserContent, model, Date.now());
+    db.prepare("INSERT INTO chat_messages (id, doc_id, user_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run(msgId + "_r", targetDocId, userId, "assistant", reply, model, Date.now());
 
     return sendJSON(res, { reply, model });
   }
@@ -143,11 +145,12 @@ ${contextText}`;
   const chatHistMatch = pathname.match(/^\/api\/documents\/([^/]+)\/chat$/);
   if (chatHistMatch && req.method === "GET") {
     const docId = chatHistMatch[1];
+    const userId = getUserId ? getUserId(req) : "anon";
     let rows;
     if (docId === "global") {
-      rows = db.prepare("SELECT * FROM chat_messages WHERE doc_id = 'global' OR doc_id IS NULL OR doc_id = '' ORDER BY created_at ASC").all();
+      rows = db.prepare("SELECT * FROM chat_messages WHERE (doc_id = 'global' OR doc_id IS NULL OR doc_id = '') AND (user_id = ? OR user_id IS NULL) ORDER BY created_at ASC").all(userId);
     } else {
-      rows = db.prepare("SELECT * FROM chat_messages WHERE doc_id = ? ORDER BY created_at ASC").all(docId);
+      rows = db.prepare("SELECT * FROM chat_messages WHERE doc_id = ? AND (user_id = ? OR user_id IS NULL) ORDER BY created_at ASC").all(docId, userId);
     }
     return sendJSON(res, { messages: rows });
   }
@@ -155,10 +158,11 @@ ${contextText}`;
   // 3. DELETE /api/documents/:id/chat - clear chat history
   if (chatHistMatch && req.method === "DELETE") {
     const docId = chatHistMatch[1];
+    const userId = getUserId ? getUserId(req) : "anon";
     if (docId === "global") {
-      db.prepare("DELETE FROM chat_messages WHERE doc_id = 'global' OR doc_id IS NULL OR doc_id = ''").run();
+      db.prepare("DELETE FROM chat_messages WHERE (doc_id = 'global' OR doc_id IS NULL OR doc_id = '') AND (user_id = ? OR user_id IS NULL)").run(userId);
     } else {
-      db.prepare("DELETE FROM chat_messages WHERE doc_id = ?").run(docId);
+      db.prepare("DELETE FROM chat_messages WHERE doc_id = ? AND (user_id = ? OR user_id IS NULL)").run(docId, userId);
     }
     return sendJSON(res, { success: true });
   }

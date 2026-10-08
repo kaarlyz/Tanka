@@ -153,6 +153,29 @@ function cleanOrphanedRecords() {
   }
 }
 
+function runMigrations() {
+  try {
+    const chatColumns = db.prepare("PRAGMA table_info(chat_messages)").all().map(c => c.name);
+    if (!chatColumns.includes("user_id")) {
+      db.prepare("ALTER TABLE chat_messages ADD COLUMN user_id TEXT DEFAULT 'anon'").run();
+      console.log("[tanka-db] Added user_id column to chat_messages table");
+    }
+  } catch (err) {
+    console.warn("[tanka-db] chat_messages migration notice:", err.message);
+  }
+
+  try {
+    const mistakeColumns = db.prepare("PRAGMA table_info(mistake_notebook)").all().map(c => c.name);
+    if (!mistakeColumns.includes("user_id")) {
+      db.prepare("ALTER TABLE mistake_notebook ADD COLUMN user_id TEXT DEFAULT 'anon'").run();
+      console.log("[tanka-db] Added user_id column to mistake_notebook table");
+    }
+  } catch (err) {
+    console.warn("[tanka-db] mistake_notebook migration notice:", err.message);
+  }
+}
+runMigrations();
+
 cleanOrphanedRecords();
 
 module.exports = {

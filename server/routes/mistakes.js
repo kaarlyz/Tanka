@@ -1,7 +1,7 @@
 const { db } = require("../db");
 
 async function handleMistakesRoutes(req, res, pathname, helpers) {
-  const { sendJSON, getBody } = helpers;
+  const { sendJSON, getBody, getUserId } = helpers;
 
   // 1. POST /api/mistakes/record - record or update a mistake
   if (req.method === "POST" && pathname === "/api/mistakes/record") {
@@ -16,10 +16,11 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
     const steps = body.steps || [];
     const explanation = body.explanation || "";
     const pitfall = body.pitfall || "";
+    const userId = getUserId ? getUserId(req, body) : (body.userId || "anon");
 
     if (!question) return sendJSON(res, { error: "Question required" }, 400);
 
-    const existing = db.prepare("SELECT id FROM mistake_notebook WHERE doc_id = ? AND question = ?").get(docId, question);
+    const existing = db.prepare("SELECT id FROM mistake_notebook WHERE doc_id = ? AND question = ? AND (user_id = ? OR user_id IS NULL)").get(docId, question, userId);
     const now = Date.now();
     if (existing) {
       db.prepare("UPDATE mistake_notebook SET user_answer_index = ?, resolved = 0, updated_at = ? WHERE id = ?")
@@ -27,8 +28,8 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
       return sendJSON(res, { success: true, id: existing.id, updated: true });
     } else {
       const id = "mistake_" + now + "_" + Math.random().toString(36).slice(2, 6);
-      db.prepare("INSERT INTO mistake_notebook (id, doc_id, doc_title, question, options, correct_index, user_answer_index, formula, steps, explanation, pitfall, resolved, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)")
-        .run(id, docId || "", docTitle, question, JSON.stringify(options), correctIndex, userAnswerIndex, formula, JSON.stringify(steps), explanation, pitfall, now, now);
+      db.prepare("INSERT INTO mistake_notebook (id, doc_id, user_id, doc_title, question, options, correct_index, user_answer_index, formula, steps, explanation, pitfall, resolved, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)")
+        .run(id, docId || "", userId, docTitle, question, JSON.stringify(options), correctIndex, userAnswerIndex, formula, JSON.stringify(steps), explanation, pitfall, now, now);
       return sendJSON(res, { success: true, id, created: true });
     }
   }
@@ -37,8 +38,9 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
   if (req.method === "GET" && pathname === "/api/mistakes") {
     const urlObj = new URL(req.url, "http://localhost");
     const docId = urlObj.searchParams.get("docId");
-    let query = "SELECT * FROM mistake_notebook WHERE resolved = 0";
-    const params = [];
+    const userId = getUserId ? getUserId(req) : "anon";
+    let query = "SELECT * FROM mistake_notebook WHERE resolved = 0 AND (user_id = ? OR user_id IS NULL)";
+    const params = [userId];
     if (docId) {
       query += " AND doc_id = ?";
       params.push(docId);
@@ -88,10 +90,11 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
   if ((req.method === "POST" && pathname === "/api/mistakes/clear") || (req.method === "DELETE" && pathname === "/api/mistakes")) {
     const urlObj = new URL(req.url, "http://localhost");
     const docId = urlObj.searchParams.get("docId");
+    const userId = getUserId ? getUserId(req) : "anon";
     if (docId) {
-      db.prepare("DELETE FROM mistake_notebook WHERE doc_id = ?").run(docId);
+      db.prepare("DELETE FROM mistake_notebook WHERE doc_id = ? AND (user_id = ? OR user_id IS NULL)").run(docId, userId);
     } else {
-      db.prepare("DELETE FROM mistake_notebook").run();
+      db.prepare("DELETE FROM mistake_notebook WHERE (user_id = ? OR user_id IS NULL)").run(userId);
     }
     return sendJSON(res, { success: true });
   }

@@ -165,7 +165,7 @@ export default function App() {
     resolveMistake,
     deleteMistake,
     handleClearMistakes
-  } = useMistakes({ activeDocId, activeDocTitle, showNotice });
+  } = useMistakes({ activeDocId, activeDocTitle, showNotice, currentUser });
 
   // Callback when exam finishes (submits score to active multiplayer room if any)
   const handleRoomExamComplete = useCallback(async (result: { finalScore: number; correctCount: number; totalQuestions: number }) => {
@@ -454,7 +454,7 @@ export default function App() {
     isFreeMode,
     setIsFreeMode,
     effectiveDocId
-  } = useChat({ activeDocId, selectedModel, showNotice });
+  } = useChat({ activeDocId, selectedModel, showNotice, currentUser });
 
   // 16. Domain Hook: Study Timer & Pomodoro
   const {

@@ -48,12 +48,32 @@ function sendJSON(res, data, statusCode = 200) {
   }
   res.writeHead(statusCode, {
     "Content-Type": "application/json",
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-User-Id, X-Session-Id",
   });
   res.end(JSON.stringify(payload));
   return true;
+}
+
+// Helper to extract userId or client session id from header/body/query
+function getUserId(req, body = {}) {
+  const fromHeader = req.headers["x-user-id"] || req.headers["x-session-id"];
+  if (fromHeader && typeof fromHeader === "string") return fromHeader.trim();
+  
+  const fromBody = body.userId || body.user_id;
+  if (fromBody && typeof fromBody === "string") return fromBody.trim();
+
+  try {
+    const urlObj = new URL(req.url, "http://localhost");
+    const fromQuery = urlObj.searchParams.get("userId") || urlObj.searchParams.get("user_id") || urlObj.searchParams.get("sessionId");
+    if (fromQuery) return fromQuery.trim();
+  } catch {}
+
+  return "anon";
 }
 
 // Helper to parse JSON body
@@ -78,7 +98,7 @@ function getBody(req) {
   });
 }
 
-const helpers = { sendJSON, getBody };
+const helpers = { sendJSON, getBody, getUserId };
 
 const server = http.createServer(async (req, res) => {
   // Handle CORS preflight
@@ -130,14 +150,29 @@ const server = http.createServer(async (req, res) => {
         ".woff": "font/woff",
         ".ttf": "font/ttf",
       };
-      res.writeHead(200, { "Content-Type": mimeTypes[ext] || "application/octet-stream" });
+      const isHtml = ext === ".html";
+      const isHashedAsset = pathname.startsWith("/assets/") && (ext === ".js" || ext === ".css");
+      const headers = {
+        "Content-Type": mimeTypes[ext] || "application/octet-stream",
+        "Cache-Control": isHashedAsset
+          ? "public, max-age=31536000, immutable"
+          : "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Pragma": isHtml ? "no-cache" : "public",
+        "Expires": isHtml ? "0" : undefined
+      };
+      res.writeHead(200, headers);
       return fs.createReadStream(filePath).pipe(res);
     }
 
     if (!pathname.startsWith("/api/")) {
       const indexHtml = path.join(distPath, "index.html");
       if (fs.existsSync(indexHtml)) {
-        res.writeHead(200, { "Content-Type": "text/html" });
+        res.writeHead(200, {
+          "Content-Type": "text/html",
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        });
         return fs.createReadStream(indexHtml).pipe(res);
       }
     }

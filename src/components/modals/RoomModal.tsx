@@ -883,6 +883,65 @@ export function RoomModal({
                 </div>
               </div>
 
+              {/* Identity indicator in Lobby */}
+              <div
+                style={{
+                  backgroundColor: "#161e1a",
+                  border: "1px solid #2a3932",
+                  borderRadius: 10,
+                  padding: "9px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontSize: 12,
+                  flexWrap: "wrap",
+                  gap: 8
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#8a9691" }}>Kamu bertanding sebagai:</span>
+                  <span style={{ fontWeight: 700, color: "#ffffff" }}>
+                    {currentUser.name || currentUser.username}
+                  </span>
+                  {currentUser.id === currentRoom.hostUserId ? (
+                    <span style={{ color: "#c8f064", fontSize: 11, fontWeight: 700 }}>(Host 👑)</span>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenAuthModal();
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#a3e635",
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    textDecoration: "underline"
+                  }}
+                  title="Ganti akun jika ingin bertanding dengan identitas teman lain"
+                >
+                  Ganti Akun / Keluar
+                </button>
+              </div>
+
+              {currentUser.id === currentRoom.hostUserId && (
+                <div style={{
+                  padding: "8px 12px",
+                  backgroundColor: "rgba(234, 179, 8, 0.1)",
+                  border: "1px solid rgba(234, 179, 8, 0.25)",
+                  borderRadius: 8,
+                  fontSize: 11.5,
+                  color: "#fde047",
+                  lineHeight: 1.4
+                }}>
+                  💡 <strong>Info Uji Coba:</strong> Perangkat ini terdeteksi sebagai <strong>Host Room</strong>. Jika sedang mencoba tanding antar 2 HP sendiri, klik <strong>Ganti Akun</strong> untuk buat nama tamu berbeda agar menjadi 2 pemain terpisah.
+                </div>
+              )}
+
               {/* Participants List */}
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>

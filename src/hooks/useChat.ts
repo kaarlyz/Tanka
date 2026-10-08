@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { ChatMessage, ChatAttachment } from "../types";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { ChatMessage, ChatAttachment, UserAccount } from "../types";
+import { getEffectiveUserId } from "../utils/session";
 
 export interface StagedChatFile {
   file: File;
@@ -13,9 +14,11 @@ export interface UseChatProps {
   activeDocId: string | null;
   selectedModel: string;
   showNotice: (msg: string) => void;
+  currentUser?: UserAccount | null;
 }
 
-export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps) {
+export function useChat({ activeDocId, selectedModel, showNotice, currentUser }: UseChatProps) {
+  const userId = useMemo(() => getEffectiveUserId(currentUser), [currentUser?.id]);
   const [isFreeMode, setIsFreeMode] = useState<boolean>(!activeDocId);
   const effectiveDocId = isFreeMode ? null : activeDocId;
   const currentSessionId = effectiveDocId || "global";
@@ -32,7 +35,7 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
   // Inisialisasi state awal langsung dari localStorage sesi aktif agar tidak ada jeda kosong
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
-      const cached = localStorage.getItem(`tanka_chat_${currentSessionId}`);
+      const cached = localStorage.getItem(`tanka_chat_${userId}_${currentSessionId}`);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) return parsed;
@@ -46,10 +49,10 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
   const [stagedAttachment, setStagedAttachment] = useState<StagedChatFile | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Isolasi sesi percakapan: Setiap kali berpindah dokumen, muat riwayat sesi terkait
+  // Isolasi sesi percakapan: Setiap kali berpindah dokumen atau berganti user/device, muat riwayat sesi terkait
   useEffect(() => {
     const sessionId = currentSessionId;
-    const storageKey = `tanka_chat_${sessionId}`;
+    const storageKey = `tanka_chat_${userId}_${sessionId}`;
 
     // 1. Baca cache lokal seketika
     try {
@@ -73,7 +76,7 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
 
     // 2. Sinkronkan dengan database SQLite backend
     let isCancelled = false;
-    fetch(`/api/documents/${sessionId}/chat`)
+    fetch(`/api/documents/${sessionId}/chat?userId=${encodeURIComponent(userId)}`)
       .then((res) => res.json())
       .then((data) => {
         if (isCancelled) return;
@@ -97,16 +100,16 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
     return () => {
       isCancelled = true;
     };
-  }, [currentSessionId]);
+  }, [currentSessionId, userId]);
 
   const handleClearChat = useCallback(async () => {
     const sessionId = currentSessionId;
     setMessages([]);
     try {
-      localStorage.removeItem(`tanka_chat_${sessionId}`);
-      await fetch(`/api/documents/${sessionId}/chat`, { method: "DELETE" });
+      localStorage.removeItem(`tanka_chat_${userId}_${sessionId}`);
+      await fetch(`/api/documents/${sessionId}/chat?userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
     } catch {}
-  }, [currentSessionId]);
+  }, [currentSessionId, userId]);
 
   const handleAttachFile = useCallback(async (file: File) => {
     if (!file) return;
@@ -232,7 +235,7 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
     const nextUserMessages = [...messages, userMsg];
     setMessages(nextUserMessages);
     try {
-      localStorage.setItem(`tanka_chat_${currentSessionId}`, JSON.stringify(nextUserMessages));
+      localStorage.setItem(`tanka_chat_${userId}_${currentSessionId}`, JSON.stringify(nextUserMessages));
     } catch {}
 
     setIsChatSending(true);
@@ -245,10 +248,11 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-User-Id": userId },
         body: JSON.stringify({
           docId: effectiveDocId || null,
           message: text,
+          userId,
           attachment: currentAttachment ? {
             fileName: currentAttachment.name,
             fileData: currentAttachment.base64,
@@ -269,7 +273,7 @@ export function useChat({ activeDocId, selectedModel, showNotice }: UseChatProps
         setMessages((prev) => {
           const finalMessages = [...prev, assistantMsg];
           try {
-            localStorage.setItem(`tanka_chat_${currentSessionId}`, JSON.stringify(finalMessages));
+            localStorage.setItem(`tanka_chat_${userId}_${currentSessionId}`, JSON.stringify(finalMessages));
           } catch {}
           return finalMessages;
         });

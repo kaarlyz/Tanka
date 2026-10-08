@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   X, Swords, Users, Copy, Check, Play, Trophy, 
   Sparkles, Award, ArrowRight, Share2, RefreshCw, CheckCircle2, AlertCircle, Link2
@@ -63,6 +63,11 @@ export function RoomModal({
   const [isCopied, setIsCopied] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
 
+  // Synchronized Match Start Countdown
+  const [startCountdown, setStartCountdown] = useState<number | null>(null);
+  const [isStartingMatch, setIsStartingMatch] = useState<boolean>(false);
+  const isCountdownRunningRef = useRef(false);
+
   useEffect(() => {
     if (activeDocId) {
       setSelectedDocId(activeDocId);
@@ -75,13 +80,54 @@ export function RoomModal({
     }
   }, [activeDocTitle]);
 
+  // Trigger smooth 3-second animated countdown for both Host & Guest
+  const triggerMatchCountdown = (room: StudyRoom, quizQuestions: any[]) => {
+    if (isCountdownRunningRef.current) return;
+    isCountdownRunningRef.current = true;
+    setStartCountdown(3);
+    let count = 3;
+    const timer = setInterval(() => {
+      count--;
+      if (count > 0) {
+        setStartCountdown(count);
+      } else {
+        clearInterval(timer);
+        setStartCountdown(null);
+        setIsStartingMatch(false);
+        isCountdownRunningRef.current = false;
+        if (onStartRoomExam && quizQuestions.length > 0) {
+          onStartRoomExam(room, quizQuestions);
+          onClose();
+        } else {
+          setQuestions(quizQuestions);
+          setCurrentQIndex(0);
+          setSelectedAnswers({});
+          setViewState("playing");
+        }
+      }
+    }, 1000);
+  };
+
   // Synchronize initial room ID and view state (with auto-join for logged in users)
   useEffect(() => {
     if (initialViewState) {
       setViewState(initialViewState);
     }
     if (initialRoomId) {
-      if (currentUser) {
+      if (initialViewState === "result") {
+        // Just fetch room & participants for viewing result/leaderboard
+        fetch(`/api/rooms/${initialRoomId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.room) {
+              setCurrentRoom(data.room);
+              setParticipants(data.participants || []);
+              if (data.questions) setQuestions(data.questions);
+              setViewState("result");
+            }
+          })
+          .catch(console.error);
+      } else if (currentUser) {
         fetch(`/api/rooms/${initialRoomId}/join`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -122,6 +168,7 @@ export function RoomModal({
   useEffect(() => {
     if (!isOpen || !currentRoom?.id) return;
 
+    const pollIntervalMs = viewState === "lobby" ? 1000 : 1500;
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/rooms/${currentRoom.id}`);
@@ -129,14 +176,13 @@ export function RoomModal({
         if (res.ok && data.room) {
           setCurrentRoom(data.room);
           setParticipants(data.participants || []);
-          if (data.room.status === "active" && viewState === "lobby" && data.questions?.length > 0) {
-            if (onStartRoomExam) {
-              onStartRoomExam(data.room, data.questions);
-              onClose();
-            } else {
-              setQuestions(data.questions);
-              setViewState("playing");
-            }
+          if (
+            data.room.status === "active" && 
+            viewState === "lobby" && 
+            data.questions?.length > 0 && 
+            !isCountdownRunningRef.current
+          ) {
+            triggerMatchCountdown(data.room, data.questions);
           } else if (data.room.status === "finished" && viewState === "playing") {
             setViewState("result");
           }
@@ -144,7 +190,7 @@ export function RoomModal({
       } catch (e) {
         console.warn("Poll room error:", e);
       }
-    }, 2000);
+    }, pollIntervalMs);
 
     return () => clearInterval(interval);
   }, [isOpen, currentRoom?.id, viewState, onStartRoomExam, onClose]);
@@ -427,8 +473,9 @@ export function RoomModal({
     }
   };
 
-  const myParticipant = participants.find(p => p.user_id === currentUser.id);
-  const isHost = currentRoom?.hostUserId === currentUser.id;
+  const myParticipant = participants.find(p => p.user_id === currentUser?.id);
+  const hostId = currentRoom?.hostUserId || (currentRoom as any)?.host_user_id;
+  const isHost = !!(hostId && currentUser?.id && hostId === currentUser.id);
 
   const handleToggleReady = async () => {
     if (!currentRoom || !myParticipant) return;
@@ -453,30 +500,27 @@ export function RoomModal({
   };
 
   const handleStartMatch = async () => {
-    if (!currentRoom) return;
+    if (!currentRoom || isStartingMatch || isCountdownRunningRef.current) return;
+    setIsStartingMatch(true);
     try {
       const res = await fetch(`/api/rooms/${currentRoom.id}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser.id })
+        body: JSON.stringify({ userId: currentUser?.id })
       });
       const data = await res.json();
       if (res.ok && data.room) {
         setCurrentRoom(data.room);
+        const qList = data.questions?.length > 0 ? data.questions : questions;
+        setQuestions(qList);
         showNotice("Kompetisi kuis dimulai! Selamat berjuang!");
-        if (onStartRoomExam && data.questions?.length > 0) {
-          onStartRoomExam(data.room, data.questions);
-          onClose();
-        } else {
-          setQuestions(data.questions || []);
-          setCurrentQIndex(0);
-          setSelectedAnswers({});
-          setViewState("playing");
-        }
+        triggerMatchCountdown(data.room, qList);
       } else {
+        setIsStartingMatch(false);
         showNotice(data.error || "Gagal memulai");
       }
     } catch {
+      setIsStartingMatch(false);
       showNotice("Koneksi gagal");
     }
   };
@@ -546,9 +590,55 @@ export function RoomModal({
           flexDirection: "column",
           boxShadow: "0 25px 60px rgba(0, 0, 0, 0.55)",
           border: "1.5px solid #2a3430",
-          overflow: "hidden"
+          overflow: "hidden",
+          position: "relative"
         }}
       >
+        {/* Full-Card Synchronized Match Countdown Overlay */}
+        {startCountdown !== null && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "rgba(15, 20, 18, 0.95)",
+              backdropFilter: "blur(12px)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 100,
+              padding: 24,
+              textAlign: "center"
+            }}
+          >
+            <div style={{ fontSize: 36, marginBottom: 10 }}>⚔️</div>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: "#ffffff", margin: "0 0 6px", letterSpacing: "0.02em" }}>
+              PERTANDINGAN DIMULAI!
+            </h3>
+            <p style={{ fontSize: 13, color: "#a1ada8", margin: "0 0 24px", maxWidth: 360, lineHeight: 1.4 }}>
+              Paket {questions.length || currentRoom?.quizCount || 5} butir soal telah disinkronkan. Mengalihkan ke arena tryout dalam...
+            </p>
+            <div
+              style={{
+                width: 96,
+                height: 96,
+                borderRadius: "50%",
+                backgroundColor: "rgba(200, 240, 100, 0.12)",
+                border: "3px solid #c8f064",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 48,
+                fontWeight: 900,
+                color: "#c8f064",
+                boxShadow: "0 0 35px rgba(200, 240, 100, 0.4)",
+                fontFamily: "'DM Mono', monospace"
+              }}
+            >
+              {startCountdown}
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div
           style={{
@@ -1098,23 +1188,24 @@ export function RoomModal({
                 {isHost && (
                   <button
                     onClick={handleStartMatch}
+                    disabled={isStartingMatch || startCountdown !== null}
                     style={{
                       flex: 1,
                       padding: "12px 0",
                       borderRadius: 10,
-                      backgroundColor: "#c8f064",
-                      color: "#161b19",
+                      backgroundColor: isStartingMatch ? "#2a3932" : "#c8f064",
+                      color: isStartingMatch ? "#8a9691" : "#161b19",
                       border: "none",
                       fontWeight: 700,
                       fontSize: 13,
-                      cursor: "pointer",
+                      cursor: (isStartingMatch || startCountdown !== null) ? "not-allowed" : "pointer",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       gap: 6
                     }}
                   >
-                    <Play size={16} /> Mulai Kompetisi!
+                    <Play size={16} /> {isStartingMatch ? "Mempersiapkan Arena..." : "Mulai Kompetisi!"}
                   </button>
                 )}
               </div>
@@ -1254,126 +1345,279 @@ export function RoomModal({
           )}
 
           {/* VIEW: RESULT LEADERBOARD */}
-          {viewState === "result" && (
-            <div>
-              <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <div
-                  style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: "50%",
-                    backgroundColor: "rgba(200, 240, 100, 0.15)",
-                    color: "#c8f064",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    margin: "0 auto 10px"
-                  }}
-                >
-                  <Trophy size={26} />
-                </div>
-                <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#ffffff" }}>
-                  Hasil Peringkat Kompetisi Room
-                </h4>
-                <p style={{ margin: "4px 0 0", fontSize: 12, color: "#8a9691" }}>
-                  Skor dihitung dari jumlah jawaban benar dan kecepatan eksekusi
-                </p>
-              </div>
+          {viewState === "result" && (() => {
+            const finishedCount = participants.filter(p => (p.total_answered || 0) > 0).length;
+            const totalCount = participants.length;
+            const isRoomFinished = currentRoom?.status === "finished" || (totalCount > 0 && finishedCount === totalCount);
+            const myParticipant = participants.find(p => p.user_id === currentUser?.id);
+            const sortedParticipants = [...participants].sort((a, b) => {
+              const aDone = (a.total_answered || 0) > 0 ? 1 : 0;
+              const bDone = (b.total_answered || 0) > 0 ? 1 : 0;
+              if (aDone !== bDone) return bDone - aDone;
+              if (b.score !== a.score) return b.score - a.score;
+              return (b.correct_answers || 0) - (a.correct_answers || 0);
+            });
 
-              {/* Leaderboard rows */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-                {participants.map((p, idx) => {
-                  const isMe = p.user_id === currentUser.id;
-                  const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
-                  return (
-                    <div
-                      key={p.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "12px 16px",
-                        borderRadius: 12,
-                        backgroundColor: isMe ? "#243328" : "#1b2320",
-                        border: isMe ? "1.5px solid #c8f064" : "1px solid #2b3832"
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <span style={{ fontSize: 16, fontWeight: 800, width: 26, textAlign: "center" }}>
-                          {medal}
-                        </span>
-                        <div
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: "50%",
-                            backgroundColor: p.avatar_color || "#10b981",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: 700,
-                            fontSize: 12,
-                            color: "#ffffff"
-                          }}
-                        >
-                          {(p.user_name || "TK").slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: isMe ? "#c8f064" : "#ffffff" }}>
-                            {p.user_name} {isMe && "(Kamu)"}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#8a9691" }}>
-                            {p.correct_answers} dari {p.total_answered || questions.length} benar
-                          </div>
-                        </div>
+            return (
+              <div>
+                {/* Live Waiting Alert Banner or Completion Banner */}
+                {!isRoomFinished ? (
+                  <div
+                    style={{
+                      backgroundColor: "rgba(234, 179, 8, 0.1)",
+                      border: "1.5px solid rgba(234, 179, 8, 0.35)",
+                      borderRadius: 14,
+                      padding: "16px 18px",
+                      marginBottom: 18,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      flexWrap: "wrap"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div
+                        style={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: "50%",
+                          backgroundColor: "rgba(234, 179, 8, 0.2)",
+                          color: "#facc15",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 18
+                        }}
+                      >
+                        ⏳
                       </div>
-
-                      <div style={{ textAlign: "right" }}>
-                        <strong style={{ fontSize: 16, color: "#c8f064", fontFamily: "'DM Mono', monospace" }}>
-                          {p.score} Pts
-                        </strong>
+                      <div>
+                        <div style={{ fontSize: 13.5, fontWeight: 800, color: "#fef08a" }}>
+                          Menunggu Kawan Main Selesai ({finishedCount}/{totalCount} Selesai)
+                        </div>
+                        <div style={{ fontSize: 11.5, color: "#d1d5db", marginTop: 2, lineHeight: 1.4 }}>
+                          {myParticipant?.total_answered
+                            ? "Jawabanmu sudah tersimpan! Halaman ini otomatis memantau skor kawan mainmu secara live..."
+                            : "Ujian kuis sedang berlangsung. Kumpulkan jawabanmu untuk masuk ke papan skor!"}
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        backgroundColor: "rgba(0,0,0,0.35)",
+                        padding: "5px 12px",
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#facc15"
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          backgroundColor: "#22c55e",
+                          display: "inline-block",
+                          boxShadow: "0 0 8px #22c55e"
+                        }}
+                      />
+                      Live Updating
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", marginBottom: 20 }}>
+                    <div
+                      style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: "50%",
+                        backgroundColor: "rgba(200, 240, 100, 0.15)",
+                        color: "#c8f064",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: "0 auto 10px"
+                      }}
+                    >
+                      <Trophy size={26} />
+                    </div>
+                    <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#ffffff" }}>
+                      Hasil Resmi Peringkat Kompetisi Room
+                    </h4>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#a1ada8" }}>
+                      Seluruh peserta telah mengumpulkan lembar jawaban. Peringkat terkunci!
+                    </p>
+                  </div>
+                )}
 
-              <div style={{ display: "flex", gap: 10 }}>
-                <button
-                  onClick={() => setViewState("hub")}
-                  style={{
-                    flex: 1,
-                    padding: "10px 0",
-                    borderRadius: 8,
-                    backgroundColor: "#1e2622",
-                    border: "1px solid #2e3a34",
-                    color: "#a1ada8",
-                    fontWeight: 600,
-                    fontSize: 12,
-                    cursor: "pointer"
-                  }}
-                >
-                  Kembali ke Hub Room
-                </button>
-                <button
-                  onClick={onClose}
-                  style={{
-                    flex: 1,
-                    padding: "10px 0",
-                    borderRadius: 8,
-                    backgroundColor: "#c8f064",
-                    border: "none",
-                    color: "#161b19",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    cursor: "pointer"
-                  }}
-                >
-                  Tutup Arena
-                </button>
+                {/* Leaderboard rows */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {sortedParticipants.map((p, idx) => {
+                    const isMe = p.user_id === currentUser?.id;
+                    const hasAnswered = (p.total_answered || 0) > 0;
+                    const medal = hasAnswered
+                      ? (idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`)
+                      : "⏳";
+                    return (
+                      <div
+                        key={p.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "12px 16px",
+                          borderRadius: 12,
+                          backgroundColor: isMe ? "#243328" : "#1b2320",
+                          border: isMe ? "1.5px solid #c8f064" : "1px solid #2b3832"
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <span style={{ fontSize: 16, fontWeight: 800, width: 26, textAlign: "center" }}>
+                            {medal}
+                          </span>
+                          <div
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: "50%",
+                              backgroundColor: p.avatar_color || "#10b981",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 700,
+                              fontSize: 13,
+                              color: "#ffffff"
+                            }}
+                          >
+                            {(p.user_name || "TK").slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13.5, fontWeight: 700, color: isMe ? "#c8f064" : "#ffffff", display: "flex", alignItems: "center", gap: 6 }}>
+                              <span>{p.user_name}</span>
+                              {isMe && <span style={{ fontSize: 11, color: "#c8f064", fontWeight: 600 }}>(Kamu)</span>}
+                              {p.user_id === currentRoom?.hostUserId && <span style={{ fontSize: 11, color: "#fbbf24" }}>👑</span>}
+                            </div>
+                            <div style={{ fontSize: 11.5, marginTop: 2 }}>
+                              {hasAnswered ? (
+                                <span style={{ color: "#8a9691" }}>
+                                  {p.correct_answers} dari {p.total_answered || questions.length || currentRoom?.quizCount || 5} benar
+                                </span>
+                              ) : (
+                                <span style={{ color: "#fbbf24", fontStyle: "italic" }}>
+                                  Sedang mengerjakan tryout... ✍️
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: "right" }}>
+                          {hasAnswered ? (
+                            <>
+                              <strong style={{ fontSize: 16, color: "#c8f064", fontFamily: "'DM Mono', monospace", display: "block" }}>
+                                {p.score} Pts
+                              </strong>
+                              <span style={{ fontSize: 10.5, color: "#4ade80", fontWeight: 700 }}>
+                                ✓ Selesai
+                              </span>
+                            </>
+                          ) : (
+                            <div style={{
+                              backgroundColor: "rgba(234, 179, 8, 0.12)",
+                              color: "#facc15",
+                              border: "1px solid rgba(234, 179, 8, 0.25)",
+                              borderRadius: 6,
+                              padding: "3px 8px",
+                              fontSize: 11,
+                              fontWeight: 600
+                            }}>
+                              Belum Kumpul
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Footer Action Buttons */}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (currentRoom) {
+                        fetch(`/api/rooms/${currentRoom.id}`)
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data.room) setCurrentRoom(data.room);
+                            if (data.participants) setParticipants(data.participants);
+                            showNotice("Status room diperbarui! ✓");
+                          })
+                          .catch(() => showNotice("Gagal memperbarui status"));
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "10px 0",
+                      borderRadius: 8,
+                      backgroundColor: "#1e2622",
+                      border: "1px solid #2e3a34",
+                      color: "#c8f064",
+                      fontWeight: 600,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <RefreshCw size={13} />
+                    <span>Segarkan Skor</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewState("hub")}
+                    style={{
+                      flex: 1,
+                      padding: "10px 0",
+                      borderRadius: 8,
+                      backgroundColor: "#1e2622",
+                      border: "1px solid #2e3a34",
+                      color: "#a1ada8",
+                      fontWeight: 600,
+                      fontSize: 12,
+                      cursor: "pointer"
+                    }}
+                  >
+                    Daftar Room
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    style={{
+                      flex: 1,
+                      padding: "10px 0",
+                      borderRadius: 8,
+                      backgroundColor: "#c8f064",
+                      border: "none",
+                      color: "#161b19",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      cursor: "pointer"
+                    }}
+                  >
+                    Tutup Arena
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>

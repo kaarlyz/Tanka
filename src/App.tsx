@@ -169,13 +169,22 @@ export default function App() {
 
   // Callback when exam finishes (submits score to active multiplayer room if any)
   const handleRoomExamComplete = useCallback(async (result: { finalScore: number; correctCount: number; totalQuestions: number }) => {
-    if (activeRoomSession && currentUser) {
+    const effectiveUser = currentUser || (() => {
+      try {
+        const raw = localStorage.getItem("tanka_user_account");
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    if (activeRoomSession && effectiveUser) {
       try {
         const res = await fetch(`/api/rooms/${activeRoomSession.roomId}/submit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: currentUser.id,
+            userId: effectiveUser.id,
             score: result.finalScore,
             correctAnswers: result.correctCount,
             totalAnswered: result.totalQuestions

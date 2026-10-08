@@ -185,7 +185,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
       const participants = db.prepare(`
         SELECT * FROM room_participants 
         WHERE room_id = ? 
-        ORDER BY score DESC, correct_answers DESC, joined_at ASC
+        ORDER BY (total_answered > 0) DESC, score DESC, correct_answers DESC, joined_at ASC
       `).all(roomId);
 
       let questions = [];
@@ -301,8 +301,17 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
         return sendJSON(res, {
           success: true,
           room: {
-            ...room,
-            status: "active"
+            id: room.id,
+            docId: room.doc_id,
+            title: room.title,
+            hostUserId: room.host_user_id,
+            host_user_id: room.host_user_id,
+            hostName: room.host_name,
+            host_name: room.host_name,
+            status: "active",
+            quizCount: room.quiz_count,
+            maxParticipants: room.max_participants || 0,
+            createdAt: room.created_at
           },
           questions,
           participants
@@ -347,7 +356,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
         const participants = db.prepare(`
           SELECT * FROM room_participants 
           WHERE room_id = ? 
-          ORDER BY score DESC, correct_answers DESC, total_answered DESC
+          ORDER BY (total_answered > 0) DESC, score DESC, correct_answers DESC, joined_at ASC
         `).all(roomId);
 
         // Check if all participants answered

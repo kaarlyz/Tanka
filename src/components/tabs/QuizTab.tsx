@@ -753,6 +753,52 @@ export function QuizTab({
                         : "Perlu drill intensif. Buka Bank Soal Salah untuk membedah akar kekeliruan konsep."}
                     </p>
 
+                    {/* Prominent Multiplayer Room Leaderboard CTA */}
+                    {activeRoomSession && onOpenRoomLeaderboard && (
+                      <div style={{
+                        backgroundColor: "#18181b",
+                        border: "1.5px solid #27272a",
+                        borderRadius: 12,
+                        padding: "14px 18px",
+                        margin: "0 auto 20px",
+                        maxWidth: 480,
+                        textAlign: "left"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: "#c8f064", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                            ⚔️ KOMPETISI ROOM {activeRoomSession.roomId}
+                          </span>
+                          <span style={{ fontSize: 11, color: "#4ade80", fontWeight: 700 }}>✓ Jawaban Tersimpan</span>
+                        </div>
+                        <p style={{ margin: "0 0 12px", fontSize: 12.5, color: "#e4e4e7", lineHeight: 1.4 }}>
+                          Nilai kamu sudah tersinkronkan ke server room. Pantau posisi peringkatmu dan tunggu kawan main selesai mengerjakan.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={onOpenRoomLeaderboard}
+                          style={{
+                            width: "100%",
+                            padding: "11px 16px",
+                            backgroundColor: "#c8f064",
+                            color: "#18181b",
+                            border: "none",
+                            borderRadius: 8,
+                            fontSize: 13,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 8,
+                            boxShadow: "0 2px 8px rgba(200, 240, 100, 0.2)"
+                          }}
+                        >
+                          <Trophy size={16} />
+                          <span>Pantau Peringkat & Leaderboard Room 🏆</span>
+                        </button>
+                      </div>
+                    )}
+
                     <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
                       <button
                         onClick={() => {

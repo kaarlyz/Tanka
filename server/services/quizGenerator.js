@@ -132,13 +132,19 @@ ${referenceContext}
 ${weaknessContext}
 ${adaptiveContext}
 
-STANDAR KUALITAS SOAL (UTBK/ASESMEN NASIONAL):
-1. ATURAN "SCENARIO-DEPENDENT" (ANTI-HAFALAN DEFINISI):
-   - Soal menghadirkan dinamika kasus, sebab-akibat, atau analisis teks kontekstual.
-2. SEMANTIC SYMMETRY PADA DISTRAKTOR:
-   - Pilihan pengecoh (distraktor) mewakili kesalahan berpikir/miskonsepsi nyata siswa.
-3. KESEIMBANGAN PANJANG OPSI:
-   - Kelima opsi A-E memiliki tingkat kedalaman dan panjang kalimat yang seimbang.
+STANDAR KUALITAS SOAL (STANDAR RESMI UTBK & ANTI AI-SLOP MUTLAK):
+1. ATURAN "ANTI-SLOP & SCENARIO-DEPENDENT" (MUTLAK):
+   - DILARANG membuat soal template kamus/definisi hafalan kaku (contoh HARAM: "Apakah definisi dari X?", "Manakah pernyataan yang benar tentang Y?").
+   - Soal WAJIB menghadirkan kasus nyata, data eksperimen/tabel, masalah kuantitatif konkret, atau analisis dinamika sebab-akibat.
+2. SEMANTIC SYMMETRY & ANTI-LEAK PADA OPSI A-E:
+   - DILARANG membuat opsi jawaban benar menjadi opsi yang paling panjang atau paling rinci.
+   - Kelima opsi (A, B, C, D, E) WAJIB memiliki jumlah kata dan panjang karakter yang setara (variasi panjang maksimal 15%).
+   - Pilihan pengecoh (distraktor) WAJIB mewakili kesalahan berpikir/perhitungan nyata siswa, BUKAN opsi ngawur/absurd.
+   - DILARANG menggunakan opsi klise AI: "Semua benar", "Semua salah", atau "Tidak ada pilihan yang tepat".
+3. PEMBAHASAN TANPA BASA-BASI AI (DIRECT MECHANICAL PROOF):
+   - DILARANG menulis basa-basi seperti "Tentu saja", "Mari kita bahas", "Jawaban yang benar adalah...".
+   - Pembahasan langsung membedah bukti faktual/matematis langkah demi langkah pada field "steps".
+   - Field "pitfall" WAJIB menjelaskan jebakan logika spesifik yang sengaja dipasang pada opsi pengecoh.
 4. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E.
 5. FORMAT TEKS OPSI: DILARANG menyertakan prefix huruf seperti "A.", "B." di teks options.
 
@@ -223,8 +229,15 @@ ${factsContext}
         q.correctIndex = q.options.indexOf(originalCorrect);
       }
 
+      if (q.question) {
+        q.question = q.question
+          .replace(/^(?:Berdasarkan materi(?: yang telah dipelajari)?,?\s*|Dalam konteks pembelajaran ini,?\s*)/gi, "")
+          .trim();
+      }
+
       if (q.explanation) {
         q.explanation = q.explanation
+          .replace(/^(?:Tentu saja|Mari kita bahas|Perlu diingat bahwa|Secara umum|Pertanyaan ini membahas|Pada dasarnya)[,\s]*/gi, "")
           .replace(/(?:Koreksi data|Mari sesuaikan data|Q2 harus|Kita ubah agar)[^.]*\./gi, "")
           .replace(/Pilihan\s+[A-E]\s+benar(?:\s+karena)?/gi, "Jawaban yang tepat adalah")
           .replace(/Opsi\s+[A-E]\s+benar(?:\s+karena)?/gi, "Jawaban yang tepat adalah")
@@ -237,6 +250,7 @@ ${factsContext}
         q.steps = q.steps.map((s) => {
           let desc = s.desc || "";
           desc = desc
+            .replace(/^(?:Tentu saja|Langkah selanjutnya adalah|Perlu dicatat)[,\s]*/gi, "")
             .replace(/pilihan\s+[A-E]\s+benar/gi, "jawaban yang tepat")
             .replace(/opsi\s+[A-E]\s+benar/gi, "jawaban yang tepat");
           return { ...s, desc };

@@ -367,7 +367,13 @@ export function TopicModal({
                   <WebSearchProgressView
                     topic={topicClarificationData?.formalTitle || topicInput}
                     subject={topicClarificationData?.subject || "Kurikulum Nasional"}
-                    subtitle="Meneliti buku kurikulum resmi, memvalidasi konsep kunci & menyusun modul belajar..."
+                    subtitle={
+                      /matematika|math|aritmatika|aritmetika|aljabar|trigonometri|kalkulus|integral|turunan|diferensial|limit|matriks|vektor|peluang|statistika|kombinatorika|permutasi|kombinasi|eksponen|logaritma|persamaan|pertidaksamaan|fungsi|polinomial|lingkaran|dimensi tiga|bangun ruang|bangun datar|pythagoras|barisan|deret|bilangan|pecahan|operasi hitung|geometri|transformasi|dilatasi|translasi|rotasi|refleksi/i.test(
+                        `${topicClarificationData?.formalTitle || topicInput} ${topicClarificationData?.subject || ""}`
+                      )
+                        ? "Menyusun formulasi matematika murni, tabel rumus KaTeX & penurunan analitik..."
+                        : "Meneliti buku kurikulum resmi, memvalidasi konsep kunci & menyusun modul belajar..."
+                    }
                   />
                 </div>
               )}

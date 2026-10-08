@@ -633,7 +633,8 @@ export function WebSearchProgressView({
 
   const isMathDomain = useMemo(() => {
     const text = `${topic} ${subject || ""}`.toLowerCase();
-    return /matematika|trigonometri|aljabar|kalkulus|integral|turunan|persamaan|matriks|vektor|peluang|statistika|eksponen|logaritma|dimensi tiga|geometri|pythagoras|fungsi/i.test(text);
+    if (/matematika|math/i.test(subject) || /matematika|math/i.test(topic)) return true;
+    return /aritmatika|aritmetika|aljabar|trigonometri|kalkulus|integral|turunan|diferensial|limit|matriks|vektor|peluang|statistika|kombinatorika|permutasi|kombinasi|eksponen|logaritma|persamaan|pertidaksamaan|fungsi|polinomial|suku banyak|lingkaran|dimensi tiga|bangun ruang|bangun datar|pythagoras|barisan|deret|bilangan|pecahan|operasi hitung|geometri|transformasi|dilatasi|translasi|rotasi|refleksi|notasi sigma/i.test(text);
   }, [topic, subject]);
 
   const sources = useMemo(
@@ -830,18 +831,31 @@ export function WebSearchProgressView({
               width: 28,
               height: 28,
               borderRadius: "50%",
-              backgroundColor: "#edf4e3",
+              backgroundColor: isMathDomain ? "#eff6ff" : "#edf4e3",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "1px solid #d7e5c5"
+              border: `1px solid ${isMathDomain ? "#bfdbfe" : "#d7e5c5"}`
             }}
           >
-            <Globe size={15} color="#4b6623" style={{ animation: "spinSlow 12s linear infinite" }} />
+            {isMathDomain ? (
+              <Sparkles size={15} color="#2563eb" />
+            ) : (
+              <Globe size={15} color="#4b6623" style={{ animation: "spinSlow 12s linear infinite" }} />
+            )}
           </div>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace" }}>
-              PENELUSURAN REFERENSI LIVE
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                color: isMathDomain ? "#1d4ed8" : "#566b36",
+                fontFamily: "'DM Mono', monospace"
+              }}
+            >
+              {isMathDomain ? "FORMULASI MATEMATIKA EKSAK (BYPASS WEB SEARCH)" : "PENELUSURAN REFERENSI LIVE"}
             </div>
             <div style={{ fontSize: 14.5, fontWeight: 800, color: "#18211e" }}>
               {topic}
@@ -854,8 +868,8 @@ export function WebSearchProgressView({
               fontSize: 10,
               fontWeight: 800,
               backgroundColor: "#ffffff",
-              border: "1px solid #dce1da",
-              color: "#4b6623",
+              border: `1px solid ${isMathDomain ? "#bfdbfe" : "#dce1da"}`,
+              color: isMathDomain ? "#1d4ed8" : "#4b6623",
               padding: "2px 8px",
               borderRadius: 6,
               fontFamily: "'DM Mono', monospace"
@@ -870,14 +884,14 @@ export function WebSearchProgressView({
       <div
         style={{
           backgroundColor: "#ffffff",
-          border: "1px solid #c2e28f",
+          border: `1px solid ${isMathDomain ? "#93c5fd" : "#c2e28f"}`,
           borderRadius: 10,
           padding: "10px 12px",
           marginBottom: 14,
           display: "flex",
           alignItems: "center",
           gap: 10,
-          boxShadow: "0 2px 8px rgba(119, 159, 47, 0.08)"
+          boxShadow: isMathDomain ? "0 2px 8px rgba(37, 99, 235, 0.08)" : "0 2px 8px rgba(119, 159, 47, 0.08)"
         }}
       >
         <span
@@ -885,14 +899,14 @@ export function WebSearchProgressView({
             width: 8,
             height: 8,
             borderRadius: "50%",
-            backgroundColor: "#779f2f",
+            backgroundColor: isMathDomain ? "#2563eb" : "#779f2f",
             flexShrink: 0,
-            boxShadow: "0 0 0 3px rgba(119, 159, 47, 0.25)"
+            boxShadow: `0 0 0 3px ${isMathDomain ? "rgba(37, 99, 235, 0.25)" : "rgba(119, 159, 47, 0.25)"}`
           }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: "#22370c", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span>Sedang Memindai:</span>
+          <div style={{ fontSize: 11, fontWeight: 800, color: isMathDomain ? "#1e3a8a" : "#22370c", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span>{isMathDomain ? "Tahapan Sintesis:" : "Sedang Memindai:"}</span>
             <span style={{ color: currentSource.color, textDecoration: "underline", textUnderlineOffset: 2 }}>
               {currentSource.name} ({currentSource.domain})
             </span>

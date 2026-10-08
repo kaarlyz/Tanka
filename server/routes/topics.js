@@ -159,9 +159,11 @@ Format output WAJIB HANYA berupa JSON valid tanpa markdown formatting:
     const insertSeg = db.prepare("INSERT INTO document_segments (id, doc_id, segment_index, source_type, raw_text, normalized_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
     // Deteksi domain matematika murni & sains eksak hitung
-    const isMathDomain = /matematika/i.test(effectiveSubject) || 
-                         /matematika/i.test(title) || 
-                         /trigonometri|aljabar|kalkulus|integral|turunan|persamaan|matriks|vektor|peluang|statistika|eksponen|logaritma|dimensi tiga|geometri|pythagoras|fungsi kuadrat|barisan dan deret|lingkaran|limit fungsi|kombinatorika/i.test(title);
+    const mathKeywordRegex = /matematika|math|aritmatika|aritmetika|aljabar|trigonometri|kalkulus|integral|turunan|diferensial|limit|matriks|vektor|peluang|statistika|kombinatorika|permutasi|kombinasi|eksponen|logaritma|persamaan|pertidaksamaan|fungsi|polinomial|suku banyak|lingkaran|dimensi tiga|bangun ruang|bangun datar|pythagoras|barisan|deret|bilangan|pecahan|operasi hitung|geometri|transformasi|dilatasi|translasi|rotasi|refleksi|notasi sigma/i;
+    const isMathDomain = /matematika|math/i.test(effectiveSubject) || 
+                         mathKeywordRegex.test(effectiveSubject) ||
+                         mathKeywordRegex.test(title) ||
+                         mathKeywordRegex.test(topic);
 
     if (isMathDomain) {
       console.log(`[topics] Topik Matematika terdeteksi ("${title}"). Bypass mode web research untuk mencegah halusinasi & noise teks; menggunakan Pure First-Principles AI.`);

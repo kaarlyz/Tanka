@@ -69,6 +69,22 @@ function segmentDocumentText(rawText, sourceType = "text") {
 
 function detectDomainCategory(title = "", text = "") {
   const combined = (title + " " + text.slice(0, 4000)).toLowerCase();
+
+  // Deteksi Domain Matematika & Hitung Eksak Murni
+  const mathTerms = [
+    "matematika", "math", "aritmatika", "aritmetika", "aljabar", "trigonometri",
+    "kalkulus", "integral", "turunan", "diferensial", "limit", "matriks", "vektor",
+    "peluang", "statistika", "kombinatorika", "permutasi", "kombinasi", "eksponen",
+    "logaritma", "persamaan", "pertidaksamaan", "fungsi", "polinomial", "suku banyak",
+    "lingkaran", "dimensi tiga", "bangun ruang", "bangun datar", "pythagoras",
+    "barisan", "deret", "bilangan", "pecahan", "operasi hitung", "geometri",
+    "transformasi", "dilatasi", "translasi", "rotasi", "refleksi", "notasi sigma"
+  ];
+  const mathScore = mathTerms.filter((t) => combined.includes(t)).length;
+  if (mathScore >= 2 || /matematika|trigonometri|aljabar|kalkulus|aritmatika|aritmetika|matriks|vektor|geometri|persamaan|integral|turunan|dilatasi/i.test(title)) {
+    return "mathematics";
+  }
+
   const academicTerms = [
     "rumus", "persamaan", "koordinat", "reaksi", "sel", "mitokondria", "vektor",
     "matriks", "diferensial", "integral", "stoikiometri", "enzim", "fotosintesis",
@@ -272,7 +288,9 @@ async function generateNaraModule(outline, fullText, segments = [], model = "ag/
     ? segments.map((s) => `--- Bagian ${s.index} (${s.sourceType}) ---\n${s.text}`).join("\n\n")
     : fullText;
 
-  const isGrowth = detectDomainCategory(outline.title, fullText) === "practical_growth";
+  const domainCategory = detectDomainCategory(outline.title, fullText);
+  const isGrowth = domainCategory === "practical_growth";
+  const isMath = domainCategory === "mathematics";
 
   let prompt;
   if (isGrowth) {
@@ -311,6 +329,51 @@ PETUNJUK PENULISAN (MODUL PENGEMBANGAN DIRI & REALITA KEHIDUPAN):
 6. LARANGAN:
    - DILARANG membuat rumus KaTeX atau contoh soal latihan ujian/UTBK.
    - DILARANG menggunakan gaya motivator klise basi; gunakan gaya Nara yang santai, cerdas, realistis, dan berpihak pada masa depan anak muda.`;
+  } else if (isMath) {
+    prompt = `${NARA_GLOBAL_PERSONA}
+
+Tugas Anda: Susun materi pembelajaran MATEMATIKA EKSAK kanonikal berstandar tinggi untuk siswa jenjang ${jenjang} (Kurikulum Nasional / Persiapan UTBK-SNBT).
+
+Judul: "${outline.title}"
+Target Jenjang: ${jenjang}
+Rencana Bab:
+${JSON.stringify(outline.chapters, null, 2)}
+
+Daftar Konsep Kunci:
+${JSON.stringify(outline.concepts, null, 2)}
+
+Bahan Fondasi Eksak:
+"""
+${sourceContext.slice(0, 45000)}
+"""
+
+PETUNJUK PENULISAN MATEMATIKA EKSAK (FORMULA-DENSE, OPERASIONAL, & BEBAS FLUFF):
+1. Mulai dengan judul markdown: # ${outline.title}
+2. Tuliskan ringkasan eksekutif dokumen dalam blockquote: > [Ringkasan padat 2-3 kalimat cakupan materi & kompetensi hitung/aljabar yang ditargetkan]
+3. Tulis pembatas horizontal sebelum bab pertama: ---
+4. MANDAT MUTLAK MATEMATIKA (BANYAK RUMUS, DEFINISI SEDIKIT, BEBAS CERITA BASA-BASI):
+   - DILARANG mendongeng atau menulis paragraf analogi kehidupan sehari-hari bertele-tele (bukan pelajaran bahasa atau sastra). Cukup 1 kalimat pengantar visual/grafik yang ringkas jika perlu.
+   - DEFINISI WAJIB SANGAT PADAT: Tulis definisi konsep secara atomik (maksimal 1-2 kalimat presisi).
+   - LEBIH BANYAK FORMULA & TABEL RUMUS KaTeX: Setiap sub-bab WAJIB memuat tabel Markdown komprehensif berisi seluruh rumus operasional, matriks, bentuk umum, dan kondisi batas dalam format KaTeX ($...$ atau $$...$$).
+   - TEOREMA & SIFAT MATEMATIS: Paparkan seluruh sifat aljabar/geometri yang berlaku mutlak beserta penurunan identitasnya.
+5. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab):
+   Setiap sub-bab (### [Nama Sub-Materi / Konsep]) WAJIB memuat urutan terstruktur ini:
+   a. **Definisi Baku & Notasi:**
+      > 📖 **Definisi:** [Definisi baku padat 1-2 kalimat tanpa dongeng]
+   b. **Tabel Formula & Notasi Operasional (KaTeX):**
+      Sajikan tabel Markdown komprehensif berisi semua rumus, pemetaan variabel, dan syarat batas.
+   c. **Sifat Matematis, Teorema, & Identitas Aljabar:**
+      Daftar bernomor sifat-sifat matematis operasional beserta rumus KaTeX.
+   d. **Contoh Soal Taktis & Bedah Penurunan Analitik (Worked Example):**
+      Sajikan 1 contoh soal representatif tipe UTBK/Ujian Sekolah dengan langkah penurunan bertahap:
+      - *Diketahui & Ditanya:*
+      - *Langkah Analitik & Substitusi:* (setiap baris langkah hitung ditulis dengan notasi KaTeX)
+      - *Kesimpulan:*
+   e. **Peringatan Salah Kaprah (Pitfall):**
+      > ⚠️ **Jebakan Soal (Pitfall):** [Miskonsepsi hitung/tanda minus/kondisi syarat batas yang sering membuat siswa salah di ujian]
+6. SEMUA RUMUS & NOTASI MATEMATIKA WAJIB MENGGUNAKAN KaTeX:
+   - Simbol sebaris: $x$, $f(x)$, $\vec{v}$, $\Delta$.
+   - Rumus blok utama: $$...$$`;
   } else {
     prompt = `${NARA_GLOBAL_PERSONA}
 

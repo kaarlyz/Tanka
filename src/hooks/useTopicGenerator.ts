@@ -64,6 +64,11 @@ export function useTopicGenerator({
       }
 
       // JIKA TOPIK JELAS: Langsung gas buat modul (1-Click)
+      setTopicClarificationData({
+        formalTitle: uData.topik_kanonik || raw,
+        subject: uData.mapel || "Umum",
+        questions: []
+      });
       setTopicStep(3);
       const res = await fetch("/api/ai/topic-generate", {
         method: "POST",

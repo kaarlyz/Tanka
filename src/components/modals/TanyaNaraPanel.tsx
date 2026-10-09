@@ -6,6 +6,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { ActiveTab, ChatMessage } from "../../types";
 import { StagedChatFile } from "../../hooks/useChat";
+import { sanitizeMathMarkdown } from "../common/DiagramRenderer";
 
 export interface TanyaNaraPanelProps {
   activeTab: ActiveTab;
@@ -480,7 +481,7 @@ export function TanyaNaraPanel({
                     {m.role === "assistant" ? (
                       <div className="nara-md-response" style={{ fontSize: 12.5, lineHeight: 1.55 }}>
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
-                          {m.content}
+                          {sanitizeMathMarkdown(m.content)}
                         </ReactMarkdown>
                       </div>
                     ) : (

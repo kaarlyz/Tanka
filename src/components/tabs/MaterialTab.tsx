@@ -29,7 +29,7 @@ import {
 import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, Flashcard, QuizQuestion } from "../../types";
 import { MathView } from "../common/MathView";
-import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText } from "../common/DiagramRenderer";
+import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeMathMarkdown } from "../common/DiagramRenderer";
 import { InteractiveMindMap } from "../common/InteractiveMindMap";
 
 export interface MaterialTabProps {
@@ -978,7 +978,7 @@ export function MaterialTab({
                               rehypePlugins={[rehypeKatex]}
                               components={markdownComponents}
                             >
-                              {chapters[currentChapterIdx]?.content || ""}
+                              {sanitizeMathMarkdown(chapters[currentChapterIdx]?.content || "")}
                             </ReactMarkdown>
                           </div>
 
@@ -1113,7 +1113,7 @@ export function MaterialTab({
                           rehypePlugins={[rehypeKatex]}
                           components={markdownComponents}
                         >
-                          {(formattedContent || activeDocContent || "").replace(/^#\s+[^\n]+\n+/, "")}
+                          {sanitizeMathMarkdown((formattedContent || activeDocContent || "").replace(/^#\s+[^\n]+\n+/, ""))}
                         </ReactMarkdown>
                       </div>
                     </div>

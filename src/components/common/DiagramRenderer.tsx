@@ -27,70 +27,94 @@ export function isAsciiDiagramText(text: string): boolean {
 export function sanitizeMathMarkdown(md: string): string {
   if (!md) return "";
 
-  // 1. Fix unclosed or misaligned LaTeX environments like \begin{aligned} / \end{aligned}
-  const lines = md.split("\n");
-  let inMathBlock = false;
-  let hasAligned = false;
-  const newLines: string[] = [];
+  let text = md.replace(/\r\n/g, "\n");
+
+  const lines = text.split("\n");
+  const processedLines: string[] = [];
+  let inMultiLineMath = false;
+  let currentIndent = "";
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
 
-    // Toggle block math state only if line has an odd number of $$
-    const dMatches = line.match(/\$\$/g);
-    if (dMatches && dMatches.length % 2 === 1) {
-      inMathBlock = !inMathBlock;
+    // Count $$ occurrences on this line
+    const dollarMatches = line.match(/\$\$/g) || [];
+    const dollarCount = dollarMatches.length;
+
+    // 1. Single-line balanced block math ($$ ... $$) -> LEAVE UNTOUCHED
+    if (dollarCount >= 2 && dollarCount % 2 === 0) {
+      processedLines.push(line);
+      continue;
     }
 
-    // Fix orphaned \end{aligned} without \begin{aligned}
-    if (line.includes("\\end{aligned}") && !hasAligned) {
-      let startIdx = newLines.length;
-      while (startIdx > 0 && (newLines[startIdx - 1].includes("&=") || newLines[startIdx - 1].includes("\\\\") || newLines[startIdx - 1].trim() === "")) {
-        startIdx--;
+    // 2. Line has an odd number of $$ (opener or closer of multiline math block)
+    if (dollarCount % 2 === 1) {
+      if (!inMultiLineMath) {
+        // OPENING multiline block
+        inMultiLineMath = true;
+        const indent = line.match(/^(\s*)/)?.[1] || "";
+        currentIndent = indent;
+
+        const trimmed = line.trim();
+        if (trimmed === "$$") {
+          processedLines.push(line);
+        } else if (trimmed.startsWith("$$")) {
+          // e.g. "   $$\begin{aligned}" -> "   $$" and "   \begin{aligned}"
+          const content = line.replace(/^\s*\$\$\s*/, "");
+          processedLines.push(indent + "$$");
+          processedLines.push(indent + content);
+        } else {
+          // e.g. "Text $$"
+          const parts = line.split("$$");
+          processedLines.push(parts[0]);
+          processedLines.push(indent + "$$");
+          if (parts[1]?.trim()) processedLines.push(indent + parts[1].trim());
+        }
+      } else {
+        // CLOSING multiline block
+        inMultiLineMath = false;
+        const indent = currentIndent || (line.match(/^(\s*)/)?.[1] || "");
+
+        const trimmed = line.trim();
+        if (trimmed === "$$") {
+          processedLines.push(indent + "$$");
+        } else if (trimmed.endsWith("$$")) {
+          // e.g. "   \end{aligned}$$" -> "   \end{aligned}" and "   $$"
+          const before = line.replace(/\s*\$\$\s*$/, "");
+          processedLines.push(before);
+          processedLines.push(indent + "$$");
+        } else {
+          const parts = line.split("$$");
+          if (parts[0]?.trim()) processedLines.push(indent + parts[0].trim());
+          processedLines.push(indent + "$$");
+          if (parts[1]?.trim()) processedLines.push(indent + parts[1].trim());
+        }
+        currentIndent = "";
       }
-      newLines.splice(startIdx, 0, "$$\\begin{aligned}");
-      line = line.replace(/\\end\{aligned\}\s*\$\$/g, "\\end{aligned}\n$$");
-      hasAligned = false;
-      inMathBlock = false;
-    } else if (line.includes("\\begin{aligned}")) {
-      hasAligned = true;
-      if (!inMathBlock && !line.includes("$$")) {
-        line = "$$\n" + line;
-        inMathBlock = true;
-      }
-    } else if (line.includes("\\end{aligned}")) {
-      hasAligned = false;
-      if (inMathBlock && !line.includes("$$")) {
-        line = line + "\n$$";
-        inMathBlock = false;
-      }
+      continue;
     }
 
-    // Safety: Headings, horizontal rules, and tables must NEVER be eaten by unclosed math!
-    if (inMathBlock && (line.trim().startsWith("#") || line.trim().startsWith("---") || line.trim().startsWith("|"))) {
-      newLines.push("$$");
-      inMathBlock = false;
-      hasAligned = false;
+    // 3. Safety: If inside multiline math and hit markdown heading, divider, or table, force-close math block
+    if (inMultiLineMath && (line.trim().startsWith("#") || line.trim().startsWith("---") || line.trim().startsWith("|"))) {
+      processedLines.push((currentIndent || "") + "$$");
+      inMultiLineMath = false;
+      currentIndent = "";
     }
 
-    newLines.push(line);
+    processedLines.push(line);
   }
 
-  if (inMathBlock) {
-    if (hasAligned) newLines.push("\\end{aligned}");
-    newLines.push("$$");
+  if (inMultiLineMath) {
+    processedLines.push((currentIndent || "") + "$$");
   }
 
-  let result = newLines.join("\n");
+  let result = processedLines.join("\n");
 
-  // 2. Fix inline math with unmatched dollar signs: e.g. "$S A_3 + A_4 ... $$" -> "$$ S A_3 + A_4 ... $$"
-  result = result.replace(/(\n|^)\s*\$([^\$\n]+)\$\$\s*(\n|$)/g, "$1$$$$ $2 $$$$$3");
-
-  // 3. Close unclosed single $ on a line so it cannot swallow later lines
+  // Fix unmatched inline math: single unclosed $ on a line
   result = result.split("\n").map((l) => {
     if (l.includes("$$")) return l;
-    const dollarCount = (l.match(/\$/g) || []).length;
-    if (dollarCount % 2 === 1) {
+    const count = (l.match(/\$/g) || []).length;
+    if (count % 2 === 1) {
       return l + "$";
     }
     return l;

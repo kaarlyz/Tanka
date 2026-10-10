@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Sparkles, Globe, Compass, ArrowRight, Check, CheckCircle2, BookOpen, Layers } from "lucide-react";
+import { MathView } from "./MathView";
 
 export function extractTextFromNode(node: any): string {
   if (!node) return "";
@@ -195,30 +196,30 @@ export function renderVisualDiagramOrPre(children: any) {
     (upper.includes("LINIER") || upper.includes("LINEAR"))
   ) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "20px 22px", backgroundColor: "#f8faf6", border: "1px solid #d4ded2", borderRadius: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
-        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1.2px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
-          <span>🗺️ Peta Dua Sumbu Utama Teori Perubahan Sosial</span>
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 18px", backgroundColor: "#f8faf6", border: "1px solid #d4ded2", borderRadius: 6, boxShadow: "none" }}>
+        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
+          Peta Dua Sumbu Utama Teori Perubahan Sosial
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
           {/* Sumbu 1: Arah Gerak */}
-          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 12, padding: "16px" }}>
-            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "'DM Mono', monospace" }}>
+          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 4, padding: "14px" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10, fontFamily: "'DM Mono', monospace" }}>
               Sumbu 1: Pola Arah Gerak
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", backgroundColor: "#fbf6e8", border: "1px solid #fae8b8", borderRadius: 9 }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>↻</span>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#fbf6e8", border: "1px solid #fae8b8", borderRadius: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#92400e", fontFamily: "'DM Mono', monospace" }}>01</span>
                 <div>
-                  <strong style={{ fontSize: 13, color: "#92400e", display: "block" }}>1. Teori Siklus (Cyclical)</strong>
+                  <strong style={{ fontSize: 13, color: "#92400e", display: "block" }}>Teori Siklus (Cyclical)</strong>
                   <span style={{ fontSize: 11.5, color: "#78350f", lineHeight: 1.45, display: "block", marginTop: 2 }}>Pola melingkar berulang tanpa ujung pangkal mutlak; menolak kemajuan mutlak (Spengler, Toynbee, Sorokin).</span>
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", backgroundColor: "#edf7ed", border: "1px solid #c8e6c9", borderRadius: 9 }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>➔</span>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#edf7ed", border: "1px solid #c8e6c9", borderRadius: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#1b5e20", fontFamily: "'DM Mono', monospace" }}>02</span>
                 <div>
-                  <strong style={{ fontSize: 13, color: "#1b5e20", display: "block" }}>2. Teori Linier / Evolusi</strong>
+                  <strong style={{ fontSize: 13, color: "#1b5e20", display: "block" }}>Teori Linier / Evolusi</strong>
                   <span style={{ fontSize: 11.5, color: "#2e7d32", lineHeight: 1.45, display: "block", marginTop: 2 }}>Gerak maju satu arah secara kumulatif & permanen dari primitif ke modern (Comte, Spencer).</span>
                 </div>
               </div>
@@ -226,23 +227,23 @@ export function renderVisualDiagramOrPre(children: any) {
           </div>
 
           {/* Sumbu 2: Penggerak Sistem */}
-          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 12, padding: "16px" }}>
-            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "'DM Mono', monospace" }}>
+          <div style={{ backgroundColor: "#ffffff", border: "1px solid #dde5d9", borderRadius: 4, padding: "14px" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10, fontFamily: "'DM Mono', monospace" }}>
               Sumbu 2: Mekanisme Penggerak
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", backgroundColor: "#fdf2f2", border: "1px solid #fecaca", borderRadius: 9 }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>⚔️</span>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#fdf2f2", border: "1px solid #fecaca", borderRadius: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#991b1b", fontFamily: "'DM Mono', monospace" }}>03</span>
                 <div>
-                  <strong style={{ fontSize: 13, color: "#991b1b", display: "block" }}>3. Teori Konflik</strong>
+                  <strong style={{ fontSize: 13, color: "#991b1b", display: "block" }}>Teori Konflik</strong>
                   <span style={{ fontSize: 11.5, color: "#7f1d1d", lineHeight: 1.45, display: "block", marginTop: 2 }}>Bentrokan kepentingan struktural (alat modal Marx vs wewenang hierarki Dahrendorf).</span>
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", backgroundColor: "#f1f8e9", border: "1px solid #dcedc8", borderRadius: 9 }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>⚖️</span>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", backgroundColor: "#f1f8e9", border: "1px solid #dcedc8", borderRadius: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#33691e", fontFamily: "'DM Mono', monospace" }}>04</span>
                 <div>
-                  <strong style={{ fontSize: 13, color: "#33691e", display: "block" }}>4. Teori Fungsionalis</strong>
+                  <strong style={{ fontSize: 13, color: "#33691e", display: "block" }}>Teori Fungsionalis</strong>
                   <span style={{ fontSize: 11.5, color: "#33691e", lineHeight: 1.45, display: "block", marginTop: 2 }}>Organisme terpadu menjaga keseimbangan dinamis / ekuilibrium; adaptasi gradual (Parsons, Ogburn, Merton).</span>
                 </div>
               </div>
@@ -259,9 +260,9 @@ export function renderVisualDiagramOrPre(children: any) {
     (upper.includes("KEMUNDURAN") || upper.includes("KEJAYAAN") || upper.includes("PUNCAK") || upper.includes("RUNTUH") || upper.includes("TUMBUH"))
   ) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#fffdf5", border: "1px solid #fde68a", borderRadius: 14, boxShadow: "0 4px 18px rgba(0,0,0,0.03)" }}>
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 18px", backgroundColor: "#fffdf5", border: "1px solid #fde68a", borderRadius: 6, boxShadow: "none" }}>
         <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#b45309", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
-          🔄 Alur Melingkar Teori Siklus (Tanpa Garis Akhir Mutlak)
+          Alur Melingkar Teori Siklus (Tanpa Garis Akhir Mutlak)
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
           {[
@@ -271,17 +272,17 @@ export function renderVisualDiagramOrPre(children: any) {
             { step: "Fase 4", title: "Kemunduran / Runtuh", sub: "Elit gagal adaptasi", bg: "#fee2e2", border: "#fecaca", color: "#991b1b" }
           ].map((item, idx) => (
             <React.Fragment key={idx}>
-              <div style={{ flex: "1 1 125px", padding: "11px 14px", backgroundColor: item.bg, border: `1px solid ${item.border}`, borderRadius: 10, textAlign: "center" }}>
+              <div style={{ flex: "1 1 125px", padding: "10px 12px", backgroundColor: item.bg, border: `1px solid ${item.border}`, borderRadius: 4, textAlign: "center" }}>
                 <div style={{ fontSize: 9.5, fontWeight: 800, textTransform: "uppercase", color: item.color, opacity: 0.8, fontFamily: "'DM Mono', monospace" }}>{item.step}</div>
                 <strong style={{ fontSize: 13, color: item.color, display: "block", marginTop: 3 }}>{item.title}</strong>
                 <span style={{ fontSize: 11, color: item.color, opacity: 0.85, display: "block", marginTop: 2 }}>{item.sub}</span>
               </div>
-              {idx < 3 && <span style={{ fontSize: 16, color: "#b45309", fontWeight: 800, padding: "0 2px" }}>➔</span>}
+              {idx < 3 && <span style={{ fontSize: 14, color: "#b45309", fontWeight: 800, padding: "0 2px" }}>➔</span>}
             </React.Fragment>
           ))}
         </div>
-        <div style={{ textAlign: "center", marginTop: 12, fontSize: 11.5, color: "#92400e", fontWeight: 600 }}>
-          ↺ Keruntuhan fase 4 menjadi bibit kebangkitan fase 1 baru bagi peradaban berikutnya.
+        <div style={{ textAlign: "center", marginTop: 10, fontSize: 11.5, color: "#92400e", fontWeight: 600 }}>
+          Keruntuhan fase 4 menjadi bibit kebangkitan fase 1 baru bagi peradaban berikutnya.
         </div>
       </div>
     );
@@ -337,12 +338,11 @@ export function renderVisualDiagramOrPre(children: any) {
     ];
 
     return (
-      <div className="visual-diagram-card decision-tree-card" style={{ margin: "16px 0", padding: "16px 16px", backgroundColor: "#f8f9fa", border: "1px solid #dde1da", borderRadius: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#18221f", fontFamily: "'DM Mono', monospace", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-          <span>⚡</span>
-          <span>Pohon Eliminasi Cepat Soal Ujian</span>
+      <div className="visual-diagram-card decision-tree-card" style={{ margin: "16px 0", padding: "16px 16px", backgroundColor: "#f8f9fa", border: "1px solid #dde1da", borderRadius: 6 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#18221f", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
+          Pohon Eliminasi Cepat Soal Ujian
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {items.map((item, idx) => (
             <div
               key={idx}
@@ -350,23 +350,23 @@ export function renderVisualDiagramOrPre(children: any) {
                 display: "flex",
                 flexDirection: "column",
                 gap: 6,
-                padding: "11px 13px",
+                padding: "10px 12px",
                 backgroundColor: item.bg,
                 border: `1px solid ${item.border}`,
-                borderRadius: 10,
+                borderRadius: 4,
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                 <span
                   style={{
-                    fontSize: 11.5,
+                    fontSize: 11,
                     fontWeight: 800,
                     letterSpacing: "0.5px",
                     color: item.badgeColor,
                     backgroundColor: item.badgeBg,
                     border: `1px solid ${item.badgeBorder}`,
-                    padding: "3px 9px",
-                    borderRadius: 6,
+                    padding: "2px 8px",
+                    borderRadius: 4,
                     whiteSpace: "nowrap",
                     display: "inline-flex",
                     alignItems: "center",
@@ -375,14 +375,14 @@ export function renderVisualDiagramOrPre(children: any) {
                 >
                   ➜ {item.badge}
                 </span>
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: item.badgeColor, opacity: 0.85, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: item.badgeColor, opacity: 0.85, textTransform: "uppercase", letterSpacing: "0.5px", fontFamily: "'DM Mono', monospace" }}>
                   Pola Jawaban
                 </span>
               </div>
-              <div style={{ fontSize: 12.5, lineHeight: 1.55, color: item.textColor }}>
+              <div style={{ fontSize: 12.5, lineHeight: 1.5, color: item.textColor }}>
                 Kata kunci: {item.keywords.map((k, kIdx) => (
                   <React.Fragment key={kIdx}>
-                    <em>{k}</em>
+                    <em><MathView text={k} /></em>
                     {kIdx < item.keywords.length - 1 && " / "}
                   </React.Fragment>
                 ))}
@@ -397,29 +397,29 @@ export function renderVisualDiagramOrPre(children: any) {
   // Pattern 4: Cultural Lag Flow
   if (upper.includes("BUDAYA MATERIAL") && (upper.includes("BUDAYA IMATERIAL") || upper.includes("CULTURAL LAG"))) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#fbfcf9", border: "1px solid #dce1da", borderRadius: 14 }}>
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 18px", backgroundColor: "#fbfcf9", border: "1px solid #dce1da", borderRadius: 6 }}>
         <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
-          ⚡ Dinamika Cultural Lag (William F. Ogburn)
+          Dinamika Cultural Lag (William F. Ogburn)
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "center" }}>
-          <div style={{ padding: "14px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase" }}>Budaya Material</div>
-            <strong style={{ fontSize: 13.5, color: "#1e40af", display: "block", marginTop: 2 }}>Inovasi Teknologi Fisik</strong>
-            <span style={{ fontSize: 11.5, color: "#2563eb", display: "block", marginTop: 4 }}>🚀 Melaju Kilat & Cepat (Fintech, Gawai, AI)</span>
+          <div style={{ padding: "12px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Budaya Material</div>
+            <strong style={{ fontSize: 13, color: "#1e40af", display: "block", marginTop: 2 }}>Inovasi Teknologi Fisik</strong>
+            <span style={{ fontSize: 11.5, color: "#2563eb", display: "block", marginTop: 3 }}>Perubahan Cepat (Fintech, Gawai, AI)</span>
           </div>
 
-          <div style={{ textAlign: "center", padding: "0 8px" }}>
-            <span style={{ fontSize: 22 }}>⚡</span>
+          <div style={{ textAlign: "center", padding: "0 6px" }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#dc2626", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>vs</div>
             <div style={{ fontSize: 9.5, fontWeight: 800, color: "#dc2626", textTransform: "uppercase", marginTop: 2 }}>Kesenjangan</div>
           </div>
 
-          <div style={{ padding: "14px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: 10 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#b45309", textTransform: "uppercase" }}>Budaya Imaterial</div>
-            <strong style={{ fontSize: 13.5, color: "#92400e", display: "block", marginTop: 2 }}>Regulasi & Norma Sosial</strong>
-            <span style={{ fontSize: 11.5, color: "#b45309", display: "block", marginTop: 4 }}>🐢 Tertinggal / Adaptasi Lambat</span>
+          <div style={{ padding: "12px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#b45309", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Budaya Imaterial</div>
+            <strong style={{ fontSize: 13, color: "#92400e", display: "block", marginTop: 2 }}>Regulasi & Norma Sosial</strong>
+            <span style={{ fontSize: 11.5, color: "#b45309", display: "block", marginTop: 3 }}>Adaptasi Bertahap / Tertinggal</span>
           </div>
         </div>
-        <div style={{ marginTop: 12, padding: "10px 14px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 9, fontSize: 12, color: "#991b1b" }}>
+        <div style={{ marginTop: 12, padding: "10px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4, fontSize: 12, color: "#991b1b" }}>
           <strong>Akibat:</strong> Menimbulkan <em>Cultural Lag</em> berupa disorganisasi sosial, kejahatan siber baru, dan anomi sebelum regulasi resmi terbit.
         </div>
       </div>
@@ -432,12 +432,12 @@ export function renderVisualDiagramOrPre(children: any) {
     (upper.includes("INNOVATOR") || upper.includes("EARLY ADOPTER") || upper.includes("LAGGARD") || upper.includes("DISTRIBUSI NORMAL") || upper.includes("34%"))
   ) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "20px 0", padding: "20px 22px", backgroundColor: "#fbfcf9", border: "1px solid #dce2da", borderRadius: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
-            📊 Kurva Distribusi Normal Adopsi Inovasi (Everett M. Rogers)
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 18px", backgroundColor: "#fbfcf9", border: "1px solid #dce2da", borderRadius: 6, boxShadow: "none" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
+            Kurva Distribusi Normal Adopsi Inovasi (Everett M. Rogers)
           </div>
-          <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: "#e2ecdc", color: "#364d18", padding: "3px 8px", borderRadius: 6 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: "#e2ecdc", color: "#364d18", padding: "2px 7px", borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>
             Total N = 100%
           </span>
         </div>
@@ -488,31 +488,31 @@ export function renderVisualDiagramOrPre(children: any) {
 
         {/* 5-Column Segmented Bento Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
-          <div style={{ padding: "10px 12px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, textAlign: "center" }}>
+          <div style={{ padding: "10px 12px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 4, textAlign: "center" }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: "#64748b", fontFamily: "'DM Mono', monospace" }}>2,5%</span>
             <strong style={{ fontSize: 12, color: "#1e293b", display: "block", marginTop: 2 }}>Innovators</strong>
             <span style={{ fontSize: 10, color: "#64748b", display: "block", marginTop: 2 }}>Pemberani, siap risiko rugi</span>
           </div>
 
-          <div style={{ padding: "10px 12px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, textAlign: "center" }}>
+          <div style={{ padding: "10px 12px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 4, textAlign: "center" }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: "#2563eb", fontFamily: "'DM Mono', monospace" }}>13,5%</span>
             <strong style={{ fontSize: 12, color: "#1e40af", display: "block", marginTop: 2 }}>Early Adopters</strong>
             <span style={{ fontSize: 10, color: "#2563eb", display: "block", marginTop: 2 }}>Opinion leader, panutan</span>
           </div>
 
-          <div style={{ padding: "10px 12px", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 10, textAlign: "center" }}>
+          <div style={{ padding: "10px 12px", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 4, textAlign: "center" }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: "#059669", fontFamily: "'DM Mono', monospace" }}>34,0%</span>
             <strong style={{ fontSize: 12, color: "#065f46", display: "block", marginTop: 2 }}>Early Majority</strong>
             <span style={{ fontSize: 10, color: "#059669", display: "block", marginTop: 2 }}>Pragmatis, adopsi aman</span>
           </div>
 
-          <div style={{ padding: "10px 12px", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, textAlign: "center" }}>
+          <div style={{ padding: "10px 12px", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 4, textAlign: "center" }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: "#d97706", fontFamily: "'DM Mono', monospace" }}>34,0%</span>
             <strong style={{ fontSize: 12, color: "#92400e", display: "block", marginTop: 2 }}>Late Majority</strong>
             <span style={{ fontSize: 10, color: "#b45309", display: "block", marginTop: 2 }}>Skeptis, adopsi terpaksa</span>
           </div>
 
-          <div style={{ padding: "10px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, textAlign: "center" }}>
+          <div style={{ padding: "10px 12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4, textAlign: "center" }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: "#dc2626", fontFamily: "'DM Mono', monospace" }}>16,0%</span>
             <strong style={{ fontSize: 12, color: "#991b1b", display: "block", marginTop: 2 }}>Laggards</strong>
             <span style={{ fontSize: 10, color: "#dc2626", display: "block", marginTop: 2 }}>Tradisional, resisten</span>
@@ -520,9 +520,8 @@ export function renderVisualDiagramOrPre(children: any) {
         </div>
 
         {/* Takeaway Box */}
-        <div style={{ marginTop: 12, padding: "10px 14px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 9, fontSize: 11.5, color: "#166534", display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16 }}>🎯</span>
-          <span><strong>Titik Kritis (Chasm):</strong> Melewati kumulatif <strong>16%</strong> (Innovators + Early Adopters) menentukan apakah inovasi meledak ke publik luas atau mati gagal di awal.</span>
+        <div style={{ marginTop: 12, padding: "10px 12px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 4, fontSize: 11.5, color: "#166534" }}>
+          <span><strong>Titik Kritis (Chasm):</strong> Melewati kumulatif <strong>16%</strong> (Innovators + Early Adopters) menentukan apakah inovasi meluas atau gagal.</span>
         </div>
       </div>
     );
@@ -534,20 +533,19 @@ export function renderVisualDiagramOrPre(children: any) {
     (upper.includes("OGBURN") && (upper.includes("POLA") || upper.includes("SEBARAN")))
   ) {
     return (
-      <div className="visual-diagram-card" style={{ margin: "20px 0", padding: "20px 22px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 14 }}>
-          ⚡ 3 Pola Sebaran Dampak Penemuan Baru (William F. Ogburn)
+      <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 18px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 6 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
+          Tiga Pola Sebaran Dampak Penemuan Baru (William F. Ogburn)
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
           {/* 1. Memancar */}
-          <div style={{ padding: "14px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+          <div style={{ padding: "12px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <span style={{ fontSize: 10, fontWeight: 800, color: "#2563eb", fontFamily: "'DM Mono', monospace", textTransform: "uppercase" }}>Pola 01</span>
-              <span style={{ fontSize: 16 }}>🌟</span>
             </div>
-            <strong style={{ fontSize: 13.5, color: "#1e293b", display: "block" }}>Memancar (Konsentris)</strong>
-            <div style={{ margin: "6px 0", padding: "6px 10px", backgroundColor: "#eff6ff", borderRadius: 6, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#1d4ed8" }}>
+            <strong style={{ fontSize: 13, color: "#1e293b", display: "block" }}>Memancar (Konsentris)</strong>
+            <div style={{ margin: "6px 0", padding: "5px 8px", backgroundColor: "#eff6ff", borderRadius: 4, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#1d4ed8" }}>
               1 Alat (X) ➜ Multi Dampak (A, B, C)
             </div>
             <p style={{ fontSize: 11, color: "#64748b", margin: 0, lineHeight: 1.45 }}>
@@ -556,13 +554,12 @@ export function renderVisualDiagramOrPre(children: any) {
           </div>
 
           {/* 2. Menjalar */}
-          <div style={{ padding: "14px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+          <div style={{ padding: "12px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <span style={{ fontSize: 10, fontWeight: 800, color: "#059669", fontFamily: "'DM Mono', monospace", textTransform: "uppercase" }}>Pola 02</span>
-              <span style={{ fontSize: 16 }}>⛓️</span>
             </div>
-            <strong style={{ fontSize: 13.5, color: "#1e293b", display: "block" }}>Menjalar (Siklis/Rantai)</strong>
-            <div style={{ margin: "6px 0", padding: "6px 10px", backgroundColor: "#ecfdf5", borderRadius: 6, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#065f46" }}>
+            <strong style={{ fontSize: 13, color: "#1e293b", display: "block" }}>Menjalar (Siklis/Rantai)</strong>
+            <div style={{ margin: "6px 0", padding: "5px 8px", backgroundColor: "#ecfdf5", borderRadius: 4, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#065f46" }}>
               X ➜ Y ➜ Z (Estafet Berantai)
             </div>
             <p style={{ fontSize: 11, color: "#64748b", margin: 0, lineHeight: 1.45 }}>
@@ -571,13 +568,12 @@ export function renderVisualDiagramOrPre(children: any) {
           </div>
 
           {/* 3. Memusat */}
-          <div style={{ padding: "14px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+          <div style={{ padding: "12px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <span style={{ fontSize: 10, fontWeight: 800, color: "#d97706", fontFamily: "'DM Mono', monospace", textTransform: "uppercase" }}>Pola 03</span>
-              <span style={{ fontSize: 16 }}>🎯</span>
             </div>
-            <strong style={{ fontSize: 13.5, color: "#1e293b", display: "block" }}>Memusat (Konvergen)</strong>
-            <div style={{ margin: "6px 0", padding: "6px 10px", backgroundColor: "#fffbeb", borderRadius: 6, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#92400e" }}>
+            <strong style={{ fontSize: 13, color: "#1e293b", display: "block" }}>Memusat (Konvergen)</strong>
+            <div style={{ margin: "6px 0", padding: "5px 8px", backgroundColor: "#fffbeb", borderRadius: 4, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#92400e" }}>
               (A + B + C) ➜ 1 Sistem Baru (X)
             </div>
             <p style={{ fontSize: 11, color: "#64748b", margin: 0, lineHeight: 1.45 }}>
@@ -599,18 +595,18 @@ export function renderVisualDiagramOrPre(children: any) {
 
     if (rawSegments.length >= 2 && rawSegments.length <= 6) {
       return (
-        <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 14, boxShadow: "0 4px 18px rgba(0,0,0,0.03)" }}>
+        <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 18px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 6, boxShadow: "none" }}>
           <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
-            ➔ Alur Transformasi & Tahapan Konsep
+            Alur Transformasi & Tahapan Konsep
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             {rawSegments.map((item, idx) => (
               <React.Fragment key={idx}>
-                <div style={{ flex: "1 1 140px", padding: "12px 14px", backgroundColor: "#ffffff", border: "1px solid #dce2da", borderRadius: 10, textAlign: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.02)" }}>
+                <div style={{ flex: "1 1 140px", padding: "10px 12px", backgroundColor: "#ffffff", border: "1px solid #dce2da", borderRadius: 4, textAlign: "center" }}>
                   <div style={{ fontSize: 9.5, fontWeight: 800, textTransform: "uppercase", color: "#566b36", fontFamily: "'DM Mono', monospace" }}>Tahap 0{idx + 1}</div>
-                  <strong style={{ fontSize: 13, color: "#18211e", display: "block", marginTop: 4 }}>{item}</strong>
+                  <strong style={{ fontSize: 13, color: "#18211e", display: "block", marginTop: 3 }}><MathView text={item} /></strong>
                 </div>
-                {idx < rawSegments.length - 1 && <span style={{ fontSize: 16, color: "#779f2f", fontWeight: 800, padding: "0 2px" }}>➔</span>}
+                {idx < rawSegments.length - 1 && <span style={{ fontSize: 14, color: "#779f2f", fontWeight: 800, padding: "0 2px" }}>➔</span>}
               </React.Fragment>
             ))}
           </div>
@@ -625,18 +621,18 @@ export function renderVisualDiagramOrPre(children: any) {
     const parts = text.split(/\s*(?:vs|versus)\s*/i).map(s => s.trim()).filter(Boolean);
     if (parts.length === 2) {
       return (
-        <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 14 }}>
+        <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 18px", backgroundColor: "#f8faf6", border: "1px solid #dce2da", borderRadius: 6 }}>
           <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
-            ⚖️ Komparasi Dua Konsep Berseberangan
+            Komparasi Dua Konsep Berseberangan
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ padding: "14px 16px", backgroundColor: "#fbf6e8", border: "1px solid #fae8b8", borderRadius: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
+            <div style={{ padding: "12px 14px", backgroundColor: "#fbf6e8", border: "1px solid #fae8b8", borderRadius: 4 }}>
               <span style={{ fontSize: 10, fontWeight: 800, color: "#92400e", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Kategori A</span>
-              <strong style={{ fontSize: 13.5, color: "#78350f", display: "block", marginTop: 4 }}>{parts[0]}</strong>
+              <strong style={{ fontSize: 13, color: "#78350f", display: "block", marginTop: 3 }}><MathView text={parts[0]} /></strong>
             </div>
-            <div style={{ padding: "14px 16px", backgroundColor: "#edf7ed", border: "1px solid #c8e6c9", borderRadius: 10 }}>
+            <div style={{ padding: "12px 14px", backgroundColor: "#edf7ed", border: "1px solid #c8e6c9", borderRadius: 4 }}>
               <span style={{ fontSize: 10, fontWeight: 800, color: "#1b5e20", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Kategori B</span>
-              <strong style={{ fontSize: 13.5, color: "#2e7d32", display: "block", marginTop: 4 }}>{parts[1]}</strong>
+              <strong style={{ fontSize: 13, color: "#2e7d32", display: "block", marginTop: 3 }}><MathView text={parts[1]} /></strong>
             </div>
           </div>
         </div>
@@ -654,36 +650,38 @@ export function renderVisualDiagramOrPre(children: any) {
 
     if (cleanNodes.length > 0) {
       return (
-        <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#f8f9f6", border: "1px solid #dce2da", borderRadius: 14, boxShadow: "0 4px 18px rgba(0,0,0,0.03)" }}>
-          <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#566b36", fontFamily: "'DM Mono', monospace", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-            <span>🗺️ Bagan Alur & Peta Hubungan Konsep</span>
+        <div className="visual-diagram-card" style={{ margin: "14px 0", padding: "14px 16px", backgroundColor: "#f8f9f6", border: "1px solid #dce2da", borderRadius: 6, boxShadow: "none" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#465f33", fontFamily: "'DM Mono', monospace", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+            <span>Bagan Alur & Peta Hubungan Konsep</span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {cleanNodes.map((nodeText, nIdx) => {
               // Parse arrow transitions e.g. [A] -> [B] or A ◄ Diakselerasi B
               const parts = nodeText.split(/\s*(?:->|-->|==>|◄|►|⇄|⇌|↔)\s*/).filter(p => p.trim().length > 0);
               const isMultiStep = parts.length > 1;
 
               return (
-                <div key={nIdx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", backgroundColor: "#ffffff", border: "1px solid #e1e7de", borderRadius: 9, fontSize: 13, color: "#18211e", flexWrap: "wrap" }}>
-                  <span style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: "#edf4e3", color: "#465f33", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800, fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>
+                <div key={nIdx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", backgroundColor: "#ffffff", border: "1px solid #e1e7de", borderRadius: 4, fontSize: 13, color: "#18211e", flexWrap: "wrap" }}>
+                  <span style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: "#edf4e3", color: "#465f33", display: "grid", placeItems: "center", fontSize: 10.5, fontWeight: 800, fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>
                     {nIdx + 1}
                   </span>
                   {isMultiStep ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", flex: 1 }}>
                       {parts.map((p, pIdx) => (
                         <React.Fragment key={pIdx}>
-                          <span style={{ fontWeight: 700, backgroundColor: "#f4f6f1", border: "1px solid #dde3d8", padding: "3px 8px", borderRadius: 6, color: "#1e2e1a" }}>
-                            {p.replace(/^\[|\]$/g, "")}
+                          <span style={{ fontWeight: 600, backgroundColor: "#f4f6f1", border: "1px solid #dde3d8", padding: "2px 7px", borderRadius: 4, color: "#1e2e1a" }}>
+                            <MathView text={p.replace(/^\[|\]$/g, "")} />
                           </span>
                           {pIdx < parts.length - 1 && (
-                            <span style={{ color: "#72a728", fontWeight: 800, fontSize: 14 }}>➔</span>
+                            <span style={{ color: "#72a728", fontWeight: 800, fontSize: 13 }}>➔</span>
                           )}
                         </React.Fragment>
                       ))}
                     </div>
                   ) : (
-                    <span style={{ fontWeight: 600, flex: 1 }}>{nodeText}</span>
+                    <span style={{ fontWeight: 600, flex: 1, fontSize: 13, lineHeight: 1.45 }}>
+                      <MathView text={nodeText} />
+                    </span>
                   )}
                 </div>
               );

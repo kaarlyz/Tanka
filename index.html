@@ -2246,6 +2246,48 @@
           z-index: 9999;
         }
       }
+
+      /* ==========================================================================
+         ENGINEERING DESIGN SYSTEM: RESTRAINED BORDER-RADIUS (ANTI-AI SLOP)
+         Tames hyper-rounded pill/bubble cards down to clean, crisp 4px-6px surfaces.
+         Preserves intentional 50% circular indicators / avatars.
+         ========================================================================== */
+      .concept-card, .mistake-card, .flashcard-face, .visual-diagram-card, .room-card,
+      .study-card, .quiz-card, .summary-card, .feynman-card, .modal-card, [class*="card"] {
+        border-radius: 6px !important;
+      }
+
+      button:not([style*="50%"]):not([style*="circle"]),
+      input:not([type="checkbox"]):not([type="radio"]),
+      select, textarea,
+      .difficulty, .card-count, .btn, [class*="-btn"]:not([style*="50%"]),
+      .action-pill, .filter-pill, .tab-btn {
+        border-radius: 4px !important;
+      }
+
+      [role="dialog"], [class*="modal"] > div {
+        border-radius: 8px !important;
+      }
+
+      [style*="border-radius: 999"]:not([style*="50%"]):not([style*="width: 6px"]):not([style*="width: 8px"]):not([style*="width: 10px"]),
+      [style*="border-radius:999"]:not([style*="50%"]):not([style*="width: 6px"]):not([style*="width: 8px"]):not([style*="width: 10px"]) {
+        border-radius: 4px !important;
+      }
+
+      [style*="border-radius: 2"]:not([style*="50%"]),
+      [style*="border-radius:2"]:not([style*="50%"]),
+      [style*="border-radius: 18"]:not([style*="50%"]),
+      [style*="border-radius:18"]:not([style*="50%"]),
+      [style*="border-radius: 16"]:not([style*="50%"]),
+      [style*="border-radius:16"]:not([style*="50%"]),
+      [style*="border-radius: 14"]:not([style*="50%"]),
+      [style*="border-radius:14"]:not([style*="50%"]),
+      [style*="border-radius: 12"]:not([style*="50%"]),
+      [style*="border-radius:12"]:not([style*="50%"]),
+      [style*="border-radius: 10"]:not([style*="50%"]),
+      [style*="border-radius:10"]:not([style*="50%"]) {
+        border-radius: 6px !important;
+      }
     </style>
   </head>
   <body>

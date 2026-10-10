@@ -716,14 +716,8 @@ export default function App() {
       {/* Backdrop overlay for mobile drawer */}
       {isMobileDrawerOpen && (
         <div
+          className="drawer-overlay"
           onClick={() => setIsMobileDrawerOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            backdropFilter: "blur(2px)",
-            zIndex: 999
-          }}
         />
       )}
 
@@ -817,7 +811,7 @@ export default function App() {
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
           <section className="main-scroll-section" style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ maxWidth: 1040, margin: "0 auto", width: "100%" }}>
+            <div style={{ maxWidth: activeTab === "material" ? 1440 : 1080, margin: "0 auto", width: "100%", transition: "max-width 0.2s ease" }}>
               {activeTab === "home" && (
                 <HomeHubTab
                   activeTab={activeTab}
@@ -854,6 +848,8 @@ export default function App() {
 
               {activeTab === "material" && (
                 <MaterialTab
+                  documents={documents}
+                  loadDocument={loadDocument}
                   activeDocId={activeDocId}
                   activeDocTitle={activeDocTitle}
                   setActiveDocTitle={setActiveDocTitle}

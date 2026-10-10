@@ -189,13 +189,13 @@ export function TanyaNaraPanel({
                   </h2>
                   <span
                     style={{
-                      fontSize: 9,
-                      fontWeight: 600,
+                      fontSize: 9.5,
+                      fontWeight: 700,
                       color: "#54655e",
                       backgroundColor: "#f1f4ee",
                       border: "1px solid #dfe5db",
-                      padding: "1px 6px",
-                      borderRadius: 4
+                      padding: "2px 8px",
+                      borderRadius: 9999
                     }}
                   >
                     {activeTabLabel}
@@ -211,8 +211,8 @@ export function TanyaNaraPanel({
                           color: "#166534",
                           backgroundColor: "#f0fdf4",
                           border: "1px solid #bbf7d0",
-                          padding: "1px 6px",
-                          borderRadius: 4,
+                          padding: "2px 8px",
+                          borderRadius: 9999,
                           maxWidth: 140,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -232,8 +232,8 @@ export function TanyaNaraPanel({
                             color: "#475569",
                             backgroundColor: "#f1f5f9",
                             border: "1px solid #cbd5e1",
-                            borderRadius: 4,
-                            padding: "1px 5px",
+                            borderRadius: 9999,
+                            padding: "2px 7px",
                             cursor: "pointer",
                             whiteSpace: "nowrap"
                           }}
@@ -252,8 +252,8 @@ export function TanyaNaraPanel({
                           color: "#0369a1",
                           backgroundColor: "#f0f9ff",
                           border: "1px solid #bae6fd",
-                          padding: "1px 6px",
-                          borderRadius: 4,
+                          padding: "2px 8px",
+                          borderRadius: 9999,
                           whiteSpace: "nowrap"
                         }}
                         title="Tanya topik apa saja secara bebas tanpa terikat modul spesifik"
@@ -270,8 +270,8 @@ export function TanyaNaraPanel({
                             color: "#166534",
                             backgroundColor: "#f0fdf4",
                             border: "1px solid #bbf7d0",
-                            borderRadius: 4,
-                            padding: "1px 5px",
+                            borderRadius: 9999,
+                            padding: "2px 7px",
                             cursor: "pointer",
                             whiteSpace: "nowrap"
                           }}
@@ -390,12 +390,12 @@ export function TanyaNaraPanel({
                       onClick={() => handleSendMessage(preset)}
                       disabled={isChatSending}
                       style={{
-                        padding: "7px 10px",
-                        fontSize: 11,
+                        padding: "8px 14px",
+                        fontSize: 11.5,
                         color: "#35443d",
                         backgroundColor: "#ffffff",
                         border: "1px solid #dde3da",
-                        borderRadius: 8,
+                        borderRadius: 9999,
                         textAlign: "left",
                         cursor: "pointer",
                         transition: "background 0.15s, border-color 0.15s"
@@ -716,8 +716,8 @@ export function TanyaNaraPanel({
                 gap: 4,
                 backgroundColor: "#f4f6f2",
                 border: "1px solid #dce2d8",
-                borderRadius: 16,
-                padding: "3px 4px 3px 8px"
+                borderRadius: 9999,
+                padding: "4px 6px 4px 10px"
               }}
             >
               {/* Option 1: Camera */}
@@ -734,7 +734,7 @@ export function TanyaNaraPanel({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 4,
+                  borderRadius: 9999,
                   transition: "color 0.15s"
                 }}
                 title="Ambil foto via kamera"
@@ -756,7 +756,7 @@ export function TanyaNaraPanel({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 4,
+                  borderRadius: 9999,
                   transition: "color 0.15s"
                 }}
                 title="Unggah gambar dari galeri"
@@ -778,7 +778,7 @@ export function TanyaNaraPanel({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 4,
+                  borderRadius: 9999,
                   transition: "color 0.15s"
                 }}
                 title="Unggah PDF / Dokumen"

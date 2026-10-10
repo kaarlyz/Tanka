@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Upload, Camera, Compass, X, Video, Search, User, Target, Trophy, Swords, LogOut, Flame, Sparkles } from "lucide-react";
+import { Plus, Trash2, Upload, Camera, Compass, X, ChevronLeft, ArrowLeft, Video, Search, User, Target, Trophy, Swords, LogOut, Flame, Sparkles } from "lucide-react";
 import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, DocumentItem, QuizQuestion, MistakeItem, Flashcard, UserAccount } from "../../types";
 
@@ -71,6 +71,54 @@ export function Sidebar({
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
+  // Mobile Swipe-to-Dismiss Gesture
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const [dragOffset, setDragOffset] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLElement>) => {
+    if (!isMobileDrawerOpen) return;
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLElement>) => {
+    if (touchStartXRef.current === null || !isMobileDrawerOpen) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = currentX - touchStartXRef.current;
+    const deltaY = currentY - (touchStartYRef.current || 0);
+
+    // If scrolling vertically, ignore horizontal swipe unless horizontal is strong
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaX) < 18) {
+      return;
+    }
+
+    // Only allow dragging to the left (closing direction)
+    if (deltaX < 0) {
+      setDragOffset(deltaX);
+    } else {
+      setDragOffset(0);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLElement>) => {
+    if (touchStartXRef.current === null || !isMobileDrawerOpen) return;
+    const endX = e.changedTouches[0].clientX;
+    const deltaX = endX - touchStartXRef.current;
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+    setIsDragging(false);
+
+    // If swiped left by 45px or more, dismiss
+    if (deltaX < -45) {
+      setIsMobileDrawerOpen(false);
+    }
+    setDragOffset(0);
+  };
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
@@ -85,32 +133,21 @@ export function Sidebar({
   return (
       <aside
         className={`figma-sidebar ${isMobileDrawerOpen ? "sidebar-drawer open" : "desktop-only"}`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{
-          height: "100%",
-          maxHeight: "100%",
-          overflowY: "scroll",
-          overflowX: "hidden",
-          WebkitOverflowScrolling: "touch",
-          display: "flex",
-          flexDirection: "column",
-          boxSizing: "border-box"
-        }}
+          "--drawer-translate": `${dragOffset}px`,
+          transition: isDragging ? "none" : undefined
+        } as React.CSSProperties}
       >
-        {/* Brand Row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexShrink: 0 }}>
+        <div className="sidebar-scroll-viewport">
+          {/* Brand Row */}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 12, flexShrink: 0 }}>
             <div className="brand-box" style={{ padding: 0 }}>
               <div className="brand-symbol-box">t</div>
               <span>tanka.</span>
             </div>
-            {isMobileDrawerOpen && (
-              <button
-                className="mobile-only"
-                onClick={() => setIsMobileDrawerOpen(false)}
-                style={{ background: "none", border: "none", color: "#aeb9b4", cursor: "pointer", padding: 4 }}
-              >
-                <X size={18} />
-              </button>
-            )}
           </div>
 
           {/* Main Navigation Links with Side Mark Chips */}
@@ -692,6 +729,41 @@ export function Sidebar({
             </span>
           </button>
         </div>
+        </div>
+
+        {/* Floating Back Tab docked on the RIGHT BORDER of the mobile drawer */}
+        {isMobileDrawerOpen && (
+          <button
+            className="mobile-only mobile-drawer-edge-tab"
+            onClick={() => setIsMobileDrawerOpen(false)}
+            style={{
+              position: "absolute",
+              right: -34,
+              top: "42%",
+              transform: "translateY(-50%)",
+              width: 34,
+              height: 64,
+              backgroundColor: "#18221f",
+              border: "1.5px solid #364942",
+              borderLeft: "none",
+              borderRadius: "0 18px 18px 0",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "6px 2px 20px rgba(0, 0, 0, 0.45)",
+              zIndex: 3005,
+              padding: 0,
+              touchAction: "none"
+            }}
+            title="Tutup menu samping"
+            aria-label="Kembali"
+          >
+            <ChevronLeft size={22} color="#c8f064" strokeWidth={2.5} />
+            <div style={{ width: 10, height: 2, backgroundColor: "rgba(200, 240, 100, 0.4)", borderRadius: 99, marginTop: 2 }} />
+          </button>
+        )}
       </aside>
   );
 }

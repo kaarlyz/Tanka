@@ -288,32 +288,107 @@ export function renderVisualDiagramOrPre(children: any) {
   }
 
   // Pattern 3: Pohon Keputusan Ujian (Decision Tree)
-  if (upper.includes("ELIMINASI") || upper.includes("POHON KEPUTUSAN") || (upper.includes("KATA KUNCI") && (upper.includes("SIKLUS") || upper.includes("LINIER")))) {
+  if (
+    upper.includes("POHON ELIMINASI") ||
+    upper.includes("POHON KEPUTUSAN") ||
+    ((upper.includes("ELIMINASI") || upper.includes("KATA KUNCI")) && (upper.includes("SIKLUS") || upper.includes("LINIER") || upper.includes("KONFLIK") || upper.includes("FUNGSIONAL")))
+  ) {
+    const items = [
+      {
+        badge: "TEORI SIKLUS",
+        badgeBg: "#fef3c7",
+        badgeBorder: "#fde68a",
+        badgeColor: "#92400e",
+        bg: "#fffbeb",
+        border: "#fde68a",
+        textColor: "#78350f",
+        keywords: ['"kembali ke masa lampau"', '"pola berulang"', '"tren surut lalu bangkit"']
+      },
+      {
+        badge: "TEORI LINIER",
+        badgeBg: "#d1fae5",
+        badgeBorder: "#a7f3d0",
+        badgeColor: "#065f46",
+        bg: "#ecfdf5",
+        border: "#a7f3d0",
+        textColor: "#065f46",
+        keywords: ['"tahapan maju permanen"', '"tidak kembali ke titik awal"', '"Comte / Spencer"']
+      },
+      {
+        badge: "TEORI KONFLIK",
+        badgeBg: "#fee2e2",
+        badgeBorder: "#fecaca",
+        badgeColor: "#991b1b",
+        bg: "#fef2f2",
+        border: "#fecaca",
+        textColor: "#7f1d1d",
+        keywords: ['"friksi dua kelompok"', '"upah & modal (Marx)"', '"wewenang & jabatan (Dahrendorf)"']
+      },
+      {
+        badge: "TEORI FUNGSIONAL",
+        badgeBg: "#dcfce7",
+        badgeBorder: "#bbf7d0",
+        badgeColor: "#166534",
+        bg: "#f0fdf4",
+        border: "#bbf7d0",
+        textColor: "#14532d",
+        keywords: ['"keseimbangan sistem (AGIL)"', '"teknologi mendahului aturan (Cultural Lag)"']
+      }
+    ];
+
     return (
-      <div className="visual-diagram-card" style={{ margin: "18px 0", padding: "18px 22px", backgroundColor: "#f8f9fa", border: "1px solid #dde1da", borderRadius: 14 }}>
-        <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#18221f", fontFamily: "'DM Mono', monospace", marginBottom: 12 }}>
-          ⚡ Pohon Eliminasi Cepat Soal Ujian
+      <div className="visual-diagram-card decision-tree-card" style={{ margin: "16px 0", padding: "16px 16px", backgroundColor: "#f8f9fa", border: "1px solid #dde1da", borderRadius: 14 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#18221f", fontFamily: "'DM Mono', monospace", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+          <span>⚡</span>
+          <span>Pohon Eliminasi Cepat Soal Ujian</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8 }}>
-            <span style={{ fontSize: 12.5, color: "#78350f" }}>Kata kunci: <em>"kembali ke masa lampau"</em> / <em>"pola berulang"</em> / <em>"tren surut lalu bangkit"</em></span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#92400e", backgroundColor: "#fef3c7", padding: "4px 10px", borderRadius: 6 }}>➜ TEORI SIKLUS</span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 8 }}>
-            <span style={{ fontSize: 12.5, color: "#065f46" }}>Kata kunci: <em>"tahapan maju permanen"</em> / <em>"tidak kembali ke titik awal"</em> / <em>"Comte / Spencer"</em></span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#065f46", backgroundColor: "#d1fae5", padding: "4px 10px", borderRadius: 6 }}>➜ TEORI LINIER</span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8 }}>
-            <span style={{ fontSize: 12.5, color: "#7f1d1d" }}>Kata kunci: <em>"friksi dua kelompok"</em> / <em>"upah & modal (Marx)"</em> / <em>"wewenang & jabatan (Dahrendorf)"</em></span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#991b1b", backgroundColor: "#fee2e2", padding: "4px 10px", borderRadius: 6 }}>➜ TEORI KONFLIK</span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8 }}>
-            <span style={{ fontSize: 12.5, color: "#14532d" }}>Kata kunci: <em>"keseimbangan sistem (AGIL)"</em> / <em>"teknologi mendahului aturan (Cultural Lag)"</em></span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#166534", backgroundColor: "#dcfce7", padding: "4px 10px", borderRadius: 6 }}>➜ TEORI FUNGSIONAL</span>
-          </div>
+          {items.map((item, idx) => (
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                padding: "11px 13px",
+                backgroundColor: item.bg,
+                border: `1px solid ${item.border}`,
+                borderRadius: 10,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    letterSpacing: "0.5px",
+                    color: item.badgeColor,
+                    backgroundColor: item.badgeBg,
+                    border: `1px solid ${item.badgeBorder}`,
+                    padding: "3px 9px",
+                    borderRadius: 6,
+                    whiteSpace: "nowrap",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                  }}
+                >
+                  ➜ {item.badge}
+                </span>
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: item.badgeColor, opacity: 0.85, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Pola Jawaban
+                </span>
+              </div>
+              <div style={{ fontSize: 12.5, lineHeight: 1.55, color: item.textColor }}>
+                Kata kunci: {item.keywords.map((k, kIdx) => (
+                  <React.Fragment key={kIdx}>
+                    <em>{k}</em>
+                    {kIdx < item.keywords.length - 1 && " / "}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

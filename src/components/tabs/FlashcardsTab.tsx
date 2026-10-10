@@ -211,7 +211,7 @@ export function FlashcardsTab({
                     </div>
 
                     {/* Flip and Navigation Button */}
-                    <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 16 }}>
+                    <div className="flashcard-nav-controls" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, marginTop: 18, marginBottom: 14, flexWrap: "wrap", position: "relative", zIndex: 10 }}>
                       <button
                         onClick={() => {
                           if (currentCardIndex > 0) {
@@ -224,35 +224,39 @@ export function FlashcardsTab({
                           backgroundColor: "#ffffff",
                           border: "1px solid #dce1da",
                           color: currentCardIndex === 0 ? "#9ca3af" : "#17201d",
-                          borderRadius: 8,
-                          padding: "8px 14px",
-                          fontSize: 12,
+                          borderRadius: 9999,
+                          padding: "9px 18px",
+                          fontSize: 12.5,
+                          fontWeight: 600,
                           cursor: currentCardIndex === 0 ? "not-allowed" : "pointer",
                           display: "flex",
                           alignItems: "center",
-                          gap: 4
+                          gap: 5,
+                          transition: "all 0.15s ease"
                         }}
                       >
-                        <ChevronLeft size={14} /> Sebelumnya
+                        <ChevronLeft size={15} /> Sebelumnya
                       </button>
 
                       <button
                         onClick={() => setIsFlipped(!isFlipped)}
                         style={{
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #dce1da",
-                          color: "#17201d",
-                          borderRadius: 8,
-                          padding: "8px 16px",
-                          fontSize: 12,
-                          fontWeight: 600,
+                          backgroundColor: "#18221f",
+                          border: "none",
+                          color: "#c8f064",
+                          borderRadius: 9999,
+                          padding: "10px 22px",
+                          fontSize: 13,
+                          fontWeight: 700,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
-                          gap: 6
+                          gap: 6,
+                          boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
+                          transition: "all 0.15s ease"
                         }}
                       >
-                        <RotateCw size={13} /> Balik Kartu
+                        <RotateCw size={14} /> Balik Kartu
                       </button>
 
                       <button
@@ -267,27 +271,30 @@ export function FlashcardsTab({
                           backgroundColor: "#ffffff",
                           border: "1px solid #dce1da",
                           color: currentCardIndex === flashcards.length - 1 ? "#9ca3af" : "#17201d",
-                          borderRadius: 8,
-                          padding: "8px 14px",
-                          fontSize: 12,
+                          borderRadius: 9999,
+                          padding: "9px 18px",
+                          fontSize: 12.5,
+                          fontWeight: 600,
                           cursor: currentCardIndex === flashcards.length - 1 ? "not-allowed" : "pointer",
                           display: "flex",
                           alignItems: "center",
-                          gap: 4
+                          gap: 5,
+                          transition: "all 0.15s ease"
                         }}
                       >
-                        Berikutnya <ChevronRight size={14} />
+                        Berikutnya <ChevronRight size={15} />
                       </button>
                     </div>
 
                     {/* Spaced Repetition Grading Actions */}
-                    <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#ffffff", borderRadius: 12, border: "1px solid #dde1da", boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)" }}>
+                    <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#ffffff", borderRadius: 16, border: "1px solid #dde1da", boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: "#6f7975" }}>
                           Beri Nilai Pemahaman Untuk Lanjut ke Kartu Berikutnya:
                         </span>
                         {currentCardIndex < flashcards.length - 1 && (
                           <button
+                            className="desktop-only"
                             onClick={() => {
                               setIsFlipped(false);
                               setCurrentCardIndex(currentCardIndex + 1);

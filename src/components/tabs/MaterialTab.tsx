@@ -27,7 +27,7 @@ import {
   Video
 } from "lucide-react";
 import { YouTubeIcon } from "../common/YouTubeIcon";
-import { ActiveTab, Flashcard, QuizQuestion } from "../../types";
+import { ActiveTab, Flashcard, QuizQuestion, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeMathMarkdown } from "../common/DiagramRenderer";
 import { InteractiveMindMap } from "../common/InteractiveMindMap";
@@ -70,6 +70,8 @@ export interface MaterialTabProps {
   handleDrop: (e: React.DragEvent) => void;
   handleGenerateQuiz: (params?: any) => void;
   handleGenerateFlashcards: () => void;
+  documents?: DocumentItem[];
+  loadDocument?: (id: string) => void;
 }
 
 export function MaterialTab({
@@ -110,6 +112,8 @@ export function MaterialTab({
   handleDrop,
   handleGenerateQuiz,
   handleGenerateFlashcards,
+  documents = [],
+  loadDocument = () => {}
 }: MaterialTabProps) {
   const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full">("chapters");
   const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
@@ -224,17 +228,17 @@ export function MaterialTab({
 
   const markdownComponents = React.useMemo(() => ({
     h1: ({ children }: any) => (
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#17201d", marginTop: 20, marginBottom: 10, borderBottom: "1px solid #dde1da", paddingBottom: 6 }}>
+      <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111a17", letterSpacing: "-0.025em", marginTop: 32, marginBottom: 14, borderBottom: "1px solid #eef1eb", paddingBottom: 8 }}>
         {children}
       </h1>
     ),
     h2: ({ children }: any) => (
-      <h2 style={{ fontSize: 17, fontWeight: 700, color: "#22370c", marginTop: 20, marginBottom: 8 }}>
+      <h2 style={{ fontSize: 20, fontWeight: 750, color: "#162420", letterSpacing: "-0.02em", marginTop: 28, marginBottom: 12 }}>
         {children}
       </h2>
     ),
     h3: ({ children }: any) => (
-      <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "#17201d", marginTop: 16, marginBottom: 6 }}>
+      <h3 style={{ fontSize: 16.5, fontWeight: 700, color: "#25371a", letterSpacing: "-0.01em", marginTop: 24, marginBottom: 10 }}>
         {children}
       </h3>
     ),
@@ -261,7 +265,7 @@ export function MaterialTab({
           </div>
         );
       }
-      return <p style={{ marginBottom: 14, color: "#23332c", lineHeight: 1.8 }}>{children}</p>;
+      return <p style={{ marginBottom: 18, color: "#1d2b26", lineHeight: 1.9, fontSize: 16.5 }}>{children}</p>;
     },
     ul: ({ children }: any) => (
       <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
@@ -330,27 +334,32 @@ export function MaterialTab({
               <div className="tab-pane-animate material-book-layout">
                 {activeDocId ? (
                   <div className="material-outer-box">
-                    <div className="material-header-panel" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+                    <div className="material-header-panel material-header-panel-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
                       <div style={{ flex: 1, minWidth: 260 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span
                             style={{
-                              fontSize: 10,
+                              fontSize: 10.5,
                               fontWeight: 800,
                               textTransform: "uppercase",
                               letterSpacing: "0.08em",
                               color: "#273f15",
                               backgroundColor: "#eef8db",
                               border: "1px solid #c2e28f",
-                              padding: "2px 7px",
-                              borderRadius: 4,
-                              fontFamily: "'DM Mono', monospace"
+                              padding: "3px 12px",
+                              borderRadius: 9999,
+                              fontFamily: "'DM Mono', monospace",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              boxShadow: "0 1px 3px rgba(39, 63, 21, 0.08)"
                             }}
                           >
+                            <span style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: "#55831b" }} />
                             Catatan Belajar
                           </span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
                           <h1 style={{ fontSize: 24, fontWeight: 800, color: "#17201d", letterSpacing: "-0.025em", margin: 0, lineHeight: 1.25 }}>
                             {activeDocTitle}
                           </h1>
@@ -361,14 +370,15 @@ export function MaterialTab({
                               backgroundColor: "#f4f6f2",
                               border: "1px solid #dce1da",
                               color: "#45544e",
-                              borderRadius: 6,
-                              padding: "3px 7px",
+                              borderRadius: 9999,
+                              padding: "4px 10px",
                               fontSize: 11,
                               fontWeight: 600,
                               cursor: isDetectingTitle ? "not-allowed" : "pointer",
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: 4
+                              gap: 5,
+                              transition: "all 0.15s ease"
                             }}
                             title="Deteksi topik pembelajaran secara otomatis berdasarkan isi materi"
                           >
@@ -377,14 +387,16 @@ export function MaterialTab({
                           </button>
                         </div>
                         {/* Compact Metadata line */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: "#667770", marginTop: 6 }}>
-                          <span>📚 {chapters.length} Bab</span>
-                          <span>•</span>
-                          <span>📝 {wordCount.toLocaleString("id-ID")} Kata</span>
-                          <span>•</span>
-                          <span>🗂️ {flashcards.length} Flashcard</span>
-                          <span>•</span>
-                          <span>🎯 {quizQuestions.length} Soal</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "#47554e", backgroundColor: "#f6f8f4", border: "1px solid #dde2d8", padding: "2px 10px", borderRadius: 9999, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            📚 {chapters.length} Bab
+                          </span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "#47554e", backgroundColor: "#f6f8f4", border: "1px solid #dde2d8", padding: "2px 10px", borderRadius: 9999, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            🗂️ {flashcards.length} Flashcard
+                          </span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "#47554e", backgroundColor: "#f6f8f4", border: "1px solid #dde2d8", padding: "2px 10px", borderRadius: 9999, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            🎯 {quizQuestions.length} Soal
+                          </span>
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -394,14 +406,15 @@ export function MaterialTab({
                             backgroundColor: "#f8f9f5",
                             border: "1px solid #dce1da",
                             color: "#17201d",
-                            borderRadius: 8,
-                            padding: "6px 12px",
+                            borderRadius: 9999,
+                            padding: "6px 14px",
                             fontSize: 12,
                             fontWeight: 600,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
-                            gap: 5
+                            gap: 5,
+                            transition: "all 0.15s ease"
                           }}
                           title="Ganti atau unggah berkas baru"
                         >
@@ -416,14 +429,15 @@ export function MaterialTab({
                             backgroundColor: "#f0f6eb",
                             border: "1px solid #c2e28f",
                             color: "#22370c",
-                            borderRadius: 8,
-                            padding: "6px 12px",
+                            borderRadius: 9999,
+                            padding: "6px 14px",
                             fontSize: 12,
                             fontWeight: 700,
                             cursor: isEnriching ? "not-allowed" : "pointer",
                             display: "flex",
                             alignItems: "center",
-                            gap: 6
+                            gap: 6,
+                            transition: "all 0.15s ease"
                           }}
                           title="Cari referensi internet atau perluas materi dengan riset AI"
                         >
@@ -438,14 +452,15 @@ export function MaterialTab({
                             backgroundColor: isTailorOpen ? "#22370c" : "#f4fbeb",
                             border: "1px solid #c2e28f",
                             color: isTailorOpen ? "#c8f064" : "#273f15",
-                            borderRadius: 8,
-                            padding: "6px 12px",
+                            borderRadius: 9999,
+                            padding: "6px 14px",
                             fontSize: 12,
                             fontWeight: 700,
                             cursor: isRestructuring ? "wait" : "pointer",
                             display: "flex",
                             alignItems: "center",
-                            gap: 6
+                            gap: 6,
+                            transition: "all 0.15s ease"
                           }}
                           title="Sesuaikan, tambah materi yang kurang, atau susun ulang bab dengan instruksi khusus"
                         >
@@ -459,8 +474,8 @@ export function MaterialTab({
                             backgroundColor: copiedId === "docContent" ? "#ecfdf5" : "#ffffff",
                             border: `1px solid ${copiedId === "docContent" ? "#10b981" : "#dce1da"}`,
                             color: copiedId === "docContent" ? "#065f46" : "#56615d",
-                            borderRadius: 8,
-                            padding: "6px 12px",
+                            borderRadius: 9999,
+                            padding: "6px 14px",
                             fontSize: 12,
                             cursor: "pointer",
                             display: "flex",
@@ -480,13 +495,14 @@ export function MaterialTab({
                             backgroundColor: "#ffffff",
                             border: "1px solid #dce1da",
                             color: "#56615d",
-                            borderRadius: 8,
-                            padding: "6px 12px",
+                            borderRadius: 9999,
+                            padding: "6px 14px",
                             fontSize: 12,
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
-                            gap: 6
+                            gap: 6,
+                            transition: "all 0.15s ease"
                           }}
                         >
                           {showRawText ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -499,10 +515,10 @@ export function MaterialTab({
                     {isTailorOpen && (
                       <div
                         style={{
-                          padding: "16px",
+                          padding: "16px 20px",
                           backgroundColor: "#f4fbeb",
                           border: "1px solid #c2e28f",
-                          borderRadius: 12,
+                          borderRadius: 20,
                           marginBottom: 16
                         }}
                       >
@@ -513,7 +529,7 @@ export function MaterialTab({
                           </span>
                           <button
                             onClick={() => setIsTailorOpen(false)}
-                            style={{ background: "none", border: "none", fontSize: 11, color: "#56615d", cursor: "pointer" }}
+                            style={{ background: "none", border: "none", fontSize: 11, color: "#56615d", cursor: "pointer", padding: "2px 8px", borderRadius: 9999 }}
                           >
                             Tutup
                           </button>
@@ -531,8 +547,8 @@ export function MaterialTab({
                             disabled={isRestructuring}
                             style={{
                               flex: "1 1 240px",
-                              padding: "9px 12px",
-                              borderRadius: 8,
+                              padding: "9px 16px",
+                              borderRadius: 9999,
                               border: "1px solid #b7dc7f",
                               fontSize: 13,
                               outline: "none",
@@ -547,8 +563,8 @@ export function MaterialTab({
                               backgroundColor: "#18221f",
                               color: "#c8f064",
                               border: "none",
-                              borderRadius: 8,
-                              padding: "9px 16px",
+                              borderRadius: 9999,
+                              padding: "9px 18px",
                               fontSize: 12.5,
                               fontWeight: 700,
                               cursor: isRestructuring ? "wait" : "pointer"
@@ -561,7 +577,7 @@ export function MaterialTab({
                     )}
 
                     {restructureNotice && (
-                      <div style={{ padding: "10px 16px", backgroundColor: "#eef8db", border: "1px solid #c2e28f", borderRadius: 8, fontSize: 12.5, color: "#22370c", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ padding: "10px 18px", backgroundColor: "#eef8db", border: "1px solid #c2e28f", borderRadius: 9999, fontSize: 12.5, color: "#22370c", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
                         <Sparkles size={16} color="#4b6623" />
                         <span>{restructureNotice}</span>
                       </div>
@@ -570,15 +586,15 @@ export function MaterialTab({
                     {/* Stats Metrics Bento Grid (Shown only in Full Document Mode to avoid crowding Chapter Reader and Mind Map) */}
                     {materialViewMode === "full" && (
                       <div className="metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 }}>
-                        <div style={{ padding: "12px 14px", backgroundColor: "#f8f9f5", borderRadius: 10, border: "1px solid #dde1da" }}>
-                          <div style={{ fontSize: 10, color: "#727d78", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.08em", fontFamily: "'DM Mono', monospace" }}>Total Kosakata</div>
+                        <div style={{ padding: "14px 18px", backgroundColor: "#fdfdfb", borderRadius: 18, border: "1px solid #dce2da" }}>
+                          <div style={{ fontSize: 10, color: "#727d78", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.08em", fontFamily: "'DM Mono', monospace" }}>Estimasi Baca</div>
                           <div style={{ fontSize: 20, fontWeight: 800, color: "#17201d", marginTop: 4, letterSpacing: "-0.02em" }}>
-                            {wordCount.toLocaleString("id-ID")} <span style={{ fontSize: 12, fontWeight: 500, color: "#727d78" }}>kata</span>
+                            ~{Math.max(1, Math.round(wordCount / 160))} <span style={{ fontSize: 12, fontWeight: 500, color: "#727d78" }}>menit</span>
                           </div>
-                          <div style={{ fontSize: 11, color: "#8a9691", marginTop: 3 }}>{activeDocContent.length} karakter sumber</div>
+                          <div style={{ fontSize: 11, color: "#8a9691", marginTop: 3 }}>Kecepatan normal membaca</div>
                         </div>
 
-                        <div style={{ padding: "12px 14px", backgroundColor: "#f8f9f5", borderRadius: 10, border: "1px solid #dde1da" }}>
+                        <div style={{ padding: "14px 18px", backgroundColor: "#fdfdfb", borderRadius: 18, border: "1px solid #dce2da" }}>
                           <div style={{ fontSize: 10, color: "#727d78", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.08em", fontFamily: "'DM Mono', monospace" }}>Kartu Flashcard</div>
                           <div style={{ fontSize: 20, fontWeight: 800, color: "#22370c", marginTop: 4, letterSpacing: "-0.02em" }}>
                             {flashcards.length} <span style={{ fontSize: 12, fontWeight: 500, color: "#4b6623" }}>kartu</span>
@@ -586,7 +602,7 @@ export function MaterialTab({
                           <div style={{ fontSize: 11, color: "#8a9691", marginTop: 3 }}>Review Spaced Repetition</div>
                         </div>
 
-                        <div style={{ padding: "12px 14px", backgroundColor: "#f8f9f5", borderRadius: 10, border: "1px solid #dde1da" }}>
+                        <div style={{ padding: "14px 18px", backgroundColor: "#fdfdfb", borderRadius: 18, border: "1px solid #dce2da" }}>
                           <div style={{ fontSize: 10, color: "#727d78", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.08em", fontFamily: "'DM Mono', monospace" }}>Paket Latihan Soal</div>
                           <div style={{ fontSize: 20, fontWeight: 800, color: "#17201d", marginTop: 4, letterSpacing: "-0.02em" }}>
                             {quizQuestions.length} <span style={{ fontSize: 12, fontWeight: 500, color: "#4b6623" }}>butir</span>
@@ -597,7 +613,7 @@ export function MaterialTab({
                     )}
 
                     {/* Pelajarin.ai Mode Switcher & Utility Actions Bar */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, padding: "6px 10px", backgroundColor: "#f8faf5", border: "1px solid #dde2d8", borderRadius: 8, margin: "10px 0 16px" }}>
+                    <div className="material-mode-switcher" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, padding: "6px 10px", backgroundColor: "#f8faf5", border: "1px solid #dde2d8", borderRadius: 9999, margin: "10px 0 16px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
                         <button
                           onClick={() => setMaterialViewMode("chapters")}
@@ -605,8 +621,8 @@ export function MaterialTab({
                             display: "flex",
                             alignItems: "center",
                             gap: 5,
-                            padding: "6px 12px",
-                            borderRadius: 6,
+                            padding: "6px 14px",
+                            borderRadius: 9999,
                             fontSize: 12,
                             fontWeight: 700,
                             border: materialViewMode === "chapters" ? "1px solid #18221f" : "1px solid transparent",
@@ -626,8 +642,8 @@ export function MaterialTab({
                             display: "flex",
                             alignItems: "center",
                             gap: 5,
-                            padding: "6px 12px",
-                            borderRadius: 6,
+                            padding: "6px 14px",
+                            borderRadius: 9999,
                             fontSize: 12,
                             fontWeight: 700,
                             border: materialViewMode === "mindmap" ? "1px solid #18221f" : "1px solid transparent",
@@ -647,8 +663,8 @@ export function MaterialTab({
                             display: "flex",
                             alignItems: "center",
                             gap: 5,
-                            padding: "6px 12px",
-                            borderRadius: 6,
+                            padding: "6px 14px",
+                            borderRadius: 9999,
                             fontSize: 12,
                             fontWeight: 700,
                             border: materialViewMode === "full" ? "1px solid #18221f" : "1px solid transparent",
@@ -656,14 +672,14 @@ export function MaterialTab({
                             color: materialViewMode === "full" ? "#c8f064" : "#45544e",
                             cursor: "pointer",
                             transition: "0.15s ease"
-                            }}
-                            >
-                            <FileText size={13} />
-                            <span>Dokumen Lengkap</span>
-                            </button>
-                            </div>
+                          }}
+                        >
+                          <FileText size={13} />
+                          <span>Dokumen Lengkap</span>
+                        </button>
+                      </div>
 
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                         <button
                           onClick={() => {
                             setActiveTab("flashcards");
@@ -673,14 +689,15 @@ export function MaterialTab({
                             display: "flex",
                             alignItems: "center",
                             gap: 5,
-                            padding: "6px 12px",
-                            borderRadius: 7,
+                            padding: "6px 14px",
+                            borderRadius: 9999,
                             fontSize: 12,
                             fontWeight: 600,
                             border: "1px solid #dce2da",
                             backgroundColor: "#ffffff",
                             color: "#22370c",
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
                           }}
                         >
                           <Layers size={13} color="#4b6623" />
@@ -696,14 +713,15 @@ export function MaterialTab({
                             display: "flex",
                             alignItems: "center",
                             gap: 5,
-                            padding: "6px 12px",
-                            borderRadius: 7,
+                            padding: "6px 14px",
+                            borderRadius: 9999,
                             fontSize: 12,
                             fontWeight: 600,
                             border: "1px solid #dce2da",
                             backgroundColor: "#ffffff",
                             color: "#18221f",
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
                           }}
                         >
                           <Target size={13} color="#dc2626" />
@@ -718,14 +736,15 @@ export function MaterialTab({
                             display: "flex",
                             alignItems: "center",
                             gap: 5,
-                            padding: "6px 12px",
-                            borderRadius: 7,
+                            padding: "6px 14px",
+                            borderRadius: 9999,
                             fontSize: 12,
                             fontWeight: 600,
                             border: "1px solid #dce2da",
                             backgroundColor: "#ffffff",
                             color: "#17201d",
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
                           }}
                         >
                           <Brain size={13} color="#4b6623" />
@@ -738,14 +757,15 @@ export function MaterialTab({
                             display: "flex",
                             alignItems: "center",
                             gap: 5,
-                            padding: "6px 10px",
-                            borderRadius: 7,
+                            padding: "6px 12px",
+                            borderRadius: 9999,
                             fontSize: 12,
                             fontWeight: 600,
                             border: "1px solid #dce2da",
                             backgroundColor: "#ffffff",
                             color: "#45544e",
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
                           }}
                           title="Cetak atau Simpan sebagai PDF"
                         >
@@ -775,17 +795,17 @@ export function MaterialTab({
                             position: "sticky",
                             top: 0,
                             zIndex: 15,
-                            backgroundColor: "rgba(255, 255, 255, 0.96)",
-                            backdropFilter: "blur(10px)",
-                            borderBottom: "1px solid #eef1eb",
-                            padding: "8px 12px",
-                            borderRadius: 8,
+                            backgroundColor: "rgba(253, 253, 251, 0.95)",
+                            backdropFilter: "blur(12px)",
+                            border: "1px solid #dce2da",
+                            padding: "8px 14px",
+                            borderRadius: 9999,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
                             gap: 8,
                             marginBottom: 8,
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)"
+                            boxShadow: "0 4px 18px rgba(27, 39, 35, 0.03)"
                           }}
                         >
                           <button
@@ -796,8 +816,8 @@ export function MaterialTab({
                               gap: 6,
                               background: "#f4f7f2",
                               border: "1px solid #dce2d8",
-                              borderRadius: 7,
-                              padding: "5px 10px",
+                              borderRadius: 9999,
+                              padding: "6px 14px",
                               fontSize: 12,
                               fontWeight: 700,
                               color: "#18221f",
@@ -816,14 +836,14 @@ export function MaterialTab({
                             <ChevronDown size={13} style={{ transform: isChapterDrawerOpen ? "rotate(180deg)" : "none", transition: "0.2s", flexShrink: 0 }} />
                           </button>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
                             <button
                               disabled={currentChapterIdx === 0}
                               onClick={() => setCurrentChapterIdx((i) => Math.max(0, i - 1))}
                               style={{
                                 width: 30,
                                 height: 30,
-                                borderRadius: 6,
+                                borderRadius: 9999,
                                 border: "1px solid #dde1da",
                                 backgroundColor: currentChapterIdx === 0 ? "#f4f6f1" : "#ffffff",
                                 color: currentChapterIdx === 0 ? "#a8b3af" : "#17201d",
@@ -846,7 +866,7 @@ export function MaterialTab({
                               style={{
                                 width: 30,
                                 height: 30,
-                                borderRadius: 6,
+                                borderRadius: 9999,
                                 border: "1px solid #dde1da",
                                 backgroundColor: currentChapterIdx >= chapters.length - 1 ? "#f4f6f1" : "#ffffff",
                                 color: currentChapterIdx >= chapters.length - 1 ? "#a8b3af" : "#17201d",
@@ -864,7 +884,7 @@ export function MaterialTab({
                         </div>
 
                         {/* Thin Segmented Progress Bar */}
-                        <div style={{ display: "flex", gap: 3, height: 3, borderRadius: 2, overflow: "hidden", backgroundColor: "#eef2ea", marginBottom: 14 }}>
+                        <div style={{ display: "flex", gap: 3, height: 4, borderRadius: 9999, overflow: "hidden", backgroundColor: "#eef2ea", marginBottom: 14 }}>
                           {chapters.map((ch, idx) => {
                             const isDone = !!completedChapters[ch.id];
                             const isCurrent = idx === currentChapterIdx;
@@ -885,12 +905,12 @@ export function MaterialTab({
                         {isChapterDrawerOpen && (
                           <div
                             style={{
-                              backgroundColor: "#ffffff",
-                              border: "1px solid #dde1da",
-                              borderRadius: 10,
-                              padding: "14px 16px",
+                              backgroundColor: "#fdfdfb",
+                              border: "1px solid #dce2da",
+                              borderRadius: 22,
+                              padding: "16px",
                               marginBottom: 16,
-                              boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
+                              boxShadow: "0 6px 24px rgba(27, 39, 35, 0.05)",
                               display: "grid",
                               gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
                               gap: 8
@@ -908,7 +928,7 @@ export function MaterialTab({
                                   }}
                                   style={{
                                     padding: "9px 12px",
-                                    borderRadius: 7,
+                                    borderRadius: 12,
                                     border: isCurrent ? "1.5px solid #4b6623" : "1px solid #e2e8e0",
                                     backgroundColor: isCurrent ? "#eef8db" : isDone ? "#f0fdf4" : "#fbfcf9",
                                     cursor: "pointer",
@@ -922,7 +942,7 @@ export function MaterialTab({
                                     style={{
                                       width: 20,
                                       height: 20,
-                                      borderRadius: 999,
+                                      borderRadius: 9999,
                                       backgroundColor: isDone ? "#10b981" : isCurrent ? "#4b6623" : "#dce1da",
                                       color: "#ffffff",
                                       display: "flex",
@@ -955,18 +975,23 @@ export function MaterialTab({
                         {/* Chapter Reader Canvas (Full Edge-to-Edge on Mobile, Elegant Book on Desktop) */}
                         <div className="reader-chapter-card">
                           {/* Chapter Heading Banner */}
-                          <div style={{ marginBottom: 20, paddingBottom: 14, borderBottom: "1px solid #eef1eb" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-                              <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#4b6623", fontFamily: "'DM Mono', monospace" }}>
-                                Bab {chapters[currentChapterIdx]?.id || 1} dari {chapters.length} • ~{Math.max(1, Math.round((chapters[currentChapterIdx]?.content || "").split(/\s+/).length / 160))} mnt baca
-                              </span>
+                          <div style={{ maxWidth: 820, margin: "0 auto 28px auto", paddingBottom: 20, borderBottom: "1px solid #edf1eb" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                <span style={{ fontSize: 11.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#3d541b", fontFamily: "'DM Mono', monospace", backgroundColor: "#f0f6ea", border: "1px solid #cce2a3", padding: "3px 12px", borderRadius: 9999 }}>
+                                  Bab {chapters[currentChapterIdx]?.id || 1} dari {chapters.length}
+                                </span>
+                                <span style={{ fontSize: 11, fontWeight: 600, color: "#617169", backgroundColor: "#f4f6f1", border: "1px solid #dde3d9", padding: "3px 10px", borderRadius: 9999, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  ⏱️ ~{Math.max(1, Math.round((chapters[currentChapterIdx]?.content || "").split(/\s+/).length / 160))} mnt baca
+                                </span>
+                              </div>
                               {completedChapters[chapters[currentChapterIdx]?.id] && (
-                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "#065f46", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", padding: "2px 8px", borderRadius: 999 }}>
-                                  <Check size={12} /> Selesai Dipelajari
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700, color: "#065f46", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", padding: "3px 12px", borderRadius: 9999 }}>
+                                  <Check size={13} /> Selesai Dipelajari
                                 </span>
                               )}
                             </div>
-                            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111a17", margin: 0, lineHeight: 1.3, letterSpacing: "-0.02em" }}>
+                            <h1 style={{ fontSize: 30, fontWeight: 800, color: "#111a17", margin: 0, lineHeight: 1.3, letterSpacing: "-0.03em" }}>
                               {chapters[currentChapterIdx]?.title}
                             </h1>
                           </div>
@@ -983,7 +1008,7 @@ export function MaterialTab({
                           </div>
 
                           {/* Chapter Pagination & Completion Footer */}
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 36, paddingTop: 18, borderTop: "1px solid #eef1eb", flexWrap: "wrap", gap: 10 }}>
+                          <div style={{ maxWidth: 820, margin: "36px auto 0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 20, borderTop: "1px solid #edf1eb", flexWrap: "wrap", gap: 10 }}>
                             <button
                               disabled={currentChapterIdx === 0}
                               onClick={() => setCurrentChapterIdx((i) => Math.max(0, i - 1))}
@@ -991,14 +1016,15 @@ export function MaterialTab({
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 6,
-                                padding: "8px 14px",
-                                borderRadius: 7,
+                                padding: "8px 16px",
+                                borderRadius: 9999,
                                 fontSize: 12,
                                 fontWeight: 700,
                                 border: "1px solid #dce1da",
                                 backgroundColor: currentChapterIdx === 0 ? "#f4f6f2" : "#ffffff",
                                 color: currentChapterIdx === 0 ? "#a3ada8" : "#17201d",
-                                cursor: currentChapterIdx === 0 ? "not-allowed" : "pointer"
+                                cursor: currentChapterIdx === 0 ? "not-allowed" : "pointer",
+                                transition: "all 0.15s ease"
                               }}
                             >
                               ← Bab Sebelumnya
@@ -1013,14 +1039,15 @@ export function MaterialTab({
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 6,
-                                padding: "8px 14px",
-                                borderRadius: 7,
+                                padding: "8px 16px",
+                                borderRadius: 9999,
                                 fontSize: 12,
                                 fontWeight: 700,
                                 border: completedChapters[chapters[currentChapterIdx]?.id] ? "1px solid #a7f3d0" : "1px solid #dce1da",
                                 backgroundColor: completedChapters[chapters[currentChapterIdx]?.id] ? "#ecfdf5" : "#ffffff",
                                 color: completedChapters[chapters[currentChapterIdx]?.id] ? "#065f46" : "#45544e",
-                                cursor: "pointer"
+                                cursor: "pointer",
+                                transition: "all 0.15s ease"
                               }}
                             >
                               <Check size={13} color={completedChapters[chapters[currentChapterIdx]?.id] ? "#10b981" : "#56615d"} />
@@ -1038,14 +1065,15 @@ export function MaterialTab({
                                   display: "flex",
                                   alignItems: "center",
                                   gap: 6,
-                                  padding: "8px 18px",
-                                  borderRadius: 7,
+                                  padding: "8px 20px",
+                                  borderRadius: 9999,
                                   fontSize: 12.5,
                                   fontWeight: 700,
                                   border: "none",
                                   backgroundColor: "#18221f",
                                   color: "#c8f064",
-                                  cursor: "pointer"
+                                  cursor: "pointer",
+                                  transition: "all 0.15s ease"
                                 }}
                               >
                                 <span>Lanjut ke Bab {currentChapterIdx + 2}</span>
@@ -1061,14 +1089,15 @@ export function MaterialTab({
                                   display: "flex",
                                   alignItems: "center",
                                   gap: 6,
-                                  padding: "8px 18px",
-                                  borderRadius: 7,
+                                  padding: "8px 20px",
+                                  borderRadius: 9999,
                                   fontSize: 12.5,
                                   fontWeight: 700,
                                   border: "none",
                                   backgroundColor: "#10b981",
                                   color: "#ffffff",
-                                  cursor: "pointer"
+                                  cursor: "pointer",
+                                  transition: "all 0.15s ease"
                                 }}
                               >
                                 <span>Semua Bab Selesai · Mulai Kuis</span>
@@ -1190,11 +1219,68 @@ export function MaterialTab({
                     style={{
                       backgroundColor: "#ffffff",
                       border: "1px solid #dde1da",
-                      borderRadius: 12,
-                      padding: "24px 28px",
-                      boxShadow: "0 4px 20px rgba(27, 39, 35, 0.03)"
+                      borderRadius: 24,
+                      padding: "26px 30px",
+                      boxShadow: "0 8px 32px rgba(27, 39, 35, 0.04)"
                     }}
                   >
+                    {/* Shortcut Pemilihan Materi Tersimpan */}
+                    {documents && documents.length > 0 && (
+                      <div
+                        style={{
+                          backgroundColor: "#f7f9f4",
+                          border: "1px solid #dce4d6",
+                          borderRadius: 20,
+                          padding: "16px 20px",
+                          marginBottom: 22
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <BookOpen size={16} color="#4b6623" />
+                            <span style={{ fontSize: 13.5, fontWeight: 800, color: "#18221f" }}>
+                              Pilih Materi Tersimpan ({documents.length})
+                            </span>
+                          </div>
+                          <span style={{ fontSize: 11.5, color: "#607068" }}>
+                            Buka modul langsung tanpa unggah ulang
+                          </span>
+                        </div>
+
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {documents.map((doc) => (
+                            <button
+                              key={doc.id}
+                              type="button"
+                              onClick={() => loadDocument(doc.id)}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 7,
+                                padding: "8px 15px",
+                                backgroundColor: "#ffffff",
+                                border: "1px solid #dce2d8",
+                                borderRadius: 9999,
+                                color: "#17201d",
+                                fontSize: 12.5,
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                                boxShadow: "0 1px 4px rgba(0,0,0,0.03)"
+                              }}
+                              title={doc.title}
+                            >
+                              <span style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: "#65a30d" }} />
+                              <span style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {doc.title || "Modul Tanpa Judul"}
+                              </span>
+                              <ChevronRight size={13} color="#8a9691" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
                       <div>
                         <h2 style={{ fontSize: 18, fontWeight: 800, color: "#17201d", margin: 0 }}>
@@ -1227,14 +1313,15 @@ export function MaterialTab({
                               backgroundColor: materialCreationTab === t.id ? "#18221f" : "#fafbf8",
                               color: materialCreationTab === t.id ? "#c8f064" : "#56615d",
                               border: `1px solid ${materialCreationTab === t.id ? "#18221f" : "#dce1da"}`,
-                              borderRadius: 7,
-                              padding: "6px 12px",
+                              borderRadius: 9999,
+                              padding: "6px 14px",
                               fontSize: 12,
                               fontWeight: 600,
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
-                              gap: 5
+                              gap: 6,
+                              transition: "all 0.15s ease"
                             }}
                           >
                             <t.icon size={12} color={materialCreationTab === t.id ? "#c8f064" : "#607068"} />
@@ -1256,7 +1343,7 @@ export function MaterialTab({
                         style={{
                           border: isDragging ? "2px dashed #72a728" : "1px dashed #dce1da",
                           backgroundColor: isDragging ? "#eef8db" : "#fbfcf9",
-                          borderRadius: 10,
+                          borderRadius: 20,
                           padding: "36px 20px",
                           textAlign: "center",
                           cursor: "pointer",
@@ -1281,14 +1368,15 @@ export function MaterialTab({
                               backgroundColor: "#18221f",
                               color: "#c8f064",
                               border: "none",
-                              borderRadius: 7,
-                              padding: "8px 16px",
+                              borderRadius: 9999,
+                              padding: "8px 18px",
                               fontSize: 12.5,
                               fontWeight: 700,
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
-                              gap: 5
+                              gap: 6,
+                              transition: "all 0.15s ease"
                             }}
                           >
                             <Upload size={13} />
@@ -1304,14 +1392,15 @@ export function MaterialTab({
                               backgroundColor: "#ffffff",
                               border: "1px solid #dce1da",
                               color: "#17201d",
-                              borderRadius: 7,
-                              padding: "8px 16px",
+                              borderRadius: 9999,
+                              padding: "8px 18px",
                               fontSize: 12.5,
                               fontWeight: 600,
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
-                              gap: 5
+                              gap: 6,
+                              transition: "all 0.15s ease"
                             }}
                           >
                             <Camera size={13} color="#4b6623" />
@@ -1346,8 +1435,8 @@ export function MaterialTab({
                               flex: 1,
                               backgroundColor: "#fafbf8",
                               border: "1px solid #dce1da",
-                              borderRadius: 8,
-                              padding: "10px 14px",
+                              borderRadius: 9999,
+                              padding: "10px 18px",
                               fontSize: 14,
                               color: "#17201d",
                               outline: "none"
@@ -1365,14 +1454,15 @@ export function MaterialTab({
                               backgroundColor: "#18221f",
                               color: "#c8f064",
                               border: "none",
-                              borderRadius: 8,
-                              padding: "10px 18px",
+                              borderRadius: 9999,
+                              padding: "10px 20px",
                               fontSize: 13,
                               fontWeight: 700,
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
-                              gap: 6
+                              gap: 6,
+                              transition: "all 0.15s ease"
                             }}
                           >
                             <Sparkles size={13} />
@@ -1436,11 +1526,12 @@ export function MaterialTab({
                             backgroundColor: "#18221f",
                             color: "#c8f064",
                             border: "none",
-                            borderRadius: 8,
-                            padding: "10px 20px",
+                            borderRadius: 9999,
+                            padding: "10px 22px",
                             fontSize: 13,
                             fontWeight: 700,
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
                           }}
                         >
                           Simpan Modul

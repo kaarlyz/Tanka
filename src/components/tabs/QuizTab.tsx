@@ -537,31 +537,35 @@ export function QuizTab({
                 ) : quizQuestions.length === 0 ? (
                   /* Unified Quiz Setup Screen (No Redundancy) */
                   <div
+                    className="quiz-setup-card"
                     style={{
                       backgroundColor: "#ffffff",
-                      border: "1px solid #dde1da",
-                      borderRadius: 12,
+                      border: "1px solid #d4ded4",
+                      borderLeft: "4px solid #4b6623",
+                      borderRadius: 6,
                       padding: "36px 32px",
-                      boxShadow: "0 4px 20px rgba(27, 39, 35, 0.03)"
+                      boxShadow: "0 2px 8px rgba(27, 39, 35, 0.04), 0 0 0 1px rgba(27, 39, 35, 0.02)"
                     }}
                   >
                     <div style={{ textAlign: "center", maxWidth: 540, margin: "0 auto 28px" }}>
                       <div
                         style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 12,
+                          width: 44,
+                          height: 44,
+                          borderRadius: 4,
                           backgroundColor: "#f2f8e8",
+                          border: "1px solid #d8e6c5",
                           color: "#4b6623",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          margin: "0 auto 14px"
+                          margin: "0 auto 14px",
+                          boxShadow: "0 1px 3px rgba(75, 102, 35, 0.08)"
                         }}
                       >
-                        <Target size={24} />
+                        <Target size={22} />
                       </div>
-                      <h2 style={{ fontSize: 20, fontWeight: 800, color: "#17201d", margin: "0 0 6px" }}>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: "#17201d", margin: "0 0 6px", letterSpacing: "-0.01em" }}>
                         Simulasi Latihan Soal Pemahaman
                       </h2>
                       <p style={{ fontSize: 13, color: "#6f7975", lineHeight: 1.5, margin: 0 }}>
@@ -572,31 +576,41 @@ export function QuizTab({
                     <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
                       {/* Jumlah Soal */}
                       <div>
-                        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 8 }}>
-                          Jumlah Butir Soal:
-                        </label>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <label style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>
+                            Jumlah Butir Soal:
+                          </label>
+                          <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6f7975" }}>
+                            {quizQuestionCount} soal
+                          </span>
+                        </div>
                         <div style={{ display: "flex", gap: 8 }}>
-                          {[3, 5, 10, 15, 20].map((num) => (
-                            <button
-                              key={num}
-                              type="button"
-                              onClick={() => setQuizQuestionCount(num)}
-                              style={{
-                                flex: 1,
-                                backgroundColor: quizQuestionCount === num ? "#18221f" : "#fafbf8",
-                                color: quizQuestionCount === num ? "#c8f064" : "#56615d",
-                                border: `1px solid ${quizQuestionCount === num ? "#18221f" : "#dce1da"}`,
-                                borderRadius: 8,
-                                padding: "8px 0",
-                                fontSize: 13,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                transition: "all 0.15s ease"
-                              }}
-                            >
-                              {num} butir
-                            </button>
-                          ))}
+                          {[3, 5, 10, 15, 20].map((num) => {
+                            const isSelected = quizQuestionCount === num;
+                            return (
+                              <button
+                                key={num}
+                                type="button"
+                                onClick={() => setQuizQuestionCount(num)}
+                                style={{
+                                  flex: 1,
+                                  backgroundColor: isSelected ? "#18221f" : "#ffffff",
+                                  color: isSelected ? "#d8fa68" : "#45544e",
+                                  border: `1px solid ${isSelected ? "#18221f" : "#d8ded6"}`,
+                                  borderBottom: isSelected ? "2.5px solid #65a30d" : "1px solid #d8ded6",
+                                  borderRadius: 4,
+                                  padding: "8px 0",
+                                  fontSize: 12.5,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  transition: "all 0.15s ease",
+                                  boxShadow: isSelected ? "0 2px 5px rgba(24, 34, 31, 0.16)" : "0 1px 2px rgba(0,0,0,0.03)"
+                                }}
+                              >
+                                {num} butir
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -610,27 +624,32 @@ export function QuizTab({
                             { id: "beginner", label: "Pemula", desc: "Konsep dasar bertahap" },
                             { id: "conceptual", label: "Standar", desc: "Pemahaman kurikulum" },
                             { id: "analytical", label: "HOTS", desc: "Analisis & penalaran" }
-                          ].map((item) => (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => setQuizType(item.id as any)}
-                              style={{
-                                flex: 1,
-                                backgroundColor: quizType === item.id ? "#18221f" : "#fafbf8",
-                                color: quizType === item.id ? "#c8f064" : "#56615d",
-                                border: `1px solid ${quizType === item.id ? "#18221f" : "#dce1da"}`,
-                                borderRadius: 8,
-                                padding: "10px 8px",
-                                textAlign: "center",
-                                cursor: "pointer",
-                                transition: "all 0.15s ease"
-                              }}
-                            >
-                              <div style={{ fontSize: 13, fontWeight: 700 }}>{item.label}</div>
-                              <div style={{ fontSize: 10.5, opacity: 0.8, marginTop: 2 }}>{item.desc}</div>
-                            </button>
-                          ))}
+                          ].map((item) => {
+                            const isSelected = quizType === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => setQuizType(item.id as any)}
+                                style={{
+                                  flex: 1,
+                                  backgroundColor: isSelected ? "#18221f" : "#ffffff",
+                                  color: isSelected ? "#d8fa68" : "#45544e",
+                                  border: `1px solid ${isSelected ? "#18221f" : "#d8ded6"}`,
+                                  borderBottom: isSelected ? "2.5px solid #65a30d" : "1px solid #d8ded6",
+                                  borderRadius: 4,
+                                  padding: "10px 8px",
+                                  textAlign: "center",
+                                  cursor: "pointer",
+                                  transition: "all 0.15s ease",
+                                  boxShadow: isSelected ? "0 2px 5px rgba(24, 34, 31, 0.16)" : "0 1px 2px rgba(0,0,0,0.03)"
+                                }}
+                              >
+                                <div style={{ fontSize: 13, fontWeight: 700 }}>{item.label}</div>
+                                <div style={{ fontSize: 10.5, opacity: 0.85, marginTop: 2 }}>{item.desc}</div>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -639,49 +658,55 @@ export function QuizTab({
                         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 8 }}>
                           Mode Pelaksanaan:
                         </label>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                           <button
                             type="button"
                             onClick={() => setQuizMode("study")}
                             style={{
-                              backgroundColor: quizMode === "study" ? "#18221f" : "#fafbf8",
-                              color: quizMode === "study" ? "#c8f064" : "#56615d",
-                              border: `1px solid ${quizMode === "study" ? "#18221f" : "#dce1da"}`,
-                              borderRadius: 8,
-                              padding: "10px 12px",
+                              backgroundColor: quizMode === "study" ? "#f4f8ed" : "#ffffff",
+                              color: quizMode === "study" ? "#18221f" : "#56615d",
+                              border: `1px solid ${quizMode === "study" ? "#c2e28f" : "#d8ded6"}`,
+                              borderLeft: `4px solid ${quizMode === "study" ? "#4b6623" : "transparent"}`,
+                              borderRadius: 4,
+                              padding: "11px 12px",
                               textAlign: "left",
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
-                              gap: 8
+                              gap: 10,
+                              boxShadow: quizMode === "study" ? "0 1px 4px rgba(75, 102, 35, 0.1)" : "0 1px 2px rgba(0,0,0,0.02)",
+                              transition: "all 0.15s ease"
                             }}
                           >
-                            <BookOpen size={16} />
+                            <BookOpen size={16} color={quizMode === "study" ? "#4b6623" : "#6f7975"} />
                             <div>
                               <div style={{ fontSize: 12.5, fontWeight: 700 }}>Mode Belajar</div>
-                              <div style={{ fontSize: 10.5, opacity: 0.8 }}>Pembahasan langsung per nomor</div>
+                              <div style={{ fontSize: 10.5, opacity: 0.85 }}>Pembahasan langsung per nomor</div>
                             </div>
                           </button>
                           <button
                             type="button"
                             onClick={() => setQuizMode("exam")}
                             style={{
-                              backgroundColor: quizMode === "exam" ? "#18221f" : "#fafbf8",
-                              color: quizMode === "exam" ? "#c8f064" : "#56615d",
-                              border: `1px solid ${quizMode === "exam" ? "#18221f" : "#dce1da"}`,
-                              borderRadius: 8,
-                              padding: "10px 12px",
+                              backgroundColor: quizMode === "exam" ? "#fffbeb" : "#ffffff",
+                              color: quizMode === "exam" ? "#18221f" : "#56615d",
+                              border: `1px solid ${quizMode === "exam" ? "#fde68a" : "#d8ded6"}`,
+                              borderLeft: `4px solid ${quizMode === "exam" ? "#d97706" : "transparent"}`,
+                              borderRadius: 4,
+                              padding: "11px 12px",
                               textAlign: "left",
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
-                              gap: 8
+                              gap: 10,
+                              boxShadow: quizMode === "exam" ? "0 1px 4px rgba(217, 119, 6, 0.1)" : "0 1px 2px rgba(0,0,0,0.02)",
+                              transition: "all 0.15s ease"
                             }}
                           >
-                            <Clock size={16} />
+                            <Clock size={16} color={quizMode === "exam" ? "#d97706" : "#6f7975"} />
                             <div>
                               <div style={{ fontSize: 12.5, fontWeight: 700 }}>Mode Tryout</div>
-                              <div style={{ fontSize: 10.5, opacity: 0.8 }}>Simulasi ujian berwaktu mundur</div>
+                              <div style={{ fontSize: 10.5, opacity: 0.85 }}>Simulasi ujian berwaktu mundur</div>
                             </div>
                           </button>
                         </div>
@@ -694,9 +719,10 @@ export function QuizTab({
                         style={{
                           backgroundColor: "#18221f",
                           color: "#c8f064",
-                          border: "none",
-                          borderRadius: 8,
-                          padding: "14px 24px",
+                          border: "1px solid #24352e",
+                          borderBottom: "3px solid #587c29",
+                          borderRadius: 4,
+                          padding: "13px 24px",
                           fontSize: 14,
                           fontWeight: 800,
                           cursor: isGeneratingQuiz ? "not-allowed" : "pointer",
@@ -705,7 +731,8 @@ export function QuizTab({
                           justifyContent: "center",
                           gap: 8,
                           marginTop: 8,
-                          boxShadow: "0 4px 14px rgba(24, 34, 31, 0.15)"
+                          boxShadow: "0 4px 14px rgba(24, 34, 31, 0.16)",
+                          transition: "all 0.15s ease"
                         }}
                       >
                         <Sparkles size={16} />
@@ -1020,13 +1047,16 @@ export function QuizTab({
                                 minHeight: 48,
                                 backgroundColor: bgColor,
                                 border: `1px solid ${borderColor}`,
-                                borderRadius: 10,
+                                borderLeft: isSelected || (isAnswerSubmitted && isCorrect)
+                                  ? `4px solid ${isAnswerSubmitted ? (isCorrect ? "#65a30d" : "#ef4444") : (quizMode === "exam" ? "#c8f064" : "#4b6623")}`
+                                  : "4px solid transparent",
+                                borderRadius: 4,
                                 color: textColor,
                                 fontSize: 13.5,
                                 lineHeight: "1.5",
                                 cursor: quizMode === "study" && isAnswerSubmitted ? "default" : "pointer",
                                 transition: "all 0.15s ease",
-                                boxShadow: shadow
+                                boxShadow: isSelected ? "0 2px 6px rgba(0,0,0,0.06)" : "0 1px 2px rgba(0,0,0,0.02)"
                               }}
                             >
                               <div

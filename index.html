@@ -2253,7 +2253,7 @@
          Preserves intentional 50% circular indicators / avatars.
          ========================================================================== */
       .concept-card, .mistake-card, .flashcard-face, .visual-diagram-card, .room-card,
-      .study-card, .quiz-card, .summary-card, .feynman-card, .modal-card, [class*="card"] {
+      .study-card, .quiz-card, .summary-card, .feynman-card, .modal-card, .quiz-setup-card, [class*="card"] {
         border-radius: 6px !important;
       }
 
@@ -2287,6 +2287,74 @@
       [style*="border-radius: 10"]:not([style*="50%"]),
       [style*="border-radius:10"]:not([style*="50%"]) {
         border-radius: 6px !important;
+      }
+
+      /* ==========================================================================
+         ENGINEERING DESIGN SYSTEM: HIGH-PRECISION STROKES & SIDE ACCENTS
+         Transforms flat gray wireframes into structured, tactile engineering surfaces.
+         ========================================================================== */
+      /* 1. Global Cards: Precision layered border + Left accent stripe */
+      .concept-card,
+      .mistake-card,
+      .flashcard-face,
+      .visual-diagram-card,
+      .room-card,
+      .study-card,
+      .quiz-card,
+      .summary-card,
+      .feynman-card,
+      .modal-card,
+      .quiz-setup-card {
+        border: 1px solid #d4ded4 !important;
+        border-left: 4px solid #4b6623 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(27, 39, 35, 0.02) !important;
+      }
+
+      /* 2. Modals & Dialogs: Deep technical edge border */
+      [role="dialog"], [class*="modal"] > div {
+        border: 1px solid #c8d4c6 !important;
+        box-shadow: 0 16px 40px rgba(15, 23, 20, 0.18), 0 0 0 1px rgba(27, 39, 35, 0.04) !important;
+      }
+
+      /* 3. Inputs & Textboxes: Inset precision stroke with active focus */
+      input:not([type="checkbox"]):not([type="radio"]),
+      textarea,
+      select {
+        border: 1px solid #ccd6c8 !important;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+      }
+
+      input:not([type="checkbox"]):not([type="radio"]):focus,
+      textarea:focus,
+      select:focus {
+        border-color: #4b6623 !important;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02), 0 0 0 2px rgba(75, 102, 35, 0.15) !important;
+        outline: none !important;
+      }
+
+      /* 4. Interactive Option Buttons & Choices: Left-accent indicator */
+      .quiz-option-btn {
+        border: 1px solid #d8ded6 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+      }
+
+      .quiz-option-btn:hover {
+        border-color: #c2cfbf !important;
+        background-color: #f8faf5 !important;
+      }
+
+      /* 5. Primary CTA buttons: Crisp bevel border with green bottom anchor */
+      button[style*="#18221f"]:not([style*="transparent"]) {
+        border: 1px solid #24352e !important;
+        border-bottom: 2.5px solid #557922 !important;
+        box-shadow: 0 2px 6px rgba(24, 34, 31, 0.14) !important;
+      }
+
+      /* 6. Blockquote & Notes: Tactical accent stroke */
+      blockquote, .formula-note {
+        border: 1px solid #d8e4cf !important;
+        border-left: 3.5px solid #557922 !important;
       }
     </style>
   </head>

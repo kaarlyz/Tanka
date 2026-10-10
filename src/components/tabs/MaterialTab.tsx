@@ -799,12 +799,12 @@ export function MaterialTab({
                             backdropFilter: "blur(12px)",
                             border: "1px solid #dce2da",
                             padding: "8px 14px",
-                            borderRadius: 9999,
+                            borderRadius: 8,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
                             gap: 8,
-                            marginBottom: 8,
+                            marginBottom: 14,
                             boxShadow: "0 4px 18px rgba(27, 39, 35, 0.03)"
                           }}
                         >
@@ -816,7 +816,7 @@ export function MaterialTab({
                               gap: 6,
                               background: "#f4f7f2",
                               border: "1px solid #dce2d8",
-                              borderRadius: 9999,
+                              borderRadius: 6,
                               padding: "6px 14px",
                               fontSize: 12,
                               fontWeight: 700,

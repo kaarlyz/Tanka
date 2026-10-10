@@ -2257,12 +2257,18 @@
         border-radius: 6px !important;
       }
 
-      button:not([style*="50%"]):not([style*="circle"]),
-      input:not([type="checkbox"]):not([type="radio"]),
-      select, textarea,
       .difficulty, .card-count, .btn, [class*="-btn"]:not([style*="50%"]),
       .action-pill, .filter-pill, .tab-btn {
-        border-radius: 4px !important;
+        border-radius: 6px !important;
+      }
+
+      button:not([style*="50%"]):not([style*="circle"]):not(.mobile-bottom-btn) {
+        border-radius: 6px !important;
+      }
+
+      input:not([type="checkbox"]):not([type="radio"]),
+      select, textarea {
+        border-radius: 6px !important;
       }
 
       [role="dialog"], [class*="modal"] > div {
@@ -2344,11 +2350,11 @@
         background-color: #f8faf5 !important;
       }
 
-      /* 5. Primary CTA buttons: Crisp bevel border with green bottom anchor */
-      button[style*="#18221f"]:not([style*="transparent"]) {
-        border: 1px solid #24352e !important;
-        border-bottom: 2.5px solid #557922 !important;
-        box-shadow: 0 2px 6px rgba(24, 34, 31, 0.14) !important;
+      /* 5. Primary CTA buttons: Clean canonical Tanka dark button */
+      button[style*="#18221f"]:not([style*="transparent"]),
+      button[style*="#19231f"]:not([style*="transparent"]) {
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(24, 34, 31, 0.14) !important;
       }
 
       /* 6. Blockquote & Notes: Tactical accent stroke */

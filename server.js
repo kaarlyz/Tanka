@@ -77,12 +77,19 @@ function getUserId(req, body = {}) {
 }
 
 // Helper to parse JSON body
-function getBody(req) {
+function getBody(req, res) {
   return new Promise((resolve, reject) => {
     let body = "";
     req.on("data", (chunk) => {
       body += chunk;
-      if (body.length > 50 * 1024 * 1024) {
+      if (body.length > 100 * 1024 * 1024) {
+        if (res && !res.headersSent) {
+          res.writeHead(413, {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          });
+          res.end(JSON.stringify({ error: "Ukuran berkas melebihi batas 100MB" }));
+        }
         req.destroy();
         reject(new Error("Request entity too large"));
       }
@@ -98,9 +105,8 @@ function getBody(req) {
   });
 }
 
-const helpers = { sendJSON, getBody, getUserId };
-
 const server = http.createServer(async (req, res) => {
+  const helpers = { sendJSON, getBody: (r) => getBody(r || req, res), getUserId };
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
@@ -149,11 +155,14 @@ const server = http.createServer(async (req, res) => {
         ".woff2": "font/woff2",
         ".woff": "font/woff",
         ".ttf": "font/ttf",
+        ".mp4": "video/mp4",
+        ".mp3": "audio/mpeg",
       };
       const isHtml = ext === ".html";
       const isHashedAsset = pathname.startsWith("/assets/") && (ext === ".js" || ext === ".css");
       const headers = {
         "Content-Type": mimeTypes[ext] || "application/octet-stream",
+        "Access-Control-Allow-Origin": "*",
         "Cache-Control": isHashedAsset
           ? "public, max-age=31536000, immutable"
           : "no-store, no-cache, must-revalidate, proxy-revalidate"
@@ -162,6 +171,28 @@ const server = http.createServer(async (req, res) => {
         headers["Pragma"] = "no-cache";
         headers["Expires"] = "0";
       }
+      const stat = fs.statSync(filePath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+
+      if (range && (ext === ".mp4" || ext === ".mp3")) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        const fileStream = fs.createReadStream(filePath, { start, end });
+        res.writeHead(206, {
+          "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": chunksize,
+          "Content-Type": mimeTypes[ext] || "application/octet-stream",
+          "Access-Control-Allow-Origin": "*",
+        });
+        return fileStream.pipe(res);
+      }
+
+      headers["Accept-Ranges"] = "bytes";
+      headers["Content-Length"] = fileSize;
       res.writeHead(200, headers);
       return fs.createReadStream(filePath).pipe(res);
     }
@@ -193,6 +224,10 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (reason) => {
   console.error("[tanka-server] Unhandled Rejection:", reason);
 });
+
+server.timeout = 300000;
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`[tanka-server] Running on http://0.0.0.0:${PORT}`);

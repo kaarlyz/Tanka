@@ -810,9 +810,33 @@ export default function App() {
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
-          <section className="main-scroll-section" style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ maxWidth: activeTab === "material" ? 1440 : 1080, margin: "0 auto", width: "100%", transition: "max-width 0.2s ease" }}>
-              {activeTab === "home" && (
+          <section className="main-scroll-section" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+            {activeTab !== "home" && (
+              <div className="mode-tabs" role="tablist" aria-label="Mode belajar" style={{ flexShrink: 0 }}>
+                {[
+                  { id: "material", label: "Materi", count: "01" },
+                  { id: "summary", label: "Rangkuman", count: "AI" },
+                  { id: "flashcards", label: "Flashcard 3D", count: String((flashcards || []).length).padStart(2, "0") },
+                  { id: "quiz", label: "Latihan Soal", count: String((quizQuestions || []).length).padStart(2, "0") },
+                  { id: "feynman", label: "Uji Feynman", count: "01" },
+                  { id: "mistakes", label: "Bank Salah", count: String((activeDocId ? (activeDocMistakes || []).length : (mistakes || []).length)).padStart(2, "0") },
+                ].map((item) => (
+                  <button
+                    className={activeTab === item.id ? "active" : ""}
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id as any)}
+                    role="tab"
+                  >
+                    <span>{item.label}</span>
+                    <small>{item.count}</small>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="content-scroll" style={{ flex: 1, minHeight: 0, padding: "16px 20px" }}>
+              <div style={{ maxWidth: activeTab === "material" ? 1440 : 1080, margin: "0 auto", width: "100%", transition: "max-width 0.2s ease" }}>
+                {activeTab === "home" && (
                 <HomeHubTab
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
@@ -1039,7 +1063,43 @@ export default function App() {
                   handleClearChat={handleClearChat}
                 />
               )}
+              </div>
             </div>
+
+            {activeTab !== "home" && (
+              <footer className="learning-footer" style={{ flexShrink: 0 }}>
+                <div className="progress-label">
+                  <span>Progres modul</span>
+                  <strong>{quizQuestions.length > 0 ? (isQuizCompleted ? 100 : Math.round(((currentQuestionIndex + 1) / quizQuestions.length) * 100)) : 64}%</strong>
+                </div>
+                <div className="footer-progress">
+                  <i style={{ width: `${quizQuestions.length > 0 ? (isQuizCompleted ? 100 : Math.round(((currentQuestionIndex + 1) / quizQuestions.length) * 100)) : 64}%` }} />
+                </div>
+                <div className="footer-steps">
+                  <span className={activeTab === "material" ? "done" : ""}>Materi</span>
+                  <span className={activeTab === "flashcards" ? "done" : ""}>Flashcard</span>
+                  <span className={activeTab === "quiz" ? "done" : ""}>Latihan</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeTab === "material") setActiveTab("flashcards");
+                    else if (activeTab === "flashcards") setActiveTab("quiz");
+                    else if (activeTab === "quiz") setActiveTab("feynman");
+                    else setActiveTab("material");
+                  }}
+                >
+                  {activeTab === "material"
+                    ? "Lanjut ke flashcard"
+                    : activeTab === "flashcards"
+                    ? "Lanjut ke latihan soal"
+                    : activeTab === "quiz"
+                    ? "Lanjut ke uji feynman"
+                    : "Kembali ke materi"}
+                  <span>→</span>
+                </button>
+              </footer>
+            )}
           </section>
 
           {/* Right Column: Tanya Nara AI Panel */}

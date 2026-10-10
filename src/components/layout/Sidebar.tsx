@@ -204,7 +204,9 @@ export function Sidebar({
                   setIsMobileDrawerOpen(false);
                 }}
               >
-                <div className="side-mark-box" style={{ color: "#c8f064", backgroundColor: "rgba(200, 240, 100, 0.15)" }}>⚔️</div>
+                <div className="side-mark-box" style={{ color: "#c8f064", backgroundColor: "rgba(200, 240, 100, 0.15)" }}>
+                  <Swords size={12} color="#c8f064" />
+                </div>
                 <span style={{ flex: 1, color: "#d6f58d", fontWeight: 700 }}>Room Kompetisi</span>
                 <span style={{ fontSize: 9, backgroundColor: "#2b3c2a", color: "#c8f064", padding: "2px 6px", borderRadius: 999, fontWeight: 700 }}>
                   EVENT
@@ -498,13 +500,14 @@ export function Sidebar({
               }}
             />
           </div>
+        </div>
 
         {/* Sidebar Bottom: Dynamic Streak Widget & Profile Row with Action Popover */}
-        <div ref={profileMenuRef} style={{ flexShrink: 0, marginTop: "auto", paddingTop: 16, paddingBottom: 24, position: "relative" }}>
+        <div ref={profileMenuRef} className="sidebar-bottom-pinned">
           {/* Real Dynamic Weekly Target & Streak Widget */}
           <div 
             className="streak-card-box" 
-            style={{ margin: "4px 0 10px", cursor: "pointer", transition: "transform 0.15s ease" }}
+            style={{ margin: "0 0 6px", cursor: "pointer", transition: "transform 0.15s ease" }}
             onClick={() => {
               if (onOpenProfileModal) {
                 onOpenProfileModal("stats");
@@ -522,21 +525,21 @@ export function Sidebar({
                 {currentUser?.active_days_this_week?.length || 0}/{currentUser?.target_weekly_days || 5} hari
               </strong>
             </div>
-            <div className="streak-days">
+            <div className="streak-days" style={{ margin: "6px 0 5px" }}>
               {["S", "S", "R", "K", "J", "S", "M"].map((day, idx) => {
                 const isDone = (currentUser?.active_days_this_week || []).includes(idx);
                 return (
-                  <span className={isDone ? "filled" : ""} key={`${day}-${idx}`} style={{ transition: "all 0.2s ease" }}>
+                  <span className={isDone ? "filled" : ""} key={`${day}-${idx}`} style={{ width: 22, height: 22, fontSize: 8.5, borderRadius: 4, transition: "all 0.2s ease" }}>
                     {isDone ? "✓" : day}
                   </span>
                 );
               })}
             </div>
-            <p style={{ margin: 0, fontSize: 11, color: "#8a9691" }}>
+            <p style={{ margin: 0, fontSize: 10, color: "#8a9691", lineHeight: 1.3 }}>
               {currentUser 
                 ? (currentUser.active_days_this_week?.length || 0) >= (currentUser.target_weekly_days || 5)
-                  ? "🎉 Hebat! Target mingguan tercapai."
-                  : `${(currentUser.target_weekly_days || 5) - (currentUser.active_days_this_week?.length || 0)} hari belajar lagi untuk capai target.`
+                  ? "Target mingguan tercapai."
+                  : `${(currentUser.target_weekly_days || 5) - (currentUser.active_days_this_week?.length || 0)} hari belajar lagi untuk target.`
                 : "Masuk akun untuk melacak konsistensi belajarmu."}
             </p>
           </div>
@@ -728,7 +731,6 @@ export function Sidebar({
               •••
             </span>
           </button>
-        </div>
         </div>
 
         {/* Floating Back Tab docked on the RIGHT BORDER of the mobile drawer */}

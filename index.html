@@ -335,72 +335,92 @@
         background: #eef1eb;
       }
       .figma-sidebar {
-        width: 270px;
+        width: 260px;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        gap: 14px;
-        padding: 18px 16px 24px;
+        padding: 14px 12px 10px;
         color: #eff5ec;
         background: #18221f;
         border-right: 1px solid rgba(255, 255, 255, 0.06);
-        height: 100vh;
-        max-height: 100vh;
-        overflow-y: auto;
-        overflow-x: hidden;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
         box-sizing: border-box;
       }
-      .figma-sidebar::-webkit-scrollbar {
-        width: 4px;
+      .sidebar-scroll-viewport {
+        flex: 1 1 0px;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-right: 2px;
       }
-      .figma-sidebar::-webkit-scrollbar-track {
+      .sidebar-bottom-pinned {
+        flex-shrink: 0;
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        position: relative;
+      }
+      .figma-sidebar::-webkit-scrollbar,
+      .sidebar-scroll-viewport::-webkit-scrollbar {
+        width: 3px;
+      }
+      .figma-sidebar::-webkit-scrollbar-track,
+      .sidebar-scroll-viewport::-webkit-scrollbar-track {
         background: transparent;
       }
-      .figma-sidebar::-webkit-scrollbar-thumb {
+      .figma-sidebar::-webkit-scrollbar-thumb,
+      .sidebar-scroll-viewport::-webkit-scrollbar-thumb {
         background: #25322e;
         border-radius: 4px;
       }
-      .figma-sidebar::-webkit-scrollbar-thumb:hover {
+      .figma-sidebar::-webkit-scrollbar-thumb:hover,
+      .sidebar-scroll-viewport::-webkit-scrollbar-thumb:hover {
         background: #34413c;
       }
       .brand-box {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 0 10px 24px;
-        font-size: 22px;
+        gap: 10px;
+        padding: 0 4px 12px;
+        font-size: 20px;
         font-weight: 800;
-        letter-spacing: -1px;
+        letter-spacing: -0.5px;
         color: #eff5ec;
       }
       .brand-symbol-box {
-        width: 34px;
-        height: 34px;
+        width: 30px;
+        height: 30px;
         display: grid;
         place-items: center;
         color: #17201d;
         background: #c8f064;
-        border-radius: 8px 8px 8px 2px;
-        font-size: 19px;
+        border-radius: 6px;
+        font-size: 17px;
         font-weight: 800;
         font-family: 'DM Mono', monospace;
       }
       .main-nav {
         display: grid;
-        gap: 6px;
+        gap: 3px;
       }
       .figma-nav-link {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 10px 14px;
+        gap: 10px;
+        padding: 7px 10px;
         color: #aeb9b4;
-        border-radius: 9px;
-        font-size: 13.5px;
+        border-radius: 6px;
+        font-size: 12.5px;
         font-weight: 600;
         text-decoration: none;
-        transition: 160ms ease;
+        transition: 140ms ease;
         background: transparent;
         border: none;
         cursor: pointer;
@@ -410,33 +430,34 @@
       .figma-nav-link:hover,
       .figma-nav-link.active {
         color: #f5f8f3;
-        background: #25322e;
+        background: #232e29;
       }
       .figma-nav-link.active {
         box-shadow: inset 3px 0 #c8f064;
       }
       .side-mark-box {
-        width: 25px;
-        height: 25px;
+        width: 22px;
+        height: 22px;
         display: grid;
         place-items: center;
         color: #86938e;
-        border: 1px solid #45514d;
-        border-radius: 7px;
+        border: 1px solid #36443e;
+        border-radius: 4px;
         font-family: "DM Mono", monospace;
-        font-size: 10.5px;
+        font-size: 10px;
         flex-shrink: 0;
       }
       .figma-nav-link.active .side-mark-box {
         color: #c8f064;
-        border-color: #657358;
+        border-color: #556c43;
       }
       .streak-card-box {
-        margin: 16px 0;
-        padding: 14px 15px;
-        background: #212d29;
-        border: 1px solid #34413c;
-        border-radius: 12px;
+        margin: 0 0 6px !important;
+        padding: 9px 12px !important;
+        background: #202b27 !important;
+        border: 1px solid #2e3d36 !important;
+        border-left: 3px solid #65a30d !important;
+        border-radius: 6px !important;
       }
       .streak-top-row {
         display: flex;
@@ -450,17 +471,17 @@
       .streak-days {
         display: flex;
         justify-content: space-between;
-        margin: 10px 0 8px;
+        margin: 5px 0 4px !important;
       }
       .streak-days span {
-        width: 26px;
-        height: 26px;
+        width: 22px !important;
+        height: 22px !important;
         display: grid;
         place-items: center;
         color: #728079;
         background: #2b3833;
-        border-radius: 6px;
-        font-size: 8.5px;
+        border-radius: 4px !important;
+        font-size: 8px !important;
         font-weight: 700;
         font-family: "DM Mono", monospace;
       }
@@ -471,18 +492,19 @@
       .streak-card-box p {
         margin: 0;
         color: #899590;
-        font-size: 10.5px;
-        line-height: 1.45;
+        font-size: 10px !important;
+        line-height: 1.3 !important;
       }
       .profile-row-box {
         width: 100%;
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 8px;
+        gap: 8px;
+        padding: 6px 8px;
         text-align: left;
-        background: transparent;
-        border: 0;
+        background: #1d2723;
+        border: 1px solid #283731;
+        border-radius: 6px;
         cursor: pointer;
       }
       .avatar-box {
@@ -1289,7 +1311,21 @@
           display: none !important;
         }
         .sidebar-scroll-viewport {
-          display: contents !important;
+          display: flex !important;
+          flex-direction: column !important;
+          flex: 1 1 0px !important;
+          min-height: 0 !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          gap: 8px !important;
+          padding-right: 2px !important;
+        }
+        .sidebar-bottom-pinned {
+          flex-shrink: 0 !important;
+          margin-top: auto !important;
+          padding-top: 8px !important;
+          border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+          position: relative !important;
         }
       }
 
@@ -2361,6 +2397,328 @@
       blockquote, .formula-note {
         border: 1px solid #d8e4cf !important;
         border-left: 3.5px solid #557922 !important;
+      }
+
+      /* ==========================================================================
+         FIGMA MAKE CANONICAL DESIGN SYSTEM (PURE REPLICATION)
+         ========================================================================== */
+      .study-app {
+        min-height: 100vh;
+        background: var(--canvas);
+      }
+
+      .learning-shell {
+        min-height: 100vh;
+        margin-left: 246px;
+        display: grid;
+        grid-template-rows: 78px minmax(0, 1fr) 72px;
+      }
+
+      .workspace-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 26px;
+        background: rgba(248, 249, 245, 0.96);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .breadcrumb > span {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+      }
+
+      .breadcrumb strong {
+        font-size: 14.5px;
+        letter-spacing: -0.3px;
+      }
+
+      .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .header-meta > span {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 9px;
+      }
+
+      .header-meta > span i,
+      .online i {
+        width: 6px;
+        height: 6px;
+        background: #82ac37;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(130, 172, 55, 0.12);
+      }
+
+      .header-meta button {
+        padding: 7px 11px;
+        background: transparent;
+        border: 1px solid #d4dad2;
+        border-radius: 7px;
+        font-size: 9px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .main-row {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(480px, 1fr) 334px;
+        transition: grid-template-columns 0.2s ease;
+      }
+
+      .main-row.nara-closed {
+        grid-template-columns: 1fr;
+      }
+
+      .center-workspace {
+        min-width: 0;
+        display: grid;
+        grid-template-rows: 54px minmax(0, 1fr);
+        background: var(--paper);
+        border-right: 1px solid var(--line);
+      }
+
+      .mode-tabs {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 28px;
+        background: #f4f6f1;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .mode-tabs button {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 15px;
+        color: #78827e;
+        background: transparent;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .mode-tabs button:hover {
+        color: var(--ink);
+      }
+
+      .mode-tabs button.active {
+        color: var(--ink);
+        border-bottom-color: var(--green);
+      }
+
+      .mode-tabs small {
+        padding: 2px 5px;
+        color: #8e9893;
+        background: #e4e9e1;
+        border-radius: 4px;
+        font-family: "DM Mono", monospace;
+        font-size: 8px;
+      }
+
+      .mode-tabs button.active small {
+        color: #41541d;
+        background: #e4f1c8;
+      }
+
+      .content-scroll {
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #bcc5bc transparent;
+      }
+
+      .learning-footer {
+        display: grid;
+        grid-template-columns: 115px minmax(140px, 1fr) 210px auto;
+        align-items: center;
+        gap: 16px;
+        padding: 0 25px;
+        background: var(--white);
+        border-top: 1px solid var(--line);
+      }
+
+      .progress-label {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+
+      .progress-label span {
+        color: #7a8580;
+        font-size: 9px;
+      }
+
+      .progress-label strong {
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+      }
+
+      .footer-progress {
+        height: 5px;
+        overflow: hidden;
+        background: #e5eae3;
+        border-radius: 6px;
+      }
+
+      .footer-progress i {
+        display: block;
+        height: 100%;
+        background: #8bb13c;
+        border-radius: inherit;
+        transition: width 350ms ease;
+      }
+
+      .footer-steps {
+        display: flex;
+        justify-content: space-between;
+        color: #9aa29e;
+        font-size: 8px;
+      }
+
+      .footer-steps span {
+        position: relative;
+        padding-left: 10px;
+      }
+
+      .footer-steps span::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 0;
+        width: 5px;
+        height: 5px;
+        background: #c9cfca;
+        border-radius: 50%;
+      }
+
+      .footer-steps span.done {
+        color: #566b32;
+      }
+
+      .footer-steps span.done::before {
+        background: #91b63f;
+      }
+
+      .learning-footer > button {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 9px 16px;
+        color: #202b1e;
+        background: var(--lime);
+        border: 0;
+        border-radius: 8px;
+        font-size: 9.5px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+      }
+
+      .learning-footer > button:hover {
+        opacity: 0.9;
+      }
+
+      @media (max-width: 1080px) {
+        .learning-shell {
+          margin-left: 220px;
+        }
+        .main-row {
+          grid-template-columns: minmax(430px, 1fr) 300px;
+        }
+        .learning-footer {
+          grid-template-columns: 90px 1fr auto;
+        }
+        .footer-steps {
+          display: none;
+        }
+      }
+
+      @media (max-width: 880px) {
+        .learning-shell {
+          margin-left: 0 !important;
+        }
+        .mobile-menu {
+          width: 33px;
+          height: 33px;
+          display: grid;
+          place-content: center;
+          gap: 5px;
+          margin-right: 12px;
+          background: transparent;
+          border: 1px solid #d4dad2;
+          border-radius: 8px;
+          cursor: pointer;
+        }
+        .mobile-menu span {
+          width: 13px;
+          height: 1px;
+          background: var(--ink);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .learning-shell {
+          display: block !important;
+        }
+        .workspace-header {
+          height: 64px !important;
+          padding: 0 15px !important;
+        }
+        .header-meta > span {
+          display: none !important;
+        }
+        .main-row {
+          display: block !important;
+        }
+        .center-workspace {
+          display: block !important;
+          border-right: 0 !important;
+        }
+        .mode-tabs {
+          height: 50px !important;
+          padding: 0 8px !important;
+          overflow-x: auto !important;
+        }
+        .mode-tabs button {
+          flex: 1 0 auto !important;
+          justify-content: center !important;
+          padding-inline: 10px !important;
+        }
+        .content-scroll {
+          overflow: visible !important;
+        }
+        .learning-footer {
+          position: sticky !important;
+          bottom: 0 !important;
+          z-index: 20 !important;
+          height: 67px !important;
+          grid-template-columns: 85px 1fr auto !important;
+          padding: 0 14px !important;
+        }
+        .learning-footer > button {
+          font-size: 0 !important;
+          gap: 0 !important;
+        }
+        .learning-footer > button span {
+          font-size: 13px !important;
+        }
       }
     </style>
   </head>

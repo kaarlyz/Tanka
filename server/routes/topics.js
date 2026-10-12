@@ -231,7 +231,11 @@ SYARAT PEDAGOGIS MATEMATIKA UTBK (TAKTIK, RUMUS PADAT, & MUDAH DIPAHAMI):
     const outline = await extractConceptsAndOutline(title, rawContext, segments, model, effectiveJenjang);
 
     if (outline && Array.isArray(outline.concepts)) {
-      const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+      const insertConcept = db.prepare(`
+        INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at, category, is_required, evidence_quote, segment_id, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      const nowTs = Date.now();
       for (const c of outline.concepts) {
         const conceptId = `${docId}_${c.id || Math.random().toString(36).slice(2, 6)}`;
         const def = c.definisi_baku || c.definisi || c.definition || "";
@@ -246,14 +250,28 @@ SYARAT PEDAGOGIS MATEMATIKA UTBK (TAKTIK, RUMUS PADAT, & MUDAH DIPAHAMI):
           bukti_kutipan: c.bukti_kutipan || "",
           verified_by_engine: !!c.verified_by_engine
         });
-        insertConcept.run(conceptId, docId, c.name, def, extra, c.origin || "source", Date.now());
+        const isReq = c.origin === "ai_enrichment" ? 0 : 1;
+        insertConcept.run(
+          conceptId, docId, c.name, def, extra,
+          c.origin || "source", nowTs,
+          c.category || "core", isReq,
+          c.bukti_kutipan || "",
+          c.segmen_id || "",
+          nowTs
+        );
       }
     }
 
     // 3. PASS 2: GENERATE NARA'S STUDY MODULE GROUNDED IN CANONICAL OUTLINE & SOURCE CHUNKS
-    const content = await generateNaraModule(outline, rawContext, segments, model, effectiveJenjang);
+    const content = await generateNaraModule(outline, rawContext, segments, model, effectiveJenjang, db, docId);
 
-    db.prepare("INSERT INTO documents (id, title, content, summary, created_at) VALUES (?, ?, ?, ?, ?)")
+    // Sync chapter_plans so downstream features (mind map, Feynman, quiz) can locate chapters
+    if (outline && Array.isArray(outline.chapters)) {
+      const { syncChapterPlansToDb } = require("../services/curriculumPipeline");
+      syncChapterPlansToDb(outline.chapters, docId, db);
+    }
+
+    db.prepare("INSERT INTO documents (id, title, content, summary, status, created_at) VALUES (?, ?, ?, ?, 'completed', ?)")
       .run(docId, title, content, outline.executiveSummary || "", Date.now());
 
     return sendJSON(res, { success: true, docId, title, content_length: content.length });

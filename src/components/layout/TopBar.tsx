@@ -125,19 +125,19 @@ export function TopBar({
         </button>
 
         <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: "#4b6623",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase"
-              }}
-            >
-              {currentUser ? currentUser.name || currentUser.username : "TANKA"}
-            </span>
-            {currentUser && (
+          {currentUser && (
+            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  color: "#4b6623",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase"
+                }}
+              >
+                {currentUser.name || currentUser.username}
+              </span>
               <span
                 style={{
                   width: 5,
@@ -146,21 +146,22 @@ export function TopBar({
                   backgroundColor: "#65a30d"
                 }}
               />
-            )}
-          </div>
+            </div>
+          )}
 
           <h1
             style={{
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: 800,
               color: "#18211e",
               margin: 0,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              maxWidth: "clamp(150px, 35vw, 360px)",
+              maxWidth: "min(65vw, 680px)",
               lineHeight: 1.2
             }}
+            title={activeTab === "home" ? "Beranda" : (activeDocTitle || "Pilih Materi")}
           >
             {activeTab === "home" ? "Beranda" : (activeDocTitle || "Pilih Materi")}
           </h1>

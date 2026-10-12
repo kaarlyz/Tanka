@@ -102,15 +102,20 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
               questions = concepts.slice(0, quizCount).map((c, idx) => {
                 const distractors = concepts.filter(other => other.id !== c.id).map(o => o.definition).slice(0, 4);
                 const allOpts = [c.definition, ...distractors];
-                const shuffled = [...allOpts].sort(() => Math.random() - 0.5);
+                // Fisher-Yates shuffle — unbiased, consistent with quizValidator
+                for (let i = allOpts.length - 1; i > 0; i--) {
+                  const j = Math.floor(Math.random() * (i + 1));
+                  [allOpts[i], allOpts[j]] = [allOpts[j], allOpts[i]];
+                }
+                const shuffled = allOpts;
                 const correctIdx = shuffled.indexOf(c.definition);
+                const safeIdx = correctIdx >= 0 ? correctIdx : 0;
                 return {
                   id: idx + 1,
                   question: `Berdasarkan materi ${targetDoc.title}, manakah penjelasan yang paling tepat mengenai konsep "${c.name}"?`,
                   options: shuffled,
-                  answer: ["A", "B", "C", "D", "E"][correctIdx >= 0 ? correctIdx : 0],
-                  correctIndex: correctIdx >= 0 ? correctIdx : 0,
-                  correct_index: correctIdx >= 0 ? correctIdx : 0,
+                  correctIndex: safeIdx,
+                  correct_index: safeIdx,
                   explanation: `Konsep "${c.name}" didefinisikan secara resmi sebagai: ${c.definition}.`
                 };
               });

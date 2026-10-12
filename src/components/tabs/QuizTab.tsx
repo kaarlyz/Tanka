@@ -35,7 +35,8 @@ function TailorQuizBox({
   setQuizQuestions,
   resetQuizState,
   isTailoring,
-  setIsTailoring
+  setIsTailoring,
+  showNotice
 }: any) {
   const [tailorInput, setTailorInput] = React.useState("");
 
@@ -59,10 +60,10 @@ function TailorQuizBox({
         setTailorInput("");
         resetQuizState();
       } else {
-        alert("Gagal menyesuaikan kuis: " + (data.error || "Unknown error"));
+        if (showNotice) showNotice("Gagal menyesuaikan kuis: " + (data.error || "Unknown error"));
       }
     } catch (err) {
-      alert("Error: " + err);
+      if (showNotice) showNotice("Gagal menyesuaikan kuis: " + err);
     } finally {
       setIsTailoring(false);
     }
@@ -161,6 +162,7 @@ export interface QuizTabProps {
   setQuizQuestions?: (val: any) => void;
   activeRoomSession?: { roomId: string; title: string; quizCount: number } | null;
   onOpenRoomLeaderboard?: () => void;
+  showNotice?: (msg: string) => void;
 }
 
 export function QuizTab({
@@ -215,7 +217,8 @@ export function QuizTab({
   selectedModel,
   setQuizQuestions,
   activeRoomSession,
-  onOpenRoomLeaderboard
+  onOpenRoomLeaderboard,
+  showNotice
 }: QuizTabProps) {
   const [isTailoring, setIsTailoring] = React.useState(false);
 
@@ -223,7 +226,7 @@ export function QuizTab({
   const isCorrect = isAnswerSubmitted && selectedOption === currentQuestion?.correctIndex;
 
   return (
-              <div className="tab-pane-animate" style={{ maxWidth: 940, margin: "0 auto" }}>
+    <div className="quiz-view tab-pane-animate" style={{ maxWidth: 940, margin: "0 auto" }}>
                 {/* Quiz Question Count Selector (Shown only when quiz questions already exist) */}
                 {quizQuestions.length > 0 && (
                   <div
@@ -1665,6 +1668,7 @@ export function QuizTab({
                         resetQuizState={resetQuizState}
                         isTailoring={isTailoring}
                         setIsTailoring={setIsTailoring}
+                        showNotice={showNotice}
                       />
                     )}
 

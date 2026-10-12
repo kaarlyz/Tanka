@@ -16,7 +16,10 @@ async function handleFeynmanRoutes(req, res, pathname, helpers) {
     let conceptsList = [];
     if (docId) {
       const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
-      if (doc) docContext = `Konteks Materi Rujukan ("${doc.title}"):\n"""\n${doc.content.slice(0, 12000)}\n"""\n\n`;
+      if (!doc) {
+        return sendJSON(res, { error: "Dokumen rujukan tidak ditemukan" }, 404);
+      }
+      docContext = `Konteks Materi Rujukan ("${doc.title}"):\n"""\n${doc.content.slice(0, 12000)}\n"""\n\n`;
       const dbConcepts = db.prepare("SELECT * FROM document_concepts WHERE doc_id = ?").all(docId);
       if (dbConcepts && dbConcepts.length > 0) {
         conceptsList = dbConcepts.map(c => ({ id: c.id, name: c.name, definition: c.definition }));
@@ -27,7 +30,7 @@ async function handleFeynmanRoutes(req, res, pathname, helpers) {
       ? `DAFTAR KONSEP KUNCI DOKUMEN:
 ${JSON.stringify(conceptsList, null, 2)}
 Tugas: Cocokkan penjelasan siswa dengan konsep-konsep kunci di atas. Tentukan status tiap konsep: "mastered" (dipahami dengan baik), "partial" (disebut tapi kurang tepat), atau "gap" (sama sekali tidak dipahami/terlewat).`
-      : "";
+      : (docContext ? `Tugas: Evaluasi pemahaman siswa secara kritis terhadap substansi isi teks materi rujukan di atas. Identifikasi konsep-konsep inti yang dijelaskan dan tentukan statusnya ("mastered", "partial", atau "gap").` : "");
 
     const prompt = `Anda adalah evaluator metode Feynman yang fleksibel dan mengapresiasi cara berpikir mandiri.
 Siswa sedang melatih active recall dengan menjelaskan materi dengan BAHASANYA SENDIRI (menggunakan analogi sehari-hari, bahasa santai, perumpamaan kreatif, atau bahkan istilah rumit/tidak biasa).
@@ -73,11 +76,59 @@ Format output WAJIB HANYA berupa JSON valid tanpa teks tambahan:
 
     // Deterministic rubric-based score calculation in code (not hallucinatory LLM integers)
     let calculatedScore = 70;
-    if (Array.isArray(evalResult.conceptsEvaluated) && evalResult.conceptsEvaluated.length > 0) {
+    if (conceptsList.length > 0) {
+      // Map AI returned concepts against canonical conceptsList
+      const canonicalMap = new Map();
+      conceptsList.forEach(c => {
+        canonicalMap.set(c.name.toLowerCase().trim(), c);
+      });
+
+      let totalPoints = 0;
+      const evaluatedNames = new Set();
+      const normalizedConceptsEvaluated = [];
+
+      if (Array.isArray(evalResult.conceptsEvaluated)) {
+        evalResult.conceptsEvaluated.forEach((c) => {
+          const normName = String(c.name || "").toLowerCase().trim();
+          const canonicalMatch = canonicalMap.get(normName);
+          if (canonicalMatch) {
+            evaluatedNames.add(normName);
+            const st = String(c.status || "").toLowerCase().trim();
+            const points = st === "mastered" ? 100 : (st === "partial" ? 50 : 0);
+            totalPoints += points;
+            normalizedConceptsEvaluated.push({
+              id: canonicalMatch.id,
+              name: canonicalMatch.name,
+              status: points === 100 ? "mastered" : (points === 50 ? "partial" : "gap"),
+              evidenceQuote: c.evidenceQuote || "",
+              gapNote: c.gapNote || ""
+            });
+          }
+        });
+      }
+
+      // Any canonical concepts omitted by student are scored as 0 (gap)
+      conceptsList.forEach(c => {
+        const normName = c.name.toLowerCase().trim();
+        if (!evaluatedNames.has(normName)) {
+          normalizedConceptsEvaluated.push({
+            id: c.id,
+            name: c.name,
+            status: "gap",
+            evidenceQuote: "",
+            gapNote: "Konsep ini belum dibahas dalam penjelasan siswa."
+          });
+        }
+      });
+
+      evalResult.conceptsEvaluated = normalizedConceptsEvaluated;
+      calculatedScore = Math.round(totalPoints / conceptsList.length);
+    } else if (Array.isArray(evalResult.conceptsEvaluated) && evalResult.conceptsEvaluated.length > 0) {
       let totalPoints = 0;
       evalResult.conceptsEvaluated.forEach((c) => {
-        if (c.status === "mastered") totalPoints += 100;
-        else if (c.status === "partial") totalPoints += 50;
+        const st = String(c.status || "").toLowerCase().trim();
+        if (st === "mastered") totalPoints += 100;
+        else if (st === "partial") totalPoints += 50;
         else totalPoints += 0;
       });
       calculatedScore = Math.round(totalPoints / evalResult.conceptsEvaluated.length);
@@ -91,21 +142,32 @@ Format output WAJIB HANYA berupa JSON valid tanpa teks tambahan:
     evalResult.score = calculatedScore;
     evalResult.verdict = calculatedScore >= 80 ? "Pemahaman Sangat Kuat" : calculatedScore >= 60 ? "Pemahaman Cukup" : "Ada Miskonsepsi Kritis";
 
-    // Persist learner event to database
+    // Persist learner event to database with idempotency protection
     try {
       if (docId) {
-        const eventId = `event_feynman_${Date.now()}`;
-        const insertEvent = db.prepare("INSERT INTO learner_events (id, user_id, doc_id, concept_id, activity_type, result, payload, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        insertEvent.run(
-          eventId,
-          null,
-          docId,
-          topic || "Feynman",
-          "feynman",
-          calculatedScore >= 70 ? "mastered" : "gap",
-          JSON.stringify({ score: calculatedScore, gaps: evalResult.missedOrFlawedPoints || [] }),
-          Date.now()
-        );
+        const docExists = db.prepare("SELECT id FROM documents WHERE id = ?").get(docId);
+        if (docExists) {
+          const recentThreshold = Date.now() - 10000;
+          const existingEvent = db.prepare(`
+            SELECT id FROM learner_events
+            WHERE doc_id = ? AND activity_type = 'feynman' AND concept_id = ? AND created_at > ?
+          `).get(docId, topic || "Feynman", recentThreshold);
+
+          if (!existingEvent) {
+            const eventId = `event_feynman_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+            const insertEvent = db.prepare("INSERT INTO learner_events (id, user_id, doc_id, concept_id, activity_type, result, payload, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            insertEvent.run(
+              eventId,
+              null,
+              docId,
+              topic || "Feynman",
+              "feynman",
+              calculatedScore >= 70 ? "mastered" : "gap",
+              JSON.stringify({ score: calculatedScore, gaps: evalResult.missedOrFlawedPoints || [] }),
+              Date.now()
+            );
+          }
+        }
       }
     } catch (dbErr) {
       console.warn("[tanka] Failed to record Feynman learner event:", dbErr.message);

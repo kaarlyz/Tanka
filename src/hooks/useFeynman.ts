@@ -2,12 +2,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { FeynmanResult } from "../types";
 
 export interface UseFeynmanProps {
+  activeDocId: string | null;
   activeDocTitle: string;
   selectedModel: string;
   showNotice: (msg: string) => void;
 }
 
-export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFeynmanProps) {
+export function useFeynman({ activeDocId, activeDocTitle, selectedModel, showNotice }: UseFeynmanProps) {
   const [feynmanTopic, setFeynmanTopic] = useState("");
   const [feynmanExplanation, setFeynmanExplanation] = useState("");
   const [isEvaluatingFeynman, setIsEvaluatingFeynman] = useState(false);
@@ -33,6 +34,7 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          docId: activeDocId,
           topic: feynmanTopic.trim() || activeDocTitle,
           explanation: feynmanExplanation.trim(),
           model: selectedModel
@@ -50,7 +52,7 @@ export function useFeynman({ activeDocTitle, selectedModel, showNotice }: UseFey
     } finally {
       setIsEvaluatingFeynman(false);
     }
-  }, [feynmanExplanation, feynmanTopic, activeDocTitle, selectedModel, showNotice]);
+  }, [feynmanExplanation, feynmanTopic, activeDocId, activeDocTitle, selectedModel, showNotice]);
 
   const handleToggleFeynmanRecording = useCallback(async () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;

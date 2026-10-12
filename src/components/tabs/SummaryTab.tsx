@@ -15,14 +15,16 @@ function TailorSummaryBox({
   selectedModel, 
   setActiveDocSummary, 
   isTailoring, 
-  setIsTailoring 
+  setIsTailoring,
+  showNotice
 }: { 
   activeDocId?: string | null, 
   activeDocSummary: string, 
   selectedModel?: string, 
   setActiveDocSummary?: (val: string) => void,
   isTailoring: boolean,
-  setIsTailoring: (val: boolean) => void
+  setIsTailoring: (val: boolean) => void,
+  showNotice?: (msg: string) => void
 }) {
   const [tailorInput, setTailorInput] = React.useState("");
 
@@ -45,10 +47,10 @@ function TailorSummaryBox({
         setActiveDocSummary(data.summary);
         setTailorInput("");
       } else {
-        alert("Gagal menyesuaikan rangkuman: " + (data.error || "Unknown error"));
+        if (showNotice) showNotice("Gagal menyesuaikan rangkuman: " + (data.error || "Unknown error"));
       }
     } catch (err) {
-      alert("Error: " + err);
+      if (showNotice) showNotice("Gagal menyesuaikan rangkuman: " + err);
     } finally {
       setIsTailoring(false);
     }
@@ -111,6 +113,7 @@ export interface SummaryTabProps {
   activeDocId?: string | null;
   selectedModel?: string;
   setActiveDocSummary?: (val: string) => void;
+  showNotice?: (msg: string) => void;
 }
 
 export function SummaryTab({
@@ -131,52 +134,45 @@ export function SummaryTab({
   flashcards,
   activeDocId,
   selectedModel,
-  setActiveDocSummary
+  setActiveDocSummary,
+  showNotice
 }: SummaryTabProps) {
   const [isTailoring, setIsTailoring] = React.useState(false);
 
   return (
-              <div className="tab-pane-animate" style={{ maxWidth: 1040, margin: "0 auto" }}>
-                {/* Summary Style Selection Pills */}
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14, flexWrap: "wrap", backgroundColor: "#fafbf8", padding: "8px 12px", borderRadius: 8, border: "1px solid #dde1da" }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#6f7975", textTransform: "uppercase", letterSpacing: "0.06em", marginRight: 4 }}>
-                    Gaya Rangkuman:
-                  </span>
+              <div className="summary-view tab-pane-animate">
+                <div className="view-heading print-hidden">
+                  <div>
+                    <span className="section-kicker">RANGKUMAN ADAPTIF</span>
+                    <h1 style={{ margin: "0 0 6px", fontSize: 28, letterSpacing: "-0.03em" }}>Rangkuman Cerdas & Poin Ujian</h1>
+                    <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: 13 }}>
+                      Pilih format intisari materi yang paling sesuai dengan cara belajarmu.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span className="card-count">± 3 menit</span>
+                  </div>
+                </div>
+
+                {/* Summary Style Selection from Figma Make */}
+                <div className="summary-style-picker print-hidden" style={{ marginBottom: 20 }}>
                   {[
-                    { id: "tutor", label: "Tutor Bertahap & Latihan", desc: "Panduan bertahap dari nol, contoh angka/kasus nyata, trik ingat, dan 5 latihan mandiri" },
-                    { id: "intuitive", label: "Sederhana & Intuitif", desc: "Bahasa santai & mudah dimengerti, konsep 100% utuh" },
-                    { id: "memorization", label: "Poin Hafalan & Ujian", desc: "Istilah kunci, klasifikasi, dan mnemonik cepat" }
+                    { id: "tutor", label: "Tutor", note: "Dibimbing bertahap & latihan" },
+                    { id: "intuitive", label: "Intuitif", note: "Analogi & konsep santai" },
+                    { id: "memorization", label: "Hafalan", note: "Pola cepat diingat & rumus" }
                   ].map((s) => (
                     <button
                       key={s.id}
+                      className={summaryStyle === s.id ? "active" : ""}
                       onClick={() => setSummaryStyle(s.id as any)}
-                      title={s.desc}
-                      style={{
-                        backgroundColor: summaryStyle === s.id ? "#18221f" : "#ffffff",
-                        color: summaryStyle === s.id ? "#c8f064" : "#45544e",
-                        border: `1px solid ${summaryStyle === s.id ? "#18221f" : "#dce1da"}`,
-                        borderRadius: 999,
-                        padding: "4px 12px",
-                        fontSize: 11.5,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        transition: "0.15s ease"
-                      }}
                     >
-                      {s.label}
+                      <strong>{s.label}</strong>
+                      <small>{s.note}</small>
                     </button>
                   ))}
                 </div>
 
-                <div className="print-hidden" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 8 }}>
-                  <div>
-                    <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
-                      Rangkuman Cerdas & Poin Kritis Ujian
-                    </h2>
-                    <p style={{ fontSize: 12, color: "#6f7975", marginTop: 2 }}>
-                      Struktur intisari materi dan analisis jebakan soal oleh model AI.
-                    </p>
-                  </div>
+                <div className="print-hidden" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 8 }}>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                     {activeDocSummary && (
                       <>
@@ -473,6 +469,7 @@ export function SummaryTab({
                       setActiveDocSummary={setActiveDocSummary}
                       isTailoring={isTailoring}
                       setIsTailoring={setIsTailoring}
+                      showNotice={showNotice}
                     />
 
                     {/* Print Appendix 1: Flashcards / Glosarium Konsep Kunci */}

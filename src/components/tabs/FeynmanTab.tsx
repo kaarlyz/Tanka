@@ -32,29 +32,28 @@ export function FeynmanTab({
   handleEvaluateFeynman,
 }: FeynmanTabProps) {
   return (
-              <div className="tab-pane-animate" style={{ maxWidth: 960, margin: "0 auto" }}>
-                <div style={{ marginBottom: 18 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Brain size={20} color="#4b6623" />
-                    <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
-                      Mode Feynman: Uji Pemahaman Sendiri
-                    </h2>
-                  </div>
-                  <p style={{ fontSize: 12.5, color: "#6f7975", marginTop: 4 }}>
-                    Jelaskan kembali suatu konsep dengan kata-kata sendiri. AI akan menguji akurasi, mendeteksi miskonsepsi, dan memberi analogi pengunci memori.
-                  </p>
-                </div>
+    <div className="feynman-view tab-pane-animate">
+      <div className="view-heading">
+        <div>
+          <span className="section-kicker">ACTIVE RECALL · UJI FEYNMAN</span>
+          <h1 style={{ margin: "0 0 6px", fontSize: 28, letterSpacing: "-0.03em" }}>Ajarkan kembali dengan bahasamu</h1>
+          <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: 13 }}>
+            Jelaskan seolah kamu sedang membantu teman yang baru mengenal materi ini. Nara akan menguji akurasi dan mendeteksi bagian yang masih kabur.
+          </p>
+        </div>
+        <span className="card-count">Target 2 menit</span>
+      </div>
 
-                <div
-                  style={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #dde1da",
-                    borderRadius: 12,
-                    padding: "24px 26px",
-                    marginBottom: 18,
-                    boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
-                  }}
-                >
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          border: "1px solid #dde1da",
+          borderRadius: 14,
+          padding: "24px 26px",
+          marginBottom: 18,
+          boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+        }}
+      >
                   <div style={{ marginBottom: 12 }}>
                     <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#45544e", marginBottom: 6 }}>
                       Konsep atau Istilah yang Ingin Dijelaskan

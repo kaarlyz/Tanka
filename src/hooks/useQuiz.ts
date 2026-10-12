@@ -44,6 +44,31 @@ export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, reco
     setIsExamTimerRunning(false);
   }, []);
 
+  // Sinkronisasi memuat kuis tersimpan saat dokumen aktif berganti
+  useEffect(() => {
+    if (!activeDocId) {
+      setQuizQuestions([]);
+      resetQuizState();
+      return;
+    }
+    let isCancelled = false;
+    fetch(`/api/documents/${activeDocId}/quizzes`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isCancelled && data && data.quiz && Array.isArray(data.quiz.questions) && data.quiz.questions.length > 0) {
+          setQuizQuestions(data.quiz.questions);
+          resetQuizState();
+        } else if (!isCancelled) {
+          setQuizQuestions([]);
+          resetQuizState();
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeDocId, resetQuizState]);
+
   const [isQuizChatOpen, setIsQuizChatOpen] = useState(false);
 
   const handleGenerateQuiz = useCallback(async (customCount?: number | unknown) => {

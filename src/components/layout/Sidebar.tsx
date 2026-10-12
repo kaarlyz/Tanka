@@ -12,7 +12,7 @@ export interface SidebarProps {
   documents: DocumentItem[];
   activeDocId: string | null;
   loadDocument: (id: string) => void;
-  handleDeleteDocument: (id: string, e?: React.MouseEvent) => void;
+  handleDeleteDocument: (id: string, e: React.MouseEvent) => void;
   handleDeleteAllDocuments?: () => void;
   docSearchQuery?: string;
   setDocSearchQuery?: (val: string) => void;
@@ -273,6 +273,7 @@ export function Sidebar({
                 <Search size={11} color="#7a8a84" style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)" }} />
                 <input
                   type="text"
+                  className="clean-input"
                   value={docSearchQuery || ""}
                   onChange={(e) => setDocSearchQuery && setDocSearchQuery(e.target.value)}
                   placeholder="Cari modul..."
@@ -328,39 +329,30 @@ export function Sidebar({
                       Tidak ada modul "{docSearchQuery}".
                     </div>
                   ) : (
-                    filteredDocs.map((doc) => {
+                    filteredDocs.map((doc, idx) => {
                       const isSelected = doc.id === activeDocId;
                       return (
                         <div
                           key={doc.id}
+                          className={`module-item ${isSelected ? "active" : ""}`}
                           onClick={() => {
                             loadDocument(doc.id);
                             setIsMobileDrawerOpen(false);
                           }}
-                          style={{
-                            padding: "9px 12px",
-                            borderRadius: 8,
-                            marginBottom: 5,
-                            backgroundColor: isSelected ? "#25322e" : "transparent",
-                            border: isSelected ? "1px solid #34413c" : "1px solid transparent",
-                            cursor: "pointer",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            transition: "all 0.15s ease"
-                          }}
                         >
-                          <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginRight: 8 }}>
-                            <div style={{ fontSize: 13, fontWeight: isSelected ? 700 : 500, color: isSelected ? "#f5f8f3" : "#aeb9b4" }}>
-                              {doc.title}
-                            </div>
-                            <div style={{ fontSize: 11, color: "#7a8a84", fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-                              {doc.flashcard_count || 0} kartu
-                            </div>
-                          </div>
+                          <span className="module-number">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <span className="module-copy" style={{ flex: 1, minWidth: 0 }}>
+                            <strong>{doc.title}</strong>
+                            <small>{doc.flashcard_count || 0} kartu • {doc.question_count || 0} soal</small>
+                          </span>
                           <button
-                            onClick={(e) => handleDeleteDocument(doc.id, e)}
-                            style={{ background: "none", border: "none", color: "#7a8a84", cursor: "pointer", padding: 4 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteDocument(doc.id, e);
+                            }}
+                            style={{ background: "none", border: "none", color: "#7a8a84", cursor: "pointer", padding: 4, flexShrink: 0 }}
                             title="Hapus dokumen"
                           >
                             <Trash2 size={13} />
@@ -517,11 +509,11 @@ export function Sidebar({
             }}
             title="Klik untuk melihat statistik & target mingguan"
           >
-            <div className="streak-top-row">
-              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <Target size={12} color="#c8f064" /> Target mingguan
+            <div className="streak-top-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: 10.5 }}>
+                <Target size={12} color="#c8f064" style={{ flexShrink: 0 }} /> Target mingguan
               </span>
-              <strong style={{ fontFamily: "'DM Mono', monospace", color: "#c8f064" }}>
+              <strong style={{ fontFamily: "'DM Mono', monospace", color: "#c8f064", flexShrink: 0, fontSize: 10.5 }}>
                 {currentUser?.active_days_this_week?.length || 0}/{currentUser?.target_weekly_days || 5} hari
               </strong>
             </div>

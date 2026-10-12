@@ -1,21 +1,7 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
-
-// Load .env
-const envPath = path.join(__dirname, ".env");
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, "utf8");
-  for (const line of envContent.split("\n")) {
-    const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
-    if (match) {
-      const key = match[1];
-      let value = match[2] || "";
-      if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
-      process.env[key] = value;
-    }
-  }
-}
+const { PORT, ROUTER_URL, validateConfigOnStartup } = require("./server/config");
 
 const { handleModelsRoutes } = require("./server/routes/models");
 const { handleDocumentsRoutes } = require("./server/routes/documents");
@@ -30,9 +16,6 @@ const { handleTopicsRoutes } = require("./server/routes/topics");
 const { handleAuthRoutes } = require("./server/routes/auth");
 const { handleUsersRoutes } = require("./server/routes/users");
 const { handleRoomsRoutes } = require("./server/routes/rooms");
-
-const PORT = parseInt(process.env.PORT || "3001", 10);
-const ROUTER_URL = process.env.ROUTER_URL || "http://127.0.0.1:20128/v1";
 
 // Helper for JSON response
 function sendJSON(res, data, statusCode = 200) {
@@ -230,6 +213,7 @@ server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`[tanka-server] Running on http://0.0.0.0:${PORT}`);
-  console.log(`[tanka-server] Connected to 9Router at ${ROUTER_URL}`);
+  const cfg = validateConfigOnStartup();
+  console.log(`[tanka-server] Running on http://0.0.0.0:${cfg.PORT}`);
+  console.log(`[tanka-server] Connected to 9Router at ${cfg.ROUTER_URL} (key configured: ${cfg.ROUTER_KEY_CONFIGURED})`);
 });

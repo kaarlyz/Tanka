@@ -8,8 +8,8 @@ export interface ChatTabProps {
   activeDocTitle: string;
   selectedModel: string;
   messages: ChatMessage[];
-  chatInput: string;
-  setChatInput: (val: string) => void;
+  chatInput?: string;
+  setChatInput?: (val: string) => void;
   handleSendMessage: (textToSend?: string) => Promise<void> | void;
   isChatSending: boolean;
   stagedAttachment?: StagedChatFile | null;
@@ -22,8 +22,8 @@ export function ChatTab({
   activeDocTitle,
   selectedModel,
   messages,
-  chatInput,
-  setChatInput,
+  chatInput: propChatInput,
+  setChatInput: propSetChatInput,
   handleSendMessage,
   isChatSending,
   stagedAttachment,
@@ -31,6 +31,10 @@ export function ChatTab({
   handleClearAttachment,
   handleClearChat,
 }: ChatTabProps) {
+  const [localInput, setLocalInput] = useState("");
+  const chatInput = propChatInput !== undefined ? propChatInput : localInput;
+  const setChatInput = propSetChatInput || setLocalInput;
+
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -412,7 +416,11 @@ export function ChatTab({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              handleSendMessage();
+              if (!isChatSending && (chatInput.trim() || stagedAttachment)) {
+                const text = chatInput;
+                if (!propSetChatInput) setLocalInput("");
+                handleSendMessage(text);
+              }
             }
           }}
           placeholder={stagedAttachment ? `Bahas ${stagedAttachment.name}... (atau langsung Enter)` : "Tanyakan konsep, paste foto soal, atau lampirkan berkas..."}
@@ -428,7 +436,13 @@ export function ChatTab({
           }}
         />
         <button
-          onClick={() => handleSendMessage()}
+          onClick={() => {
+            if (!isChatSending && (chatInput.trim() || stagedAttachment)) {
+              const text = chatInput;
+              if (!propSetChatInput) setLocalInput("");
+              handleSendMessage(text);
+            }
+          }}
           disabled={isChatSending || (!chatInput.trim() && !stagedAttachment)}
           style={{
             backgroundColor: "#18221f",

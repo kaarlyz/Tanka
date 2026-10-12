@@ -162,8 +162,9 @@ export function HomeHubTab({
                     </div>
                   </div>
 
-                  {/* Clean Search Input */}
+                  {/* Clean Unified Search & Topic Generator Input */}
                   <form
+                    className="home-unified-search-form"
                     onSubmit={(e) => {
                       e.preventDefault();
                       if (homeSearchQuery.trim()) {
@@ -175,51 +176,71 @@ export function HomeHubTab({
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      backgroundColor: "#f8f9f5",
+                      backgroundColor: "#f4f6f1",
                       borderRadius: 8,
                       border: "1px solid #dce1da",
                       padding: "4px 6px 4px 14px",
                       gap: 10
                     }}
                   >
-                    <Search size={18} color="#8a9691" style={{ flexShrink: 0 }} />
+                    <Search size={16} color="#6f7975" style={{ flexShrink: 0 }} />
                     <input
                       type="text"
+                      className="clean-input"
                       value={homeSearchQuery}
                       onChange={(e) => setHomeSearchQuery(e.target.value)}
-                      placeholder="Cari materi atau topik baru..."
+                      placeholder="Cari materi tersimpan atau ketik topik baru untuk dibuat AI..."
                       style={{
                         flex: 1,
                         minWidth: 0,
-                        border: "none",
-                        outline: "none",
-                        fontSize: 14,
+                        border: "none !important",
+                        outline: "none !important",
+                        boxShadow: "none !important",
+                        fontSize: 13,
                         color: "#17201d",
                         padding: "8px 0",
                         backgroundColor: "transparent"
                       }}
                     />
-                    <button
-                      type="submit"
-                      disabled={!homeSearchQuery.trim()}
-                      style={{
-                        backgroundColor: homeSearchQuery.trim() ? "#18221f" : "#e5e7eb",
-                        color: homeSearchQuery.trim() ? "#c8f064" : "#9ca3af",
-                        border: "none",
-                        borderRadius: 6,
-                        padding: "8px 14px",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: homeSearchQuery.trim() ? "pointer" : "default",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        flexShrink: 0
-                      }}
-                    >
-                      <span className="desktop-only">Cari / Buat</span>
-                      <ArrowRight size={14} />
-                    </button>
+                    {homeSearchQuery.trim() ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => setHomeSearchQuery("")}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#8a9691",
+                            cursor: "pointer",
+                            padding: 4,
+                            display: "flex"
+                          }}
+                          title="Hapus pencarian"
+                        >
+                          <X size={14} />
+                        </button>
+                        <button
+                          type="submit"
+                          style={{
+                            backgroundColor: "#18221f",
+                            color: "#c8f064",
+                            border: "none",
+                            borderRadius: 6,
+                            padding: "6px 12px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                          }}
+                          title="Generate topik baru dengan AI"
+                        >
+                          <span>Buat Topik AI</span>
+                          <ArrowRight size={13} />
+                        </button>
+                      </div>
+                    ) : null}
                   </form>
 
                   {/* Mobile Quick Action Strip (Compact Tool Bar) */}
@@ -292,7 +313,7 @@ export function HomeHubTab({
                     className="home-stat-card"
                     style={{
                       backgroundColor: "#ffffff",
-                      borderRadius: 12,
+                      borderRadius: 10,
                       padding: "16px 20px",
                       border: "1px solid #dce1da",
                       display: "flex",
@@ -321,7 +342,7 @@ export function HomeHubTab({
                     className="home-stat-card"
                     style={{
                       backgroundColor: "#ffffff",
-                      borderRadius: 12,
+                      borderRadius: 10,
                       padding: "16px 20px",
                       border: "1px solid #dce1da",
                       display: "flex",
@@ -350,27 +371,25 @@ export function HomeHubTab({
                     className="home-stat-card"
                     onClick={() => setActiveTab("mistakes")}
                     style={{
-                      backgroundColor: mistakes.length > 0 ? "#faece8" : "#ffffff",
-                      borderRadius: 14,
-                      padding: "18px 22px",
-                      border: mistakes.length > 0 ? "1px solid #f2d5ce" : "1px solid #dce2da",
+                      backgroundColor: "#ffffff",
+                      borderRadius: 10,
+                      padding: "16px 20px",
+                      border: "1px solid #dce1da",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      cursor: "pointer",
-                      boxShadow: "0 12px 35px rgba(29, 40, 35, 0.04)",
-                      transition: "all 0.15s ease"
+                      boxShadow: "0 2px 8px rgba(27, 39, 35, 0.02)"
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 11, color: mistakes.length > 0 ? "#a2574a" : "#7b914e", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'DM Mono', monospace" }}>
+                      <div style={{ fontSize: 11.5, color: "#6f7975", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
                         Bank Kesalahan
                       </div>
-                      <div style={{ fontSize: 26, fontWeight: 800, color: mistakes.length > 0 ? "#a2574a" : "#18211e", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>
+                      <div style={{ fontSize: 26, fontWeight: 800, color: "#17201d", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>
                         {mistakes.length}
                       </div>
-                      <div style={{ fontSize: 12, color: mistakes.length > 0 ? "#a2574a" : "#89938f", marginTop: 2 }}>
-                        {mistakes.length > 0 ? "Klik untuk drill kesalahan" : "Belum ada catatan salah"}
+                      <div style={{ fontSize: 12, color: "#8a9691", marginTop: 2 }}>
+                        {mistakes.length > 0 ? "Perlu review ulang" : "Semua soal bersih"}
                       </div>
                     </div>
                     <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: mistakes.length > 0 ? "#faece8" : "#edf4e3", display: "flex", alignItems: "center", justifyContent: "center", border: mistakes.length > 0 ? "1px solid #f2d5ce" : "1px solid #d7e5c5" }}>
@@ -425,7 +444,7 @@ export function HomeHubTab({
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", width: "100%", marginTop: 4 }} className="home-last-session-actions">
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }} className="home-last-session-actions">
                         <button
                           onClick={() => {
                             loadDocument(targetDoc.id);
@@ -546,48 +565,6 @@ export function HomeHubTab({
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }} className="home-search-filter-wrap">
-                      {/* Search Bar Modul di Home */}
-                      <div style={{ position: "relative", minWidth: 180 }} className="home-search-subbar">
-                        <Search size={12} color="#8a9691" style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }} />
-                        <input
-                          type="text"
-                          value={homeSearchQuery}
-                          onChange={(e) => setHomeSearchQuery(e.target.value)}
-                          placeholder="Cari materi..."
-                          style={{
-                            width: "100%",
-                            backgroundColor: "#ffffff",
-                            border: "1px solid #dce1da",
-                            borderRadius: 7,
-                            padding: "5px 24px 5px 27px",
-                            fontSize: 11.5,
-                            color: "#17201d",
-                            outline: "none",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                        {homeSearchQuery && (
-                          <button
-                            type="button"
-                            onClick={() => setHomeSearchQuery("")}
-                            style={{
-                              position: "absolute",
-                              right: 6,
-                              top: "50%",
-                              transform: "translateY(-50%)",
-                              background: "none",
-                              border: "none",
-                              color: "#8a9691",
-                              cursor: "pointer",
-                              padding: 2,
-                              display: "flex"
-                            }}
-                          >
-                            <X size={11} />
-                          </button>
-                        )}
-                      </div>
-
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }} className="home-filter-scroll">
                         {["Semua", "Sosiologi", "Ekonomi", "Matematika", "Sains", "Bahasa"].map((cat) => (
                           <button

@@ -2,6 +2,7 @@ const crypto = require("node:crypto");
 const { db } = require("../db");
 const { callRouter, detectRealMath } = require("../ai");
 const { safeJsonParse } = require("../utils/jsonParser");
+const { validateAndNormalizeQuiz } = require("./quizValidator");
 
 /**
  * Core question generator for Tanka
@@ -207,79 +208,8 @@ ${factsContext}
     questions = results.flat();
   }
 
-  const letters = ["A", "B", "C", "D", "E"];
-  questions.forEach((q) => {
-    if (Array.isArray(q.options) && q.options.length >= 2) {
-      q.options = q.options.map(opt => typeof opt === "string" ? opt.replace(/^[A-Ea-e][\.\)]\s*/, "").trim() : opt);
-
-      const oldCorrectIdx = typeof q.correctIndex === "number" && q.correctIndex >= 0 ? q.correctIndex : 0;
-      const originalCorrect = q.options[oldCorrectIdx];
-
-      for (let i = q.options.length - 1; i > 0; i--) {
-        const j = crypto.randomInt(0, i + 1);
-        [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
-      }
-
-      const targetSlot = crypto.randomInt(0, q.options.length);
-      const currPos = q.options.indexOf(originalCorrect);
-      if (currPos !== -1 && targetSlot < q.options.length) {
-        [q.options[currPos], q.options[targetSlot]] = [q.options[targetSlot], q.options[currPos]];
-        q.correctIndex = targetSlot;
-      } else {
-        q.correctIndex = q.options.indexOf(originalCorrect);
-      }
-
-      if (q.question) {
-        q.question = q.question
-          .replace(/^(?:Berdasarkan materi(?: yang telah dipelajari)?,?\s*|Dalam konteks pembelajaran ini,?\s*)/gi, "")
-          .trim();
-      }
-
-      if (q.explanation) {
-        q.explanation = q.explanation
-          .replace(/^(?:Tentu saja|Mari kita bahas|Perlu diingat bahwa|Secara umum|Pertanyaan ini membahas|Pada dasarnya)[,\s]*/gi, "")
-          .replace(/(?:Koreksi data|Mari sesuaikan data|Q2 harus|Kita ubah agar)[^.]*\./gi, "")
-          .replace(/Pilihan\s+[A-E]\s+benar(?:\s+karena)?/gi, "Jawaban yang tepat adalah")
-          .replace(/Opsi\s+[A-E]\s+benar(?:\s+karena)?/gi, "Jawaban yang tepat adalah")
-          .replace(/Pilihan\s+[A-E]\s+tepat/gi, "Jawaban yang tepat")
-          .replace(/Opsi\s+[A-E]\s+tepat/gi, "Jawaban yang tepat")
-          .trim();
-      }
-
-      if (Array.isArray(q.steps)) {
-        q.steps = q.steps.map((s) => {
-          let desc = s.desc || "";
-          desc = desc
-            .replace(/^(?:Tentu saja|Langkah selanjutnya adalah|Perlu dicatat)[,\s]*/gi, "")
-            .replace(/pilihan\s+[A-E]\s+benar/gi, "jawaban yang tepat")
-            .replace(/opsi\s+[A-E]\s+benar/gi, "jawaban yang tepat");
-          return { ...s, desc };
-        });
-      }
-    }
-  });
-
-  const sanitizeMathString = (t) => {
-    if (!t || typeof t !== "string") return t;
-    let cleaned = t;
-    const dollarCount = (cleaned.match(/(?<!\\)\$/g) || []).length;
-    if (dollarCount % 2 !== 0) {
-      cleaned += "$";
-    }
-    return cleaned.replace(/\{\}/g, "");
-  };
-
-  questions.forEach((q) => {
-    q.question = sanitizeMathString(q.question);
-    if (Array.isArray(q.options)) {
-      q.options = q.options.map(sanitizeMathString);
-    }
-    if (q.explanation) {
-      q.explanation = sanitizeMathString(q.explanation);
-    }
-  });
-
-  return questions;
+  // Validasi dan normalisasi kanonis dengan pengacakan opsi dan pembersihan letter-reference
+  return validateAndNormalizeQuiz(questions, { shuffleOptions: true, renumber: true });
 }
 
 module.exports = {

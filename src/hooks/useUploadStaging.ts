@@ -219,6 +219,17 @@ export function useUploadStaging({
         }
         await fetchDocuments();
         if (data.id) {
+          // Tunggu hingga sintesis bab Nara selesai agar pengguna langsung mendarat pada bab final yang rapi
+          for (let attempt = 0; attempt < 25; attempt++) {
+            try {
+              const checkRes = await fetch(`/api/documents/${data.id}`);
+              const checkData = await checkRes.json();
+              if (checkData.document?.content?.includes("## Bab ")) {
+                break;
+              }
+            } catch {}
+            await new Promise((r) => setTimeout(r, 2500));
+          }
           await loadDocument(data.id);
         }
         handleCancelStaging();

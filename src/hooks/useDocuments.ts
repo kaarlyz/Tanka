@@ -43,6 +43,38 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
         setActiveDocSummary(data.document.summary || "");
         if (callback) callback(data.document);
         if (onDocumentLoaded) onDocumentLoaded(data.document);
+
+        // Jika dokumen berstatus processing atau baru dibuat dan masih teks mentah, poll otomatis sampai bab Nara selesai
+        const isProcessing = data.document.status === "processing" || 
+          (data.document.content && !data.document.content.includes("## ") && (Date.now() - (data.document.created_at || 0) < 300000));
+
+        if (isProcessing) {
+          let attempts = 0;
+          const pollInterval = setInterval(async () => {
+            attempts++;
+            if (attempts > 30) {
+              clearInterval(pollInterval);
+              return;
+            }
+            try {
+              const pollRes = await fetch(`/api/documents/${id}`);
+              const pollData = await pollRes.json();
+              if (pollData.document) {
+                const status = pollData.document.status;
+                if (status === "completed" || status === "partial" || (pollData.document.content && pollData.document.content.includes("## "))) {
+                  setActiveDocContent(pollData.document.content);
+                  if (pollData.document.summary) setActiveDocSummary(pollData.document.summary);
+                  clearInterval(pollInterval);
+                } else if (status === "failed") {
+                  clearInterval(pollInterval);
+                  showNotice("Pembuatan modul kurikulum mengalami kendala");
+                }
+              }
+            } catch {
+              clearInterval(pollInterval);
+            }
+          }, 3500);
+        }
       }
     } catch (err) {
       console.error("Gagal memuat dokumen:", err);

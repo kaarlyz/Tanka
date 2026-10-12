@@ -44,7 +44,6 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
     return [];
   });
 
-  const [chatInput, setChatInput] = useState("");
   const [isChatSending, setIsChatSending] = useState(false);
   const [stagedAttachment, setStagedAttachment] = useState<StagedChatFile | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -72,7 +71,6 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
     }
 
     setStagedAttachment(null);
-    setChatInput("");
 
     // 2. Sinkronkan dengan database SQLite backend
     let isCancelled = false;
@@ -201,7 +199,7 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
   }, []);
 
   const handleSendMessage = useCallback(async (customPrompt?: string) => {
-    const rawText = customPrompt || chatInput;
+    const rawText = customPrompt || "";
     if ((!rawText.trim() && !stagedAttachment) || isChatSending) return;
 
     let text = rawText.trim();
@@ -213,7 +211,6 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
 
     const currentAttachment = stagedAttachment;
     setStagedAttachment(null);
-    if (!customPrompt) setChatInput("");
 
     const attachmentMeta: ChatAttachment | undefined = currentAttachment
       ? {
@@ -241,7 +238,12 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
     setIsChatSending(true);
     setTimeout(() => {
       if (chatEndRef.current) {
-        chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        const container = chatEndRef.current.closest(".chat-window-box") as HTMLElement | null;
+        if (container) {
+          container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+        } else {
+          chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
       }
     }, 50);
 
@@ -259,7 +261,7 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
             fileType: currentAttachment.type
           } : null,
           model: selectedModel,
-          history: messages.slice(-6).map(m => ({ role: m.role, content: m.content }))
+          history: messages.slice(-20).map(m => ({ role: m.role, content: m.content }))
         })
       });
       const data = await res.json();
@@ -279,7 +281,15 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
         });
         setTimeout(() => {
           if (chatEndRef.current) {
-            chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            const container = chatEndRef.current.closest(".chat-window-box") as HTMLElement | null;
+            if (container) {
+              const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 220;
+              if (isNearBottom) {
+                container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+              }
+            } else {
+              chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
           }
         }, 100);
       } else {
@@ -290,13 +300,13 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
     } finally {
       setIsChatSending(false);
     }
-  }, [currentSessionId, effectiveDocId, chatInput, stagedAttachment, isChatSending, selectedModel, messages, showNotice]);
+  }, [currentSessionId, effectiveDocId, stagedAttachment, isChatSending, selectedModel, messages, showNotice]);
 
   return {
     messages,
     setMessages,
-    chatInput,
-    setChatInput,
+    chatInput: "",
+    setChatInput: (() => {}) as (val: string) => void,
     isChatSending,
     chatEndRef,
     stagedAttachment,

@@ -1,5 +1,5 @@
-import React, { useRef } from "react";
-import { RotateCw, X, Sparkles, Brain, Camera, Image, FileText, Send, Copy, Check } from "lucide-react";
+import React, { useRef, useState, useCallback, useMemo, useEffect } from "react";
+import { RotateCw, X, Sparkles, Brain, Camera, Image, FileText, Send, Copy, Check, Plus, ArrowUp } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -7,6 +7,595 @@ import rehypeKatex from "rehype-katex";
 import { ActiveTab, ChatMessage } from "../../types";
 import { StagedChatFile } from "../../hooks/useChat";
 import { sanitizeMathMarkdown } from "../common/DiagramRenderer";
+
+const STATIC_REMARK_PLUGINS = [remarkGfm, remarkMath];
+const STATIC_REHYPE_PLUGINS = [rehypeKatex];
+
+interface ChatMessageItemProps {
+  m: ChatMessage;
+  copiedMsgId: string | null;
+  onCopy: (id: string, text: string) => void;
+}
+
+export const ChatMessageItem = React.memo(
+  function ChatMessageItem({ m, copiedMsgId, onCopy }: ChatMessageItemProps) {
+    const isUser = m.role === "user";
+    const sanitizedContent = useMemo(() => {
+      return isUser ? m.content : sanitizeMathMarkdown(m.content);
+    }, [m.content, isUser]);
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: isUser ? "flex-end" : "flex-start",
+          gap: 3,
+          padding: "0 2px"
+        }}
+      >
+        {/* Attachment preview if present */}
+        {m.attachment && (
+          <div
+            style={{
+              maxWidth: "85%",
+              padding: "5px 10px",
+              borderRadius: 8,
+              backgroundColor: isUser ? "#202e28" : "#edf2ea",
+              border: "1px solid rgba(0,0,0,0.06)",
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              fontSize: 11,
+              color: isUser ? "#d5e6cf" : "#223320"
+            }}
+          >
+            {m.attachment.type === "image" && m.attachment.url ? (
+              <img
+                src={m.attachment.url}
+                alt="Lampiran"
+                style={{
+                  width: 32,
+                  height: 32,
+                  objectFit: "cover",
+                  borderRadius: 5,
+                  border: "1px solid rgba(255,255,255,0.2)"
+                }}
+              />
+            ) : (
+              <FileText size={14} color={isUser ? "#a8c99e" : "#446128"} />
+            )}
+            <span
+              style={{
+                fontWeight: 600,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}
+            >
+              {m.attachment.name}
+            </span>
+          </div>
+        )}
+
+        {/* Speech Bubble */}
+        <div
+          style={{
+            maxWidth: isUser ? "85%" : "94%",
+            padding: isUser ? "9px 13px" : "11px 14px",
+            borderRadius: isUser ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+            backgroundColor: isUser ? "#1c2b25" : "#ffffff",
+            color: isUser ? "#f5f8f3" : "#17201d",
+            fontSize: 13,
+            lineHeight: 1.58,
+            border: isUser ? "none" : "1px solid #dce2d8",
+            boxShadow: isUser
+              ? "0 1px 4px rgba(28, 43, 37, 0.15)"
+              : "0 1px 4px rgba(27, 39, 35, 0.04)"
+          }}
+        >
+          {isUser ? (
+            <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.content}</div>
+          ) : (
+            <>
+              <div className="nara-md-response" style={{ fontSize: 13, lineHeight: 1.58 }}>
+                <ReactMarkdown remarkPlugins={STATIC_REMARK_PLUGINS} rehypePlugins={STATIC_REHYPE_PLUGINS}>
+                  {sanitizedContent}
+                </ReactMarkdown>
+              </div>
+
+              {/* Copy to Clipboard Button - Only for Assistant */}
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6, paddingTop: 4, borderTop: "1px solid #edf1ea" }}>
+                <button
+                  type="button"
+                  onClick={() => onCopy(m.id, m.content)}
+                  title="Salin jawaban"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#74827b",
+                    fontSize: 11,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "3px 6px",
+                    borderRadius: 5,
+                    transition: "color 0.15s ease"
+                  }}
+                >
+                  {copiedMsgId === m.id ? (
+                    <>
+                      <Check size={12} color="#436125" />
+                      <span style={{ color: "#436125", fontWeight: 600 }}>Disalin</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={12} />
+                      <span>Salin</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  },
+  (prev, next) => {
+    return (
+      prev.m.id === next.m.id &&
+      prev.m.content === next.m.content &&
+      prev.m.role === next.m.role &&
+      prev.m.attachment === next.m.attachment &&
+      (prev.copiedMsgId === prev.m.id) === (next.copiedMsgId === next.m.id)
+    );
+  }
+);
+
+interface ChatInputBarProps {
+  activeTab: ActiveTab;
+  isChatSending: boolean;
+  hasMessages: boolean;
+  stagedAttachment?: StagedChatFile | null;
+  handleSendMessage: (textToSend?: string) => Promise<void> | void;
+  handleAttachFile?: (file: File) => Promise<void>;
+  handleClearAttachment?: () => void;
+}
+
+export function ChatInputBar({
+  activeTab,
+  isChatSending,
+  hasMessages,
+  stagedAttachment,
+  handleSendMessage,
+  handleAttachFile,
+  handleClearAttachment
+}: ChatInputBarProps) {
+  const [inputVal, setInputVal] = useState("");
+  const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isAttachMenuOpen) return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsAttachMenuOpen(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener("click", onPointerDown);
+      document.addEventListener("touchstart", onPointerDown);
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+    };
+  }, [isAttachMenuOpen]);
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+      const file = e.clipboardData.files[0];
+      if (handleAttachFile) {
+        handleAttachFile(file);
+        e.preventDefault();
+      }
+    }
+  };
+
+  const onSubmit = () => {
+    if (isChatSending) return;
+    if (inputVal.trim() || stagedAttachment) {
+      const text = inputVal;
+      setInputVal("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
+      handleSendMessage(text);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        flexShrink: 0,
+        position: "relative",
+        padding: "8px 12px max(10px, env(safe-area-inset-bottom))",
+        borderTop: "1px solid #e5ebe2",
+        backgroundColor: "#ffffff"
+      }}
+    >
+      {/* Contextual Quick Suggestion Chips - ONLY shown when conversation is active to prevent duplicate cards with empty state */}
+      {hasMessages && (
+        <div
+          className="prompt-chips-box no-scrollbar"
+          style={{
+            display: "flex",
+            gap: 6,
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            paddingBottom: 7,
+            marginBottom: 4
+          }}
+        >
+          {(activeTab === "quiz"
+            ? ["Bahas soal ini", "Kenapa jawaban itu benar?", "Rumus terkait"]
+            : activeTab === "flashcards"
+            ? ["Jelaskan kartu ini", "Beri analogi", "Contoh penerapan"]
+            : activeTab === "feynman"
+            ? ["Koreksi penjelasanku", "Bantu susun analogi", "Apa yang kurang?"]
+            : ["Jelaskan lebih sederhana", "Beri contoh soal lain", "Trik cepat rumus"]
+          ).map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => handleSendMessage(chip)}
+              disabled={isChatSending}
+              style={{
+                fontSize: 11,
+                padding: "4px 11px",
+                backgroundColor: "#f4f6f1",
+                border: "1px solid #dce2d8",
+                borderRadius: 999,
+                color: "#3a4c43",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                transition: "background 0.15s, border-color 0.15s"
+              }}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Staged File Preview Chip */}
+      {stagedAttachment && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: "#f0f4ee",
+            border: "1px solid #cdd8cb",
+            borderRadius: 8,
+            padding: "5px 9px",
+            marginBottom: 6,
+            fontSize: 11,
+            color: "#273b18"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 7, overflow: "hidden" }}>
+            {stagedAttachment.type === "image" && stagedAttachment.previewUrl ? (
+              <img
+                src={stagedAttachment.previewUrl}
+                alt="Preview"
+                style={{
+                  width: 24,
+                  height: 24,
+                  objectFit: "cover",
+                  borderRadius: 4,
+                  border: "1px solid #b6c9af"
+                }}
+              />
+            ) : (
+              <FileText size={15} color="#446128" />
+            )}
+            <span
+              style={{
+                fontWeight: 600,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: 200
+              }}
+            >
+              {stagedAttachment.name}
+            </span>
+            <span style={{ fontSize: 9.5, color: "#6e806a" }}>
+              ({Math.round(stagedAttachment.file.size / 1024)} KB)
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearAttachment}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#6e806a",
+              padding: 3,
+              display: "flex",
+              alignItems: "center"
+            }}
+            title="Hapus lampiran"
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
+
+      {/* Hidden File Inputs */}
+      <input
+        type="file"
+        ref={cameraInputRef}
+        style={{ display: "none" }}
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0] && handleAttachFile) {
+            handleAttachFile(e.target.files[0]);
+            e.target.value = "";
+          }
+        }}
+      />
+      <input
+        type="file"
+        ref={galleryInputRef}
+        style={{ display: "none" }}
+        accept="image/png,image/jpeg,image/webp,image/bmp"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0] && handleAttachFile) {
+            handleAttachFile(e.target.files[0]);
+            e.target.value = "";
+          }
+        }}
+      />
+      <input
+        type="file"
+        ref={docInputRef}
+        style={{ display: "none" }}
+        accept=".pdf,.docx,.pptx,.txt,.md"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0] && handleAttachFile) {
+            handleAttachFile(e.target.files[0]);
+            e.target.value = "";
+          }
+        }}
+      />
+
+      {/* Form Input Bar */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+        onPaste={handlePaste}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          backgroundColor: "#f4f6f2",
+          border: "1px solid #dce2d8",
+          borderRadius: 24,
+          padding: "4px 6px 4px 6px"
+        }}
+      >
+        {/* Unified Attachment Toggle Button with Context Popover */}
+        <div ref={menuRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          {isAttachMenuOpen && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: "calc(100% + 6px)",
+                left: 0,
+                backgroundColor: "#ffffff",
+                border: "1px solid #dce2d8",
+                borderRadius: 12,
+                padding: "4px",
+                boxShadow: "0 8px 24px rgba(18, 30, 24, 0.12)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+                minWidth: 155,
+                zIndex: 60,
+                animation: "fadeIn 0.12s ease-out"
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAttachMenuOpen(false);
+                  cameraInputRef.current?.click();
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "7px 10px",
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: "#22342b",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRadius: 7,
+                  cursor: "pointer",
+                  textAlign: "left"
+                }}
+              >
+                <Camera size={14} color="#456128" />
+                <span>Ambil Foto</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAttachMenuOpen(false);
+                  galleryInputRef.current?.click();
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "7px 10px",
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: "#22342b",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRadius: 7,
+                  cursor: "pointer",
+                  textAlign: "left"
+                }}
+              >
+                <Image size={14} color="#456128" />
+                <span>Pilih Gambar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAttachMenuOpen(false);
+                  docInputRef.current?.click();
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "7px 10px",
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: "#22342b",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRadius: 7,
+                  cursor: "pointer",
+                  textAlign: "left"
+                }}
+              >
+                <FileText size={14} color="#456128" />
+                <span>Dokumen / PDF</span>
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsAttachMenuOpen((prev) => !prev);
+            }}
+            disabled={isChatSending}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              border: stagedAttachment ? "1px solid #b6c9af" : "1px solid transparent",
+              backgroundColor: isAttachMenuOpen || stagedAttachment ? "#e4ede0" : "#e8eee4",
+              color: isAttachMenuOpen || stagedAttachment ? "#273f15" : "#4e6057",
+              cursor: "pointer",
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              transition: "all 0.15s ease"
+            }}
+            title="Lampirkan foto atau dokumen"
+          >
+            <Plus size={18} />
+          </button>
+        </div>
+
+        <textarea
+          ref={textareaRef}
+          rows={1}
+          placeholder={
+            stagedAttachment
+              ? `Bahas ${stagedAttachment.name}...`
+              : "Tanya Nara atau ketik soal..."
+          }
+          value={inputVal}
+          onChange={(e) => {
+            setInputVal(e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = Math.min(e.target.scrollHeight, 84) + "px";
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
+          disabled={isChatSending}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            fontSize: 13,
+            lineHeight: 1.45,
+            padding: "6px 5px",
+            color: "#18221f",
+            resize: "none",
+            overflowY: inputVal.length > 80 ? "auto" : "hidden",
+            maxHeight: 84,
+            fontFamily: "inherit",
+            boxSizing: "border-box"
+          }}
+        />
+
+        <button
+          type="submit"
+          disabled={isChatSending || (!inputVal.trim() && !stagedAttachment)}
+          title={isChatSending ? "Nara sedang menjawab..." : "Kirim pesan"}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            border: "none",
+            backgroundColor:
+              (!inputVal.trim() && !stagedAttachment) || isChatSending
+                ? "#d2dad0"
+                : "#18221f",
+            color: "#ffffff",
+            cursor:
+              (!inputVal.trim() && !stagedAttachment) || isChatSending
+                ? "not-allowed"
+                : "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            transition: "background 0.15s, transform 0.1s"
+          }}
+        >
+          {isChatSending ? (
+            <RotateCw size={14} className="animate-spin" />
+          ) : (
+            <ArrowUp size={17} />
+          )}
+        </button>
+      </form>
+    </div>
+  );
+}
 
 export interface TanyaNaraPanelProps {
   activeTab: ActiveTab;
@@ -17,8 +606,8 @@ export interface TanyaNaraPanelProps {
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
   isChatSending: boolean;
   chatEndRef: React.RefObject<HTMLDivElement | null>;
-  chatInput: string;
-  setChatInput: (val: string) => void;
+  chatInput?: string;
+  setChatInput?: (val: string) => void;
   handleSendMessage: (textToSend?: string) => Promise<void> | void;
   stagedAttachment?: StagedChatFile | null;
   handleAttachFile?: (file: File) => Promise<void>;
@@ -38,8 +627,6 @@ export function TanyaNaraPanel({
   setMessages,
   isChatSending,
   chatEndRef,
-  chatInput,
-  setChatInput,
   handleSendMessage,
   stagedAttachment,
   handleAttachFile,
@@ -49,34 +636,28 @@ export function TanyaNaraPanel({
   setIsFreeMode,
   effectiveDocId,
 }: TanyaNaraPanelProps) {
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-  const docInputRef = useRef<HTMLInputElement>(null);
-  const [copiedMsgId, setCopiedMsgId] = React.useState<string | null>(null);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
 
-  const handleCopy = (id: string, text: string) => {
+  const handleCopy = useCallback((id: string, text: string) => {
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(text);
       setCopiedMsgId(id);
       setTimeout(() => setCopiedMsgId(null), 1800);
     }
-  };
+  }, []);
 
-  React.useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  useEffect(() => {
+    const el = chatWindowRef.current;
+    if (!el) return;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
+    const lastMsg = messages[messages.length - 1];
+    const isUserMsg = lastMsg?.role === "user";
+
+    if (isNearBottom || isUserMsg || isChatSending) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }
   }, [messages, isChatSending]);
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
-      const file = e.clipboardData.files[0];
-      if (handleAttachFile) {
-        handleAttachFile(file);
-        e.preventDefault();
-      }
-    }
-  };
 
   const activeTabLabel =
     activeTab === "quiz"
@@ -109,6 +690,8 @@ export function TanyaNaraPanel({
           flexShrink: 0,
           height: "100%",
           maxHeight: "100%",
+          minHeight: 0,
+          position: "relative",
           boxSizing: "border-box",
           overflow: "hidden"
         }}
@@ -334,11 +917,13 @@ export function TanyaNaraPanel({
 
           {/* 2. Messages Container (Full bleed scrollable area) */}
           <div
+            ref={chatWindowRef}
             className="chat-window-box no-scrollbar"
             style={{
               flex: 1,
               minHeight: 0,
               overflowY: "auto",
+              overscrollBehavior: "contain",
               display: "flex",
               flexDirection: "column",
               gap: 10,
@@ -349,182 +934,75 @@ export function TanyaNaraPanel({
             {messages.length === 0 ? (
               <div
                 style={{
-                  margin: "auto 0",
-                  padding: "18px 12px",
+                  flex: 1,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
+                  justifyContent: "center",
                   textAlign: "center",
-                  gap: 8
+                  padding: "24px 14px",
+                  gap: 10
                 }}
               >
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
+                    width: 42,
+                    height: 42,
+                    borderRadius: 12,
                     backgroundColor: "#eef2e9",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#37473f"
+                    color: "#304037"
                   }}
                 >
-                  <Brain size={18} />
+                  <Brain size={20} />
                 </div>
-                <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, color: "#17201d" }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "#17201d" }}>
                   Mulai Diskusi Bareng Nara
                 </h3>
-                <p style={{ fontSize: 11, color: "#6c7a73", margin: 0, lineHeight: 1.5, maxWidth: 260 }}>
-                  Tanyakan rumus, konsep sulit, atau unggah foto soal latihan untuk dibedah langkah demi langkah.
+                <p style={{ fontSize: 11.5, color: "#6c7a73", margin: 0, lineHeight: 1.5, maxWidth: 280 }}>
+                  Tanyakan rumus, konsep sulit, atau lampirkan foto soal latihan untuk dibahas langkah demi langkah.
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", maxWidth: 270, marginTop: 6 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 7, width: "100%", maxWidth: 290, marginTop: 10 }}>
                   {[
-                    "💡 Ringkas poin penting topik ini",
-                    "📐 Beri contoh soal & pembahasan taktis",
-                    "❓ Uji pemahamanku dengan kuis kilat"
+                    { text: "💡 Ringkas poin penting topik ini", desc: "Intisari konsep & peta rumus" },
+                    { text: "📐 Beri contoh soal & pembahasan", desc: "Latihan bertahap & cara cepat" },
+                    { text: "❓ Uji pemahamanku dengan kuis kilat", desc: "Cek ingatan dalam 3 pertanyaan" }
                   ].map((preset) => (
                     <button
-                      key={preset}
+                      key={preset.text}
                       type="button"
-                      onClick={() => handleSendMessage(preset)}
+                      onClick={() => handleSendMessage(preset.text)}
                       disabled={isChatSending}
                       style={{
-                        padding: "8px 14px",
-                        fontSize: 11.5,
-                        color: "#35443d",
+                        padding: "10px 14px",
                         backgroundColor: "#ffffff",
-                        border: "1px solid #dde3da",
-                        borderRadius: 9999,
+                        border: "1px solid #dce2d8",
+                        borderRadius: 12,
                         textAlign: "left",
                         cursor: "pointer",
-                        transition: "background 0.15s, border-color 0.15s"
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+                        transition: "all 0.15s ease"
                       }}
                     >
-                      {preset}
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#1f2e26" }}>{preset.text}</span>
+                      <span style={{ fontSize: 10.5, color: "#74827b" }}>{preset.desc}</span>
                     </button>
                   ))}
                 </div>
               </div>
             ) : (
               messages.map((m) => (
-                <div
+                <ChatMessageItem
                   key={m.id}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: m.role === "user" ? "flex-end" : "flex-start",
-                    gap: 3
-                  }}
-                >
-                  {/* Attachment preview if present */}
-                  {m.attachment && (
-                    <div
-                      style={{
-                        maxWidth: "85%",
-                        padding: "4px 8px",
-                        borderRadius: 6,
-                        backgroundColor: m.role === "user" ? "#22312d" : "#e8eee5",
-                        border: "1px solid rgba(0,0,0,0.06)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        fontSize: 10.5,
-                        color: m.role === "user" ? "#d2e4cb" : "#243321"
-                      }}
-                    >
-                      {m.attachment.type === "image" && m.attachment.url ? (
-                        <img
-                          src={m.attachment.url}
-                          alt="Lampiran"
-                          style={{
-                            width: 32,
-                            height: 32,
-                            objectFit: "cover",
-                            borderRadius: 4,
-                            border: "1px solid rgba(255,255,255,0.2)"
-                          }}
-                        />
-                      ) : (
-                        <FileText size={13} color={m.role === "user" ? "#a8c99e" : "#446128"} />
-                      )}
-                      <span
-                        style={{
-                          fontWeight: 600,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap"
-                        }}
-                      >
-                        {m.attachment.name}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Speech Bubble */}
-                  <div
-                    style={{
-                      maxWidth: m.role === "user" ? "85%" : "92%",
-                      padding: m.role === "user" ? "8px 12px" : "10px 13px",
-                      borderRadius: m.role === "user" ? "12px 12px 3px 12px" : "12px 12px 12px 3px",
-                      backgroundColor: m.role === "user" ? "#18221f" : "#ffffff",
-                      color: m.role === "user" ? "#f4f7f2" : "#17201d",
-                      fontSize: 12.5,
-                      lineHeight: 1.55,
-                      border: m.role === "user" ? "none" : "1px solid #dde1da",
-                      boxShadow:
-                        m.role === "user"
-                          ? "0 1px 3px rgba(24, 34, 31, 0.12)"
-                          : "0 1px 3px rgba(27, 39, 35, 0.03)"
-                    }}
-                  >
-                    {m.role === "assistant" ? (
-                      <div className="nara-md-response" style={{ fontSize: 12.5, lineHeight: 1.55 }}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
-                          {sanitizeMathMarkdown(m.content)}
-                        </ReactMarkdown>
-                      </div>
-                    ) : (
-                      <div style={{ whiteSpace: "pre-wrap" }}>{m.content}</div>
-                    )}
-
-                    {/* Copy to Clipboard Button */}
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(m.id, m.content)}
-                        title="Salin pesan"
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: m.role === "user" ? "rgba(244, 247, 242, 0.6)" : "#8a9691",
-                          fontSize: 9.5,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 3,
-                          padding: "2px 4px",
-                          borderRadius: 4,
-                          transition: "color 0.15s ease"
-                        }}
-                      >
-                        {copiedMsgId === m.id ? (
-                          <>
-                            <Check size={11} color={m.role === "user" ? "#a8c99e" : "#4b6623"} />
-                            <span style={{ color: m.role === "user" ? "#a8c99e" : "#4b6623", fontWeight: 600 }}>
-                              Disalin
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={11} />
-                            <span>Salin</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  m={m}
+                  copiedMsgId={copiedMsgId}
+                  onCopy={handleCopy}
+                />
               ))
             )}
 
@@ -548,295 +1026,15 @@ export function TanyaNaraPanel({
           </div>
 
           {/* 3. Footer (Input & Attachment Bar) */}
-          <div
-            style={{
-              flexShrink: 0,
-              padding: "8px 12px max(8px, env(safe-area-inset-bottom))",
-              borderTop: "1px solid #e8ede5",
-              backgroundColor: "#ffffff"
-            }}
-          >
-            {/* Contextual Quick Suggestion Chips */}
-            <div
-              className="prompt-chips-box no-scrollbar"
-              style={{
-                display: "flex",
-                gap: 5,
-                overflowX: "auto",
-                paddingBottom: 6,
-                marginBottom: 2
-              }}
-            >
-              {(activeTab === "quiz"
-                ? ["Bahas soal ini", "Kenapa jawaban itu benar?", "Rumus terkait"]
-                : activeTab === "flashcards"
-                ? ["Jelaskan kartu ini", "Beri analogi", "Contoh penerapan"]
-                : activeTab === "feynman"
-                ? ["Koreksi penjelasanku", "Bantu susun analogi", "Apa yang kurang?"]
-                : ["Jelaskan lebih sederhana", "Beri contoh soal lain", "Trik cepat rumus"]
-              ).map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => handleSendMessage(chip)}
-                  disabled={isChatSending}
-                  style={{
-                    fontSize: 10,
-                    padding: "3px 9px",
-                    backgroundColor: "#f4f6f2",
-                    border: "1px solid #dde3da",
-                    borderRadius: 999,
-                    color: "#46554e",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                    transition: "background 0.15s, border-color 0.15s"
-                  }}
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-
-            {/* Staged File Preview Chip */}
-            {stagedAttachment && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  backgroundColor: "#f0f4ee",
-                  border: "1px solid #cdd8cb",
-                  borderRadius: 6,
-                  padding: "4px 8px",
-                  marginBottom: 6,
-                  fontSize: 10.5,
-                  color: "#273b18"
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden" }}>
-                  {stagedAttachment.type === "image" && stagedAttachment.previewUrl ? (
-                    <img
-                      src={stagedAttachment.previewUrl}
-                      alt="Preview"
-                      style={{
-                        width: 22,
-                        height: 22,
-                        objectFit: "cover",
-                        borderRadius: 4,
-                        border: "1px solid #b6c9af"
-                      }}
-                    />
-                  ) : (
-                    <FileText size={14} color="#446128" />
-                  )}
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      maxWidth: 190
-                    }}
-                  >
-                    {stagedAttachment.name}
-                  </span>
-                  <span style={{ fontSize: 9.5, color: "#6e806a" }}>
-                    ({Math.round(stagedAttachment.file.size / 1024)} KB)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleClearAttachment}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#6e806a",
-                    padding: 2,
-                    display: "flex",
-                    alignItems: "center"
-                  }}
-                  title="Hapus lampiran"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            )}
-
-            {/* Hidden File Inputs */}
-            <input
-              type="file"
-              ref={cameraInputRef}
-              style={{ display: "none" }}
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0] && handleAttachFile) {
-                  handleAttachFile(e.target.files[0]);
-                  e.target.value = "";
-                }
-              }}
-            />
-            <input
-              type="file"
-              ref={galleryInputRef}
-              style={{ display: "none" }}
-              accept="image/png,image/jpeg,image/webp,image/bmp"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0] && handleAttachFile) {
-                  handleAttachFile(e.target.files[0]);
-                  e.target.value = "";
-                }
-              }}
-            />
-            <input
-              type="file"
-              ref={docInputRef}
-              style={{ display: "none" }}
-              accept=".pdf,.docx,.pptx,.txt,.md"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0] && handleAttachFile) {
-                  handleAttachFile(e.target.files[0]);
-                  e.target.value = "";
-                }
-              }}
-            />
-
-            {/* Form Input Bar */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
-              }}
-              onPaste={handlePaste}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                backgroundColor: "#f4f6f2",
-                border: "1px solid #dce2d8",
-                borderRadius: 9999,
-                padding: "4px 6px 4px 10px"
-              }}
-            >
-              {/* Option 1: Camera */}
-              <button
-                type="button"
-                onClick={() => cameraInputRef.current?.click()}
-                disabled={isChatSending}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#62736b",
-                  cursor: "pointer",
-                  padding: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 9999,
-                  transition: "color 0.15s"
-                }}
-                title="Ambil foto via kamera"
-              >
-                <Camera size={15} />
-              </button>
-
-              {/* Option 2: Gallery */}
-              <button
-                type="button"
-                onClick={() => galleryInputRef.current?.click()}
-                disabled={isChatSending}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: stagedAttachment?.type === "image" ? "#3b5821" : "#62736b",
-                  cursor: "pointer",
-                  padding: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 9999,
-                  transition: "color 0.15s"
-                }}
-                title="Unggah gambar dari galeri"
-              >
-                <Image size={15} />
-              </button>
-
-              {/* Option 3: Document */}
-              <button
-                type="button"
-                onClick={() => docInputRef.current?.click()}
-                disabled={isChatSending}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: stagedAttachment?.type === "document" ? "#3b5821" : "#62736b",
-                  cursor: "pointer",
-                  padding: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 9999,
-                  transition: "color 0.15s"
-                }}
-                title="Unggah PDF / Dokumen"
-              >
-                <FileText size={15} />
-              </button>
-
-              <input
-                type="text"
-                placeholder={
-                  stagedAttachment
-                    ? `Bahas ${stagedAttachment.name}... (Enter)`
-                    : "Tanya Nara, paste gambar..."
-                }
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                disabled={isChatSending}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  border: "none",
-                  outline: "none",
-                  background: "transparent",
-                  fontSize: 13,
-                  padding: "4px 2px",
-                  color: "#18221f"
-                }}
-              />
-
-              <button
-                type="submit"
-                disabled={isChatSending || (!chatInput.trim() && !stagedAttachment)}
-                title="Kirim pesan"
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: "50%",
-                  border: "none",
-                  backgroundColor:
-                    (!chatInput.trim() && !stagedAttachment) || isChatSending
-                      ? "#d2dad0"
-                      : "#18221f",
-                  color: "#ffffff",
-                  cursor:
-                    (!chatInput.trim() && !stagedAttachment) || isChatSending
-                      ? "not-allowed"
-                      : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  transition: "background 0.15s"
-                }}
-              >
-                <Send size={12} />
-              </button>
-            </form>
-          </div>
+          <ChatInputBar
+            activeTab={activeTab}
+            isChatSending={isChatSending}
+            hasMessages={messages.length > 0}
+            stagedAttachment={stagedAttachment}
+            handleSendMessage={handleSendMessage}
+            handleAttachFile={handleAttachFile}
+            handleClearAttachment={handleClearAttachment}
+          />
         </div>
       </aside>
     </>

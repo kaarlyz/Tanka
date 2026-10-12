@@ -2,6 +2,7 @@ const { db } = require("../db");
 const { callRouter } = require("../ai");
 const { safeJsonParse } = require("../utils/jsonParser");
 const { generateQuestionsCore } = require("../services/quizGenerator");
+const { validateAndNormalizeQuiz } = require("../services/quizValidator");
 
 async function handleQuizzesRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
@@ -43,16 +44,23 @@ async function handleQuizzesRoutes(req, res, pathname, helpers) {
       const existingRow = db.prepare("SELECT * FROM quizzes WHERE doc_id = ? ORDER BY created_at DESC LIMIT 1").get(docId);
       if (existingRow && existingRow.questions) {
         try {
-          const existingList = JSON.parse(existingRow.questions);
+          const existingList = safeJsonParse(existingRow.questions);
           if (Array.isArray(existingList) && existingList.length > 0) {
-            const startId = existingList.length + 1;
+            let normalizedExisting = existingList;
+            try {
+              normalizedExisting = validateAndNormalizeQuiz(existingList, { shuffleOptions: false, renumber: false });
+            } catch {}
+            const startId = normalizedExisting.length + 1;
             const renumbered = questions.map((q, idx) => ({ ...q, id: startId + idx }));
-            finalQuestions = [...existingList, ...renumbered];
+            finalQuestions = [...normalizedExisting, ...renumbered];
           }
         } catch (e) {
           console.warn("Append existing quiz parse error:", e.message);
         }
       }
+      try {
+        finalQuestions = validateAndNormalizeQuiz(finalQuestions, { shuffleOptions: false, renumber: true });
+      } catch {}
       const quizId = "quiz_" + Date.now();
       db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")
         .run(quizId, docId, JSON.stringify(finalQuestions), Date.now());
@@ -84,7 +92,19 @@ async function handleQuizzesRoutes(req, res, pathname, helpers) {
   if (req.method === "GET" && quizMatch) {
     const docId = quizMatch[1];
     const row = db.prepare("SELECT * FROM quizzes WHERE doc_id = ? ORDER BY created_at DESC LIMIT 1").get(docId);
-    return sendJSON(res, { quiz: row ? { id: row.id, questions: JSON.parse(row.questions) } : null });
+    let parsedQuestions = null;
+    if (row && row.questions) {
+      const parsed = safeJsonParse(row.questions);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        try {
+          parsedQuestions = validateAndNormalizeQuiz(parsed, { shuffleOptions: false, renumber: true });
+        } catch (normErr) {
+          console.warn("[Quizzes] Normalization on read warning:", normErr.message);
+          parsedQuestions = parsed;
+        }
+      }
+    }
+    return sendJSON(res, { quiz: row && parsedQuestions ? { id: row.id, questions: parsedQuestions } : null });
   }
 
   // 3. POST /api/ai/quiz-question-chat - chat with AI tutor about a question
@@ -163,7 +183,7 @@ ${JSON.stringify(currentQuiz, null, 2)}
 
 Tugas:
 Edit/Ubah data JSON soal tersebut agar memenuhi permintaan pengguna. Output WAJIB berupa JSON array valid yang memiliki struktur objek yang sama persis:
-[ { "question": "", "options": ["", "", "", ""], "answer": 0, "explanation": "" }, ... ]
+[ { "question": "", "options": ["", "", "", ""], "correctIndex": 0, "explanation": "", "pitfall": "", "formula": "" }, ... ]
 Jangan sertakan teks apapun selain JSON murni.`;
 
     try {
@@ -172,8 +192,11 @@ Jangan sertakan teks apapun selain JSON murni.`;
         { role: "user", content: prompt }
       ], model);
 
-      const newQuiz = safeJsonParse(completion);
+      let newQuiz = safeJsonParse(completion);
       if (!newQuiz) throw new Error("Format JSON kuis baru tidak valid");
+
+      // Validasi ketat dan normalisasi kanonis dengan fallback answer / correctIndex
+      newQuiz = validateAndNormalizeQuiz(newQuiz, { shuffleOptions: false, renumber: true });
 
       const quizId = "quiz_" + Date.now();
       db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")
@@ -189,6 +212,5 @@ Jangan sertakan teks apapun selain JSON murni.`;
 }
 
 module.exports = {
-  handleQuizzesRoutes,
-  generateQuestionsCore
+  handleQuizzesRoutes
 };

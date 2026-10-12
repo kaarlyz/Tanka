@@ -15,6 +15,7 @@ const {
   generateNaraModule
 } = require("../services/curriculumPipeline");
 const { safeJsonParse } = require("../utils/jsonParser");
+const { getPythonBin, executePythonScript, executePythonScriptAsync } = require("../utils/pythonResolver");
 
 // Intelligent Exam Sheet Processor
 async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance, goal = "", instruction = "") {
@@ -139,12 +140,6 @@ function detectFileExtension(fileName, base64Data) {
   return ".txt";
 }
 
-function getPythonBin() {
-  const venvPy = path.join(__dirname, "..", "..", ".venv", "bin", "python");
-  if (fs.existsSync(venvPy)) return venvPy;
-  return "python3";
-}
-
 async function handleDocumentsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
@@ -175,14 +170,14 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     }
     const scriptPath = path.join(__dirname, "..", "..", "extract_youtube.py");
     try {
-      const output = execFileSync(getPythonBin(), [scriptPath, url.trim()], {
-        encoding: "utf8",
-        maxBuffer: 15 * 1024 * 1024,
-        timeout: 20000
-      });
-      const parsed = JSON.parse(output.trim());
-      if (!parsed.success) {
-        return sendJSON(res, { error: parsed.error || "Gagal memproses video YouTube", videoId: parsed.videoId, title: parsed.title }, 400);
+      const pyRes = await executePythonScriptAsync(scriptPath, [url.trim()], { timeout: 20000 });
+      if (!pyRes.success) {
+        console.error("[YouTube Info Error]:", pyRes.error);
+        return sendJSON(res, { error: "Gagal mengambil data video YouTube: " + pyRes.error }, 500);
+      }
+      const parsed = safeJsonParse(pyRes.stdout);
+      if (!parsed || !parsed.success) {
+        return sendJSON(res, { error: (parsed && parsed.error) || "Gagal memproses video YouTube", videoId: parsed?.videoId, title: parsed?.title }, 400);
       }
       return sendJSON(res, {
         success: true,
@@ -212,19 +207,19 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     let pyResult;
     try {
       console.log(`[YouTube Extraction] Memproses video: ${url}...`);
-      const output = execFileSync(getPythonBin(), [scriptPath, url.trim()], {
-        encoding: "utf8",
-        maxBuffer: 25 * 1024 * 1024,
-        timeout: 30000
-      });
-      pyResult = JSON.parse(output.trim());
+      const pyRes = await executePythonScriptAsync(scriptPath, [url.trim()], { timeout: 35000 });
+      if (!pyRes.success) {
+        console.error("[YouTube Script Error]:", pyRes.error);
+        return sendJSON(res, { error: "Gagal memproses transkrip video YouTube: " + pyRes.error }, 500);
+      }
+      pyResult = safeJsonParse(pyRes.stdout);
     } catch (err) {
       console.error("[YouTube Script Error]:", err.message);
       return sendJSON(res, { error: "Gagal memproses transkrip video YouTube: " + err.message }, 500);
     }
 
-    if (!pyResult.success || !pyResult.text) {
-      return sendJSON(res, { error: pyResult.error || "Transkrip video YouTube tidak tersedia atau tidak dapat diakses." }, 400);
+    if (!pyResult || !pyResult.success || !pyResult.text) {
+      return sendJSON(res, { error: (pyResult && pyResult.error) || "Transkrip video YouTube tidak tersedia atau tidak dapat diakses." }, 400);
     }
 
     const videoId = pyResult.videoId;
@@ -240,7 +235,12 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
 
     const id = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
     const createdAt = Date.now();
-    db.prepare("INSERT INTO documents (id, title, content, created_at) VALUES (?, ?, ?, ?)").run(id, cleanTitle, sourceContext, createdAt);
+    db.prepare("INSERT INTO documents (id, title, content, status, created_at) VALUES (?, ?, ?, 'processing', ?)").run(
+      id,
+      cleanTitle,
+      sourceContext,
+      createdAt
+    );
 
     // Simpan segmen
     const segments = segmentDocumentText(rawTranscript, "youtube_transcript");
@@ -255,12 +255,17 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
 
     // Two-Pass Pipeline (Pass 1 outline + Pass 2 modul Nara)
     let finalContent = sourceContext;
+    let docStatus = "processing";
     try {
       console.log(`[Curriculum Pipeline] Menyusun modul Nara dari video YouTube: "${cleanTitle}"...`);
       const dynamicOutline = await extractConceptsAndOutline(cleanTitle, rawTranscript, segments, model);
 
       if (dynamicOutline && Array.isArray(dynamicOutline.concepts)) {
-        const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        const insertConcept = db.prepare(`
+          INSERT INTO document_concepts (
+            id, doc_id, name, definition, prerequisites, origin, created_at, category, is_required, evidence_quote, segment_id, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
         for (const c of dynamicOutline.concepts) {
           const conceptId = `${id}_${c.id || Math.random().toString(36).slice(2, 6)}`;
           const def = c.definisi_baku || c.definition || "";
@@ -269,17 +274,41 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
             tokoh: c.tokoh || [],
             salah_kaprah: c.salah_kaprah || ""
           });
-          insertConcept.run(conceptId, id, c.name, def, extra, "youtube", createdAt);
+          const category = c.category || "core";
+          const isReq = c.is_required !== false ? 1 : 0;
+          const quote = c.evidence_quote || c.kutipan || "";
+          const segId = c.segment_id || "";
+
+          insertConcept.run(
+            conceptId,
+            id,
+            c.name,
+            def,
+            extra,
+            "youtube",
+            createdAt,
+            category,
+            isReq,
+            quote,
+            segId,
+            createdAt
+          );
         }
       }
 
-      const naraContent = await generateNaraModule(dynamicOutline, rawTranscript, segments, model, "SMA");
+      const naraContent = await generateNaraModule(dynamicOutline, rawTranscript, segments, model, "SMA", db, id);
       if (naraContent && naraContent.length > 300) {
         finalContent = `> 📺 **Referensi Video YouTube:** [${cleanTitle} (${authorName})](https://www.youtube.com/watch?v=${videoId})\n\n` + naraContent;
-        db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(finalContent, id);
+        docStatus = "completed";
+        db.prepare("UPDATE documents SET content = ?, status = 'completed' WHERE id = ?").run(finalContent, id);
         console.log(`[Curriculum Pipeline] Sukses menyusun modul YouTube Nara (${finalContent.length} karakter).`);
+      } else {
+        docStatus = "partial";
+        db.prepare("UPDATE documents SET status = 'partial' WHERE id = ?").run(id);
       }
     } catch (e) {
+      docStatus = "partial";
+      db.prepare("UPDATE documents SET status = 'partial' WHERE id = ?").run(id);
       console.warn("[tanka] YouTube curriculum pipeline error:", e.message);
     }
 
@@ -290,6 +319,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
       content: finalContent,
       author: authorName,
       videoId,
+      status: docStatus,
       created_at: createdAt
     });
   }
@@ -371,11 +401,14 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
             const tmpFilePath = path.join(scratchDir, `upload_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
             try {
               fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
-              const scriptOutput = execFileSync(getPythonBin(), [scriptPath, tmpFilePath], {
-                encoding: "utf8",
-                maxBuffer: 25 * 1024 * 1024
-              }).trim();
-              text = scriptOutput;
+              const pyRes = await executePythonScriptAsync(scriptPath, [tmpFilePath], {
+                maxBuffer: 25 * 1024 * 1024,
+                timeout: 45000
+              });
+              text = pyRes.success ? pyRes.stdout : "";
+              if (!pyRes.success) {
+                console.error(`Gagal ekstrak ${f.fileName}:`, pyRes.error);
+              }
             } catch (err) {
               console.error(`Gagal ekstrak ${f.fileName}:`, err.message);
             } finally {
@@ -428,8 +461,14 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
 
     const id = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
     const createdAt = Date.now();
-    const insert = db.prepare("INSERT INTO documents (id, title, content, created_at) VALUES (?, ?, ?, ?)");
-    insert.run(id, cleanTitle, mergedText, createdAt);
+
+    // Intelligent exam sheet & kisi-kisi question detection (must run BEFORE the INSERT so we know initialStatus)
+    const examResult = await processExamQuestionsIfDetected(id, mergedText, cleanTitle, db, body.goal, body.instruction);
+    let finalContent = examResult.newContent || mergedText;
+
+    const initialStatus = examResult.isExamSheet ? "completed" : "processing";
+    const insert = db.prepare("INSERT INTO documents (id, title, content, status, created_at) VALUES (?, ?, ?, ?, ?)");
+    insert.run(id, cleanTitle, mergedText, initialStatus, createdAt);
 
     // Persist document segments into document_segments table (no truncation)
     try {
@@ -443,44 +482,8 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
       console.warn("[tanka] Failed to persist segments:", segErr.message);
     }
 
-    // Intelligent exam sheet & kisi-kisi question detection
-    const examResult = await processExamQuestionsIfDetected(id, mergedText, cleanTitle, db, body.goal, body.instruction);
-    let finalContent = examResult.newContent || mergedText;
-
-    // If not an exam sheet, use Nara Pipeline (Two-Pass: Canonical Concepts + Dynamic Outline + Nara Prosa)
-    if (!examResult.isExamSheet) {
-      try {
-        console.log(`[Curriculum Pipeline] Menyusun modul dinamis Nara untuk: "${cleanTitle}"...`);
-        const segments = segmentDocumentText(mergedText);
-        const dynamicOutline = await extractConceptsAndOutline(cleanTitle, mergedText, segments, body.model || "ag/gemini-3.8-flash-low");
-        
-        // Persist concepts to document_concepts table
-        if (dynamicOutline && Array.isArray(dynamicOutline.concepts)) {
-          const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
-          for (const c of dynamicOutline.concepts) {
-            const conceptId = `${id}_${c.id || Math.random().toString(36).slice(2, 6)}`;
-            const def = c.definisi_baku || c.definition || "";
-            const extra = JSON.stringify({
-              rumus: c.rumus || "",
-              tokoh: c.tokoh || [],
-              salah_kaprah: c.salah_kaprah || ""
-            });
-            insertConcept.run(conceptId, id, c.name, def, extra, c.origin || "source", createdAt);
-          }
-        }
-
-        const naraContent = await generateNaraModule(dynamicOutline, mergedText, segments, body.model || "ag/gemini-3.8-flash-low");
-        if (naraContent && naraContent.length > 300) {
-          finalContent = naraContent;
-          db.prepare("UPDATE documents SET content = ? WHERE id = ?").run(finalContent, id);
-          console.log(`[Curriculum Pipeline] Sukses menyusun modul Nara (${finalContent.length} karakter).`);
-        }
-      } catch (e) {
-        console.warn("[tanka] Curriculum pipeline error:", e.message);
-      }
-    }
-
-    return sendJSON(res, {
+    // Kirim respons langsung ke client dalam <1 detik agar koneksi browser anti-timeout
+    sendJSON(res, {
       success: true,
       id,
       title: cleanTitle,
@@ -492,6 +495,75 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
       questionCount: examResult.questionCount || 0,
       detectedQuestions: examResult.questions || []
     });
+
+    // Jalankan pipeline pendalaman kurikulum Nara secara asynchronous di latar belakang
+    if (!examResult.isExamSheet) {
+      (async () => {
+        try {
+          console.log(`[Curriculum Pipeline] Menyusun modul dinamis Nara untuk: "${cleanTitle}"...`);
+          const segments = segmentDocumentText(mergedText);
+          const dynamicOutline = await extractConceptsAndOutline(cleanTitle, mergedText, segments, body.model || "ag/gemini-3.8-flash-low");
+          
+          // Persist concepts to document_concepts table
+          if (dynamicOutline && Array.isArray(dynamicOutline.concepts)) {
+            const { autoRepairOutlineCoverage } = require("../services/curriculumPipeline");
+            const repairedOutline = autoRepairOutlineCoverage(dynamicOutline);
+
+            const insertConcept = db.prepare(`
+              INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at, category, is_required, evidence_quote, segment_id, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            for (const c of repairedOutline.concepts) {
+              const conceptId = `${id}_${c.id || Math.random().toString(36).slice(2, 6)}`;
+              const def = c.definisi_baku || c.definition || "";
+              const extra = JSON.stringify({
+                rumus: c.rumus || "",
+                tokoh: c.tokoh || [],
+                salah_kaprah: c.salah_kaprah || "",
+                sumber_ref: c.sumber_ref || "source_document"
+              });
+              const isReq = (c.is_required !== undefined) ? (c.is_required ? 1 : 0) : (c.origin === "ai_enrichment" ? 0 : 1);
+              insertConcept.run(
+                conceptId,
+                id,
+                c.name,
+                def,
+                extra,
+                c.origin || "source",
+                createdAt,
+                c.category || (isReq ? "core" : "enrichment"),
+                isReq,
+                c.bukti_kutipan || "",
+                c.segmen_id || "",
+                createdAt
+              );
+            }
+
+            // Sync concept graph edges
+            try {
+              const { buildOrInferConceptEdges, syncConceptEdgesToDb } = require("../services/conceptGraphService");
+              const edges = buildOrInferConceptEdges(repairedOutline.concepts, repairedOutline.chapters, repairedOutline.edges || []);
+              syncConceptEdgesToDb(db, id, edges);
+            } catch (edgeErr) {
+              console.warn("[documents] Notice syncing concept edges on upload:", edgeErr.message);
+            }
+
+            const naraContent = await generateNaraModule(repairedOutline, mergedText, segments, body.model || "ag/gemini-3.8-flash-low", "SMA", db, id);
+            if (naraContent && naraContent.length > 300) {
+              db.prepare("UPDATE documents SET content = ?, status = 'completed' WHERE id = ?").run(naraContent, id);
+              console.log(`[Curriculum Pipeline] Sukses memperbarui modul Nara (${naraContent.length} karakter).`);
+            } else {
+              db.prepare("UPDATE documents SET status = 'partial' WHERE id = ?").run(id);
+            }
+          }
+        } catch (e) {
+          console.warn("[tanka] Curriculum pipeline background error:", e.message);
+          try {
+            db.prepare("UPDATE documents SET status = 'partial' WHERE id = ?").run(id);
+          } catch {}
+        }
+      })();
+    }
   }
 
   // 2b. POST /api/documents/:id/restructure - re-synthesize document into chapter-by-chapter curriculum via Two-Pass Pipeline
@@ -507,6 +579,10 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     const customInstruction = (body.instruction || body.tailorPrompt || "").trim();
 
     console.log(`[Curriculum Synthesis] Restructuring doc ${docId} ("${doc.title}") via Two-Pass Pipeline... ${customInstruction ? `(Instruksi: "${customInstruction}")` : ""}`);
+
+    try {
+      db.prepare("UPDATE documents SET status = 'processing' WHERE id = ?").run(docId);
+    } catch {}
 
     const { segmentDocumentText, extractConceptsAndOutline, generateNaraModule } = require("../services/curriculumPipeline");
 
@@ -525,16 +601,21 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
 
     // 2. Pass 1: Extract concepts and autonomous dynamic outline strictly bound to actual concepts
     const outline = await extractConceptsAndOutline(
-      customInstruction ? `${doc.title} (Instruksi Tambahan: ${customInstruction})` : doc.title,
+      doc.title,
       doc.content,
       segments,
-      model
+      model,
+      "SMA",
+      customInstruction
     );
 
     // Sync concepts to database
     if (outline && Array.isArray(outline.concepts)) {
       db.prepare("DELETE FROM document_concepts WHERE doc_id = ?").run(docId);
-      const insertConcept = db.prepare("INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+      const insertConcept = db.prepare(`
+        INSERT INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at, category, is_required, evidence_quote, segment_id, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
       for (const c of outline.concepts) {
         const conceptId = `${docId}_${c.id || Math.random().toString(36).slice(2, 6)}`;
         const def = c.definisi_baku || c.definition || "";
@@ -544,7 +625,30 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
           salah_kaprah: c.salah_kaprah || "",
           sumber_ref: c.sumber_ref || "source_document"
         });
-        insertConcept.run(conceptId, docId, c.name, def, extra, c.origin || "source", Date.now());
+        const isReq = (c.is_required !== undefined) ? (c.is_required ? 1 : 0) : (c.origin === "ai_enrichment" ? 0 : 1);
+        insertConcept.run(
+          conceptId,
+          docId,
+          c.name,
+          def,
+          extra,
+          c.origin || "source",
+          Date.now(),
+          c.category || (isReq ? "core" : "enrichment"),
+          isReq,
+          c.bukti_kutipan || "",
+          c.segmen_id || "",
+          Date.now()
+        );
+      }
+
+      // Sync concept graph edges
+      try {
+        const { buildOrInferConceptEdges, syncConceptEdgesToDb } = require("../services/conceptGraphService");
+        const edges = buildOrInferConceptEdges(outline.concepts, outline.chapters, outline.edges || []);
+        syncConceptEdgesToDb(db, docId, edges);
+      } catch (edgeErr) {
+        console.warn("[documents] Notice syncing concept edges:", edgeErr.message);
       }
     }
 
@@ -553,13 +657,17 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
       outline, 
       customInstruction ? `${doc.content}\n\n[Instruksi Khusus Revisi Pengguna]: ${customInstruction}` : doc.content, 
       segments, 
-      model
+      model,
+      "SMA",
+      db,
+      docId
     );
     if (!structuredCurriculum) {
+      try { db.prepare("UPDATE documents SET status = 'partial' WHERE id = ?").run(docId); } catch {}
       return sendJSON(res, { error: "Gagal menyusun ulang kurikulum materi" }, 500);
     }
 
-    db.prepare("UPDATE documents SET content = ?, summary = ? WHERE id = ?").run(structuredCurriculum, outline.executiveSummary || "", docId);
+    db.prepare("UPDATE documents SET content = ?, summary = ?, status = 'completed' WHERE id = ?").run(structuredCurriculum, outline.executiveSummary || "", docId);
     return sendJSON(res, {
       success: true,
       id: docId,
@@ -581,7 +689,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     }
     const id = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
     const createdAt = Date.now();
-    const insert = db.prepare("INSERT INTO documents (id, title, content, created_at) VALUES (?, ?, ?, ?)");
+    const insert = db.prepare("INSERT INTO documents (id, title, content, status, created_at) VALUES (?, ?, ?, 'completed', ?)");
     insert.run(id, finalTitle, content.trim(), createdAt);
 
     const examResult = await processExamQuestionsIfDetected(id, content.trim(), finalTitle, db);
@@ -780,6 +888,18 @@ Tugas Anda:
     return sendJSON(res, { success: true, title: newTitle });
   }
 
+  // 7b. GET /api/documents/:id/concept-graph - get structured canonical concept graph & mind map tree
+  const conceptGraphMatch = pathname.match(/^\/api\/documents\/([^/]+)\/concept-graph$/);
+  if (conceptGraphMatch && req.method === "GET") {
+    const docId = conceptGraphMatch[1];
+    const { getConceptGraphForDocument } = require("../services/conceptGraphService");
+    const graphData = getConceptGraphForDocument(db, docId);
+    if (!graphData) {
+      return sendJSON(res, { error: "Dokumen tidak ditemukan" }, 404);
+    }
+    return sendJSON(res, graphData);
+  }
+
   // 8. Single Document operations: GET, PATCH, DELETE /api/documents/:id
   const singleDocMatch = pathname.match(/^\/api\/documents\/([^/]+)$/);
   if (singleDocMatch) {
@@ -788,7 +908,8 @@ Tugas Anda:
       const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
       if (!doc) return sendJSON(res, { error: "Document not found" }, 404);
       const cards = db.prepare("SELECT * FROM flashcards WHERE doc_id = ? ORDER BY created_at ASC").all(docId);
-      return sendJSON(res, { document: doc, flashcards: cards });
+      const chapters = db.prepare("SELECT * FROM chapter_plans WHERE doc_id = ? ORDER BY chapter_number ASC").all(docId);
+      return sendJSON(res, { document: doc, flashcards: cards, chapters: chapters || [] });
     }
 
     if (req.method === "PATCH") {
@@ -809,8 +930,11 @@ Tugas Anda:
       db.prepare("DELETE FROM quizzes WHERE doc_id = ?").run(docId);
       db.prepare("DELETE FROM chat_messages WHERE doc_id = ?").run(docId);
       db.prepare("DELETE FROM formula_cheatsheets WHERE doc_id = ?").run(docId);
+      db.prepare("DELETE FROM chapter_plans WHERE doc_id = ?").run(docId);
+      db.prepare("DELETE FROM concept_edges WHERE doc_id = ?").run(docId);
       db.prepare("DELETE FROM document_concepts WHERE doc_id = ?").run(docId);
       db.prepare("DELETE FROM document_segments WHERE doc_id = ?").run(docId);
+      db.prepare("DELETE FROM learner_events WHERE doc_id = ?").run(docId);
       db.prepare("DELETE FROM documents WHERE id = ?").run(docId);
       return sendJSON(res, { success: true, id: docId });
     }

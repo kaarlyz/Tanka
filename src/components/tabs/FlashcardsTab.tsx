@@ -27,38 +27,40 @@ export function FlashcardsTab({
 }: FlashcardsTabProps) {
   const currentCard = flashcards[currentCardIndex];
   return (
-              <div className="tab-pane-animate" style={{ maxWidth: 860, margin: "0 auto" }}>
-                {/* Flashcard Header Controls */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
-                  <div>
-                    <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.02em", color: "#17201d" }}>
-                      Flashcards: Latihan Ingatan Aktif
-                    </h2>
-                    <p style={{ fontSize: 12, color: "#6f7975", marginTop: 2 }}>
-                      1 konsep per kartu untuk memperkuat retensi memori jangka panjang (Spaced Repetition).
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleGenerateFlashcards}
-                    disabled={isGeneratingCards}
-                    style={{
-                      backgroundColor: "#18221f",
-                      border: "none",
-                      color: "#c8f064",
-                      borderRadius: 8,
-                      padding: "8px 14px",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: isGeneratingCards ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6
-                    }}
-                  >
-                    <Sparkles size={14} />
-                    {isGeneratingCards ? "Menganalisis..." : "Buat Kartu Baru"}
-                  </button>
-                </div>
+    <div className="flashcard-view tab-pane-animate">
+      {/* Flashcard Header Controls */}
+      <div className="view-heading" style={{ marginBottom: 20 }}>
+        <div>
+          <span className="section-kicker">PENGULANGAN AKTIF</span>
+          <h1 style={{ margin: "0 0 6px", fontSize: 28, letterSpacing: "-0.03em" }}>Flashcard 3D</h1>
+          <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: 13 }}>
+            Klik kartu untuk melihat jawaban, lalu nilai pemahamanmu (Spaced Repetition).
+          </p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span className="card-count">{flashcards.length > 0 ? `${currentCardIndex + 1} / ${flashcards.length}` : "0 / 0"}</span>
+          <button
+            onClick={handleGenerateFlashcards}
+            disabled={isGeneratingCards}
+            style={{
+              backgroundColor: "#18221f",
+              border: "none",
+              color: "#c8f064",
+              borderRadius: 8,
+              padding: "8px 14px",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: isGeneratingCards ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            }}
+          >
+            <Sparkles size={14} />
+            {isGeneratingCards ? "Menganalisis..." : "Buat Kartu Baru"}
+          </button>
+        </div>
+      </div>
 
                 {/* Empty State */}
                 {isGeneratingCards ? (

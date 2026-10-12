@@ -270,13 +270,15 @@ interface InteractiveMindMapProps {
   title: string;
   onAskNara?: (questionText: string) => void;
   height?: number | string;
+  docId?: string;
 }
 
 export function InteractiveMindMap({
   markdown,
   title,
   onAskNara,
-  height = "640px"
+  height = "640px",
+  docId
 }: InteractiveMindMapProps) {
   // View Mode: "flow" (structured sequential roadmap) or "mindmap" (spatial canvas)
   const [viewMode, setViewMode] = useState<"flow" | "mindmap">("flow");
@@ -290,6 +292,30 @@ export function InteractiveMindMap({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
+  // Canonical Concept Graph tree from backend
+  const [canonicalTree, setCanonicalTree] = useState<MindMapTree | null>(null);
+
+  useEffect(() => {
+    if (!docId) {
+      setCanonicalTree(null);
+      return;
+    }
+    let isCancelled = false;
+    fetch(`/api/documents/${docId}/concept-graph`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!isCancelled && data && data.tree && Array.isArray(data.tree.children) && data.tree.children.length > 0) {
+          setCanonicalTree(data.tree);
+        }
+      })
+      .catch(() => {
+        // Fallback to markdown parsing gracefully
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [docId]);
+
   // Node collapse and inspection state in Mind Map
   const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({});
   const [selectedNode, setSelectedNode] = useState<{
@@ -301,8 +327,13 @@ export function InteractiveMindMap({
     stageNumber?: number;
   } | null>(null);
 
-  // Parse markdown into pedagogical tree
-  const tree = useMemo(() => parseMarkdownToMindMapTree(markdown, title), [markdown, title]);
+  // Parse markdown into pedagogical tree as fallback or use canonical graph tree
+  const tree = useMemo(() => {
+    if (canonicalTree && canonicalTree.children && canonicalTree.children.length > 0) {
+      return canonicalTree;
+    }
+    return parseMarkdownToMindMapTree(markdown, title);
+  }, [canonicalTree, markdown, title]);
 
   // Total atomic concepts across all stages
   const totalConcepts = useMemo(() => {

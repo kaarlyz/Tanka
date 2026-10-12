@@ -108,7 +108,7 @@ function detectDomainCategory(title = "", text = "") {
 /**
  * Step 1: Extract canonical concepts and dynamic curriculum outline without hardcoded 5 chapters.
  */
-async function extractConceptsAndOutline(docTitle, fullText, segments = [], model = "ag/gemini-3.8-flash-low", jenjang = "SMA") {
+async function extractConceptsAndOutline(docTitle, fullText, segments = [], model = "ag/gemini-3.8-flash-low", jenjang = "SMA", customInstruction = "") {
   // Label segments clearly as [S1], [S2], [S3] for exact quote traceability
   let segmentOverview = "";
   if (segments.length > 0) {
@@ -128,6 +128,26 @@ async function extractConceptsAndOutline(docTitle, fullText, segments = [], mode
   }
 
   const isGrowth = detectDomainCategory(docTitle, fullText) === "practical_growth";
+
+  const wordCount = fullText.trim().split(/\s+/).length;
+  let targetChapterMin = 1;
+  let targetChapterMax = 2;
+  if (wordCount < 400) {
+    targetChapterMin = 1;
+    targetChapterMax = 2;
+  } else if (wordCount < 1000) {
+    targetChapterMin = 2;
+    targetChapterMax = 3;
+  } else if (wordCount < 2500) {
+    targetChapterMin = 3;
+    targetChapterMax = 5;
+  } else if (wordCount < 5000) {
+    targetChapterMin = 4;
+    targetChapterMax = 6;
+  } else {
+    targetChapterMin = 5;
+    targetChapterMax = Math.min(10, Math.ceil(wordCount / 600));
+  }
 
   const rolePrompt = isGrowth
     ? `Anda adalah mentor pembelajaran mandiri dan analis strategis yang menyusun intisari wawasan, pola pikir, dan prinsip praktis berbobot untuk anak muda usia 15-20 tahun.`
@@ -163,8 +183,7 @@ async function extractConceptsAndOutline(docTitle, fullText, segments = [], mode
 2. KONSEP KUNCI LENGKAP & ANTI-PENGHAPUSAN (EXHAUSTIVE COVERAGE MUTLAK)
 - DOKUMEN UPLOAD SERINGKALI ADALAH MATERI/KISI-KISI UJIAN SEBENARNYA! Dilarang keras memangkas, meringkas dangkal, atau menghilangkan butir-butir materi dari teks sumber!
 - Bahasa boleh disederhanakan dan dimudahkan agar ramah siswa, TETAPI ESENSI DAN SELURUH POIN MATERI DARI SUMBER ASLI HARUS MENCAKUP 100% TANPA ADA YANG TERPOTONG.
-- JIKA BAHAN MEMUAT DAFTAR BUTIR/FAKTOR/KLASIFIKASI: Setiap butir, pilar, atau klasifikasi yang tertulis di teks sumber WAJIB diekstrak menjadi konsep tersendiri agar materi ujian tidak buntung.
-- Jangan menggabungkan dua butir berbeda secara serakah hanya untuk memperpendek daftar konsep.
+- ATURAN ATOMIK DAFTAR FAKTOR / KLASIFIKASI: Jika bahan sumber memuat daftar bernomor/berbutir (misalnya "7 Faktor Penghambat" atau "Faktor Pendorong"), SETIAP FAKTOR ATAU BUTIR BERNOMOR WAJIB MENJADI 1 ENTITAS KONSEP TERSENDIRI di array "concepts" (misal: "Hambatan Ideologis", "Adat Istiadat", "Vested Interest", "Isolasi Geografis/Sosial"). DILARANG KERAS menggabungkan atau menghilangkan butir bernomor menjadi konsep payung abstrak.
 - Masukkan seluruh konsep inti yang didukung bahan sumber ("origin": "source").
 - "bukti_kutipan": Kutip klausa teks asli dari bahan (maksimal 20 kata) beserta kode segmennya (misal: "S1").
 - "definisi": Tuliskan dalam kalimat utuh baku yang lugas dan presisi, bukan sekadar kata kunci telegram.
@@ -173,16 +192,21 @@ async function extractConceptsAndOutline(docTitle, fullText, segments = [], mode
 - "rumus": Berikan rumus KaTeX hanya jika materi hitung kuantitatif (Matematika/Fisika/Kimia Stoikiometri/Ekonomi Kurva). Pada materi Biologi konseptual, Sosiologi, dan Sejarah, kosongkan rumus ("").
 - "salah_kaprah": Isi miskonsepsi siswa yang masuk akal. Jika tidak ada yang signifikan, kosongkan ("").
 
-3. PRINSIP PEMBENTUKAN BAB (PROGRESSIVE COGNITIVE LOAD)
-- Bab adalah satu unit belajar 10-15 menit yang memayungi 1 hingga 4 konsep kunci yang saling bersandar.
-- Tentukan jumlah bab secara alami berdasarkan kepadatan materi (materi ringkas cukup 2 bab, materi luas bisa 3-5 bab).
-- Urutkan bab dari konsep fondasi (konkret/definisi), lanjut ke mekanisme/cara kerja/rumus, hingga ke penerapan/perbandingan.
-- Setiap bab wajib memiliki "pertanyaanPemantik" (situasi nyata pengungkit rasa ingin tahu) dan "keyConceptIds" yang menjadi fokusnya.`;
+3. PRINSIP PEMBENTUKAN BAB & BEBAN KOGNITIF ADAPTIF
+- KAPASITAS KOGNITIF KETAT: Setiap bab adalah 1 unit belajar 10-15 menit siswa. Idealnya memuat 2 sampai 4 konsep kunci. MAKSIMAL 4 KONSEP PER BAB.
+- DILARANG BAB KANTONG RAKSASA (ANTI-MONOLITHIC): DILARANG KERAS menumpuk seluruh faktor ke dalam 1 bab tunggal (misal menumpuk 8 faktor pendorong ke dalam 1 bab, atau 7 faktor penghambat ke dalam 1 bab)! Kategori besar wajib dipecah menjadi beberapa bab tematik (misal: faktor kultural/pengetahuan terpisah dari faktor struktural/mobilitas).
+- BEBAN SUMBER OTOMATIS: Dokumen ini memiliki bobot ~${wordCount} kata. Rencanakan antara ${targetChapterMin} hingga ${targetChapterMax} bab!
+- DILARANG TERPAKU PADA ANGKA STATIS:
+  * Jika dokumen ringkas (1-2 topik), rencanakan 1-2 bab saja. DILARANG memaksakan bab tambahan yang kosong.
+  * Jika dokumen luas/multi-bagian, rencanakan lebih banyak bab (${targetChapterMin}-${targetChapterMax} bab) agar setiap domain materi (faktor, studi kasus, teori) terbahas mendalam.
+- Urutkan bab dari konsep fondasi (konkret/definisi), lanjut ke mekanisme/cara kerja/rumus, hingga ke penerapan/perbandingan/teori.
+- Setiap bab wajib memiliki "pertanyaanPemantik" dan "keyConceptIds" yang menjadi fokusnya.`;
 
   const prompt = `${rolePrompt}
 Tugas Anda: Analisis bahan sumber berikut, ekstrak konsep/prinsip kunci berbukti, dan susun alur bab yang mengalir secara alami.
 
 Judul Materi: "${docTitle}"
+${customInstruction ? `Instruksi Khusus Pengguna: "${customInstruction}"` : ""}
 ${targetCategory}
 
 Bahan Sumber (masing-masing diberi label kode [S1], [S2], dst):
@@ -280,176 +304,383 @@ Kembalikan HANYA format JSON valid berikut:
 }
 
 /**
- * Step 2: Generate full pedagogical module using Nara persona, based on dynamic outline.
+ * Auto-repair curriculum outline coverage if planner missed any required concepts
+ * or if any chapter exceeds cognitive load limits (max 4 concepts per chapter).
  */
-async function generateNaraModule(outline, fullText, segments = [], model = "ag/gemini-3.8-flash-low", jenjang = "SMA") {
-  // Use segment text context
-  const sourceContext = segments.length > 0
-    ? segments.map((s) => `--- Bagian ${s.index} (${s.sourceType}) ---\n${s.text}`).join("\n\n")
-    : fullText;
-
-  const domainCategory = detectDomainCategory(outline.title, fullText);
-  const isGrowth = domainCategory === "practical_growth";
-  const isMath = domainCategory === "mathematics";
-
-  let prompt;
-  if (isGrowth) {
-    prompt = `${NARA_GLOBAL_PERSONA}
-
-Tugas Anda: Susun modul intisari pembelajaran mendalam untuk anak muda usia 15-20 tahun berdasarkan kerangka (outline) dan teks transkrip pembicara berikut.
-
-Judul: "${outline.title}"
-Rencana Bab:
-${JSON.stringify(outline.chapters, null, 2)}
-
-Daftar Prinsip Kunci:
-${JSON.stringify(outline.concepts, null, 2)}
-
-Teks Sumber Asli:
-"""
-${sourceContext.slice(0, 24000)}
-"""
-
-PETUNJUK PENULISAN (MODUL PENGEMBANGAN DIRI & REALITA KEHIDUPAN):
-1. Mulai dengan judul markdown: # ${outline.title}
-2. Tuliskan ringkasan eksekutif / tesis utama dalam blockquote:
-   > 📌 **Tesis Utama & Esensi Video:** [Saring omong kosong filler 5 menit pertama; tuliskan 2-3 kalimat tajam inti pesan pembicara]
-3. Tulis pembatas horizontal sebelum bab pertama: ---
-4. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab):
-   Setiap sub-bab (### [Prinsip / Topik]) WAJIB memuat:
-   a. **Realita Lapangan & Pengalaman Nyata:** Cerita riil atau latar belakang mengapa pembicara menekankan hal ini (fokus pada argumen substantif, buang basa-basi).
-   b. **Prinsip Kunci (Mental Model):**
-      > 💡 **Prinsip Inti:** [Pernyataan prinsip hidup/kerja yang padat, aplikatif, dan membumi]
-   c. **Filter Realita (Bedah Objektif):** Pisahkan antara poin yang benar-benar bisa diterapkan anak muda umur 15-20 dengan bumbu motivasi/clickbait berlebihan. Tunjukkan batas realistisnya.
-   d. **Peringatan Jebakan Pemula (Pitfall):** Kesalahan umum, ilusi instan, atau jebakan overthinking yang sering bikin orang gagal mempraktikkannya.
-5. Bab Penutup / Bab Terakhir WAJIB berupa panduan aksi nyata:
-   ## Playbook: Rencana Tindakan Terukur (Action Checklist)
-   - Berikan 4-5 checklist aksi nyata yang bisa dieksekusi anak muda umur 15-20 tahun mulai hari ini (konkret, terukur, tanpa biaya mahal).
-   - Berikan 2-3 pertanyaan refleksi diri jujur untuk mengevaluasi kebiasaan harian.
-6. LARANGAN:
-   - DILARANG membuat rumus KaTeX atau contoh soal latihan ujian/UTBK.
-   - DILARANG menggunakan gaya motivator klise basi; gunakan gaya Nara yang santai, cerdas, realistis, dan berpihak pada masa depan anak muda.`;
-  } else if (isMath) {
-    prompt = `${NARA_GLOBAL_PERSONA}
-
-Tugas Anda: Susun materi pembelajaran MATEMATIKA EKSAK kanonikal berstandar Master Tutor UTBK untuk siswa jenjang ${jenjang} (Kurikulum Nasional / Persiapan UTBK-SNBT).
-
-Judul: "${outline.title}"
-Target Jenjang: ${jenjang}
-Rencana Bab:
-${JSON.stringify(outline.chapters, null, 2)}
-
-Daftar Konsep Kunci:
-${JSON.stringify(outline.concepts, null, 2)}
-
-Bahan Fondasi Eksak:
-"""
-${sourceContext.slice(0, 45000)}
-"""
-
-PETUNJUK PENULISAN MATEMATIKA TAKTIS (FORMULA-DENSE, MUDAH DIPAHAMI, & BEBAS JARGON UNIVERSITAS):
-1. Mulai dengan judul markdown: # ${outline.title}
-2. Tuliskan ringkasan modul dalam blockquote: > [Ringkasan taktis 2-3 kalimat cakupan materi & kompetensi hitung/aljabar yang ditargetkan]
-3. Tulis pembatas horizontal sebelum bab pertama: ---
-4. GAYA BAHASA & PEDAGOGI (LEVEL TUTOR UTBK/SMA TERBAIK):
-   - DILARANG mendongeng atau menulis paragraf analogi kehidupan sehari-hari bertele-tele (bukan pelajaran bahasa atau cerpen). Cukup 1 kalimat pengantar intuisi visual/geometris jika perlu.
-   - DILARANG menggunakan istilah abstrak matematika universitas (seperti: gelanggang komutatif, grup, ruang metrik, isomorfisme, magnitudo absolut, pemetaan affine). Gunakan istilah baku SMA: "sifat komutatif/asosiatif/distributif", "lawan bilangan / negatif", "nilai mutlak", "titik balik", "faktor skala".
-   - DEFINISI WAJIB SANGAT PADAT: Tulis definisi konsep secara atomik (maksimal 1-2 kalimat presisi yang mudah dibayangkan).
-   - LEBIH BANYAK FORMULA & TABEL RUMUS KaTeX: Setiap sub-bab WAJIB memuat tabel Markdown komprehensif berisi seluruh rumus operasional, matriks, bentuk umum, dan kondisi batas dalam format KaTeX ($...$ atau $$...$$).
-   - KAPAN RUMUS DIPAKAI: Jelaskan kapan menggunakan rumus A vs rumus B secara praktis.
-5. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab):
-   Setiap sub-bab (### [Nama Sub-Materi / Konsep]) WAJIB memuat urutan terstruktur ini:
-   a. **Definisi Baku & Intuisi Singkat:**
-      > 📖 **Definisi:** [Definisi baku padat 1-2 kalimat tanpa dongeng]
-   b. **Tabel Formula & Notasi Operasional (KaTeX):**
-      Sajikan tabel Markdown komprehensif berisi semua rumus, pemetaan variabel, dan syarat batas.
-   c. **Sifat Matematis, Teorema, & Trik Aljabar:**
-      Daftar bernomor sifat-sifat matematis operasional beserta rumus KaTeX.
-   d. **Contoh Soal Taktis & Bedah Penurunan Analitik (Worked Example):**
-      Sajikan 1 contoh soal representatif tipe UTBK/Ujian Sekolah dengan langkah penurunan bertahap:
-      - *Diketahui & Ditanya:*
-      - *Langkah Analitik & Substitusi:* (setiap baris langkah hitung ditulis dengan notasi KaTeX, sertakan catatan trik manipulasi aljabar di samping langkah)
-      - *Kesimpulan:*
-   e. **Peringatan Salah Kaprah (Pitfall):**
-      > ⚠️ **Jebakan Soal (Pitfall):** [Miskonsepsi hitung/tanda minus/kondisi syarat batas yang sering membuat siswa salah di ujian]
-6. SEMUA RUMUS & NOTASI MATEMATIKA WAJIB MENGGUNAKAN KaTeX:
-   - Simbol sebaris: $x$, $f(x)$, $\vec{v}$, $\Delta$.
-   - Rumus blok utama: $$...$$`;
-  } else {
-    prompt = `${NARA_GLOBAL_PERSONA}
-
-Tugas Anda: Susun materi pembelajaran lengkap untuk siswa jenjang ${jenjang} (Kurikulum Nasional Indonesia) berdasarkan kerangka (outline) dan teks sumber berikut.
-
-Judul: "${outline.title}"
-Target Jenjang: ${jenjang}
-Rencana Bab:
-${JSON.stringify(outline.chapters, null, 2)}
-
-Daftar Konsep Kunci:
-${JSON.stringify(outline.concepts, null, 2)}
-
-Teks Sumber Asli:
-"""
-${sourceContext.slice(0, 50000)}
-"""
-
-PETUNJUK PENULISAN:
-1. Mulai dengan judul markdown: # ${outline.title}
-2. Tuliskan ringkasan eksekutif dokumen dalam blockquote: > [Ringkasan singkat bertutur 2-3 kalimat]
-3. Tulis pembatas horizontal sebelum bab pertama: ---
-4. MANDAT CAKUPAN LENGKAP & KEDALAMAN ADAPTIF KONTEKSTUAL:
-   - DILARANG MERANGKUM DANGKAL ATAU MEMANGKAS ISI DOKUMEN ASLI!
-   - Ingat bahwa materi upload ini seringkali merupakan bahan kisi-kisi ujian asli siswa. Jika materi dipotong atau diringkas terlalu pendek, siswa akan kehilangan poin materi yang keluar saat ujian.
-   - JANGAN SENGAJA MEMPERSEMPIT MATERI YANG KAYA: Jika bahan sumber memuat materi yang luas (seperti sejarah seni rupa, pergerakan estetika, ragam kriya mancanegara, tokoh perintis, teknik material, atau bab sosiologi/sejarah yang padat), DILARANG MEMADATKANNYA menjadi poin kurus atau deretan angka telanjang (1, 1, 2, 3, 4, 5). Jelaskan secara luas, filosofis, tekniknya, dan ragam karyanya agar pemahaman siswa benar-benar luas dan mendalam.
-   - JANGAN MEMANJANG-MANJANGKAN TANPA ARTI (ANTI-FLUFF): Sebaliknya, jika suatu materi memang sederhana atau ringkas, jangan dipaksakan berbunga-bunga kosong. Sesuaikan kedalaman dan volume penjelasan secara proporsional dengan bobot konteks aslinya.
-   - BERSIHKAN SAMPAH SLIDE/OCR: Jangan biarkan angka urutan slide mentah (seperti "1", "2", "3") atau penanda teknis "--- Slide X ---" mengotori modul. Ubah menjadi narasi bab dan sub-bab yang berkelas, mengalir, dan hidup.
-   - Bahasakan dengan mengalir, santai, dan mudah dipahami, TAPI PASTIKAN SETIAP POIN PENTING, SUB-BAB, DAN RINCIAN OPERASIONAL DARI SUMBER ASLI TERTAMPUNG DAN DIJELASKAN SECARA TUNTAS.
-5. Tulis bab per bab mengikuti rencana bab (Gunakan ## untuk Bab, ### untuk Sub-bab). Gunakan "pertanyaanPemantik" yang ada pada rencana bab sebagai pintu masuk pengait situasi nyata di awal setiap bab.
-   PERINGATAN FORMAT: Jangan pernah mengulang penulisan "# Judul" atau ringkasan dokumen di dalam Bab 1. Bab 1 harus langsung dimulai dengan "## Bab 1: [Judul Bab]".
-6. KONTRAK STRUKTUR SUB-BAB (WAJIB DIPATUHI PER KONSEP):
-   Setiap sub-bab (### [Nama Konsep]) WAJIB memuat urutan ini:
-   a. Situasi / Intuisi konkret sehari-hari (1-2 paragraf pendek):
-      - Untuk Sosiologi & Humaniora: Ceritakan latar belakang fundamental mengapa fenomena tersebut lahir di masyarakat, akar masalahnya, baru sambungkan ke konsep.
-      - Untuk Matematika: Gambarkan fenomena visual/geometris atau masalah nyata secara singkat.
-   b. Kotak Definisi Baku resmi dalam blockquote:
-      > 📖 **Definisi Baku:** [Tuliskan definisi baku kurikulum/buku teks di sini secara presisi. KHUSUS MATEMATIKA: Tulis definisi SEDIKIT & PADAT saja (1-2 kalimat), dilarang dongeng panjang!]
-   c. Penjelasan Mekanisme & Sebab-Akibat yang runtut dan struktural.
-   d. Rumus, Tabel Pemetaan, & Operasional Konkret:
-      - HANYA berlaku untuk materi hitung kuantitatif resmi (Matematika, Fisika, Kimia Stoikiometri, dan Ekonomi Hitung/Kurva).
-      - KHUSUS MATEMATIKA (PONDASI, TABEL RUMUS, & ALJABAR OPERASIONAL):
-        * Bedah seluruh cakupannya di awal topik agar siswa melihat peta besarnya.
-        * WAJIB MENYAJIKAN TABEL RUMUS / TABEL PEMETAAN KaTeX yang rapi dan terstruktur (misal untuk Refleksi: buatkan tabel pemetaan titik $(x, y) \rightarrow (x', y')$ dan matriks transformasinya untuk cermin sumbu-x, sumbu-y, garis $y = x$, garis $y = -x$, titik asal $(0,0)$, garis $x = h$, dan garis $y = k$).
-        * Jelaskan bagaimana rumus/matriks tersebut diterapkan pada kurva/garis $y = f(x)$, bukan hanya titik koordinat tunggal.
-        * Tunjukkan langkah substitusi balik ($x = x' - a, y = y' - b$) secara gamblang saat menurunkan persamaan bayangan kurva.
-      - DILARANG KERAS memaksakan rumus matematis/biofisika/kalkulus pada Biologi SMA (seperti anatomi jaringan, transpirasi, organ, sel), Sosiologi, Sejarah, dan Bahasa. Pada materi Biologi, fokuskan pada mekanisme biologis, regulasi organel, dan reaksi biokimia kualitatif tanpa hitungan fluks buatan.
-      - Jika bukan materi hitung kuantitatif resmi, LEWATKAN poin rumus ini secara alami.
-   e. Contoh Soal Taktis & Bedah Langkah Pengerjaan (Worked Example):
-      - Berikan 1 contoh soal representatif UTBK/Ujian beserta pembongkaran pengerjaan langkah demi langkah secara runtut (bukan sekadar hasil akhir). Tunjukkan cara mengeliminasi jebakan umum aljabar (seperti tanda minus atau kelalaian perkalian distributif).
-   f. Peringatan Salah Kaprah (Pitfall): Kesalahan umum siswa di ujian.
-5. LARANGAN MUTLAK ANTI-HALUSINASI:
-   - DILARANG KERAS MENCIPTAKAN RUMUS FISIKA/MATEMATIKA PADA TOPIK BIOLOGI KONSEPTUAL ATAU ILMU SOSIAL/HUMANIORA.
-   - Dilarang mengarang tokoh fiktif atau istilah palsu.
-6. Jika ada contoh kasus atau analogi di luar teks sumber, wajib tandai dengan:
-   > 💡 **Insight Nara (Pengayaan):** [Uraian contoh/analogi...]
-7. Jika ada rumus eksak/matematika, WAJIB gunakan format KaTeX rapi ($rumus$ atau $$blok$$).`;
+function autoRepairOutlineCoverage(outline) {
+  if (!outline || !Array.isArray(outline.concepts) || !Array.isArray(outline.chapters)) {
+    return outline;
   }
 
-  const content = await callRouter(
+  // 1. DIVERSIFIKASI & PECAH BAB OVERLOAD (MAKSIMAL 4 KONSEP PER BAB)
+  // Mencegah AI menumpuk 6-8 konsep ke dalam 1 bab raksasa
+  const MAX_CONCEPTS_PER_CHAPTER = 4;
+  const newChapters = [];
+  let chNum = 1;
+
+  for (const ch of outline.chapters) {
+    const rawIds = Array.isArray(ch.keyConceptIds) ? ch.keyConceptIds : [];
+    if (rawIds.length <= MAX_CONCEPTS_PER_CHAPTER) {
+      newChapters.push({
+        ...ch,
+        chapterNumber: chNum++
+      });
+    } else {
+      // Pecah bab overload menjadi unit belajar maksimal 4 konsep
+      const splitChunks = [];
+      const numSplits = Math.ceil(rawIds.length / MAX_CONCEPTS_PER_CHAPTER);
+      const chunkSize = Math.ceil(rawIds.length / numSplits);
+      for (let i = 0; i < rawIds.length; i += chunkSize) {
+        splitChunks.push(rawIds.slice(i, i + chunkSize));
+      }
+
+      splitChunks.forEach((chunkIds, subIdx) => {
+        const chunkConcepts = outline.concepts.filter((c) => chunkIds.includes(c.id));
+        const subNames = chunkConcepts.map((c) => c.name).slice(0, 2).join(" & ");
+        
+        let subTitle = ch.chapterTitle;
+        if (splitChunks.length > 1) {
+          subTitle = `${ch.chapterTitle} (Bagian ${subIdx + 1}: ${subNames || "Lanjutan"})`;
+        }
+
+        newChapters.push({
+          chapterNumber: chNum++,
+          chapterTitle: subTitle,
+          pertanyaanPemantik: ch.pertanyaanPemantik || "Bagaimana keterkaitan konsep-konsep ini dalam dinamika masyarakat?",
+          targetGoal: `${ch.targetGoal || "Memahami esensi materi"} [Fokus: ${subNames}]`,
+          keyConceptIds: chunkIds
+        });
+      });
+    }
+  }
+
+  outline.chapters = newChapters;
+
+  const validation = validateCurriculumCoverage(outline.concepts, outline.chapters);
+  if (validation.isValid) {
+    return outline;
+  }
+
+  // 2. Tangani konsep wajib yang tercecer
+  if (validation.unmappedRequiredConceptIds.length > 0) {
+    const unmappedIds = new Set(validation.unmappedRequiredConceptIds);
+    const unmappedConcepts = outline.concepts.filter((c) => unmappedIds.has(c.id));
+    console.warn(`[curriculumPipeline] Menyelamatkan ${unmappedConcepts.length} konsep wajib yang belum terpetakan ke bab:`, unmappedConcepts.map(c => c.name));
+
+    if (outline.chapters.length > 0 && outline.chapters.length < 8) {
+      outline.chapters.push({
+        chapterNumber: outline.chapters.length + 1,
+        chapterTitle: "Pendalaman Faktor & Konsep Kunci Terkait",
+        pertanyaanPemantik: "Bagaimana dinamika dan faktor-faktor penentu lainnya saling melengkapi topik ini?",
+        targetGoal: "Memahami seluruh klasifikasi dan faktor pendukung yang esensial",
+        keyConceptIds: unmappedConcepts.map((c) => c.id)
+      });
+    } else if (outline.chapters.length > 0) {
+      const lastCh = outline.chapters[outline.chapters.length - 1];
+      const existing = Array.isArray(lastCh.keyConceptIds) ? lastCh.keyConceptIds : [];
+      lastCh.keyConceptIds = Array.from(new Set([...existing, ...unmappedConcepts.map((c) => c.id)]));
+    }
+  }
+
+  // 3. Bersihkan referensi ID yang tidak dikenal dari bab
+  if (validation.invalidConceptReferences.length > 0) {
+    const validIds = new Set(outline.concepts.map((c) => c.id));
+    outline.chapters.forEach((ch) => {
+      if (Array.isArray(ch.keyConceptIds)) {
+        ch.keyConceptIds = ch.keyConceptIds.filter((id) => validIds.has(id));
+      }
+    });
+  }
+
+  return outline;
+}
+
+/**
+ * Sinkronisasi daftar rencana bab ke tabel SQLite chapter_plans dengan status 'planned'.
+ */
+function syncChapterPlansToDb(dbInstance, docId, chapters) {
+  if (!dbInstance || !docId || !Array.isArray(chapters)) return;
+
+  const upsertPlan = dbInstance.prepare(`
+    INSERT INTO chapter_plans (
+      id, doc_id, chapter_number, title, trigger_question, target_goal, key_concept_ids, content, status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(doc_id, chapter_number) DO UPDATE SET
+      title = excluded.title,
+      trigger_question = excluded.trigger_question,
+      target_goal = excluded.target_goal,
+      key_concept_ids = excluded.key_concept_ids,
+      content = CASE WHEN excluded.content != '' THEN excluded.content ELSE chapter_plans.content END,
+      status = excluded.status,
+      updated_at = excluded.updated_at
+  `);
+
+  const now = Date.now();
+  for (const ch of chapters) {
+    const chNum = Number(ch.chapterNumber ?? ch.chapter_number ?? 1);
+    const planId = `${docId}_ch_${chNum}`;
+    const title = ch.chapterTitle || ch.title || `Bab ${chNum}`;
+    const trigger = ch.pertanyaanPemantik || ch.trigger_question || "";
+    const goal = ch.targetGoal || ch.target_goal || "";
+    const keyConceptIdsStr = JSON.stringify(ch.keyConceptIds || ch.key_concept_ids || []);
+
+    upsertPlan.run(
+      planId,
+      docId,
+      chNum,
+      title,
+      trigger,
+      goal,
+      keyConceptIdsStr,
+      ch.content || "",
+      ch.status || "planned",
+      now,
+      now
+    );
+  }
+}
+
+/**
+ * AI Modular Chapter Writer: Menulis satu bab terarah fokus pada konsep kunci bab tersebut.
+ */
+async function generateChapterModular(chapter, chapterConcepts = [], sourceContext = "", overallMeta = {}, model = "ag/gemini-3.8-flash-low", jenjang = "SMA") {
+  const domainCategory = detectDomainCategory(overallMeta.courseTitle || "", sourceContext);
+  const isMath = domainCategory === "mathematics";
+  const isGrowth = domainCategory === "practical_growth";
+
+  const chNum = chapter.chapterNumber || chapter.chapter_number || 1;
+  const chTitle = chapter.chapterTitle || chapter.title || `Bab ${chNum}`;
+  const trigger = chapter.pertanyaanPemantik || chapter.trigger_question || "Bagaimana fenomena ini terjadi?";
+  const goal = chapter.targetGoal || chapter.target_goal || "Memahami mekanisme konsep";
+
+  let specificGuidelines = "";
+  if (isMath) {
+    specificGuidelines = `
+PETUNJUK PENULISAN BAB MATEMATIKA:
+1. Mulai langsung dengan heading bab: ## Bab ${chNum}: ${chTitle}
+2. Hubungkan singkat pertanyaan pemantik ("${trigger}") dalam 1-2 kalimat intuisi geometris/aljabar.
+3. Bedah setiap konsep kunci di bawah ini satu per satu (Gunakan ### [Nama Konsep]):
+   Setiap sub-bab konsep WAJIB memuat:
+   a. Definisi Padat (1-2 kalimat).
+   b. Tabel Formula KaTeX komprehensif ($...$ atau $$...$$) lengkap dengan notasi dan syarat batas.
+   c. 1 Contoh Soal Taktis & Bedah Penurunan Langkah demi Langkah (Worked Example) berstandar UTBK.
+   d. Peringatan Jebakan Soal (Pitfall) aljabar/tanda minus.
+4. Akhiri bab dengan "### Cek Intuisi Taktis" (1 pertanyaan penalaran analitis tanpa pilihan ganda).
+5. DILARANG membuat soal pilihan ganda A, B, C, D, E di dalam modul bab!`;
+  } else if (isGrowth) {
+    specificGuidelines = `
+PETUNJUK PENULISAN BAB PENGEMBANGAN DIRI & REALITA:
+1. Mulai langsung dengan heading bab: ## Bab ${chNum}: ${chTitle}
+2. Tuliskan konteks pembuka pemantik rasa ingin tahu berdasarkan: "${trigger}"
+3. Bedah setiap prinsip kunci di bawah ini (Gunakan ### [Nama Prinsip]):
+   a. Realita Lapangan & Pengalaman Nyata (fokus pada argumen substantif).
+   b. Inti Prinsip (Mental Model) aplikatif.
+   c. Filter Realita (pisahkan clickbait/ilusi instan dari aksi realistis).
+   d. Peringatan Jebakan Pemula (Pitfall).
+4. Akhiri bab dengan "### Refleksi Diri" (1-2 pertanyaan evaluasi kebiasaan harian).
+5. DILARANG membuat rumus matematika atau soal pilihan ganda.`;
+  } else {
+    specificGuidelines = `
+PETUNJUK PENULISAN BAB AKADEMIK & ILMU SOSIAL/SAINS:
+1. Mulai langsung dengan heading bab: ## Bab ${chNum}: ${chTitle}
+2. Buka dengan situasi nyata kontekstual berdasarkan pertanyaan pemantik: "${trigger}" agar siswa memahami relevansinya.
+3. Target Capaian Bab: "${goal}".
+4. Bedah SETIAP konsep kunci di bawah ini secara mendalam tanpa ada yang dilewati (Gunakan ### [Nama Konsep]):
+   Setiap sub-bab konsep WAJIB memuat urutan terstruktur ini:
+   a. **Situasi Konkret & Pemicu Intuisi:** Mulai dari konteks nyata yang mudah dibayangkan siswa sebelum memperkenalkan istilah formal.
+   b. **Inti Konsep:** Penjelasan makna esensial konsep secara lugas. (Jika konsep didukung kutipan sumber, beri label '> 📖 **Definisi dari Sumber:** [kutipan/definisi]').
+   c. **Mekanisme & Sebab-Akibat:** Jelaskan MENGAPA dan BAGAIMANA proses/faktor ini bekerja dalam kenyataan. Uraikan butir-butir penjelas secara runtut.
+   d. **Batas Konsep & Pembeda:** Berikan non-contoh atau pembeda jika konsep ini rawan tertukar dengan konsep lain.
+   e. **Peringatan Salah Kaprah (Pitfall):** 1 kalimat miskonsepsi umum yang sering mengecoh siswa saat ujian.
+5. Akhiri bab dengan:
+   ### Cek Pemahaman
+   Sajikan 1-2 pertanyaan kasus penerapan terbuka yang menguji apakah siswa dapat membedakan konsep dan menjelaskan mekanismenya (DILARANG opsi pilihan ganda A, B, C, D, E).`;
+  }
+
+  const prompt = `${NARA_GLOBAL_PERSONA}
+
+Tugas Anda: Tulis modul BACAAN LENGKAP untuk SATU BAB TUNGGAL: Bab ${chNum} dari materi "${overallMeta.courseTitle || 'Materi Belajar'}".
+Jenjang Target: ${jenjang} (Kurikulum Nasional Indonesia)
+
+RENCANA BAB INI:
+- Nomor & Judul: Bab ${chNum}: ${chTitle}
+- Pertanyaan Pemantik: "${trigger}"
+- Capaian Pembelajaran: "${goal}"
+
+DAFTAR KONSEP KUNCI YANG WAJIB DIBAHAS TUNTAS DI BAB INI:
+${JSON.stringify(chapterConcepts, null, 2)}
+
+POTONGAN SUMBER ASLI TERKAIT:
+"""
+${sourceContext.slice(0, 30000)}
+"""
+
+${specificGuidelines}
+
+PERINGATAN FORMAT:
+- Bab WAJIB langsung dimulai dengan "## Bab ${chNum}: ${chTitle}".
+- DILARANG menulis ulang judul kursus "# ${overallMeta.courseTitle || ''}" di awal bab.
+- DILARANG menyingkat penjelasan menjadi deretan angka telanjang. Jelaskan secara tuntas dan mengalir.`;
+
+  const chapterContent = await callRouter(
     [
-      { role: "system", content: "You are Nara, an empathetic and highly articulate study tutor for high school students." },
+      { role: "system", content: "You are Nara, an empathetic, highly articulate educational writer. Strictly generate only this specific chapter in clean markdown." },
       { role: "user", content: prompt }
     ],
     model,
     0.25,
     null,
-    240000
+    180000
   );
 
-  return content ? content.trim() : fullText;
+  return chapterContent ? chapterContent.trim() : `## Bab ${chNum}: ${chTitle}\n\n${trigger}\n\n${goal}`;
 }
+
+/**
+ * Step 2: Generate full pedagogical module using modular per-chapter pipeline with deterministic gatekeeper.
+ */
+async function generateModularCurriculumModule(outline, fullText, segments = [], model = "ag/gemini-3.8-flash-low", jenjang = "SMA", dbInstance = null, docId = null) {
+  // 1. Jalankan Deterministic Gatekeeper & Auto-Repair Coverage
+  const safeOutline = autoRepairOutlineCoverage(outline);
+  const sourceContext = segments.length > 0
+    ? segments.map((s) => `--- Bagian ${s.index} (${s.sourceType}) ---\n${s.text}`).join("\n\n")
+    : fullText;
+
+  // 2. Simpan chapter plans ke database dengan status 'planned' (jika dbInstance tersedia)
+  if (dbInstance && docId && Array.isArray(safeOutline.chapters)) {
+    try {
+      syncChapterPlansToDb(dbInstance, docId, safeOutline.chapters);
+    } catch (dbErr) {
+      console.warn("[curriculumPipeline] Notice syncing planned chapters:", dbErr.message);
+    }
+  }
+
+  // 3. Bangun Header Modul (Judul & Ringkasan Eksekutif)
+  const header = `# ${safeOutline.title}\n\n> 📌 **Tesis & Esensi Modul:** ${safeOutline.executiveSummary || "Modul pembelajaran mendalam terstruktur."}\n\n---\n\n`;
+
+  // 4. Generasi Setiap Bab Secara Modular (Paralel / Terkontrol)
+  const chapters = safeOutline.chapters || [];
+  const conceptMap = new Map((safeOutline.concepts || []).map((c) => [c.id, c]));
+
+  console.log(`[curriculumPipeline] Memulai generasi modular untuk ${chapters.length} bab pada dokumen "${safeOutline.title}"...`);
+
+  const chapterPromises = chapters.map(async (ch) => {
+    const rawKeys = Array.isArray(ch.keyConceptIds) ? ch.keyConceptIds : [];
+    const chConcepts = rawKeys.map((kId) => conceptMap.get(kId)).filter(Boolean);
+
+    // Fallback jika konsep tidak terpetakan langsung
+    const assignedConcepts = chConcepts.length > 0 ? chConcepts : (safeOutline.concepts || []).slice(0, 3);
+
+    let chapterMarkdown = "";
+    let isSuccess = false;
+    let lastError = null;
+
+    // Bounded retry per bab (maksimal 2 percobaan per bab sebelum menandai gagal)
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        chapterMarkdown = await generateChapterModular(
+          ch,
+          assignedConcepts,
+          sourceContext,
+          {
+            courseTitle: safeOutline.title,
+            totalChapters: chapters.length,
+            executiveSummary: safeOutline.executiveSummary
+          },
+          model,
+          jenjang
+        );
+
+        if (chapterMarkdown && chapterMarkdown.length > 200) {
+          isSuccess = true;
+          break;
+        } else {
+          throw new Error("Output bab terlalu pendek atau kosong");
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`[curriculumPipeline] Percobaan ${attempt} gagal untuk Bab ${ch.chapterNumber}: ${err.message}`);
+        if (attempt === 1) {
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      }
+    }
+
+    if (isSuccess) {
+      if (dbInstance && docId) {
+        try {
+          const chNum = Number(ch.chapterNumber ?? ch.chapter_number ?? 1);
+          dbInstance.prepare(`
+            UPDATE chapter_plans
+            SET content = ?, status = 'completed', updated_at = ?
+            WHERE doc_id = ? AND chapter_number = ?
+          `).run(chapterMarkdown, Date.now(), docId, chNum);
+        } catch (updateErr) {
+          console.warn(`[curriculumPipeline] Notice updating chapter plan ${ch.chapterNumber}:`, updateErr.message);
+        }
+      }
+      return { chapterNumber: ch.chapterNumber || ch.chapter_number || 1, content: chapterMarkdown, success: true };
+    } else {
+      console.error(`[curriculumPipeline] Gagal menulis Bab ${ch.chapterNumber} setelah retry:`, lastError ? lastError.message : "Error");
+      const fallbackContent = `## Bab ${ch.chapterNumber}: ${ch.chapterTitle || 'Bab Materi'}\n\n*Gagal menyusun bab ini secara lengkap: ${lastError ? lastError.message : 'Terjadi kendala jaringan'}*`;
+      if (dbInstance && docId) {
+        try {
+          const chNum = Number(ch.chapterNumber ?? ch.chapter_number ?? 1);
+          dbInstance.prepare(`
+            UPDATE chapter_plans
+            SET content = ?, status = 'failed', updated_at = ?
+            WHERE doc_id = ? AND chapter_number = ?
+          `).run(fallbackContent, Date.now(), docId, chNum);
+        } catch {}
+      }
+      return { chapterNumber: ch.chapterNumber || ch.chapter_number || 1, content: fallbackContent, success: false };
+    }
+  });
+
+  const generatedChapters = await Promise.all(chapterPromises);
+
+  // 5. Urutkan bab sesuai nomor urut dan gabungkan
+  generatedChapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
+  const fullDocumentMarkdown = header + generatedChapters.map((c) => c.content).join("\n\n---\n\n");
+
+  const anyFailed = generatedChapters.some(c => !c.success);
+  if (dbInstance && docId) {
+    try {
+      dbInstance.prepare("UPDATE documents SET status = ? WHERE id = ?").run(anyFailed ? "partial" : "completed", docId);
+    } catch {}
+  }
+
+  console.log(`[curriculumPipeline] Selesai merakit modul kurikulum modular (${fullDocumentMarkdown.length} karakter).`);
+  return fullDocumentMarkdown;
+}
+
+/**
+ * Step 2 Wrapper: Kompatibel dengan pemanggilan legacy generateNaraModule.
+ */
+async function generateNaraModule(outline, fullText, segments = [], model = "ag/gemini-3.8-flash-low", jenjang = "SMA", dbInstance = null, docId = null) {
+  try {
+    return await generateModularCurriculumModule(outline, fullText, segments, model, jenjang, dbInstance, docId);
+  } catch (err) {
+    console.warn("[curriculumPipeline] Fallback ke modul monolitik akibat:", err.message);
+    return fullText;
+  }
+}
+
+const {
+  validateCurriculumCoverage,
+  validateDocumentCoverageFromDb,
+  isConceptRequired
+} = require("./coverageValidator");
 
 module.exports = {
   segmentDocumentText,
   extractConceptsAndOutline,
-  generateNaraModule
+  generateNaraModule,
+  generateChapterModular,
+  generateModularCurriculumModule,
+  syncChapterPlansToDb,
+  autoRepairOutlineCoverage,
+  validateCurriculumCoverage,
+  validateDocumentCoverageFromDb,
+  isConceptRequired
 };

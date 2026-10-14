@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -13,13 +13,8 @@ import {
   WifiOff,
   Check,
   X,
-  Play,
-  RotateCcw,
   BookOpen,
-  Send,
-  Layers,
-  GraduationCap,
-  Quote
+  Send
 } from "lucide-react";
 import { UserAccount } from "../../types";
 import { MathView } from "../common/MathView";
@@ -38,7 +33,7 @@ export function LandingPage({
   // Stepper state
   const [activeStep, setActiveStep] = useState(0);
 
-  // Hero Nara AI Simulator state
+  // Hero Live Nara AI Simulator state
   const [activeHeroQ, setActiveHeroQ] = useState(0);
   const [isHeroThinking, setIsHeroThinking] = useState(false);
   const [heroPromptInput, setHeroPromptInput] = useState("");
@@ -46,21 +41,21 @@ export function LandingPage({
   const heroQuestions = [
     {
       q: "Bagaimana cara mencari irisan himpunan A ∩ B?",
-      summary: "Konsep Irisan Himpunan",
+      chip: "Irisan Himpunan A ∩ B",
       answer:
-        "Irisan dua himpunan $A \\cap B$ adalah himpunan anggota yang ada di **himpunan A sekaligus himpunan B**:\n\n$$A \\cap B = \\{x \\mid x \\in A \\land x \\in B\\}$$\n\n**Contoh Nyata:**\nJika $A = \\{2, 4, 6\\}$ dan $B = \\{4, 6, 8\\}$, maka angka yang sama di kedua himpunan adalah $\\{4, 6\\}$."
+        "Irisan dua himpunan $A \\cap B$ adalah himpunan anggota yang ada di **himpunan A sekaligus himpunan B**:\n\n$$A \\cap B = \\{x \\mid x \\in A \\land x \\in B\\}$$\n\n**Contoh:**\nJika $A = \\{2, 4, 6\\}$ dan $B = \\{4, 6, 8\\}$, maka angka yang sama di kedua himpunan adalah $\\{4, 6\\}$."
     },
     {
       q: "Jelaskan hukum fotosintesis secara singkat",
-      summary: "Reaksi Kimia Fotosintesis",
+      chip: "Hukum Fotosintesis",
       answer:
-        "Fotosintesis adalah reaksi pembentukan energi glukosa oleh klorofil tanaman memanfaatkan sinar matahari:\n\n$$6CO_2 + 6H_2O \\xrightarrow{\\text{cahaya}} C_6H_{12}O_6 + 6O_2$$\n\nKarbon dioksida ($CO_2$) dari udara dan air ($H_2O$) diubah menjadi glukosa ($C_6H_{12}O_6$) untuk cadangan makanan dan oksigen ($O_2$) untuk bernapas."
+        "Fotosintesis adalah reaksi pembentukan energi glukosa oleh klorofil tanaman memanfaatkan sinar matahari:\n\n$$6CO_2 + 6H_2O \\xrightarrow{\\text{cahaya}} C_6H_{12}O_6 + 6O_2$$\n\nKarbon dioksida ($CO_2$) dan air ($H_2O$) diubah menjadi glukosa ($C_6H_{12}O_6$) untuk cadangan makanan serta oksigen ($O_2$) untuk bernapas."
     },
     {
       q: "Kenapa rumus pythagoras a² + b² = c²?",
-      summary: "Penurunan Teorema Pythagoras",
+      chip: "Rumus Pythagoras a² + b² = c²",
       answer:
-        "Pada setiap segitiga siku-siku, luas bujur sangkar di sisi miring ($c$) sama dengan jumlah luas bujur sangkar kedua sisi penyikunya ($a$ dan $b$):\n\n$$a^2 + b^2 = c^2 \\implies c = \\sqrt{a^2 + b^2}$$\n\nIni hukum fundamental ruang datar Euclidean: jarak terpendek menghubungkan dua titik tegak lurus selalu merupakan hipotenusa."
+        "Pada setiap segitiga siku-siku, luas bujur sangkar di sisi miring ($c$) selalu sama dengan jumlah luas bujur sangkar kedua sisi penyikunya ($a$ dan $b$):\n\n$$a^2 + b^2 = c^2 \\implies c = \\sqrt{a^2 + b^2}$$\n\nIni hukum fundamental ruang Euclidean: jarak terpendek yang menghubungkan dua titik tegak lurus selalu merupakan hipotenusa."
     }
   ];
 
@@ -70,7 +65,7 @@ export function LandingPage({
     setActiveHeroQ(idx);
     setTimeout(() => {
       setIsHeroThinking(false);
-    }, 240);
+    }, 220);
   };
 
   // Bento Card 2: Interactive Atomic Quiz state
@@ -84,8 +79,8 @@ export function LandingPage({
   const handleSimulateYouTube = () => {
     if (ytSimulating) return;
     setYtSimulating(true);
-    setYtProgress(15);
-    setTimeout(() => setYtProgress(45), 200);
+    setYtProgress(20);
+    setTimeout(() => setYtProgress(55), 200);
     setTimeout(() => setYtProgress(85), 450);
     setTimeout(() => {
       setYtProgress(100);
@@ -173,8 +168,8 @@ export function LandingPage({
           top: 100px;
           left: 50%;
           transform: translateX(-50%);
-          width: 720px;
-          height: 420px;
+          width: 700px;
+          height: 400px;
           background: radial-gradient(ellipse at center, rgba(200, 240, 100, 0.16) 0%, rgba(75, 102, 35, 0.06) 50%, transparent 75%);
           filter: blur(64px);
           pointer-events: none;
@@ -184,12 +179,12 @@ export function LandingPage({
 
         .landing-ambient-orb-2 {
           position: absolute;
-          top: 1550px;
-          right: 5%;
-          width: 580px;
+          top: 1600px;
+          right: 4%;
+          width: 600px;
           height: 380px;
-          background: radial-gradient(ellipse at center, rgba(168, 196, 138, 0.14) 0%, rgba(24, 34, 31, 0.04) 55%, transparent 75%);
-          filter: blur(70px);
+          background: radial-gradient(ellipse at center, rgba(168, 196, 138, 0.15) 0%, rgba(24, 34, 31, 0.04) 55%, transparent 75%);
+          filter: blur(72px);
           pointer-events: none;
           z-index: 0;
           animation: orbFloatReverse 10s ease-in-out infinite alternate;
@@ -197,12 +192,12 @@ export function LandingPage({
 
         @keyframes orbFloat {
           0% { transform: translateX(-50%) translateY(0) scale(1); }
-          100% { transform: translateX(-48%) translateY(28px) scale(1.06); }
+          100% { transform: translateX(-48%) translateY(26px) scale(1.07); }
         }
 
         @keyframes orbFloatReverse {
           0% { transform: translateY(0) scale(1); }
-          100% { transform: translateY(-30px) scale(1.08); }
+          100% { transform: translateY(-28px) scale(1.06); }
         }
 
         /* Nav */
@@ -326,7 +321,7 @@ export function LandingPage({
           z-index: 1;
           max-width: 1200px;
           margin: 0 auto;
-          padding: 56px 24px 64px;
+          padding: 54px 24px 64px;
           text-align: center;
         }
 
@@ -394,7 +389,7 @@ export function LandingPage({
           line-height: 1.62;
           color: #5f6b66;
           max-width: 720px;
-          margin: 0 auto 32px;
+          margin: 0 auto 30px;
         }
 
         .hero-cta-group {
@@ -403,7 +398,7 @@ export function LandingPage({
           justify-content: center;
           gap: 14px;
           flex-wrap: wrap;
-          margin-bottom: 38px;
+          margin-bottom: 36px;
         }
 
         @keyframes ctaGlow {
@@ -462,7 +457,7 @@ export function LandingPage({
         /* Hero Live Simulator */
         .hero-simulator-wrapper {
           max-width: 820px;
-          margin: 0 auto 50px;
+          margin: 0 auto 46px;
           text-align: left;
         }
 
@@ -472,7 +467,7 @@ export function LandingPage({
           border-radius: 16px;
           box-shadow: 0 16px 40px -10px rgba(24, 34, 31, 0.08), 0 0 0 1px rgba(24, 34, 31, 0.02);
           overflow: hidden;
-          transition: border-color 0.2s ease;
+          transition: border-color 0.25s ease;
         }
 
         .hero-simulator-card:hover {
@@ -555,7 +550,7 @@ export function LandingPage({
 
         .simulator-chat-body {
           padding: 18px 20px;
-          min-height: 160px;
+          min-height: 155px;
           display: flex;
           flex-direction: column;
           gap: 14px;
@@ -796,7 +791,7 @@ export function LandingPage({
           font-size: 14px;
           line-height: 1.6;
           color: #5f6b66;
-          margin-bottom: 22px;
+          margin-bottom: 20px;
         }
 
         .mini-device-frame {
@@ -883,8 +878,8 @@ export function LandingPage({
 
         .quiz-option-btn.selected-correct {
           background: #f3fae8;
-          border-color: #8da868;
-          box-shadow: 0 0 0 1px #8da868;
+          border-color: #c8f064 !important;
+          box-shadow: 0 0 0 2px #c8f064;
           color: #1b3814;
         }
 
@@ -998,6 +993,15 @@ export function LandingPage({
           padding: 12px;
           margin-top: 14px;
           text-align: center;
+        }
+
+        @keyframes linkPulse {
+          0%, 100% { opacity: 0.45; stroke-width: 1.5; }
+          50% { opacity: 0.95; stroke-width: 2.2; }
+        }
+
+        .graph-link-pulse {
+          animation: linkPulse 2.5s infinite ease-in-out;
         }
 
         .graph-node {
@@ -1406,7 +1410,7 @@ export function LandingPage({
                   onClick={() => handleSelectHeroQuestion(idx)}
                 >
                   <Sparkles size={12} />
-                  <span>{item.summary}</span>
+                  <span>{item.chip}</span>
                 </button>
               ))}
             </div>
@@ -1575,7 +1579,7 @@ export function LandingPage({
                   <div className="quiz-feedback-banner correct">
                     <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} />
                     <div>
-                      <strong>Jawaban Benar!</strong> Irisan ($A \cap B$) adalah elemen yang ada di kedua himpunan ($4$ dan $6$).
+                      <strong>✓ Jawaban Benar!</strong> Irisan adalah elemen yang ada di kedua himpunan ($4$ dan $6$).
                     </div>
                   </div>
                 )}
@@ -1697,11 +1701,11 @@ export function LandingPage({
               {/* Radial Graph Visualizer */}
               <div className="radial-graph-wrapper">
                 <svg width="100%" height="150" viewBox="0 0 320 150">
-                  {/* Curved Connection Lines */}
-                  <path d="M 160 75 Q 110 35 60 40" stroke="#a8c48a" strokeWidth="1.5" fill="none" strokeDasharray="3 3" />
-                  <path d="M 160 75 Q 210 35 260 40" stroke="#a8c48a" strokeWidth="1.5" fill="none" strokeDasharray="3 3" />
-                  <path d="M 160 75 Q 110 115 60 115" stroke="#a8c48a" strokeWidth="1.5" fill="none" strokeDasharray="3 3" />
-                  <path d="M 160 75 Q 210 115 260 115" stroke="#a8c48a" strokeWidth="1.5" fill="none" strokeDasharray="3 3" />
+                  {/* Curved Connection Lines with olive green pulsing glow */}
+                  <path d="M 160 75 Q 110 35 60 40" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
+                  <path d="M 160 75 Q 210 35 260 40" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
+                  <path d="M 160 75 Q 110 115 60 115" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
+                  <path d="M 160 75 Q 210 115 260 115" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
 
                   {/* Outer Nodes */}
                   <g className="graph-node" onClick={() => setActiveGraphNode("Limit Aljabar")}>
@@ -1822,13 +1826,13 @@ export function LandingPage({
             className={`comp-tab-btn ${comparisonView === "old" ? "active" : ""}`}
             onClick={() => setComparisonView("old")}
           >
-            Cara Lama (Bikin Pusing)
+            Belajar Cara Lama (Bikin Pusing)
           </button>
           <button
             className={`comp-tab-btn ${comparisonView === "tanka" ? "active" : ""}`}
             onClick={() => setComparisonView("tanka")}
           >
-            Cara Tanka (Otonom & Cepat)
+            Belajar Cara Tanka (Otonom & Cepat)
           </button>
         </div>
 
@@ -1861,7 +1865,7 @@ export function LandingPage({
                 </div>
                 <div className="comp-item">
                   <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>Tanya guru atau teman malu karena takut dikira tidak menyimak.</span>
+                  <span>Tanya guru/teman malu takut dikira tidak menyimak.</span>
                 </div>
                 <div className="comp-item">
                   <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
@@ -1878,7 +1882,7 @@ export function LandingPage({
                   DENGAN TANKA
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#283832" }}>
-                  Otonom, Rapi & Efisien
+                  Otonom & Cepat
                 </span>
               </div>
               <h3 style={{ fontSize: 20, fontWeight: 800, color: "#18221f", marginBottom: 6 }}>
@@ -1903,7 +1907,7 @@ export function LandingPage({
                 </div>
                 <div className="comp-item">
                   <CheckCircle2 size={18} color="#527928" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>100% bebas iklan, local-first, hemat kuota dan fokus terjaga penuh.</span>
+                  <span>100% bebas iklan, local-first, hemat kuota dan fokus terjaga.</span>
                 </div>
               </div>
             </div>
@@ -1939,7 +1943,7 @@ export function LandingPage({
               <div style={{ fontSize: 12.5, color: "#5f6b66" }}>Siswa Kelas XII / Pejuang UTBK</div>
               <div style={{ marginTop: 8 }}>
                 <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "3px 8px", borderRadius: 4, color: "#283832", fontWeight: 600 }}>
-                  ✓ Lolos Target Tryout SNBT
+                  ✓ Pejuang SNBT 2026
                 </span>
               </div>
             </div>
@@ -1962,7 +1966,7 @@ export function LandingPage({
               <div style={{ fontSize: 12.5, color: "#5f6b66" }}>Mahasiswi Biologi</div>
               <div style={{ marginTop: 8 }}>
                 <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "3px 8px", borderRadius: 4, color: "#283832", fontWeight: 600 }}>
-                  ✓ Rangkum Jurnal dalam 2 Menit
+                  ✓ Rangkum Jurnal Cepat
                 </span>
               </div>
             </div>
@@ -1982,10 +1986,10 @@ export function LandingPage({
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: 15, color: "#18221f" }}>Rian</div>
-              <div style={{ fontSize: 12.5, color: "#5f6b66" }}>Pelajar Gap Year</div>
+              <div style={{ fontSize: 12.5, color: "#5f6b66" }}>Gap Year</div>
               <div style={{ marginTop: 8 }}>
                 <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "3px 8px", borderRadius: 4, color: "#283832", fontWeight: 600 }}>
-                  ✓ Belajar Mandiri Tanpa Kuota
+                  ✓ 100% Offline di Kafe
                 </span>
               </div>
             </div>

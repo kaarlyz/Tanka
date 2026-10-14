@@ -1,6 +1,7 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
+const zlib = require("node:zlib");
 const { PORT, ROUTER_URL, validateConfigOnStartup } = require("./server/config");
 
 const { handleModelsRoutes } = require("./server/routes/models");
@@ -175,7 +176,27 @@ const server = http.createServer(async (req, res) => {
       }
 
       headers["Accept-Ranges"] = "bytes";
+
+      const isCompressible = [".js", ".css", ".html", ".json", ".svg"].includes(ext);
+      const acceptEncoding = (req.headers && req.headers["accept-encoding"]) || "";
+      const useGzip = isCompressible && acceptEncoding.includes("gzip");
+
+      if (useGzip) {
+        headers["Content-Encoding"] = "gzip";
+        headers["Vary"] = "Accept-Encoding";
+        if (req.method === "HEAD") {
+          res.writeHead(200, headers);
+          return res.end();
+        }
+        res.writeHead(200, headers);
+        return fs.createReadStream(filePath).pipe(zlib.createGzip()).pipe(res);
+      }
+
       headers["Content-Length"] = fileSize;
+      if (req.method === "HEAD") {
+        res.writeHead(200, headers);
+        return res.end();
+      }
       res.writeHead(200, headers);
       return fs.createReadStream(filePath).pipe(res);
     }
@@ -183,12 +204,29 @@ const server = http.createServer(async (req, res) => {
     if (!pathname.startsWith("/api/")) {
       const indexHtml = path.join(distPath, "index.html");
       if (fs.existsSync(indexHtml)) {
-        res.writeHead(200, {
+        const acceptEncoding = (req.headers && req.headers["accept-encoding"]) || "";
+        const headers = {
           "Content-Type": "text/html",
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
           "Pragma": "no-cache",
-          "Expires": "0"
-        });
+          "Expires": "0",
+          "Access-Control-Allow-Origin": "*",
+        };
+        if (acceptEncoding.includes("gzip")) {
+          headers["Content-Encoding"] = "gzip";
+          headers["Vary"] = "Accept-Encoding";
+          if (req.method === "HEAD") {
+            res.writeHead(200, headers);
+            return res.end();
+          }
+          res.writeHead(200, headers);
+          return fs.createReadStream(indexHtml).pipe(zlib.createGzip()).pipe(res);
+        }
+        if (req.method === "HEAD") {
+          res.writeHead(200, headers);
+          return res.end();
+        }
+        res.writeHead(200, headers);
         return fs.createReadStream(indexHtml).pipe(res);
       }
     }

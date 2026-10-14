@@ -783,9 +783,11 @@
         cursor: pointer;
         transition: 0.15s ease;
       }
-      .chat-form-box button:hover:not(:disabled) {
-        background: #25332e;
-        transform: scale(1.04);
+      @media (hover: hover) and (pointer: fine) {
+        .chat-form-box button:hover:not(:disabled) {
+          background: #25332e;
+          transform: scale(1.04);
+        }
       }
       .chat-form-box button:disabled {
         background: #e4e9e3;
@@ -2068,7 +2070,8 @@
       button {
         outline: none;
         user-select: none;
-        -webkit-tap-highlight-color: transparent;
+        -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
       }
       button:focus-visible {
         outline: 2px solid var(--lime) !important;
@@ -2078,6 +2081,10 @@
       @media (hover: hover) and (pointer: fine) {
         button:hover:not(:disabled) {
           transform: translateY(-1.5px);
+        }
+        .home-docs-grid > div:hover {
+          transform: translateY(-2.5px);
+          box-shadow: 0 8px 24px rgba(24, 34, 31, 0.06);
         }
       }
 
@@ -2092,11 +2099,6 @@
 
       .modal-scale-in {
         animation: scaleIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both !important;
-      }
-
-      .home-docs-grid > div:hover {
-        transform: translateY(-2.5px);
-        box-shadow: 0 8px 24px rgba(24, 34, 31, 0.06);
       }
 
       .auth-modal-close {
@@ -2917,7 +2919,7 @@
       }
 
       .chapter-content-fade {
-        animation: chapterCrossfade 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation: none !important;
       }
 
       .content-scroll {

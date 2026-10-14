@@ -18,6 +18,7 @@ import {
   Layers,
   BookOpen,
   ChevronRight,
+  ArrowRight,
   FileUp,
   Globe,
   ChevronUp,
@@ -153,29 +154,50 @@ export const MaterialTab = React.memo(function MaterialTab({
   const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
   const [mountedChapters, setMountedChapters] = React.useState<Set<number>>(() => new Set([0, 1]));
+  const [isTransitioningChapter, setIsTransitioningChapter] = React.useState(false);
+  const [targetChapterIdx, setTargetChapterIdx] = React.useState<number | null>(null);
+  const readerCardRef = React.useRef<HTMLDivElement>(null);
 
   // Reset saat dokumen berganti
   React.useEffect(() => {
     setCurrentChapterIdx(0);
     setMountedChapters(new Set([0, 1]));
+    setIsTransitioningChapter(false);
+    setTargetChapterIdx(null);
   }, [activeDocId]);
 
-  const handleSelectChapter = (idx: number | ((prev: number) => number)) => {
-    const scrollContainer = document.querySelector(".content-scroll");
-    if (scrollContainer) scrollContainer.scrollTop = 0;
-    window.scrollTo(0, 0);
+  const handleSelectChapter = (idxOrFn: number | ((prev: number) => number)) => {
+    const nextIdx = typeof idxOrFn === "function" ? idxOrFn(currentChapterIdx) : idxOrFn;
+    if (nextIdx === currentChapterIdx || nextIdx < 0 || nextIdx >= chapters.length) return;
 
-    setCurrentChapterIdx(idx);
-  };
+    setIsTransitioningChapter(true);
+    setTargetChapterIdx(nextIdx);
 
-  // Auto-scroll reset to top on chapter change
-  React.useEffect(() => {
+    // 1. Scroll mulus terarah ke kartu judul bab (bukan membanting ke paling atas dokumen)
     const scrollContainer = document.querySelector(".content-scroll");
-    if (scrollContainer) {
-      scrollContainer.scrollTop = 0;
+    const readerCard = readerCardRef.current || document.querySelector(".reader-chapter-card");
+    if (readerCard && scrollContainer) {
+      const topOffset = readerCard.getBoundingClientRect().top + scrollContainer.scrollTop - 40;
+      scrollContainer.scrollTo({ top: Math.max(0, topOffset), behavior: "smooth" });
     }
-    window.scrollTo(0, 0);
-  }, [currentChapterIdx]);
+
+    // 2. Jeda mikro fade-out 120ms
+    setTimeout(() => {
+      setCurrentChapterIdx(nextIdx);
+      setMountedChapters((prev) => {
+        const next = new Set(prev);
+        next.add(nextIdx);
+        if (nextIdx + 1 < chapters.length) next.add(nextIdx + 1);
+        return next;
+      });
+
+      // 3. Fade-in bab baru dalam 150ms
+      setTimeout(() => {
+        setIsTransitioningChapter(false);
+        setTargetChapterIdx(null);
+      }, 150);
+    }, 120);
+  };
   const [isRestructuring, setIsRestructuring] = React.useState(false);
   const [restructureNotice, setRestructureNotice] = React.useState<string | null>(null);
   const [isTailorOpen, setIsTailorOpen] = React.useState(false);
@@ -986,7 +1008,7 @@ export const MaterialTab = React.memo(function MaterialTab({
 
                           <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
                             <button
-                              disabled={currentChapterIdx === 0}
+                              disabled={currentChapterIdx === 0 || isTransitioningChapter}
                               onClick={() => handleSelectChapter((i) => Math.max(0, i - 1))}
                               style={{
                                 width: 30,
@@ -995,11 +1017,12 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 border: "1px solid #dde1da",
                                 backgroundColor: currentChapterIdx === 0 ? "#f4f6f1" : "#ffffff",
                                 color: currentChapterIdx === 0 ? "#a8b3af" : "#17201d",
-                                cursor: currentChapterIdx === 0 ? "not-allowed" : "pointer",
+                                cursor: currentChapterIdx === 0 || isTransitioningChapter ? "not-allowed" : "pointer",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 fontSize: 11,
+                                opacity: isTransitioningChapter ? 0.6 : 1,
                                 transition: "all 0.15s ease"
                               }}
                               title="Bab Sebelumnya"
@@ -1010,7 +1033,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                               {currentChapterIdx + 1}/{chapters.length}
                             </span>
                             <button
-                              disabled={currentChapterIdx >= chapters.length - 1}
+                              disabled={currentChapterIdx >= chapters.length - 1 || isTransitioningChapter}
                               onClick={() => handleSelectChapter((i) => Math.min(chapters.length - 1, i + 1))}
                               style={{
                                 width: 30,
@@ -1019,11 +1042,12 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 border: "1px solid #dde1da",
                                 backgroundColor: currentChapterIdx >= chapters.length - 1 ? "#f4f6f1" : "#ffffff",
                                 color: currentChapterIdx >= chapters.length - 1 ? "#a8b3af" : "#17201d",
-                                cursor: currentChapterIdx >= chapters.length - 1 ? "not-allowed" : "pointer",
+                                cursor: currentChapterIdx >= chapters.length - 1 || isTransitioningChapter ? "not-allowed" : "pointer",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 fontSize: 11,
+                                opacity: isTransitioningChapter ? 0.6 : 1,
                                 transition: "all 0.15s ease"
                               }}
                               title="Bab Berikutnya"
@@ -1123,7 +1147,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                         )}
 
                         {/* Chapter Reader Canvas (Full Edge-to-Edge on Mobile, Elegant Book on Desktop) */}
-                        <div className="reader-chapter-card">
+                        <div className="reader-chapter-card" ref={readerCardRef}>
                           {/* Chapter Heading Banner */}
                           <div style={{ maxWidth: 820, margin: "0 auto 28px auto", paddingBottom: 20, borderBottom: "1px solid #edf1eb" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
@@ -1161,7 +1185,16 @@ export const MaterialTab = React.memo(function MaterialTab({
                           )}
 
                           {/* Literary Reader Markdown Body */}
-                          <div className="chapters-viewport" style={{ maxWidth: 820, margin: "0 auto" }}>
+                          <div
+                            className="chapters-viewport"
+                            style={{
+                              maxWidth: 820,
+                              margin: "0 auto",
+                              opacity: isTransitioningChapter ? 0.2 : 1,
+                              transform: isTransitioningChapter ? "translateY(8px)" : "translateY(0)",
+                              transition: "opacity 0.14s cubic-bezier(0.16, 1, 0.3, 1), transform 0.14s cubic-bezier(0.16, 1, 0.3, 1)"
+                            }}
+                          >
                             {chapters.map((ch, idx) => {
                               const isMounted = mountedChapters.has(idx) || idx === currentChapterIdx;
                               if (!isMounted) return null;
@@ -1187,20 +1220,21 @@ export const MaterialTab = React.memo(function MaterialTab({
                           {/* Chapter Pagination & Completion Footer */}
                           <div style={{ maxWidth: 820, margin: "36px auto 0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 20, borderTop: "1px solid #edf1eb", flexWrap: "wrap", gap: 10 }}>
                             <button
-                              disabled={currentChapterIdx === 0}
+                              disabled={currentChapterIdx === 0 || isTransitioningChapter}
                               onClick={() => handleSelectChapter((i) => Math.max(0, i - 1))}
                               style={{
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 6,
-                                padding: "8px 16px",
-                                borderRadius: 9999,
-                                fontSize: 12,
-                                fontWeight: 700,
+                                padding: "10px 18px",
+                                borderRadius: 10,
+                                fontSize: 12.5,
+                                fontWeight: 600,
                                 border: "1px solid #dce1da",
                                 backgroundColor: currentChapterIdx === 0 ? "#f4f6f2" : "#ffffff",
                                 color: currentChapterIdx === 0 ? "#a3ada8" : "#17201d",
-                                cursor: currentChapterIdx === 0 ? "not-allowed" : "pointer",
+                                cursor: currentChapterIdx === 0 || isTransitioningChapter ? "not-allowed" : "pointer",
+                                opacity: isTransitioningChapter ? 0.6 : 1,
                                 transition: "all 0.15s ease"
                               }}
                             >
@@ -1233,6 +1267,7 @@ export const MaterialTab = React.memo(function MaterialTab({
 
                             {currentChapterIdx < chapters.length - 1 ? (
                               <button
+                                disabled={isTransitioningChapter}
                                 onClick={() => {
                                   const chId = chapters[currentChapterIdx]?.id;
                                   if (chId) setCompletedChapters((prev) => ({ ...prev, [chId]: true }));
@@ -1241,20 +1276,41 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
-                                  gap: 6,
-                                  padding: "8px 20px",
-                                  borderRadius: 9999,
-                                  fontSize: 12.5,
+                                  gap: 8,
+                                  padding: "10px 22px",
+                                  borderRadius: 10,
+                                  fontSize: 13,
                                   fontWeight: 700,
                                   border: "none",
                                   backgroundColor: "#18221f",
                                   color: "#c8f064",
-                                  cursor: "pointer",
-                                  transition: "all 0.15s ease"
+                                  cursor: isTransitioningChapter ? "wait" : "pointer",
+                                  opacity: isTransitioningChapter ? 0.85 : 1,
+                                  transform: isTransitioningChapter ? "scale(0.97)" : "none",
+                                  transition: "all 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
+                                  boxShadow: "0 2px 8px rgba(24, 34, 31, 0.12)"
                                 }}
                               >
-                                <span>Lanjut ke Bab {currentChapterIdx + 2}</span>
-                                <ChevronRight size={14} />
+                                {isTransitioningChapter ? (
+                                  <>
+                                    <span
+                                      style={{
+                                        width: 7,
+                                        height: 7,
+                                        borderRadius: "50%",
+                                        backgroundColor: "#c8f064",
+                                        display: "inline-block",
+                                        animation: "pulse 1s infinite"
+                                      }}
+                                    />
+                                    <span>Membuka Bab {(targetChapterIdx ?? currentChapterIdx + 1) + 1}...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>Lanjut ke Bab {currentChapterIdx + 2}</span>
+                                    <ArrowRight size={14} />
+                                  </>
+                                )}
                               </button>
                             ) : (
                               <button

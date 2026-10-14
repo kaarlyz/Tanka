@@ -1004,97 +1004,99 @@ export function LandingPage({
           color: #55635e;
         }
 
-        /* Bento Grid with Cursor Spotlight */
-        .bento-grid-wrapper {
-          position: relative;
-          border-radius: 24px;
-          overflow: hidden;
-          padding: 8px;
-        }
-
-        .bento-spotlight-layer {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          z-index: 0;
-          transition: background 0.08s ease;
-        }
-
-        .bento-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 26px;
-          position: relative;
-          z-index: 1;
-        }
-
-        .bento-card {
-          position: relative;
-          background: #ffffff;
-          border: 1px solid #e2e8df;
-          border-radius: 18px;
-          padding: 34px;
-          box-shadow: 0 8px 30px rgba(24, 34, 31, 0.04);
+        /* ========================================================
+           EDITORIAL FEATURE SHOWCASE (Rombak Bento Box Jadi Alur Bebas Border)
+           ======================================================== */
+        .features-flow-wrapper {
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
-          overflow: hidden;
-          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+          gap: clamp(48px, 6vh, 72px);
+          position: relative;
+        }
+
+        .feature-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-family: 'DM Mono', monospace;
+          font-size: 11.5px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #4b6623;
+          margin-bottom: 12px;
+        }
+
+        .feature-headline {
+          font-size: clamp(1.85rem, 2.5vw, 2.45rem);
+          font-weight: 800;
+          line-height: 1.2;
+          letter-spacing: -0.025em;
+          color: #18221f;
+          margin-bottom: 16px;
+        }
+
+        .feature-lead {
+          font-size: clamp(14.5px, 1.1vw, 16px);
+          line-height: 1.68;
+          color: #55635e;
+          margin-bottom: 24px;
+        }
+
+        /* Block 1: Master Spotlight Card (Tutor Nara AI 2-Col) */
+        .feature-hero-card {
+          background: #ffffff;
+          border: 1px solid rgba(226, 232, 223, 0.85);
+          border-radius: 28px;
+          padding: clamp(38px, 4.5vw, 64px);
+          box-shadow: 0 20px 60px -15px rgba(24, 34, 31, 0.05);
+          transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.25s ease;
         }
 
         @media (hover: hover) and (pointer: fine) {
-          .bento-card:hover {
-            transform: translateY(-5px);
-            border-color: #8da868 !important;
-            box-shadow: 0 22px 48px rgba(24, 34, 31, 0.1) !important;
+          .feature-hero-card:hover {
+            border-color: #8da868;
+            box-shadow: 0 28px 70px -15px rgba(24, 34, 31, 0.09);
           }
         }
 
-        .bento-span-2 {
-          grid-column: span 2;
+        .feature-hero-split {
+          display: grid;
+          grid-template-columns: 1.05fr 1.15fr;
+          gap: clamp(36px, 4.5vw, 68px);
+          align-items: center;
         }
 
-        .bento-label {
-          font-family: 'DM Mono', monospace;
-          font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 0.12em;
-          color: #4b6623;
-          text-transform: uppercase;
-          margin-bottom: 8px;
+        .feature-checklist {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
 
-        .bento-title {
-          font-size: 22px;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          color: #18221f;
-          margin-bottom: 12px;
-          line-height: 1.3;
-        }
-
-        .bento-desc {
+        .feature-check-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
           font-size: 14.5px;
-          line-height: 1.65;
-          color: #55635e;
-          margin-bottom: 22px;
+          font-weight: 600;
+          color: #18221f;
         }
 
         .mini-device-frame {
-          border-radius: 12px;
+          border-radius: 14px;
           border: 1px solid #e2e8df;
           background: #f7f9f5;
           overflow: hidden;
-          box-shadow: 0 8px 24px rgba(24, 34, 31, 0.05);
+          box-shadow: 0 20px 50px -10px rgba(24, 34, 31, 0.08);
         }
 
         .mini-device-header {
-          height: 30px;
+          height: 32px;
           background: #edf1e9;
           border-bottom: 1px solid #e2e8df;
           display: flex;
           align-items: center;
-          padding: 0 12px;
+          padding: 0 14px;
           gap: 6px;
         }
 
@@ -1105,37 +1107,47 @@ export function LandingPage({
           background: #c2cbbd;
         }
 
-        .bento-two-col {
+        /* Block 2: Dual Grid (Kuis Cerdas & YouTube) */
+        .feature-dual-grid {
           display: grid;
-          grid-template-columns: 1.15fr 1.25fr;
-          gap: 32px;
-          align-items: center;
+          grid-template-columns: 1fr 1fr;
+          gap: clamp(32px, 4vw, 48px);
         }
 
-        .chip-group {
+        .feature-card-item {
+          background: #ffffff;
+          border: 1px solid rgba(226, 232, 223, 0.85);
+          border-radius: 26px;
+          padding: clamp(36px, 4vw, 50px);
+          box-shadow: 0 16px 45px -12px rgba(24, 34, 31, 0.05);
           display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-top: 16px;
+          flex-direction: column;
+          justify-content: space-between;
+          transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.25s ease;
         }
 
-        .metric-chip {
-          font-size: 12px;
-          font-weight: 600;
-          background: #f2f6ee;
-          color: #273e1c;
-          padding: 6px 12px;
-          border-radius: 8px;
-          border: 1px solid #dce4d5;
+        @media (hover: hover) and (pointer: fine) {
+          .feature-card-item:hover {
+            transform: translateY(-4px);
+            border-color: #8da868;
+            box-shadow: 0 24px 55px rgba(24, 34, 31, 0.09);
+          }
         }
 
-        /* Interactive Quiz Card Styles */
-        .quiz-demo-box {
-          background: #f7f9f4;
-          border: 1px solid #dce3d6;
-          border-radius: 14px;
-          padding: 18px;
-          margin-top: 12px;
+        /* Seamless Interactive Quiz (Tanpa Nested Box Gray Border) */
+        .seamless-interactive-area {
+          margin-top: 18px;
+        }
+
+        .quiz-prompt-text {
+          font-size: 14.5px;
+          font-weight: 700;
+          color: #18221f;
+          line-height: 1.5;
+          padding: 12px 14px;
+          background: #f7f9f5;
+          border-radius: 12px;
+          margin-bottom: 12px;
         }
 
         .quiz-option-btn {
@@ -1143,10 +1155,10 @@ export function LandingPage({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 11px 16px;
+          padding: 12px 16px;
           margin-top: 8px;
-          border-radius: 10px;
-          border: 1px solid #dce3d6;
+          border-radius: 12px;
+          border: 1px solid #dfe5da;
           background: #ffffff;
           font-size: 14px;
           font-weight: 600;
@@ -1158,7 +1170,7 @@ export function LandingPage({
 
         .quiz-option-btn:hover {
           border-color: #8da868;
-          background: #fcfdfa;
+          background: #f8faf5;
         }
 
         .quiz-option-btn.selected-correct {
@@ -1176,8 +1188,8 @@ export function LandingPage({
 
         .quiz-feedback-banner {
           margin-top: 14px;
-          padding: 12px 14px;
-          border-radius: 10px;
+          padding: 12px 16px;
+          border-radius: 12px;
           font-size: 13px;
           line-height: 1.55;
           display: flex;
@@ -1197,40 +1209,39 @@ export function LandingPage({
           border: 1px solid #fecaca;
         }
 
-        /* YouTube Interactive Simulator */
-        .yt-demo-box {
-          background: #f8faf6;
-          border: 1px solid #e2e8df;
-          border-radius: 14px;
-          padding: 16px;
-          margin-top: 14px;
-        }
-
+        /* Seamless YouTube Area (Tanpa Nested Box Gray Border) */
         .yt-input-row {
           display: flex;
           gap: 8px;
           align-items: center;
+          margin-top: 14px;
         }
 
         .yt-input-field {
           flex: 1;
-          background: #ffffff;
+          background: #f6f8f4;
           border: 1px solid #dce2da;
-          border-radius: 8px;
-          padding: 9px 12px;
-          font-size: 12.5px;
+          border-radius: 10px;
+          padding: 11px 14px;
+          font-size: 13px;
           font-family: 'DM Mono', monospace;
           color: #45544e;
           outline: none;
+          transition: border-color 0.15s ease;
+        }
+
+        .yt-input-field:focus {
+          border-color: #8da868;
+          background: #ffffff;
         }
 
         .yt-action-btn {
           background: #18221f;
           color: #c8f064;
           border: none;
-          padding: 9px 16px;
-          border-radius: 8px;
-          font-size: 12.5px;
+          padding: 11px 18px;
+          border-radius: 10px;
+          font-size: 13px;
           font-weight: 700;
           cursor: pointer;
           white-space: nowrap;
@@ -1246,7 +1257,7 @@ export function LandingPage({
           height: 6px;
           background: #e2e8df;
           border-radius: 4px;
-          margin-top: 12px;
+          margin-top: 14px;
           overflow: hidden;
         }
 
@@ -1260,24 +1271,21 @@ export function LandingPage({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 8px 12px;
-          background: #ffffff;
+          padding: 10px 14px;
+          background: #f8faf5;
           border: 1px solid #e2e8df;
-          border-radius: 8px;
-          margin-top: 7px;
-          font-size: 12.5px;
+          border-radius: 10px;
+          margin-top: 8px;
+          font-size: 13px;
           font-weight: 600;
           color: #18221f;
         }
 
-        /* Moving Energy Flow in SVG Knowledge Graph */
-        .radial-graph-wrapper {
-          background: #f7f9f5;
-          border: 1px solid #e2e8df;
-          border-radius: 14px;
-          padding: 14px;
-          margin-top: 14px;
-          text-align: center;
+        /* Block 3: Asymmetric Duo (Peta Konsep & Offline) */
+        .feature-dual-asym {
+          display: grid;
+          grid-template-columns: 1.12fr 0.88fr;
+          gap: clamp(32px, 4vw, 48px);
         }
 
         @keyframes flowEnergy {
@@ -1299,29 +1307,22 @@ export function LandingPage({
           filter: drop-shadow(0 2px 8px rgba(141, 168, 104, 0.5));
         }
 
-        /* Offline Toggle */
-        .offline-toggle-container {
-          background: #f7f9f5;
-          border: 1px solid #dde3d8;
-          border-radius: 14px;
-          padding: 16px;
-          margin-top: 14px;
-        }
-
+        /* Seamless Offline Switch */
         .offline-toggle-btn {
           width: 100%;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: #ffffff;
+          background: #f7f9f4;
           border: 1px solid #dce2da;
-          padding: 11px 16px;
-          border-radius: 10px;
+          padding: 14px 18px;
+          border-radius: 12px;
           cursor: pointer;
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 700;
           color: #18221f;
           transition: all 0.2s ease;
+          margin-top: 14px;
         }
 
         .offline-toggle-btn:hover {
@@ -1568,8 +1569,11 @@ export function LandingPage({
             grid-template-columns: 1fr;
             gap: 36px;
           }
-          .bento-grid {
+          .feature-hero-split,
+          .feature-dual-grid,
+          .feature-dual-asym {
             grid-template-columns: 1fr;
+            gap: 28px;
           }
           .bento-span-2 {
             grid-column: span 1;
@@ -1871,72 +1875,82 @@ export function LandingPage({
           </p>
         </div>
 
-        <div className="bento-grid-wrapper" onMouseMove={handleBentoMouseMove}>
-          <div
-            className="bento-spotlight-layer"
-            style={{
-              background: `radial-gradient(700px circle at ${bentoMouse.x}px ${bentoMouse.y}px, rgba(200, 240, 100, 0.18), transparent 75%)`
-            }}
-          />
-          <div className="bento-grid">
-            {/* Card 1: 2 Kolom Lebar (Nara AI) */}
-            <div className="bento-card bento-span-2 reveal-scroll">
-              <div className="bento-two-col">
-                <div>
-                  <div className="bento-label">TUTOR PRIBADI 24 JAM</div>
-                  <h3 className="bento-title">Tanya Rumus & Konsep Sepuasnya Tanpa Rasa Malu</h3>
-                  <p className="bento-desc">
-                    Sering ragu bertanya di kelas karena takut dibilang gak nyimak? Di sini kamu bebas menanyakan rumus serumit apapun. Nara menjelaskan memakai analogi sehari-hari sampai kamu benar-benar paham.
-                  </p>
-                  <div className="chip-group">
-                    <span className="metric-chip">Analogi Sederhana</span>
-                    <span className="metric-chip">Penjelasan Bertahap</span>
-                    <span className="metric-chip">Ramah & Siap Siaga</span>
+        <div className="features-flow-wrapper">
+          {/* Track 1: Master Spotlight Card (Tutor Nara AI 2-Kolom) */}
+          <div className="feature-hero-card reveal-scroll">
+            <div className="feature-hero-split">
+              <div>
+                <span className="feature-eyebrow">
+                  <Bot size={14} color="#4b6623" />
+                  <span>01 // TUTOR PRIBADI 24 JAM</span>
+                </span>
+                <h3 className="feature-headline">Tanya Rumus & Konsep Sepuasnya Tanpa Rasa Malu</h3>
+                <p className="feature-lead">
+                  Sering segan bertanya di kelas karena takut dikira gak nyimak? Di sini kamu bebas menanyakan konsep serumit apapun. Nara menjelaskan memakai analogi sehari-hari sampai kamu benar-benar paham.
+                </p>
+                <div className="feature-checklist">
+                  <div className="feature-check-item">
+                    <CheckCircle2 size={17} color="#4b6623" />
+                    <span>Analogi sederhana dari kejadian sehari-hari</span>
                   </div>
-                </div>
-                <div className="mini-device-frame">
-                  <div className="mini-device-header">
-                    <span className="mini-device-dot" />
-                    <span className="mini-device-dot" />
-                    <span className="mini-device-dot" />
-                    <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#60706a", marginLeft: 6 }}>
-                      tanya-nara.ai • tutor pribadi
-                    </span>
+                  <div className="feature-check-item">
+                    <CheckCircle2 size={17} color="#4b6623" />
+                    <span>Penurunan rumus KaTeX langkah demi langkah</span>
                   </div>
-                  <img
-                    src="/assets/landing/bento-nara.png"
-                    alt="Tanya Nara AI Tutor Pribadi"
-                    className="mockup-img"
-                    loading="eager"
-                  />
+                  <div className="feature-check-item">
+                    <CheckCircle2 size={17} color="#4b6623" />
+                    <span>Respon sabar dan siap mendampingi 24 jam</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Card 2: 1 Kolom (Interactive Atomic Quiz) */}
-            <div className="bento-card reveal-scroll delay-1">
+              <div className="mini-device-frame">
+                <div className="mini-device-header">
+                  <span className="mini-device-dot" />
+                  <span className="mini-device-dot" />
+                  <span className="mini-device-dot" />
+                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#60706a", marginLeft: 6 }}>
+                    tanya-nara.ai • tutor pribadi
+                  </span>
+                </div>
+                <img
+                  src="/assets/landing/bento-nara.png"
+                  alt="Tanya Nara AI Tutor Pribadi"
+                  className="mockup-img"
+                  loading="eager"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Track 2: The Interactive Playground Duo (Kuis Cerdas & YouTube) */}
+          <div className="feature-dual-grid">
+            {/* Card A: Kuis Cerdas */}
+            <div className="feature-card-item reveal-scroll delay-1">
               <div>
-                <div className="bento-label">LATIHAN TERARAH</div>
-                <h3 className="bento-title">Kuis Cerdas: Uji Logika, Bukan Tebak-Tebakan</h3>
-                <p className="bento-desc">
+                <span className="feature-eyebrow">
+                  <Sparkles size={13} color="#4b6623" />
+                  <span>02 // LATIHAN TERARAH</span>
+                </span>
+                <h3 className="feature-headline" style={{ fontSize: "clamp(1.5rem, 2vw, 1.85rem)" }}>
+                  Kuis Cerdas: Uji Logika & Catat Bank Salah
+                </h3>
+                <p className="feature-lead" style={{ marginBottom: 14 }}>
                   Coba langsung kuis interaktif di bawah. Soal dirancang untuk menguji pemahaman intimu tanpa jebakan ngawur:
                 </p>
 
-                {/* Interactive Quiz Box */}
-                <div className="quiz-demo-box">
-                  <div style={{ fontSize: 11.5, fontFamily: "'DM Mono', monospace", color: "#60706a", marginBottom: 6 }}>
-                    SOAL LATIHAN INTERAKTIF:
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#18221f", lineHeight: 1.45 }}>
+                {/* Seamless Interactive Quiz */}
+                <div className="seamless-interactive-area">
+                  <div className="quiz-prompt-text">
                     <MathView text="Jika himpunan $A = \{2, 4, 6\}$ dan $B = \{4, 6, 8\}$, maka anggota $A \cap B$ adalah..." />
                   </div>
 
-                  <div style={{ marginTop: 10 }}>
+                  <div>
                     <button
                       className={`quiz-option-btn ${quizSelected === "A" ? "selected-wrong" : ""}`}
                       onClick={() => setQuizSelected("A")}
                     >
-                      <span>[A] <MathView text="$\\{2, 8\\}$" /></span>
+                      <span>[A] <MathView text="$\{2, 8\}$" /></span>
                       {quizSelected === "A" && <X size={15} color="#dc2626" />}
                     </button>
 
@@ -1944,7 +1958,7 @@ export function LandingPage({
                       className={`quiz-option-btn ${quizSelected === "B" ? "selected-correct" : ""}`}
                       onClick={() => setQuizSelected("B")}
                     >
-                      <span>[B] <MathView text="$\\{4, 6\\}$" /></span>
+                      <span>[B] <MathView text="$\{4, 6\}$" /></span>
                       {quizSelected === "B" && <Check size={15} color="#15803d" />}
                     </button>
 
@@ -1952,7 +1966,7 @@ export function LandingPage({
                       className={`quiz-option-btn ${quizSelected === "C" ? "selected-wrong" : ""}`}
                       onClick={() => setQuizSelected("C")}
                     >
-                      <span>[C] <MathView text="$\\{2, 4, 6, 8\\}$" /></span>
+                      <span>[C] <MathView text="$\{2, 4, 6, 8\}$" /></span>
                       {quizSelected === "C" && <X size={15} color="#dc2626" />}
                     </button>
                   </div>
@@ -1996,23 +2010,32 @@ export function LandingPage({
                 </div>
               </div>
 
-              <div className="chip-group" style={{ marginTop: 20 }}>
-                <span className="metric-chip">Pembahasan Lengkap</span>
-                <span className="metric-chip">Otomatis Catat Bank Salah</span>
+              <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#4b6623", background: "rgba(200, 240, 100, 0.22)", padding: "4px 10px", borderRadius: 6 }}>
+                  ✓ Otomatis Catat Bank Salah
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#60706a", background: "#f2f5ef", padding: "4px 10px", borderRadius: 6 }}>
+                  Penjelasan Step-by-Step
+                </span>
               </div>
             </div>
 
-            {/* Card 3: 1 Kolom (Interactive YouTube to Summary) */}
-            <div className="bento-card reveal-scroll delay-2">
+            {/* Card B: YouTube Summarizer */}
+            <div className="feature-card-item reveal-scroll delay-2">
               <div>
-                <div className="bento-label">RINGKASAN CEPAT</div>
-                <h3 className="bento-title">Video 2 Jam Dirangkum Jadi Bacaan 3 Menit</h3>
-                <p className="bento-desc">
-                  Cukup tempel tautan video YouTube. Tanka otomatis merapikannya menjadi modul bab siap baca:
+                <span className="feature-eyebrow">
+                  <Zap size={13} color="#4b6623" />
+                  <span>03 // RANGKUM CEPAT</span>
+                </span>
+                <h3 className="feature-headline" style={{ fontSize: "clamp(1.5rem, 2vw, 1.85rem)" }}>
+                  Video 2 Jam Dipotong Jadi Modul 3 Menit
+                </h3>
+                <p className="feature-lead" style={{ marginBottom: 14 }}>
+                  Cukup tempel tautan video kuliah atau materi YouTube. Tanka otomatis merapikannya menjadi modul bab siap baca:
                 </p>
 
-                {/* YouTube Demo Interactive Box */}
-                <div className="yt-demo-box">
+                {/* Seamless YouTube Input & Simulator */}
+                <div className="seamless-interactive-area">
                   <div className="yt-input-row">
                     <input
                       type="text"
@@ -2043,7 +2066,7 @@ export function LandingPage({
                         <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>3 mnt baca</span>
                       </div>
                       <div className="yt-chapter-pill">
-                        <span>Bab 3: Aturan Rantai & Aplikasi Nilai Maksimum</span>
+                        <span>Bab 3: Aturan Rantai & Nilai Maksimum</span>
                         <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>4 mnt baca</span>
                       </div>
                     </div>
@@ -2051,31 +2074,41 @@ export function LandingPage({
                 </div>
               </div>
 
-              <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
-                <span className="metric-chip">Auto-Chapter</span>
-                <span className="metric-chip">Rangkuman Rumus</span>
-                <span className="metric-chip">Buku Saku Digital</span>
+              <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#4b6623", background: "rgba(200, 240, 100, 0.22)", padding: "4px 10px", borderRadius: 6 }}>
+                  ✓ Ekstraksi Bab Otomatis
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#60706a", background: "#f2f5ef", padding: "4px 10px", borderRadius: 6 }}>
+                  Transkrip & Rumus Rapi
+                </span>
               </div>
             </div>
+          </div>
 
-            {/* Card 4: 1 Kolom (Radial Knowledge Graph) */}
-            <div className="bento-card reveal-scroll delay-1">
+          {/* Track 3: The Knowledge Freedom Duo (Peta Konsep & Offline) */}
+          <div className="feature-dual-asym">
+            {/* Card C: Peta Konsep */}
+            <div className="feature-card-item reveal-scroll delay-1">
               <div>
-                <div className="bento-label">PETA BESAR MATERI</div>
-                <h3 className="bento-title">Petakan Hubungan Antar-Konsep Sebelum Ujian</h3>
-                <p className="bento-desc">
+                <span className="feature-eyebrow">
+                  <Lock size={13} color="#4b6623" />
+                  <span>04 // PETA BESAR MATERI</span>
+                </span>
+                <h3 className="feature-headline" style={{ fontSize: "clamp(1.5rem, 2vw, 1.85rem)" }}>
+                  Petakan Hubungan Antar-Konsep Sebelum Ujian
+                </h3>
+                <p className="feature-lead" style={{ marginBottom: 14 }}>
                   Lihat keterkaitan materi secara menyeluruh agar tidak ada mata rantai ilmu yang bolong. Klik salah satu simpul untuk melihat hubungannya:
                 </p>
 
-                {/* Radial Graph Visualizer */}
-                <div className="radial-graph-wrapper">
+                {/* Seamless SVG Graph */}
+                <div style={{ background: "#f8faf5", borderRadius: 14, padding: 14, marginTop: 12, textAlign: "center" }}>
                   <svg width="100%" height="150" viewBox="0 0 320 150">
                     <path d="M 160 75 Q 110 35 60 40" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
                     <path d="M 160 75 Q 210 35 260 40" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
                     <path d="M 160 75 Q 110 115 60 115" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
                     <path d="M 160 75 Q 210 115 260 115" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
 
-                    {/* Outer Nodes */}
                     <g className="graph-node" onClick={() => setActiveGraphNode("Limit Aljabar")}>
                       <circle cx="60" cy="40" r="14" fill={activeGraphNode === "Limit Aljabar" ? "#18221f" : "#ffffff"} stroke="#8da868" strokeWidth="2" />
                       <text x="60" y="44" fontSize="9" textAnchor="middle" fill={activeGraphNode === "Limit Aljabar" ? "#c8f064" : "#18221f"} fontWeight="700">Limit</text>
@@ -2096,7 +2129,6 @@ export function LandingPage({
                       <text x="260" y="119" fontSize="9" textAnchor="middle" fill={activeGraphNode === "Optimasi Nilai" ? "#c8f064" : "#18221f"} fontWeight="700">Optimasi</text>
                     </g>
 
-                    {/* Central Node */}
                     <g className="graph-node" onClick={() => setActiveGraphNode("Kalkulus Dasar")}>
                       <circle cx="160" cy="75" r="22" fill="#18221f" stroke="#c8f064" strokeWidth="2.5" />
                       <text x="160" y="79" fontSize="10" textAnchor="middle" fill="#c8f064" fontWeight="800">Kalkulus</text>
@@ -2116,24 +2148,32 @@ export function LandingPage({
                 </div>
               </div>
 
-              <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
-                <span className="metric-chip">Peta Visual</span>
-                <span className="metric-chip">Kaitkan Prasyarat</span>
-                <span className="metric-chip">Ingatan Jangka Panjang</span>
+              <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#4b6623", background: "rgba(200, 240, 100, 0.22)", padding: "4px 10px", borderRadius: 6 }}>
+                  ✓ Peta Visual Lengkap
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#60706a", background: "#f2f5ef", padding: "4px 10px", borderRadius: 6 }}>
+                  Ingatan Jangka Panjang
+                </span>
               </div>
             </div>
 
-            {/* Card 5: 1 Kolom (Interactive Offline) */}
-            <div className="bento-card reveal-scroll delay-2">
+            {/* Card D: Mode Offline */}
+            <div className="feature-card-item reveal-scroll delay-2">
               <div>
-                <div className="bento-label">HEMAT & MANDIRI</div>
-                <h3 className="bento-title">Tetap Bisa Belajar Walau Kuota Habis</h3>
-                <p className="bento-desc">
+                <span className="feature-eyebrow">
+                  <WifiOff size={13} color="#4b6623" />
+                  <span>05 // HEMAT & MANDIRI</span>
+                </span>
+                <h3 className="feature-headline" style={{ fontSize: "clamp(1.5rem, 2vw, 1.85rem)" }}>
+                  Tetap Bisa Belajar Walau Kuota Habis
+                </h3>
+                <p className="feature-lead" style={{ marginBottom: 14 }}>
                   Semua materi dan catatanmu tersimpan di HP/laptopmu sendiri. Bebas dibuka di mana saja tanpa pusing sinyal internet putus-nyambung:
                 </p>
 
-                {/* Interactive Offline Switch */}
-                <div className="offline-toggle-container">
+                {/* Seamless Offline Switch */}
+                <div className="seamless-interactive-area">
                   <button
                     className={`offline-toggle-btn ${isOfflineMode ? "offline-active" : ""}`}
                     onClick={() => setIsOfflineMode(!isOfflineMode)}
@@ -2147,7 +2187,7 @@ export function LandingPage({
                     </span>
                   </button>
 
-                  <div style={{ marginTop: 12, fontSize: 13, lineHeight: 1.55, color: "#45544e" }}>
+                  <div style={{ marginTop: 14, fontSize: 13, lineHeight: 1.55, color: "#45544e" }}>
                     {isOfflineMode ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <CheckCircle2 size={16} color="#4b6623" />
@@ -2163,18 +2203,20 @@ export function LandingPage({
                 </div>
               </div>
 
-              <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
-                <span className="metric-chip">Bisa Offline</span>
-                <span className="metric-chip">Ringan di HP</span>
-                <span className="metric-chip">Nol Iklan Mengganggu</span>
+              <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#4b6623", background: "rgba(200, 240, 100, 0.22)", padding: "4px 10px", borderRadius: 6 }}>
+                  ✓ 100% Bebas Iklan
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#60706a", background: "#f2f5ef", padding: "4px 10px", borderRadius: 6 }}>
+                  Data Privat di Perangkat
+                </span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Dual Side-by-Side Visual Battle: Cara Lama vs Cara Tanka (Rhythm Header Kiri) */}
-      <section id="perbandingan" className="landing-section">
+<section id="perbandingan" className="landing-section">
         <div className="section-header-left reveal-scroll">
           <span className="section-kicker">PERBANDINGAN NYATA</span>
           <h2 className="section-title">Tinggalkan Frustrasi Belajar Cara Lama</h2>

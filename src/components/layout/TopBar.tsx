@@ -14,7 +14,8 @@ import {
   Cpu,
   User,
   LogOut,
-  UserPlus
+  UserPlus,
+  Globe
 } from "lucide-react";
 import { ActiveTab, FormulaItem, UserAccount } from "../../types";
 
@@ -49,6 +50,7 @@ export interface TopBarProps {
   onOpenAuthModal?: (mode?: "login" | "register") => void;
   onLogout?: () => void;
   onOpenProfileModal?: () => void;
+  setActiveTab?: (tab: ActiveTab) => void;
 }
 
 export function formatModelName(modelId: string): string {
@@ -105,7 +107,8 @@ export function TopBar({
   currentUser,
   onOpenAuthModal,
   onLogout,
-  onOpenProfileModal
+  onOpenProfileModal,
+  setActiveTab
 }: TopBarProps) {
   const timerMins = Math.floor(timerSeconds / 60);
   const timerSecs = timerSeconds % 60;
@@ -471,6 +474,30 @@ export function TopBar({
         )}
 
         {/* Desktop Extras */}
+        {setActiveTab && (
+          <button
+            onClick={() => setActiveTab("landing")}
+            className="desktop-only"
+            title="Buka Halaman Depan / Landing Page"
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1px solid #dce1da",
+              color: "#17201d",
+              borderRadius: 8,
+              padding: "6px 11px",
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 5
+            }}
+          >
+            <Globe size={13} color="#4b6623" />
+            <span>Landing</span>
+          </button>
+        )}
+
         <button
           onClick={fetchOrExtractFormulas}
           className="desktop-only"

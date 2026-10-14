@@ -102,6 +102,7 @@ export interface FormulaItem {
 }
 
 export type ActiveTab =
+  | "landing"
   | "home"
   | "material"
   | "quiz"

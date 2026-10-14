@@ -32,6 +32,7 @@ const TimerAlarmModal = lazy(() => import("./components/modals/TimerAlarmModal")
 const AuthModal = lazy(() => import("./components/modals/AuthModal").then(m => ({ default: m.AuthModal })));
 const ProfileModal = lazy(() => import("./components/modals/ProfileModal").then(m => ({ default: m.ProfileModal })));
 const RoomModal = lazy(() => import("./components/modals/RoomModal").then(m => ({ default: m.RoomModal })));
+const LandingPage = lazy(() => import("./components/landing/LandingPage"));
 
 function TabFallbackSkeleton() {
   return (
@@ -70,7 +71,7 @@ export default function App() {
   }, []);
 
   // 2. Clean URL Routing (Native Path Routing, Zero Hash)
-  const { activeTab, setActiveTab } = useAppRoute("home");
+  const { activeTab, setActiveTab } = useAppRoute("landing");
 
   // 2.5 User Account Authentication
   const {
@@ -655,7 +656,7 @@ export default function App() {
   const activeDoc = useMemo(() => documents.find((d) => d.id === activeDocId), [documents, activeDocId]);
 
   return (
-    <div className="app-shell" style={{ display: "flex", height: "100%", minHeight: "100%", maxHeight: "100%", backgroundColor: "#eef1eb", color: "#17201d", overflow: "hidden" }}>
+    <>
       {/* Toast Notification */}
       {statusNotice && (
         <div
@@ -745,7 +746,17 @@ export default function App() {
         />
       </Suspense>
 
-      {/* Backdrop overlay for mobile drawer */}
+      {activeTab === "landing" ? (
+        <Suspense fallback={<div style={{ display: "flex", height: "100%", width: "100%", alignItems: "center", justifyContent: "center", background: "#fcfdfa", color: "#5f6b66", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>Memuat Tanka...</div>}>
+          <LandingPage
+            onLaunchApp={() => setActiveTab("home")}
+            onOpenAuth={handleOpenAuth}
+            currentUser={currentUser}
+          />
+        </Suspense>
+      ) : (
+        <div className="app-shell" style={{ display: "flex", height: "100%", minHeight: "100%", maxHeight: "100%", backgroundColor: "#eef1eb", color: "#17201d", overflow: "hidden" }}>
+          {/* Backdrop overlay for mobile drawer */}
       {isMobileDrawerOpen && (
         <div
           className="drawer-overlay"
@@ -832,6 +843,7 @@ export default function App() {
             setProfileModalTab("profile");
             setIsProfileModalOpen(true);
           }}
+          setActiveTab={setActiveTab}
         />
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative", minHeight: 0, height: "100%" }}>
@@ -1248,6 +1260,8 @@ export default function App() {
           }
         }}
       />
-    </div>
+        </div>
+      )}
+    </>
   );
 }

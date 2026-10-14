@@ -142,11 +142,44 @@ export function Sidebar({
       >
         <div className="sidebar-scroll-viewport">
           {/* Brand Row */}
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 12, flexShrink: 0 }}>
-            <div className="brand-box" style={{ padding: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexShrink: 0 }}>
+            <div
+              className="brand-box"
+              style={{ padding: 0, cursor: "pointer" }}
+              onClick={() => {
+                setActiveTab("landing");
+                setIsMobileDrawerOpen(false);
+              }}
+              title="Ke Halaman Depan (Landing Page)"
+            >
               <div className="brand-symbol-box">t</div>
               <span>tanka.</span>
             </div>
+            <button
+              onClick={() => {
+                setActiveTab("landing");
+                setIsMobileDrawerOpen(false);
+              }}
+              className="landing-shortcut-btn"
+              style={{
+                fontSize: 10,
+                fontFamily: "'DM Mono', monospace",
+                fontWeight: 600,
+                color: "#95a39d",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: 4,
+                padding: "3px 7px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4
+              }}
+              title="Buka Landing Page"
+            >
+              <span>web</span>
+              <span style={{ color: "#c8f064" }}>↗</span>
+            </button>
           </div>
 
           {/* Main Navigation Links with Side Mark Chips */}

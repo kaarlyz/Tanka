@@ -97,6 +97,16 @@ export function LandingPage({
   // Bento Offline state
   const [isOfflineMode, setIsOfflineMode] = useState(false);
 
+  // Cursor Spotlight State for Bento Section
+  const [bentoMouse, setBentoMouse] = useState({ x: 300, y: 200 });
+  const handleBentoMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setBentoMouse({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
   // Scroll Reveal Observer
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +120,7 @@ export function LandingPage({
         });
       },
       {
-        threshold: 0.12,
+        threshold: 0.1,
         rootMargin: "0px 0px -40px 0px"
       }
     );
@@ -179,9 +189,9 @@ export function LandingPage({
           -webkit-overflow-scrolling: touch;
           background-color: #fbfdf9;
           background-image: 
-            radial-gradient(circle at 50% 0%, rgba(200, 240, 100, 0.12) 0%, transparent 60%),
-            linear-gradient(to right, rgba(24, 34, 31, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(24, 34, 31, 0.03) 1px, transparent 1px);
+            radial-gradient(circle at 50% 0%, rgba(200, 240, 100, 0.14) 0%, transparent 60%),
+            linear-gradient(to right, rgba(24, 34, 31, 0.035) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(24, 34, 31, 0.035) 1px, transparent 1px);
           background-size: 100% 100%, 36px 36px, 36px 36px;
           color: #18221f;
           font-family: 'Plus Jakarta Sans', 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -195,10 +205,10 @@ export function LandingPage({
           top: 80px;
           left: 50%;
           transform: translateX(-50%);
-          width: 720px;
-          height: 420px;
-          background: radial-gradient(ellipse at center, rgba(200, 240, 100, 0.22) 0%, rgba(75, 102, 35, 0.08) 50%, transparent 75%);
-          filter: blur(70px);
+          width: 760px;
+          height: 440px;
+          background: radial-gradient(ellipse at center, rgba(200, 240, 100, 0.26) 0%, rgba(75, 102, 35, 0.1) 50%, transparent 75%);
+          filter: blur(75px);
           pointer-events: none;
           z-index: 0;
           animation: orbDrift 9s ease-in-out infinite alternate;
@@ -208,10 +218,10 @@ export function LandingPage({
           position: absolute;
           top: 1400px;
           right: 2%;
-          width: 620px;
-          height: 400px;
-          background: radial-gradient(ellipse at center, rgba(168, 196, 138, 0.18) 0%, rgba(24, 34, 31, 0.05) 55%, transparent 75%);
-          filter: blur(80px);
+          width: 660px;
+          height: 420px;
+          background: radial-gradient(ellipse at center, rgba(168, 196, 138, 0.22) 0%, rgba(24, 34, 31, 0.06) 55%, transparent 75%);
+          filter: blur(85px);
           pointer-events: none;
           z-index: 0;
           animation: orbDriftReverse 11s ease-in-out infinite alternate;
@@ -219,19 +229,19 @@ export function LandingPage({
 
         @keyframes orbDrift {
           0% { transform: translateX(-50%) translateY(0) scale(1); }
-          100% { transform: translateX(-47%) translateY(32px) scale(1.08); }
+          100% { transform: translateX(-47%) translateY(34px) scale(1.1); }
         }
 
         @keyframes orbDriftReverse {
           0% { transform: translateY(0) scale(1); }
-          100% { transform: translateY(-36px) scale(1.06); }
+          100% { transform: translateY(-38px) scale(1.08); }
         }
 
-        /* Scroll Reveal Utility */
+        /* Dynamic Scroll Reveal */
         .reveal-scroll {
           opacity: 0;
-          transform: translateY(32px);
-          transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+          transform: translateY(34px);
+          transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
           will-change: opacity, transform;
         }
 
@@ -240,9 +250,9 @@ export function LandingPage({
           transform: translateY(0);
         }
 
-        .delay-1 { transition-delay: 0.1s; }
-        .delay-2 { transition-delay: 0.2s; }
-        .delay-3 { transition-delay: 0.3s; }
+        .delay-1 { transition-delay: 0.12s; }
+        .delay-2 { transition-delay: 0.24s; }
+        .delay-3 { transition-delay: 0.36s; }
 
         /* Top Navigation */
         .landing-nav {
@@ -375,7 +385,7 @@ export function LandingPage({
           gap: 8px;
           padding: 6px 16px;
           border-radius: 999px;
-          background: rgba(200, 240, 100, 0.2);
+          background: rgba(200, 240, 100, 0.22);
           color: #273e1c;
           font-size: 12.5px;
           font-weight: 700;
@@ -578,6 +588,12 @@ export function LandingPage({
           gap: 16px;
         }
 
+        @keyframes bubblePop {
+          0% { transform: scale(0.94) translateY(6px); opacity: 0; }
+          70% { transform: scale(1.02) translateY(-2px); opacity: 1; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
         .sim-bubble-user {
           align-self: flex-end;
           background: #18221f;
@@ -588,6 +604,7 @@ export function LandingPage({
           max-width: 85%;
           line-height: 1.5;
           font-weight: 500;
+          animation: bubblePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
 
         .sim-bubble-ai {
@@ -601,6 +618,7 @@ export function LandingPage({
           line-height: 1.65;
           max-width: 94%;
           box-shadow: 0 4px 14px rgba(24, 34, 31, 0.03);
+          animation: bubblePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
 
         .sim-typing-indicator {
@@ -690,15 +708,105 @@ export function LandingPage({
           box-shadow: 0 4px 12px rgba(75, 102, 35, 0.22);
         }
 
-        /* Mockup Window */
-        .mockup-window {
+        /* Hero Device Mockup Container & 3D Floating Satellite Badges */
+        .hero-mockup-container {
+          position: relative;
           max-width: 1100px;
           margin: 0 auto;
-          border-radius: 16px;
+          perspective: 1400px;
+        }
+
+        @keyframes floatSlow1 {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-11px) rotate(-1.5deg); }
+        }
+
+        @keyframes floatSlow2 {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-13px) rotate(1.5deg); }
+        }
+
+        @keyframes floatSlow3 {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-9px); }
+        }
+
+        .hero-float-badge {
+          position: absolute;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border: 1px solid rgba(200, 240, 100, 0.4);
+          border-radius: 14px;
+          padding: 12px 18px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          box-shadow: 0 20px 42px rgba(24, 34, 31, 0.12);
+          z-index: 10;
+          text-align: left;
+          pointer-events: none;
+        }
+
+        .float-top-left {
+          top: -24px;
+          left: -16px;
+          animation: floatSlow1 5.5s ease-in-out infinite;
+        }
+
+        .float-top-right {
+          top: -18px;
+          right: -16px;
+          animation: floatSlow2 6.5s ease-in-out infinite 0.8s;
+        }
+
+        .float-mid-left {
+          top: 240px;
+          left: -28px;
+          animation: floatSlow3 6s ease-in-out infinite 1.4s;
+        }
+
+        .float-badge-icon {
+          font-size: 20px;
+          line-height: 1;
+        }
+
+        .float-badge-text strong {
+          display: block;
+          font-size: 13px;
+          font-weight: 800;
+          color: #18221f;
+        }
+
+        .float-badge-text small {
+          display: block;
+          font-size: 11px;
+          color: #60706a;
+        }
+
+        @media (max-width: 860px) {
+          .hero-float-badge {
+            display: none !important;
+          }
+        }
+
+        /* Mockup Window with Pronounced 3D Perspective Tilt */
+        .mockup-window {
+          border-radius: 18px;
           border: 1px solid #dce2da;
           background: #ffffff;
-          box-shadow: 0 28px 70px -14px rgba(24, 34, 31, 0.14), 0 0 0 1px rgba(24, 34, 31, 0.03);
+          box-shadow: 0 40px 100px -20px rgba(24, 34, 31, 0.28), 0 0 0 1px rgba(24, 34, 31, 0.04);
           overflow: hidden;
+          transform: rotateX(12deg) rotateY(-3deg) scale(0.97);
+          transform-style: preserve-3d;
+          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .hero-mockup-container:hover .mockup-window {
+            transform: rotateX(0deg) rotateY(0deg) scale(1);
+            box-shadow: 0 45px 110px -18px rgba(24, 34, 31, 0.32);
+          }
         }
 
         .mockup-chrome {
@@ -740,6 +848,64 @@ export function LandingPage({
           width: 100%;
           height: auto;
           display: block;
+        }
+
+        /* Animated Marquee Ticker */
+        .landing-marquee-wrapper {
+          overflow: hidden;
+          padding: 32px 0 12px;
+          user-select: none;
+          max-width: 100%;
+          position: relative;
+        }
+
+        .landing-marquee-wrapper::before,
+        .landing-marquee-wrapper::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 100px;
+          z-index: 2;
+          pointer-events: none;
+        }
+
+        .landing-marquee-wrapper::before {
+          left: 0;
+          background: linear-gradient(to right, #fbfdf9 20%, transparent);
+        }
+
+        .landing-marquee-wrapper::after {
+          right: 0;
+          background: linear-gradient(to left, #fbfdf9 20%, transparent);
+        }
+
+        .landing-marquee-track {
+          display: flex;
+          width: max-content;
+          animation: marqueeLoop 28s linear infinite;
+        }
+
+        @keyframes marqueeLoop {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+
+        .landing-marquee-content {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          padding-right: 24px;
+          font-family: 'DM Mono', monospace;
+          font-size: 12px;
+          font-weight: 700;
+          color: #4b6623;
+          letter-spacing: 0.08em;
+        }
+
+        .marquee-dot {
+          color: #a8be98;
+          font-size: 14px;
         }
 
         /* Generic Section Elements */
@@ -784,11 +950,28 @@ export function LandingPage({
           color: #55635e;
         }
 
-        /* Bento Grid */
+        /* Bento Grid with Cursor Spotlight */
+        .bento-grid-wrapper {
+          position: relative;
+          border-radius: 24px;
+          overflow: hidden;
+          padding: 8px;
+        }
+
+        .bento-spotlight-layer {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: 0;
+          transition: background 0.08s ease;
+        }
+
         .bento-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 26px;
+          position: relative;
+          z-index: 1;
         }
 
         .bento-card {
@@ -1033,7 +1216,7 @@ export function LandingPage({
           color: #18221f;
         }
 
-        /* Radial Knowledge Graph Canvas */
+        /* Moving Energy Flow in SVG Knowledge Graph */
         .radial-graph-wrapper {
           background: #f7f9f5;
           border: 1px solid #e2e8df;
@@ -1043,13 +1226,14 @@ export function LandingPage({
           text-align: center;
         }
 
-        @keyframes linkPulse {
-          0%, 100% { opacity: 0.45; stroke-width: 1.5; }
-          50% { opacity: 0.95; stroke-width: 2.2; }
+        @keyframes flowEnergy {
+          from { stroke-dashoffset: 24; }
+          to { stroke-dashoffset: 0; }
         }
 
         .graph-link-pulse {
-          animation: linkPulse 2.5s infinite ease-in-out;
+          stroke-dasharray: 6 6;
+          animation: flowEnergy 1.2s linear infinite;
         }
 
         .graph-node {
@@ -1058,7 +1242,7 @@ export function LandingPage({
         }
 
         .graph-node:hover {
-          filter: drop-shadow(0 2px 6px rgba(141, 168, 104, 0.4));
+          filter: drop-shadow(0 2px 8px rgba(141, 168, 104, 0.5));
         }
 
         /* Offline Toggle */
@@ -1096,7 +1280,7 @@ export function LandingPage({
           border-color: #18221f;
         }
 
-        /* Side-By-Side Visual Battle Comparison (Realitas Belajar) */
+        /* Side-By-Side Visual Battle Comparison with Rotating Glow Beam */
         .comparison-dual-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -1117,11 +1301,29 @@ export function LandingPage({
           border: 1px solid #f3d8cc;
         }
 
+        @keyframes rotateBorderBeam {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
         .battle-card.tanka-way {
           background: #f4faee;
-          border: 1px solid #c8e89f;
-          box-shadow: 0 16px 44px rgba(75, 102, 35, 0.1);
+          border: 1.5px solid transparent;
           position: relative;
+          box-shadow: 0 16px 44px rgba(75, 102, 35, 0.12);
+        }
+
+        .battle-card.tanka-way::before {
+          content: "";
+          position: absolute;
+          inset: -1.5px;
+          border-radius: 21px;
+          background: linear-gradient(135deg, #c8f064, #4b6623, #c8f064, #7ca836);
+          background-size: 300% 300%;
+          animation: rotateBorderBeam 6s linear infinite;
+          z-index: -1;
+          opacity: 0.85;
         }
 
         .battle-header-pill {
@@ -1521,28 +1723,77 @@ export function LandingPage({
           </div>
         </div>
 
-        {/* Hero Device Mockup Frame */}
-        <div className="mockup-window reveal-scroll">
-          <div className="mockup-chrome">
-            <div className="mockup-dots">
-              <span className="mockup-dot" style={{ background: "#ff5f56" }} />
-              <span className="mockup-dot" style={{ background: "#ffbd2e" }} />
-              <span className="mockup-dot" style={{ background: "#27c93f" }} />
+        {/* Hero Device Mockup Container with 3D Floating Satellite Badges */}
+        <div className="hero-mockup-container reveal-scroll">
+          {/* Floating Badges */}
+          <div className="hero-float-badge float-top-left">
+            <span className="float-badge-icon">✨</span>
+            <div className="float-badge-text">
+              <strong>Bab Santai 3 Menit</strong>
+              <small>Otomatis dipotong ringkas</small>
             </div>
-            <div className="mockup-url-pill">
-              <Lock size={11} />
-              <span>tanka.app/modul/operasi-himpunan</span>
-            </div>
-            <div style={{ width: 48 }} />
           </div>
-          <img
-            src="/assets/landing/hero-reader.png"
-            alt="Tanka Book Reader & Chapter Strip"
-            className="mockup-img"
-            loading="eager"
-          />
+
+          <div className="hero-float-badge float-top-right">
+            <span className="float-badge-icon">⚡</span>
+            <div className="float-badge-text">
+              <strong>Nara AI Siaga 24 Jam</strong>
+              <small>Tanya rumus tanpa batas</small>
+            </div>
+          </div>
+
+          <div className="hero-float-badge float-mid-left">
+            <span className="float-badge-icon">🛡️</span>
+            <div className="float-badge-text">
+              <strong>Bisa Dibuka Offline</strong>
+              <small>Data tersimpan di perangkat</small>
+            </div>
+          </div>
+
+          <div className="mockup-window">
+            <div className="mockup-chrome">
+              <div className="mockup-dots">
+                <span className="mockup-dot" style={{ background: "#ff5f56" }} />
+                <span className="mockup-dot" style={{ background: "#ffbd2e" }} />
+                <span className="mockup-dot" style={{ background: "#27c93f" }} />
+              </div>
+              <div className="mockup-url-pill">
+                <Lock size={11} />
+                <span>tanka.app/modul/operasi-himpunan</span>
+              </div>
+              <div style={{ width: 48 }} />
+            </div>
+            <img
+              src="/assets/landing/hero-reader.png"
+              alt="Tanka Book Reader & Chapter Strip"
+              className="mockup-img"
+              loading="eager"
+            />
+          </div>
         </div>
       </section>
+
+      {/* Animated Marquee Ticker */}
+      <div className="landing-marquee-wrapper reveal-scroll">
+        <div className="landing-marquee-track">
+          {[...Array(2)].map((_, trackIdx) => (
+            <div className="landing-marquee-content" key={trackIdx}>
+              <span>✨ 100% BEBAS IKLAN</span>
+              <span className="marquee-dot">•</span>
+              <span>⚡ TANYA RUMUS SEPUASNYA</span>
+              <span className="marquee-dot">•</span>
+              <span>📚 RANGKUM OTOMATIS VIDEO YOUTUBE</span>
+              <span className="marquee-dot">•</span>
+              <span>🎯 KUIS PINTAR 1 KARTU 1 FAKTA</span>
+              <span className="marquee-dot">•</span>
+              <span>📱 RINGAN DI SEMUA HP</span>
+              <span className="marquee-dot">•</span>
+              <span>🛡️ DATA PRIVAT TERSIMPAN LOKAL</span>
+              <span className="marquee-dot">•</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Bento Grid Showcase Section */}
       <section id="keunggulan" className="landing-section">
@@ -1554,178 +1805,185 @@ export function LandingPage({
           </p>
         </div>
 
-        <div className="bento-grid">
-          {/* Card 1: 2 Kolom Lebar (Nara AI) */}
-          <div className="bento-card bento-span-2 reveal-scroll">
-            <div className="bento-two-col">
-              <div>
-                <div className="bento-label">TUTOR PRIBADI 24 JAM</div>
-                <h3 className="bento-title">Tanya Rumus & Konsep Sepuasnya Tanpa Rasa Malu</h3>
-                <p className="bento-desc">
-                  Sering ragu bertanya di kelas karena takut dibilang gak nyimak? Di sini kamu bebas menanyakan rumus serumit apapun. Nara menjelaskan memakai analogi sehari-hari sampai kamu benar-benar paham.
-                </p>
-                <div className="chip-group">
-                  <span className="metric-chip">Analogi Sederhana</span>
-                  <span className="metric-chip">Penjelasan Bertahap</span>
-                  <span className="metric-chip">Ramah & Siap Siaga</span>
-                </div>
-              </div>
-              <div className="mini-device-frame">
-                <div className="mini-device-header">
-                  <span className="mini-device-dot" />
-                  <span className="mini-device-dot" />
-                  <span className="mini-device-dot" />
-                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#60706a", marginLeft: 6 }}>
-                    tanya-nara.ai • tutor pribadi
-                  </span>
-                </div>
-                <img
-                  src="/assets/landing/bento-nara.png"
-                  alt="Tanya Nara AI Tutor Pribadi"
-                  className="mockup-img"
-                  loading="eager"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: 1 Kolom (Interactive Atomic Quiz) */}
-          <div className="bento-card reveal-scroll delay-1">
-            <div>
-              <div className="bento-label">LATIHAN TERARAH</div>
-              <h3 className="bento-title">Kuis Cerdas: Uji Logika, Bukan Tebak-Tebakan</h3>
-              <p className="bento-desc">
-                Coba langsung kuis interaktif di bawah. Soal dirancang untuk menguji pemahaman intimu tanpa jebakan ngawur:
-              </p>
-
-              {/* Interactive Quiz Box */}
-              <div className="quiz-demo-box">
-                <div style={{ fontSize: 11.5, fontFamily: "'DM Mono', monospace", color: "#60706a", marginBottom: 6 }}>
-                  SOAL LATIHAN INTERAKTIF:
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#18221f", lineHeight: 1.45 }}>
-                  <MathView text="Jika himpunan $A = \{2, 4, 6\}$ dan $B = \{4, 6, 8\}$, maka anggota $A \cap B$ adalah..." />
-                </div>
-
-                <div style={{ marginTop: 10 }}>
-                  <button
-                    className={`quiz-option-btn ${quizSelected === "A" ? "selected-wrong" : ""}`}
-                    onClick={() => setQuizSelected("A")}
-                  >
-                    <span>[A] <MathView text="$\\{2, 8\\}$" /></span>
-                    {quizSelected === "A" && <X size={15} color="#dc2626" />}
-                  </button>
-
-                  <button
-                    className={`quiz-option-btn ${quizSelected === "B" ? "selected-correct" : ""}`}
-                    onClick={() => setQuizSelected("B")}
-                  >
-                    <span>[B] <MathView text="$\\{4, 6\\}$" /></span>
-                    {quizSelected === "B" && <Check size={15} color="#15803d" />}
-                  </button>
-
-                  <button
-                    className={`quiz-option-btn ${quizSelected === "C" ? "selected-wrong" : ""}`}
-                    onClick={() => setQuizSelected("C")}
-                  >
-                    <span>[C] <MathView text="$\\{2, 4, 6, 8\\}$" /></span>
-                    {quizSelected === "C" && <X size={15} color="#dc2626" />}
-                  </button>
-                </div>
-
-                {quizSelected === "B" && (
-                  <div className="quiz-feedback-banner correct">
-                    <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} />
-                    <div>
-                      <strong>✓ Jawaban Benar!</strong> Irisan adalah angka yang ada di kedua himpunan ($4$ dan $6$).
-                    </div>
+        <div className="bento-grid-wrapper" onMouseMove={handleBentoMouseMove}>
+          <div
+            className="bento-spotlight-layer"
+            style={{
+              background: `radial-gradient(700px circle at ${bentoMouse.x}px ${bentoMouse.y}px, rgba(200, 240, 100, 0.18), transparent 75%)`
+            }}
+          />
+          <div className="bento-grid">
+            {/* Card 1: 2 Kolom Lebar (Nara AI) */}
+            <div className="bento-card bento-span-2 reveal-scroll">
+              <div className="bento-two-col">
+                <div>
+                  <div className="bento-label">TUTOR PRIBADI 24 JAM</div>
+                  <h3 className="bento-title">Tanya Rumus & Konsep Sepuasnya Tanpa Rasa Malu</h3>
+                  <p className="bento-desc">
+                    Sering ragu bertanya di kelas karena takut dibilang gak nyimak? Di sini kamu bebas menanyakan rumus serumit apapun. Nara menjelaskan memakai analogi sehari-hari sampai kamu benar-benar paham.
+                  </p>
+                  <div className="chip-group">
+                    <span className="metric-chip">Analogi Sederhana</span>
+                    <span className="metric-chip">Penjelasan Bertahap</span>
+                    <span className="metric-chip">Ramah & Siap Siaga</span>
                   </div>
-                )}
-
-                {(quizSelected === "A" || quizSelected === "C") && (
-                  <div className="quiz-feedback-banner wrong">
-                    <X size={16} style={{ flexShrink: 0, marginTop: 1 }} />
-                    <div>
-                      {quizSelected === "A"
-                        ? "Kurang pas. Angka 2 tidak ada di B, dan angka 8 tidak ada di A. Irisan cuma mengambil yang sama di dua-duanya."
-                        : "Kurang pas. Itu hasil gabungan (A ∪ B), bukan irisan (A ∩ B)."}
-                      <button
-                        onClick={() => setQuizSelected(null)}
-                        style={{
-                          display: "block",
-                          marginTop: 6,
-                          background: "none",
-                          border: "none",
-                          color: "#991b1b",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          textDecoration: "underline",
-                          fontSize: 12,
-                          padding: 0
-                        }}
-                      >
-                        Coba lagi
-                      </button>
-                    </div>
+                </div>
+                <div className="mini-device-frame">
+                  <div className="mini-device-header">
+                    <span className="mini-device-dot" />
+                    <span className="mini-device-dot" />
+                    <span className="mini-device-dot" />
+                    <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#60706a", marginLeft: 6 }}>
+                      tanya-nara.ai • tutor pribadi
+                    </span>
                   </div>
-                )}
-              </div>
-            </div>
-
-            <div className="chip-group" style={{ marginTop: 20 }}>
-              <span className="metric-chip">Pembahasan Lengkap</span>
-              <span className="metric-chip">Otomatis Catat Bank Salah</span>
-            </div>
-          </div>
-
-          {/* Card 3: 1 Kolom (Interactive YouTube to Summary) */}
-          <div className="bento-card reveal-scroll delay-2">
-            <div>
-              <div className="bento-label">RINGKASAN CEPAT</div>
-              <h3 className="bento-title">Video 2 Jam Dirangkum Jadi Bacaan 3 Menit</h3>
-              <p className="bento-desc">
-                Cukup tempel tautan video YouTube. Tanka otomatis merapikannya menjadi modul bab siap baca:
-              </p>
-
-              {/* YouTube Demo Interactive Box */}
-              <div className="yt-demo-box">
-                <div className="yt-input-row">
-                  <input
-                    type="text"
-                    value={ytUrlInput}
-                    onChange={(e) => setYtUrlInput(e.target.value)}
-                    className="yt-input-field"
-                    placeholder="Tempel link video YouTube..."
+                  <img
+                    src="/assets/landing/bento-nara.png"
+                    alt="Tanya Nara AI Tutor Pribadi"
+                    className="mockup-img"
+                    loading="eager"
                   />
-                  <button className="yt-action-btn" onClick={handleSimulateYt}>
-                    {isYtProcessing ? "Merangkum..." : "Simulasikan"}
-                  </button>
                 </div>
-
-                {isYtProcessing && (
-                  <div className="yt-progress-bar-bg">
-                    <div className="yt-progress-bar-fill" style={{ width: "70%" }} />
-                  </div>
-                )}
-
-                {ytProcessed && !isYtProcessing && (
-                  <div style={{ marginTop: 12 }}>
-                    <div className="yt-chapter-pill">
-                      <span>Bab 1: Konsep Dasar Limit & Gradien</span>
-                      <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>2 mnt baca</span>
-                    </div>
-                    <div className="yt-chapter-pill">
-                      <span>Bab 2: Turunan Fungsi Aljabar</span>
-                      <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>3 mnt baca</span>
-                    </div>
-                    <div className="yt-chapter-pill">
-                      <span>Bab 3: Aturan Rantai & Aplikasi Nilai Maksimum</span>
-                      <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>4 mnt baca</span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
+
+            {/* Card 2: 1 Kolom (Interactive Atomic Quiz) */}
+            <div className="bento-card reveal-scroll delay-1">
+              <div>
+                <div className="bento-label">LATIHAN TERARAH</div>
+                <h3 className="bento-title">Kuis Cerdas: Uji Logika, Bukan Tebak-Tebakan</h3>
+                <p className="bento-desc">
+                  Coba langsung kuis interaktif di bawah. Soal dirancang untuk menguji pemahaman intimu tanpa jebakan ngawur:
+                </p>
+
+                {/* Interactive Quiz Box */}
+                <div className="quiz-demo-box">
+                  <div style={{ fontSize: 11.5, fontFamily: "'DM Mono', monospace", color: "#60706a", marginBottom: 6 }}>
+                    SOAL LATIHAN INTERAKTIF:
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#18221f", lineHeight: 1.45 }}>
+                    <MathView text="Jika himpunan $A = \{2, 4, 6\}$ dan $B = \{4, 6, 8\}$, maka anggota $A \cap B$ adalah..." />
+                  </div>
+
+                  <div style={{ marginTop: 10 }}>
+                    <button
+                      className={`quiz-option-btn ${quizSelected === "A" ? "selected-wrong" : ""}`}
+                      onClick={() => setQuizSelected("A")}
+                    >
+                      <span>[A] <MathView text="$\\{2, 8\\}$" /></span>
+                      {quizSelected === "A" && <X size={15} color="#dc2626" />}
+                    </button>
+
+                    <button
+                      className={`quiz-option-btn ${quizSelected === "B" ? "selected-correct" : ""}`}
+                      onClick={() => setQuizSelected("B")}
+                    >
+                      <span>[B] <MathView text="$\\{4, 6\\}$" /></span>
+                      {quizSelected === "B" && <Check size={15} color="#15803d" />}
+                    </button>
+
+                    <button
+                      className={`quiz-option-btn ${quizSelected === "C" ? "selected-wrong" : ""}`}
+                      onClick={() => setQuizSelected("C")}
+                    >
+                      <span>[C] <MathView text="$\\{2, 4, 6, 8\\}$" /></span>
+                      {quizSelected === "C" && <X size={15} color="#dc2626" />}
+                    </button>
+                  </div>
+
+                  {quizSelected === "B" && (
+                    <div className="quiz-feedback-banner correct">
+                      <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <div>
+                        <strong>✓ Jawaban Benar!</strong> Irisan adalah angka yang ada di kedua himpunan ($4$ dan $6$).
+                      </div>
+                    </div>
+                  )}
+
+                  {(quizSelected === "A" || quizSelected === "C") && (
+                    <div className="quiz-feedback-banner wrong">
+                      <X size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <div>
+                        {quizSelected === "A"
+                          ? "Kurang pas. Angka 2 tidak ada di B, dan angka 8 tidak ada di A. Irisan cuma mengambil yang sama di dua-duanya."
+                          : "Kurang pas. Itu hasil gabungan (A ∪ B), bukan irisan (A ∩ B)."}
+                        <button
+                          onClick={() => setQuizSelected(null)}
+                          style={{
+                            display: "block",
+                            marginTop: 6,
+                            background: "none",
+                            border: "none",
+                            color: "#991b1b",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            textDecoration: "underline",
+                            fontSize: 12,
+                            padding: 0
+                          }}
+                        >
+                          Coba lagi
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="chip-group" style={{ marginTop: 20 }}>
+                <span className="metric-chip">Pembahasan Lengkap</span>
+                <span className="metric-chip">Otomatis Catat Bank Salah</span>
+              </div>
+            </div>
+
+            {/* Card 3: 1 Kolom (Interactive YouTube to Summary) */}
+            <div className="bento-card reveal-scroll delay-2">
+              <div>
+                <div className="bento-label">RINGKASAN CEPAT</div>
+                <h3 className="bento-title">Video 2 Jam Dirangkum Jadi Bacaan 3 Menit</h3>
+                <p className="bento-desc">
+                  Cukup tempel tautan video YouTube. Tanka otomatis merapikannya menjadi modul bab siap baca:
+                </p>
+
+                {/* YouTube Demo Interactive Box */}
+                <div className="yt-demo-box">
+                  <div className="yt-input-row">
+                    <input
+                      type="text"
+                      value={ytUrlInput}
+                      onChange={(e) => setYtUrlInput(e.target.value)}
+                      className="yt-input-field"
+                      placeholder="Tempel link video YouTube..."
+                    />
+                    <button className="yt-action-btn" onClick={handleSimulateYt}>
+                      {isYtProcessing ? "Merangkum..." : "Simulasikan"}
+                    </button>
+                  </div>
+
+                  {isYtProcessing && (
+                    <div className="yt-progress-bar-bg">
+                      <div className="yt-progress-bar-fill" style={{ width: "70%" }} />
+                    </div>
+                  )}
+
+                  {ytProcessed && !isYtProcessing && (
+                    <div style={{ marginTop: 12 }}>
+                      <div className="yt-chapter-pill">
+                        <span>Bab 1: Konsep Dasar Limit & Gradien</span>
+                        <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>2 mnt baca</span>
+                      </div>
+                      <div className="yt-chapter-pill">
+                        <span>Bab 2: Turunan Fungsi Aljabar</span>
+                        <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>3 mnt baca</span>
+                      </div>
+                      <div className="yt-chapter-pill">
+                        <span>Bab 3: Aturan Rantai & Aplikasi Nilai Maksimum</span>
+                        <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>4 mnt baca</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
             <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
               <span className="metric-chip">Auto-Chapter</span>
@@ -1734,7 +1992,7 @@ export function LandingPage({
             </div>
           </div>
 
-          {/* Card 4: 1 Kolom (Radial Knowledge Graph) */}
+          {/* Card 4: 1 Kolom (Radial Knowledge Graph with Moving Energy Flow) */}
           <div className="bento-card reveal-scroll delay-1">
             <div>
               <div className="bento-label">PETA BESAR MATERI</div>
@@ -1746,10 +2004,10 @@ export function LandingPage({
               {/* Radial Graph Visualizer */}
               <div className="radial-graph-wrapper">
                 <svg width="100%" height="150" viewBox="0 0 320 150">
-                  <path d="M 160 75 Q 110 35 60 40" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
-                  <path d="M 160 75 Q 210 35 260 40" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
-                  <path d="M 160 75 Q 110 115 60 115" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
-                  <path d="M 160 75 Q 210 115 260 115" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
+                  <path d="M 160 75 Q 110 35 60 40" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
+                  <path d="M 160 75 Q 210 35 260 40" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
+                  <path d="M 160 75 Q 110 115 60 115" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
+                  <path d="M 160 75 Q 210 115 260 115" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
 
                   {/* Outer Nodes */}
                   <g className="graph-node" onClick={() => setActiveGraphNode("Limit Aljabar")}>
@@ -1846,6 +2104,7 @@ export function LandingPage({
             </div>
           </div>
         </div>
+      </div>
       </section>
 
       {/* Dual Side-by-Side Visual Battle: Cara Lama vs Cara Tanka */}
@@ -1893,7 +2152,7 @@ export function LandingPage({
             </div>
           </div>
 
-          {/* Right Card: Cara Tanka */}
+          {/* Right Card: Cara Tanka with Border Glow Beam */}
           <div className="battle-card tanka-way">
             <div>
               <div className="battle-header-pill tanka">

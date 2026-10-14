@@ -1,6 +1,6 @@
 # TASK: TASK-AUTH-MODAL-HEADER-004
 ## STATUS
-READY
+VERIFIED & COMPLETED
 
 ## METADATA
 - Project: Tanka (/home/vallencia/Projects/tanka)
@@ -36,8 +36,8 @@ Hilangkan kotak border pembungkus pada area header modal registrasi/login (`Auth
    - Pastikan visual modal bersih, minimalis, dan tidak ada kotak di dalam kotak.
 
 ## ACCEPTANCE CRITERIA
-- [ ] Header modal (icon, judul, subjudul) menyatu polos dengan background dialog tanpa garis border pembungkus/kotak.
-- [ ] Tombol close (✕) berada bebas di pojok kanan atas modal dialog, tidak terkurung dalam garis border header.
-- [ ] Tidak ada nesting border pada container modal.
-- [ ] `npm run build` sukses 100%.
-- [ ] `npm test` lulus seluruh test suite (83/83 passing).
+- [x] Header modal (icon, judul, subjudul) menyatu polos dengan background dialog tanpa garis border pembungkus/kotak.
+- [x] Tombol close (✕) berada bebas di pojok kanan atas modal dialog, tidak terkurung dalam garis border header.
+- [x] Tidak ada nesting border pada container modal.
+- [x] `npm run build` sukses 100%.
+- [x] `npm test` lulus seluruh test suite (83/83 passing).

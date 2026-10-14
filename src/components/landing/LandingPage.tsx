@@ -1005,35 +1005,37 @@ export function LandingPage({
         }
 
         /* ========================================================
-           EDITORIAL FEATURE SHOWCASE (Rombak Bento Box Jadi Alur Bebas Border)
+           HIGH-FIDELITY PRODUCT SHOWCASE: LINEAR & APPLE GRADE
            ======================================================== */
         .features-flow-wrapper {
           display: flex;
           flex-direction: column;
-          gap: clamp(48px, 6vh, 72px);
+          gap: clamp(52px, 7vh, 84px);
           position: relative;
         }
 
-        .feature-eyebrow {
+        .feature-badge-pill {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          font-family: 'DM Mono', monospace;
+          gap: 7px;
+          padding: 5px 12px;
+          border-radius: 999px;
+          background: rgba(200, 240, 100, 0.22);
+          color: #273e1c;
           font-size: 11.5px;
-          font-weight: 800;
-          letter-spacing: 0.12em;
+          font-weight: 700;
+          letter-spacing: 0.04em;
           text-transform: uppercase;
-          color: #4b6623;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
 
         .feature-headline {
-          font-size: clamp(1.85rem, 2.5vw, 2.45rem);
+          font-size: clamp(1.85rem, 2.5vw, 2.5rem);
           font-weight: 800;
-          line-height: 1.2;
-          letter-spacing: -0.025em;
+          line-height: 1.18;
+          letter-spacing: -0.03em;
           color: #18221f;
-          margin-bottom: 16px;
+          margin-bottom: 14px;
         }
 
         .feature-lead {
@@ -1043,20 +1045,20 @@ export function LandingPage({
           margin-bottom: 24px;
         }
 
-        /* Block 1: Master Spotlight Card (Tutor Nara AI 2-Col) */
-        .feature-hero-card {
+        /* Block 1: Master Spotlight Card (Tutor Nara AI) */
+        .feature-master-card {
           background: #ffffff;
-          border: 1px solid rgba(226, 232, 223, 0.85);
+          border: 1px solid rgba(220, 228, 218, 0.9);
           border-radius: 28px;
           padding: clamp(38px, 4.5vw, 64px);
-          box-shadow: 0 20px 60px -15px rgba(24, 34, 31, 0.05);
-          transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.25s ease;
+          box-shadow: 0 0 0 1px rgba(24, 34, 31, 0.03), 0 12px 36px -6px rgba(24, 34, 31, 0.06), 0 28px 70px -15px rgba(24, 34, 31, 0.08);
+          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.25s ease;
         }
 
         @media (hover: hover) and (pointer: fine) {
-          .feature-hero-card:hover {
+          .feature-master-card:hover {
             border-color: #8da868;
-            box-shadow: 0 28px 70px -15px rgba(24, 34, 31, 0.09);
+            box-shadow: 0 0 0 1px rgba(141, 168, 104, 0.2), 0 16px 44px -6px rgba(24, 34, 31, 0.08), 0 36px 85px -15px rgba(24, 34, 31, 0.12);
           }
         }
 
@@ -1083,15 +1085,15 @@ export function LandingPage({
         }
 
         .mini-device-frame {
-          border-radius: 14px;
-          border: 1px solid #e2e8df;
+          border-radius: 16px;
+          border: 1px solid #dce2da;
           background: #f7f9f5;
           overflow: hidden;
-          box-shadow: 0 20px 50px -10px rgba(24, 34, 31, 0.08);
+          box-shadow: 0 24px 60px -12px rgba(24, 34, 31, 0.12);
         }
 
         .mini-device-header {
-          height: 32px;
+          height: 34px;
           background: #edf1e9;
           border-bottom: 1px solid #e2e8df;
           display: flex;
@@ -1107,80 +1109,117 @@ export function LandingPage({
           background: #c2cbbd;
         }
 
-        /* Block 2: Dual Grid (Kuis Cerdas & YouTube) */
+        /* High-Fidelity Dual Cards (Kuis & YouTube Timeline) */
         .feature-dual-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: clamp(32px, 4vw, 48px);
         }
 
-        .feature-card-item {
+        .feature-hifi-card {
           background: #ffffff;
-          border: 1px solid rgba(226, 232, 223, 0.85);
+          border: 1px solid rgba(220, 228, 218, 0.9);
           border-radius: 26px;
           padding: clamp(36px, 4vw, 50px);
-          box-shadow: 0 16px 45px -12px rgba(24, 34, 31, 0.05);
+          box-shadow: 0 0 0 1px rgba(24, 34, 31, 0.03), 0 10px 30px -5px rgba(24, 34, 31, 0.05), 0 24px 60px -12px rgba(24, 34, 31, 0.07);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.25s ease;
+          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.25s ease;
         }
 
         @media (hover: hover) and (pointer: fine) {
-          .feature-card-item:hover {
+          .feature-hifi-card:hover {
             transform: translateY(-4px);
             border-color: #8da868;
-            box-shadow: 0 24px 55px rgba(24, 34, 31, 0.09);
+            box-shadow: 0 0 0 1px rgba(141, 168, 104, 0.2), 0 16px 40px -6px rgba(24, 34, 31, 0.08), 0 32px 75px -12px rgba(24, 34, 31, 0.12);
           }
         }
 
-        /* Seamless Interactive Quiz (Tanpa Nested Box Gray Border) */
-        .seamless-interactive-area {
-          margin-top: 18px;
+        /* High-Fidelity Quiz Component */
+        .quiz-stage-container {
+          background: #fbfcf9;
+          border: 1px solid #e2e7df;
+          border-radius: 18px;
+          padding: 20px;
+          box-shadow: inset 0 2px 6px rgba(24, 34, 31, 0.02);
         }
 
-        .quiz-prompt-text {
+        .quiz-stage-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        }
+
+        .quiz-streak-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 11.5px;
+          font-weight: 700;
+          color: #d97706;
+          background: #fef3c7;
+          padding: 4px 10px;
+          border-radius: 999px;
+        }
+
+        .quiz-xp-badge {
+          font-family: 'DM Mono', monospace;
+          font-size: 11.5px;
+          font-weight: 800;
+          color: #273e1c;
+          background: #c8f064;
+          padding: 3px 9px;
+          border-radius: 6px;
+        }
+
+        .quiz-prompt-bubble {
           font-size: 14.5px;
           font-weight: 700;
           color: #18221f;
           line-height: 1.5;
-          padding: 12px 14px;
-          background: #f7f9f5;
+          padding: 14px 16px;
+          background: #ffffff;
+          border: 1px solid #e1e7dc;
           border-radius: 12px;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
+          box-shadow: 0 4px 14px rgba(24, 34, 31, 0.03);
         }
 
-        .quiz-option-btn {
+        .quiz-option-tactile {
           width: 100%;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 12px 16px;
+          padding: 12px 18px;
           margin-top: 8px;
           border-radius: 12px;
-          border: 1px solid #dfe5da;
+          border: 1.5px solid #dfe5da;
           background: #ffffff;
           font-size: 14px;
           font-weight: 600;
           color: #18221f;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
           text-align: left;
+          box-shadow: 0 2px 6px rgba(24, 34, 31, 0.02);
         }
 
-        .quiz-option-btn:hover {
+        .quiz-option-tactile:hover {
           border-color: #8da868;
           background: #f8faf5;
+          transform: translateX(3px);
         }
 
-        .quiz-option-btn.selected-correct {
+        .quiz-option-tactile.correct {
           background: #f2fae6;
           border-color: #8da868 !important;
-          box-shadow: 0 0 0 2px #8da868;
+          box-shadow: 0 0 0 2px #8da868, 0 6px 18px rgba(75, 102, 35, 0.15);
           color: #183312;
         }
 
-        .quiz-option-btn.selected-wrong {
+        .quiz-option-tactile.wrong {
           background: #fef2f2;
           border-color: #fca5a5;
           color: #991b1b;
@@ -1188,17 +1227,18 @@ export function LandingPage({
 
         .quiz-feedback-banner {
           margin-top: 14px;
-          padding: 12px 16px;
+          padding: 14px 16px;
           border-radius: 12px;
-          font-size: 13px;
+          font-size: 13.5px;
           line-height: 1.55;
           display: flex;
           align-items: flex-start;
           gap: 10px;
+          animation: bubblePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
 
         .quiz-feedback-banner.correct {
-          background: #eff8db;
+          background: #eef8dc;
           color: #273e1c;
           border: 1px solid #c7e89d;
         }
@@ -1209,37 +1249,101 @@ export function LandingPage({
           border: 1px solid #fecaca;
         }
 
-        /* Seamless YouTube Area (Tanpa Nested Box Gray Border) */
-        .yt-input-row {
+        /* High-Fidelity Video Timeline Shredder */
+        .video-player-container {
+          background: #0f1714;
+          border-radius: 18px;
+          padding: 16px;
+          box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.35);
+          border: 1px solid #23352c;
+          color: #ffffff;
+        }
+
+        .video-meta-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+          font-size: 12.5px;
+        }
+
+        .video-duration-pill {
+          font-family: 'DM Mono', monospace;
+          background: rgba(255, 255, 255, 0.12);
+          padding: 3px 8px;
+          border-radius: 6px;
+          color: #c8f064;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .video-scrubber-track {
+          height: 10px;
+          border-radius: 999px;
+          background: #1c2a23;
+          display: flex;
+          overflow: hidden;
+          margin-bottom: 16px;
+          gap: 2px;
+        }
+
+        .scrubber-seg-1 {
+          flex: 2;
+          background: #4b6623;
+        }
+
+        .scrubber-seg-2 {
+          flex: 4;
+          background: #d97706;
+        }
+
+        .scrubber-seg-3 {
+          flex: 5;
+          background: #c8f064;
+        }
+
+        .video-chapter-card {
+          background: #182520;
+          border: 1px solid #283a31;
+          border-radius: 10px;
+          padding: 10px 14px;
+          margin-top: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 12.5px;
+          transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .video-chapter-card:hover {
+          background: #20322b;
+          border-color: #8da868;
+        }
+
+        .video-input-bar {
           display: flex;
           gap: 8px;
           align-items: center;
-          margin-top: 14px;
+          margin-top: 16px;
         }
 
-        .yt-input-field {
+        .video-input-field {
           flex: 1;
-          background: #f6f8f4;
+          background: #ffffff;
           border: 1px solid #dce2da;
           border-radius: 10px;
-          padding: 11px 14px;
+          padding: 10px 14px;
           font-size: 13px;
           font-family: 'DM Mono', monospace;
           color: #45544e;
           outline: none;
-          transition: border-color 0.15s ease;
         }
 
-        .yt-input-field:focus {
-          border-color: #8da868;
-          background: #ffffff;
-        }
-
-        .yt-action-btn {
+        .video-simulate-btn {
           background: #18221f;
           color: #c8f064;
           border: none;
-          padding: 11px 18px;
+          padding: 10px 18px;
           border-radius: 10px;
           font-size: 13px;
           font-weight: 700;
@@ -1248,91 +1352,112 @@ export function LandingPage({
           transition: background 0.15s ease;
         }
 
-        .yt-action-btn:hover {
+        .video-simulate-btn:hover {
           background: #24352f;
         }
 
-        .yt-progress-bar-bg {
-          width: 100%;
-          height: 6px;
-          background: #e2e8df;
-          border-radius: 4px;
-          margin-top: 14px;
-          overflow: hidden;
-        }
-
-        .yt-progress-bar-fill {
-          height: 100%;
-          background: #4b6623;
-          transition: width 0.3s ease;
-        }
-
-        .yt-chapter-pill {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 10px 14px;
-          background: #f8faf5;
-          border: 1px solid #e2e8df;
-          border-radius: 10px;
-          margin-top: 8px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #18221f;
-        }
-
-        /* Block 3: Asymmetric Duo (Peta Konsep & Offline) */
+        /* Block 3: Asymmetric Neural Graph & Hardware Offline Console */
         .feature-dual-asym {
           display: grid;
-          grid-template-columns: 1.12fr 0.88fr;
+          grid-template-columns: 1.15fr 0.85fr;
           gap: clamp(32px, 4vw, 48px);
         }
 
-        @keyframes flowEnergy {
-          from { stroke-dashoffset: 24; }
-          to { stroke-dashoffset: 0; }
+        /* Neural Graph Canvas */
+        .neural-graph-stage {
+          background: #111a16;
+          border-radius: 20px;
+          padding: 22px;
+          border: 1px solid #23352c;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.28);
         }
 
-        .graph-link-pulse {
-          stroke-dasharray: 6 6;
-          animation: flowEnergy 1.2s linear infinite;
+        .neural-graph-ambient-glow {
+          position: absolute;
+          top: 30%;
+          left: 40%;
+          width: 280px;
+          height: 180px;
+          background: radial-gradient(circle, rgba(200, 240, 100, 0.18) 0%, transparent 70%);
+          pointer-events: none;
+          filter: blur(40px);
         }
 
-        .graph-node {
-          cursor: pointer;
-          transition: transform 0.2s ease;
+        .neural-hud-card {
+          margin-top: 14px;
+          background: #192721;
+          border: 1px solid #283d34;
+          border-radius: 12px;
+          padding: 12px 16px;
+          color: #eff5ec;
         }
 
-        .graph-node:hover {
-          filter: drop-shadow(0 2px 8px rgba(141, 168, 104, 0.5));
+        /* Hardware Offline Console */
+        .offline-hardware-console {
+          background: #fbfdf9;
+          border: 1px solid #e1e7dc;
+          border-radius: 20px;
+          padding: 22px;
+          box-shadow: inset 0 2px 8px rgba(24, 34, 31, 0.02);
         }
 
-        /* Seamless Offline Switch */
-        .offline-toggle-btn {
+        .offline-telemetry-chip-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+
+        .telemetry-chip {
+          font-family: 'DM Mono', monospace;
+          font-size: 11px;
+          font-weight: 700;
+          color: #273e1c;
+          background: #f1f6ed;
+          border: 1px solid #dce5d6;
+          padding: 5px 10px;
+          border-radius: 6px;
+        }
+
+        .offline-toggle-hardware-btn {
           width: 100%;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: #f7f9f4;
-          border: 1px solid #dce2da;
+          background: #ffffff;
+          border: 1.5px solid #dce2da;
           padding: 14px 18px;
-          border-radius: 12px;
+          border-radius: 14px;
           cursor: pointer;
           font-size: 14px;
           font-weight: 700;
           color: #18221f;
-          transition: all 0.2s ease;
-          margin-top: 14px;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 4px 12px rgba(24, 34, 31, 0.04);
         }
 
-        .offline-toggle-btn:hover {
+        .offline-toggle-hardware-btn:hover {
           border-color: #8da868;
         }
 
-        .offline-toggle-btn.offline-active {
+        .offline-toggle-hardware-btn.active {
           background: #18221f;
           color: #c8f064;
           border-color: #18221f;
+          box-shadow: 0 8px 24px rgba(24, 34, 31, 0.16);
+        }
+
+        .offline-status-display {
+          margin-top: 16px;
+          padding: 14px 16px;
+          border-radius: 12px;
+          background: #f4f7f1;
+          border: 1px solid #e2e8df;
+          font-size: 13px;
+          line-height: 1.55;
+          color: #3b4b44;
         }
 
         /* Side-By-Side Visual Battle Comparison with Rotating Glow Beam */
@@ -1876,13 +2001,15 @@ export function LandingPage({
         </div>
 
         <div className="features-flow-wrapper">
-          {/* Track 1: Master Spotlight Card (Tutor Nara AI 2-Kolom) */}
-          <div className="feature-hero-card reveal-scroll">
+          {/* ========================================================
+              TRACK 1: MASTER SPOTLIGHT (TUTOR NARA AI 2-KOLOM)
+              ======================================================== */}
+          <div className="feature-master-card reveal-scroll">
             <div className="feature-hero-split">
               <div>
-                <span className="feature-eyebrow">
-                  <Bot size={14} color="#4b6623" />
-                  <span>01 // TUTOR PRIBADI 24 JAM</span>
+                <span className="feature-badge-pill">
+                  <Bot size={13} color="#4b6623" />
+                  <span>Tutor AI Siaga 24 Jam</span>
                 </span>
                 <h3 className="feature-headline">Tanya Rumus & Konsep Sepuasnya Tanpa Rasa Malu</h3>
                 <p className="feature-lead">
@@ -1890,15 +2017,15 @@ export function LandingPage({
                 </p>
                 <div className="feature-checklist">
                   <div className="feature-check-item">
-                    <CheckCircle2 size={17} color="#4b6623" />
+                    <CheckCircle2 size={18} color="#4b6623" />
                     <span>Analogi sederhana dari kejadian sehari-hari</span>
                   </div>
                   <div className="feature-check-item">
-                    <CheckCircle2 size={17} color="#4b6623" />
+                    <CheckCircle2 size={18} color="#4b6623" />
                     <span>Penurunan rumus KaTeX langkah demi langkah</span>
                   </div>
                   <div className="feature-check-item">
-                    <CheckCircle2 size={17} color="#4b6623" />
+                    <CheckCircle2 size={18} color="#4b6623" />
                     <span>Respon sabar dan siap mendampingi 24 jam</span>
                   </div>
                 </div>
@@ -1923,31 +2050,41 @@ export function LandingPage({
             </div>
           </div>
 
-          {/* Track 2: The Interactive Playground Duo (Kuis Cerdas & YouTube) */}
+          {/* ========================================================
+              TRACK 2: HIGH-FIDELITY INTERACTIVE PLAYGROUNDS (KUIS & VIDEO)
+              ======================================================== */}
           <div className="feature-dual-grid">
-            {/* Card A: Kuis Cerdas */}
-            <div className="feature-card-item reveal-scroll delay-1">
+            {/* CARD A: KUIS PINTAR & BANK SALAH PRIBADI */}
+            <div className="feature-hifi-card reveal-scroll delay-1">
               <div>
-                <span className="feature-eyebrow">
+                <span className="feature-badge-pill">
                   <Sparkles size={13} color="#4b6623" />
-                  <span>02 // LATIHAN TERARAH</span>
+                  <span>Latihan Logika Terarah</span>
                 </span>
                 <h3 className="feature-headline" style={{ fontSize: "clamp(1.5rem, 2vw, 1.85rem)" }}>
-                  Kuis Cerdas: Uji Logika & Catat Bank Salah
+                  Kuis Cerdas & Bank Salah Pribadi
                 </h3>
-                <p className="feature-lead" style={{ marginBottom: 14 }}>
-                  Coba langsung kuis interaktif di bawah. Soal dirancang untuk menguji pemahaman intimu tanpa jebakan ngawur:
+                <p className="feature-lead" style={{ marginBottom: 16 }}>
+                  Soal dirancang menguji logika konsep tanpa jebakan ngawur. Jawaban salah langsung masuk Bank Salah pribadi:
                 </p>
 
-                {/* Seamless Interactive Quiz */}
-                <div className="seamless-interactive-area">
-                  <div className="quiz-prompt-text">
-                    <MathView text="Jika himpunan $A = \{2, 4, 6\}$ dan $B = \{4, 6, 8\}$, maka anggota $A \cap B$ adalah..." />
+                {/* High-Fidelity Quiz Flashcard */}
+                <div className="quiz-stage-container">
+                  <div className="quiz-stage-header">
+                    <span className="quiz-streak-pill">
+                      <Flame size={13} color="#d97706" />
+                      <span>3 Hari Berturut-turut</span>
+                    </span>
+                    <span className="quiz-xp-badge">+50 XP</span>
+                  </div>
+
+                  <div className="quiz-prompt-bubble">
+                    <MathView text="Jika himpunan $A = \{2, 4, 6\}$ dan $B = \{4, 6, 8\}$, tentukan anggota $A \cap B$..." />
                   </div>
 
                   <div>
                     <button
-                      className={`quiz-option-btn ${quizSelected === "A" ? "selected-wrong" : ""}`}
+                      className={`quiz-option-tactile ${quizSelected === "A" ? "wrong" : ""}`}
                       onClick={() => setQuizSelected("A")}
                     >
                       <span>[A] <MathView text="$\{2, 8\}$" /></span>
@@ -1955,15 +2092,15 @@ export function LandingPage({
                     </button>
 
                     <button
-                      className={`quiz-option-btn ${quizSelected === "B" ? "selected-correct" : ""}`}
+                      className={`quiz-option-tactile ${quizSelected === "B" ? "correct" : ""}`}
                       onClick={() => setQuizSelected("B")}
                     >
                       <span>[B] <MathView text="$\{4, 6\}$" /></span>
-                      {quizSelected === "B" && <Check size={15} color="#15803d" />}
+                      {quizSelected === "B" && <Check size={16} color="#15803d" />}
                     </button>
 
                     <button
-                      className={`quiz-option-btn ${quizSelected === "C" ? "selected-wrong" : ""}`}
+                      className={`quiz-option-tactile ${quizSelected === "C" ? "wrong" : ""}`}
                       onClick={() => setQuizSelected("C")}
                     >
                       <span>[C] <MathView text="$\{2, 4, 6, 8\}$" /></span>
@@ -1973,24 +2110,29 @@ export function LandingPage({
 
                   {quizSelected === "B" && (
                     <div className="quiz-feedback-banner correct">
-                      <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 2 }} />
                       <div>
-                        <strong>✓ Jawaban Benar!</strong> Irisan adalah angka yang ada di kedua himpunan ($4$ dan $6$).
+                        <strong>✓ Jawaban Tepat! +50 XP</strong>
+                        <div style={{ fontSize: 12.5, marginTop: 2 }}>
+                          Irisan ($A \cap B$) adalah angka yang ada di kedua himpunan ($4$ dan $6$).
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {(quizSelected === "A" || quizSelected === "C") && (
                     <div className="quiz-feedback-banner wrong">
-                      <X size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <X size={16} style={{ flexShrink: 0, marginTop: 2 }} />
                       <div>
-                        {quizSelected === "A"
-                          ? "Kurang pas. Angka 2 tidak ada di B, dan angka 8 tidak ada di A. Irisan cuma mengambil yang sama di dua-duanya."
-                          : "Kurang pas. Itu hasil gabungan (A ∪ B), bukan irisan (A ∩ B)."}
+                        <strong>⚠️ Otomatis Ditambahkan ke Bank Salah Pribadi!</strong>
+                        <div style={{ fontSize: 12.5, marginTop: 2 }}>
+                          {quizSelected === "A"
+                            ? "Angka 2 bukan anggota B dan angka 8 bukan anggota A. Irisan hanya mengambil angka kembar."
+                            : "Itu hasil gabungan ($A \cup B$), bukan irisan ($A \cap B$)."}
+                        </div>
                         <button
                           onClick={() => setQuizSelected(null)}
                           style={{
-                            display: "block",
                             marginTop: 6,
                             background: "none",
                             border: "none",
@@ -2002,7 +2144,7 @@ export function LandingPage({
                             padding: 0
                           }}
                         >
-                          Coba lagi
+                          Coba ulangi soal
                         </button>
                       </div>
                     </div>
@@ -2012,145 +2154,157 @@ export function LandingPage({
 
               <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "#4b6623", background: "rgba(200, 240, 100, 0.22)", padding: "4px 10px", borderRadius: 6 }}>
-                  ✓ Otomatis Catat Bank Salah
+                  ✓ Catat Otomatis Titik Lemah
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "#60706a", background: "#f2f5ef", padding: "4px 10px", borderRadius: 6 }}>
-                  Penjelasan Step-by-Step
+                  Anti Soal Halusinasi
                 </span>
               </div>
             </div>
 
-            {/* Card B: YouTube Summarizer */}
-            <div className="feature-card-item reveal-scroll delay-2">
+            {/* CARD B: YOUTUBE & PDF TIMELINE SHREDDER */}
+            <div className="feature-hifi-card reveal-scroll delay-2">
               <div>
-                <span className="feature-eyebrow">
-                  <Zap size={13} color="#4b6623" />
-                  <span>03 // RANGKUM CEPAT</span>
+                <span className="feature-badge-pill">
+                  <Play size={12} color="#4b6623" />
+                  <span>Rangkuman Multi-Format</span>
                 </span>
                 <h3 className="feature-headline" style={{ fontSize: "clamp(1.5rem, 2vw, 1.85rem)" }}>
-                  Video 2 Jam Dipotong Jadi Modul 3 Menit
+                  Video 2 Jam → Bab Santai 3 Menit
                 </h3>
-                <p className="feature-lead" style={{ marginBottom: 14 }}>
-                  Cukup tempel tautan video kuliah atau materi YouTube. Tanka otomatis merapikannya menjadi modul bab siap baca:
+                <p className="feature-lead" style={{ marginBottom: 16 }}>
+                  Tempel tautan materi video atau dokumen. Tanka memotongnya otomatis menjadi modul bab ringkas:
                 </p>
 
-                {/* Seamless YouTube Input & Simulator */}
-                <div className="seamless-interactive-area">
-                  <div className="yt-input-row">
-                    <input
-                      type="text"
-                      value={ytUrlInput}
-                      onChange={(e) => setYtUrlInput(e.target.value)}
-                      className="yt-input-field"
-                      placeholder="Tempel link video YouTube..."
-                    />
-                    <button className="yt-action-btn" onClick={handleSimulateYt}>
-                      {isYtProcessing ? "Merangkum..." : "Simulasikan"}
-                    </button>
+                {/* High-Fidelity Video Scrubber UI */}
+                <div className="video-player-container">
+                  <div className="video-meta-row">
+                    <span style={{ fontWeight: 700, color: "#eff5ec" }}>Kalkulus Dasar: Dari Limit ke Turunan</span>
+                    <span className="video-duration-pill">1:42:18 • Full HD</span>
                   </div>
 
-                  {isYtProcessing && (
-                    <div className="yt-progress-bar-bg">
-                      <div className="yt-progress-bar-fill" style={{ width: "70%" }} />
-                    </div>
-                  )}
+                  {/* Multi-Segment Scrubber Track */}
+                  <div className="video-scrubber-track">
+                    <div className="scrubber-seg-1" title="Bab 1: Limit" />
+                    <div className="scrubber-seg-2" title="Bab 2: Turunan" />
+                    <div className="scrubber-seg-3" title="Bab 3: Aturan Rantai" />
+                  </div>
 
-                  {ytProcessed && !isYtProcessing && (
-                    <div style={{ marginTop: 12 }}>
-                      <div className="yt-chapter-pill">
-                        <span>Bab 1: Konsep Dasar Limit & Gradien</span>
-                        <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>2 mnt baca</span>
-                      </div>
-                      <div className="yt-chapter-pill">
-                        <span>Bab 2: Turunan Fungsi Aljabar</span>
-                        <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>3 mnt baca</span>
-                      </div>
-                      <div className="yt-chapter-pill">
-                        <span>Bab 3: Aturan Rantai & Nilai Maksimum</span>
-                        <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>4 mnt baca</span>
-                      </div>
+                  {/* Extracted Chapters Preview */}
+                  <div>
+                    <div className="video-chapter-card">
+                      <span style={{ fontWeight: 600, color: "#eff5ec" }}>Bab 1: Konsep Limit & Laju Perubahan</span>
+                      <span style={{ color: "#c8f064", fontWeight: 700, fontSize: 11.5 }}>2 mnt baca</span>
                     </div>
-                  )}
+                    <div className="video-chapter-card">
+                      <span style={{ fontWeight: 600, color: "#eff5ec" }}>Bab 2: Turunan Aljabar & Gradien Garis</span>
+                      <span style={{ color: "#c8f064", fontWeight: 700, fontSize: 11.5 }}>3 mnt baca</span>
+                    </div>
+                    <div className="video-chapter-card">
+                      <span style={{ fontWeight: 600, color: "#eff5ec" }}>Bab 3: Aturan Rantai & Nilai Maksimum</span>
+                      <span style={{ color: "#c8f064", fontWeight: 700, fontSize: 11.5 }}>4 mnt baca</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="video-input-bar">
+                  <input
+                    type="text"
+                    value={ytUrlInput}
+                    onChange={(e) => setYtUrlInput(e.target.value)}
+                    className="video-input-field"
+                    placeholder="Tempel link video YouTube..."
+                  />
+                  <button className="video-simulate-btn" onClick={handleSimulateYt}>
+                    {isYtProcessing ? "Merangkum..." : "Simulasikan"}
+                  </button>
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "#4b6623", background: "rgba(200, 240, 100, 0.22)", padding: "4px 10px", borderRadius: 6 }}>
-                  ✓ Ekstraksi Bab Otomatis
+                  ✓ Potong Bab Otomatis
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "#60706a", background: "#f2f5ef", padding: "4px 10px", borderRadius: 6 }}>
-                  Transkrip & Rumus Rapi
+                  Rumus Matematika Rapi
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Track 3: The Knowledge Freedom Duo (Peta Konsep & Offline) */}
+          {/* ========================================================
+              TRACK 3: ASYMMETRIC NEURAL GRAPH & HARDWARE OFFLINE CONSOLE
+              ======================================================== */}
           <div className="feature-dual-asym">
-            {/* Card C: Peta Konsep */}
-            <div className="feature-card-item reveal-scroll delay-1">
+            {/* CARD C: NEURAL CONCEPT GRAPH */}
+            <div className="feature-hifi-card reveal-scroll delay-1">
               <div>
-                <span className="feature-eyebrow">
-                  <Lock size={13} color="#4b6623" />
-                  <span>04 // PETA BESAR MATERI</span>
+                <span className="feature-badge-pill">
+                  <Brain size={13} color="#4b6623" />
+                  <span>Peta Saraf Hubungan Materi</span>
                 </span>
                 <h3 className="feature-headline" style={{ fontSize: "clamp(1.5rem, 2vw, 1.85rem)" }}>
-                  Petakan Hubungan Antar-Konsep Sebelum Ujian
+                  Petakan Seluruh Keterkaitan Materi
                 </h3>
-                <p className="feature-lead" style={{ marginBottom: 14 }}>
-                  Lihat keterkaitan materi secara menyeluruh agar tidak ada mata rantai ilmu yang bolong. Klik salah satu simpul untuk melihat hubungannya:
+                <p className="feature-lead" style={{ marginBottom: 16 }}>
+                  Pahami rantai ilmu dari hulu ke hilir. Klik simpul untuk melihat keterkaitan prasyarat:
                 </p>
 
-                {/* Seamless SVG Graph */}
-                <div style={{ background: "#f8faf5", borderRadius: 14, padding: 14, marginTop: 12, textAlign: "center" }}>
-                  <svg width="100%" height="150" viewBox="0 0 320 150">
-                    <path d="M 160 75 Q 110 35 60 40" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
-                    <path d="M 160 75 Q 210 35 260 40" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
-                    <path d="M 160 75 Q 110 115 60 115" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
-                    <path d="M 160 75 Q 210 115 260 115" stroke="#8da868" strokeWidth="2" fill="none" className="graph-link-pulse" />
+                {/* Dark Glass Neural Graph Stage */}
+                <div className="neural-graph-stage">
+                  <div className="neural-graph-ambient-glow" />
+                  <svg width="100%" height="160" viewBox="0 0 320 160">
+                    <path d="M 160 80 Q 110 40 60 45" stroke="#c8f064" strokeWidth="2" fill="none" className="graph-link-pulse" opacity="0.8" />
+                    <path d="M 160 80 Q 210 40 260 45" stroke="#c8f064" strokeWidth="2" fill="none" className="graph-link-pulse" opacity="0.8" />
+                    <path d="M 160 80 Q 110 120 60 120" stroke="#c8f064" strokeWidth="2" fill="none" className="graph-link-pulse" opacity="0.8" />
+                    <path d="M 160 80 Q 210 120 260 120" stroke="#c8f064" strokeWidth="2" fill="none" className="graph-link-pulse" opacity="0.8" />
 
                     <g className="graph-node" onClick={() => setActiveGraphNode("Limit Aljabar")}>
-                      <circle cx="60" cy="40" r="14" fill={activeGraphNode === "Limit Aljabar" ? "#18221f" : "#ffffff"} stroke="#8da868" strokeWidth="2" />
-                      <text x="60" y="44" fontSize="9" textAnchor="middle" fill={activeGraphNode === "Limit Aljabar" ? "#c8f064" : "#18221f"} fontWeight="700">Limit</text>
+                      <circle cx="60" cy="45" r="16" fill={activeGraphNode === "Limit Aljabar" ? "#c8f064" : "#1c2a23"} stroke="#8da868" strokeWidth="2" />
+                      <text x="60" y="49" fontSize="9.5" textAnchor="middle" fill={activeGraphNode === "Limit Aljabar" ? "#18221f" : "#eff5ec"} fontWeight="800">Limit</text>
                     </g>
 
                     <g className="graph-node" onClick={() => setActiveGraphNode("Turunan Fungsi")}>
-                      <circle cx="260" cy="40" r="14" fill={activeGraphNode === "Turunan Fungsi" ? "#18221f" : "#ffffff"} stroke="#8da868" strokeWidth="2" />
-                      <text x="260" y="44" fontSize="9" textAnchor="middle" fill={activeGraphNode === "Turunan Fungsi" ? "#c8f064" : "#18221f"} fontWeight="700">Turunan</text>
+                      <circle cx="260" cy="45" r="16" fill={activeGraphNode === "Turunan Fungsi" ? "#c8f064" : "#1c2a23"} stroke="#8da868" strokeWidth="2" />
+                      <text x="260" y="49" fontSize="9.5" textAnchor="middle" fill={activeGraphNode === "Turunan Fungsi" ? "#18221f" : "#eff5ec"} fontWeight="800">Turunan</text>
                     </g>
 
                     <g className="graph-node" onClick={() => setActiveGraphNode("Integral Riemann")}>
-                      <circle cx="60" cy="115" r="14" fill={activeGraphNode === "Integral Riemann" ? "#18221f" : "#ffffff"} stroke="#8da868" strokeWidth="2" />
-                      <text x="60" y="119" fontSize="9" textAnchor="middle" fill={activeGraphNode === "Integral Riemann" ? "#c8f064" : "#18221f"} fontWeight="700">Integral</text>
+                      <circle cx="60" cy="120" r="16" fill={activeGraphNode === "Integral Riemann" ? "#c8f064" : "#1c2a23"} stroke="#8da868" strokeWidth="2" />
+                      <text x="60" y="124" fontSize="9.5" textAnchor="middle" fill={activeGraphNode === "Integral Riemann" ? "#18221f" : "#eff5ec"} fontWeight="800">Integral</text>
                     </g>
 
                     <g className="graph-node" onClick={() => setActiveGraphNode("Optimasi Nilai")}>
-                      <circle cx="260" cy="115" r="14" fill={activeGraphNode === "Optimasi Nilai" ? "#18221f" : "#ffffff"} stroke="#8da868" strokeWidth="2" />
-                      <text x="260" y="119" fontSize="9" textAnchor="middle" fill={activeGraphNode === "Optimasi Nilai" ? "#c8f064" : "#18221f"} fontWeight="700">Optimasi</text>
+                      <circle cx="260" cy="120" r="16" fill={activeGraphNode === "Optimasi Nilai" ? "#c8f064" : "#1c2a23"} stroke="#8da868" strokeWidth="2" />
+                      <text x="260" y="124" fontSize="9.5" textAnchor="middle" fill={activeGraphNode === "Optimasi Nilai" ? "#18221f" : "#eff5ec"} fontWeight="800">Optimasi</text>
                     </g>
 
+                    {/* Central Pulsing Node */}
                     <g className="graph-node" onClick={() => setActiveGraphNode("Kalkulus Dasar")}>
-                      <circle cx="160" cy="75" r="22" fill="#18221f" stroke="#c8f064" strokeWidth="2.5" />
-                      <text x="160" y="79" fontSize="10" textAnchor="middle" fill="#c8f064" fontWeight="800">Kalkulus</text>
+                      <circle cx="160" cy="80" r="24" fill="#18221f" stroke="#c8f064" strokeWidth="3" />
+                      <text x="160" y="84" fontSize="10.5" textAnchor="middle" fill="#c8f064" fontWeight="800">Kalkulus</text>
                     </g>
                   </svg>
 
-                  <div style={{ marginTop: 8, fontSize: 12.5, color: "#18221f" }}>
-                    Konsep Terpilih: <strong>{activeGraphNode}</strong>
-                    <span style={{ display: "block", color: "#60706a", fontSize: 11.5, marginTop: 3 }}>
-                      {activeGraphNode === "Kalkulus Dasar" && "Pusat fondasi aljabar menghubungkan materi limit, turunan, dan integral."}
-                      {activeGraphNode === "Limit Aljabar" && "Syarat utama sebelum bisa memahami rumus turunan dan gradien garis."}
-                      {activeGraphNode === "Turunan Fungsi" && "Kunci menyelesaikan soal laju perubahan dan mencari nilai maksimum."}
-                      {activeGraphNode === "Integral Riemann" && "Operasi kebalikan turunan untuk menghitung total akumulasi dan luas daerah."}
-                      {activeGraphNode === "Optimasi Nilai" && "Aplikasi praktis turunan pertama bernilai nol untuk mencari titik puncak."}
-                    </span>
+                  <div className="neural-hud-card">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: "#c8f064" }}>{activeGraphNode}</span>
+                      <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#8da868" }}>Prasyarat: Terpenuhi</span>
+                    </div>
+                    <p style={{ fontSize: 12, lineHeight: 1.5, color: "#b5c4bd", margin: 0 }}>
+                      {activeGraphNode === "Kalkulus Dasar" && "Fondasi aljabar utama yang menghubungkan materi limit, turunan, dan integral."}
+                      {activeGraphNode === "Limit Aljabar" && "Syarat mutlak untuk memahami konsep turunan dan gradien kemiringan garis."}
+                      {activeGraphNode === "Turunan Fungsi" && "Kunci untuk menyelesaikan problem laju perubahan dan optimasi nilai."}
+                      {activeGraphNode === "Integral Riemann" && "Operasi invers turunan untuk mencari total akumulasi luasan daerah."}
+                      {activeGraphNode === "Optimasi Nilai" && "Aplikasi praktis turunan pertama sama dengan nol untuk menentukan titik ekstrim."}
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "#4b6623", background: "rgba(200, 240, 100, 0.22)", padding: "4px 10px", borderRadius: 6 }}>
-                  ✓ Peta Visual Lengkap
+                  ✓ Visualisasi Prasyarat
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "#60706a", background: "#f2f5ef", padding: "4px 10px", borderRadius: 6 }}>
                   Ingatan Jangka Panjang
@@ -2158,45 +2312,55 @@ export function LandingPage({
               </div>
             </div>
 
-            {/* Card D: Mode Offline */}
-            <div className="feature-card-item reveal-scroll delay-2">
+            {/* CARD D: HARDWARE-GRADE OFFLINE CONSOLE */}
+            <div className="feature-hifi-card reveal-scroll delay-2">
               <div>
-                <span className="feature-eyebrow">
+                <span className="feature-badge-pill">
                   <WifiOff size={13} color="#4b6623" />
-                  <span>05 // HEMAT & MANDIRI</span>
+                  <span>Kemandirian Belajar</span>
                 </span>
                 <h3 className="feature-headline" style={{ fontSize: "clamp(1.5rem, 2vw, 1.85rem)" }}>
-                  Tetap Bisa Belajar Walau Kuota Habis
+                  100% Offline & Privat di Perangkat
                 </h3>
-                <p className="feature-lead" style={{ marginBottom: 14 }}>
-                  Semua materi dan catatanmu tersimpan di HP/laptopmu sendiri. Bebas dibuka di mana saja tanpa pusing sinyal internet putus-nyambung:
+                <p className="feature-lead" style={{ marginBottom: 16 }}>
+                  Semua modul tersimpan lokal di perangkatmu. Bebas dibuka tanpa sinyal di mana saja:
                 </p>
 
-                {/* Seamless Offline Switch */}
-                <div className="seamless-interactive-area">
+                {/* Hardware Storage Console */}
+                <div className="offline-hardware-console">
+                  <div className="offline-telemetry-chip-row">
+                    <span className="telemetry-chip">SQLite WAL Engine</span>
+                    <span className="telemetry-chip">38.4 MB Tersimpan</span>
+                    <span className="telemetry-chip">0 KB Data Digunakan</span>
+                  </div>
+
                   <button
-                    className={`offline-toggle-btn ${isOfflineMode ? "offline-active" : ""}`}
+                    className={`offline-toggle-hardware-btn ${isOfflineMode ? "active" : ""}`}
                     onClick={() => setIsOfflineMode(!isOfflineMode)}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      {isOfflineMode ? <WifiOff size={16} color="#c8f064" /> : <Wifi size={16} color="#18221f" />}
-                      <span>{isOfflineMode ? "Mode Offline / Tanpa Internet Aktif" : "Mode Online"}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      {isOfflineMode ? <WifiOff size={18} color="#c8f064" /> : <Wifi size={18} color="#18221f" />}
+                      <span>{isOfflineMode ? "Mode Offline / Tanpa Internet Aktif" : "Mode Online (Tersinkron)"}</span>
                     </div>
-                    <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace" }}>
-                      [Coba Klik]
+                    <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", padding: "3px 8px", borderRadius: 6, background: isOfflineMode ? "rgba(200, 240, 100, 0.2)" : "#f1f4ee" }}>
+                      [Klik untuk Uji]
                     </span>
                   </button>
 
-                  <div style={{ marginTop: 14, fontSize: 13, lineHeight: 1.55, color: "#45544e" }}>
+                  <div className="offline-status-display">
                     {isOfflineMode ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <CheckCircle2 size={16} color="#4b6623" />
-                        <span>Semua modul tetap terbuka lancar tanpa kuota internet di kafe atau perpustakaan.</span>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <CheckCircle2 size={17} color="#4b6623" style={{ flexShrink: 0, marginTop: 1 }} />
+                        <div>
+                          <strong>Simulasi Sinyal Mati:</strong> Seluruh modul bab, rumus KaTeX, dan kuis tetap terbuka instan tanpa kuota.
+                        </div>
                       </div>
                     ) : (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Zap size={16} color="#18221f" />
-                        <span>Data otomatis tersimpan di perangkatmu. Coba klik tombol di atas untuk simulasi buka offline.</span>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <Zap size={17} color="#18221f" style={{ flexShrink: 0, marginTop: 1 }} />
+                        <div>
+                          <strong>Perangkat Siaga:</strong> Data tersimpan lokal di HP/laptopmu. Coba klik sakelar di atas untuk simulasi belajar di pesawat/kafe.
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2205,10 +2369,10 @@ export function LandingPage({
 
               <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "#4b6623", background: "rgba(200, 240, 100, 0.22)", padding: "4px 10px", borderRadius: 6 }}>
-                  ✓ 100% Bebas Iklan
+                  ✓ Nol Iklan
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "#60706a", background: "#f2f5ef", padding: "4px 10px", borderRadius: 6 }}>
-                  Data Privat di Perangkat
+                  100% Data Privat
                 </span>
               </div>
             </div>

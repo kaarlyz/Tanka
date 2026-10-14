@@ -801,7 +801,15 @@ export function LandingPage({
           position: relative;
           max-width: 1100px;
           margin: 0 auto;
-          perspective: 1400px;
+          perspective: 1200px;
+          transform: perspective(1200px) rotateX(2deg);
+          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .hero-mockup-container:hover {
+            transform: perspective(1200px) rotateX(0deg);
+          }
         }
 
         @keyframes floatSlow1 {
@@ -834,6 +842,18 @@ export function LandingPage({
           z-index: 10;
           text-align: left;
           pointer-events: none;
+        }
+
+        .float-badge-icon-box {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: #f4f7ee;
+          border: 1px solid #dce4d2;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
         }
 
         .float-top-left {
@@ -935,7 +955,7 @@ export function LandingPage({
         /* Animated Marquee Ticker */
         .landing-marquee-wrapper {
           overflow: hidden;
-          padding: 42px 0 16px;
+          padding: 36px 0 16px;
           user-select: none;
           max-width: 100%;
           position: relative;
@@ -947,25 +967,29 @@ export function LandingPage({
           position: absolute;
           top: 0;
           bottom: 0;
-          width: 120px;
+          width: 140px;
           z-index: 2;
           pointer-events: none;
         }
 
         .landing-marquee-wrapper::before {
           left: 0;
-          background: linear-gradient(to right, #fbfdf9 30%, transparent);
+          background: linear-gradient(to right, #fcfdfa 40%, transparent);
         }
 
         .landing-marquee-wrapper::after {
           right: 0;
-          background: linear-gradient(to left, #fbfdf9 30%, transparent);
+          background: linear-gradient(to left, #fcfdfa 40%, transparent);
         }
 
         .landing-marquee-track {
           display: flex;
           width: max-content;
-          animation: marqueeLoop 28s linear infinite;
+          animation: marqueeLoop 30s linear infinite;
+        }
+
+        .landing-marquee-track:hover {
+          animation-play-state: paused;
         }
 
         @keyframes marqueeLoop {
@@ -976,18 +1000,39 @@ export function LandingPage({
         .landing-marquee-content {
           display: flex;
           align-items: center;
-          gap: 24px;
-          padding-right: 24px;
-          font-family: 'DM Mono', monospace;
-          font-size: 12px;
-          font-weight: 700;
-          color: #4b6623;
-          letter-spacing: 0.08em;
+          gap: 20px;
+          padding-right: 20px;
         }
 
-        .marquee-dot {
-          color: #a8be98;
-          font-size: 14px;
+        .marquee-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-family: 'DM Mono', monospace;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #283832;
+          padding: 6px 14px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.85);
+          border: 1px solid rgba(220, 228, 218, 0.85);
+          box-shadow: 0 2px 8px rgba(24, 34, 31, 0.03);
+          white-space: nowrap;
+        }
+
+        .marquee-dot-pulse {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #779f2f;
+          display: inline-block;
+          box-shadow: 0 0 6px rgba(119, 159, 47, 0.6);
+        }
+
+        .marquee-separator {
+          color: #cbd5cb;
+          font-size: 13px;
         }
 
         /* Generic Section Elements */
@@ -1112,12 +1157,22 @@ export function LandingPage({
         }
 
         .spec-content-fade {
-          animation: specSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation: studioFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        @keyframes specSlideIn {
-          from { opacity: 0; transform: translateY(12px) scale(0.98); }
+        @keyframes studioFadeIn {
+          from { opacity: 0; transform: translateY(8px) scale(0.99); }
           to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .bento-card {
+          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        .bento-card:hover {
+          transform: translateY(-4px);
+          border-color: #8da868;
+          box-shadow: 0 24px 60px -12px rgba(141, 168, 104, 0.18);
         }
 
         /* Pulse glow for neural central node */
@@ -1250,13 +1305,17 @@ export function LandingPage({
 
         .cockpit-input-bar {
           display: flex;
-          gap: 8px;
+          gap: 10px;
           align-items: center;
           margin-top: 16px;
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .cockpit-input-field {
-          flex: 1;
+          flex: 1 1 0;
+          min-width: 0;
+          width: 100%;
           background: #ffffff;
           border: 1px solid #dce2da;
           border-radius: 10px;
@@ -1265,19 +1324,51 @@ export function LandingPage({
           font-family: 'DM Mono', monospace;
           color: #45544e;
           outline: none;
+          box-sizing: border-box;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .cockpit-input-field:focus {
+          border-color: #779f2f;
+          box-shadow: 0 0 0 3px rgba(119, 159, 47, 0.15);
         }
 
         .cockpit-submit-btn {
+          flex-shrink: 0;
           background: #c8f064;
           color: #18221f;
           border: none;
-          padding: 10px 18px;
+          padding: 10px 20px;
           border-radius: 10px;
           font-size: 13px;
           font-weight: 800;
           cursor: pointer;
           white-space: nowrap;
-          transition: background 0.15s ease;
+          box-sizing: border-box;
+          transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .cockpit-submit-btn:hover:not(:disabled) {
+          background: #b8e64c;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(200, 240, 100, 0.35);
+        }
+
+        .cockpit-submit-btn:active:not(:disabled) {
+          transform: scale(0.97);
+        }
+
+        @media (max-width: 560px) {
+          .cockpit-input-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+          }
+          .cockpit-submit-btn {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+          }
         }
 
         /* Quiz inside Cockpit */
@@ -1738,6 +1829,10 @@ export function LandingPage({
             padding: 0 16px !important;
           }
 
+          .hero-mockup-container {
+            transform: none !important;
+          }
+
           .mockup-window {
             transform: none !important;
             border-radius: 14px !important;
@@ -2056,7 +2151,9 @@ export function LandingPage({
         <div className="hero-mockup-container reveal-scroll delay-2">
           {/* Floating Badges */}
           <div className="hero-float-badge float-top-left">
-            <span className="float-badge-icon">✨</span>
+            <div className="float-badge-icon-box">
+              <BookOpen size={18} color="#4b6623" />
+            </div>
             <div className="float-badge-text">
               <strong>Bab Santai 3 Menit</strong>
               <small>Otomatis dipotong ringkas</small>
@@ -2064,7 +2161,9 @@ export function LandingPage({
           </div>
 
           <div className="hero-float-badge float-top-right">
-            <span className="float-badge-icon">⚡</span>
+            <div className="float-badge-icon-box">
+              <Brain size={18} color="#4b6623" />
+            </div>
             <div className="float-badge-text">
               <strong>Nara AI Siaga 24 Jam</strong>
               <small>Tanya rumus tanpa batas</small>
@@ -2101,18 +2200,36 @@ export function LandingPage({
         <div className="landing-marquee-track">
           {[...Array(2)].map((_, trackIdx) => (
             <div className="landing-marquee-content" key={trackIdx}>
-              <span>✨ PENURUNAN RUMUS KONTINU</span>
-              <span className="marquee-dot">•</span>
-              <span>⚡ TANYA RUMUS SEPUASNYA</span>
-              <span className="marquee-dot">•</span>
-              <span>📚 RANGKUM OTOMATIS VIDEO YOUTUBE</span>
-              <span className="marquee-dot">•</span>
-              <span>🎯 KUIS PINTAR 1 KARTU 1 FAKTA</span>
-              <span className="marquee-dot">•</span>
-              <span>📱 RINGAN DI SEMUA PERANGKAT</span>
-              <span className="marquee-dot">•</span>
-              <span>🛡️ PENDAMPING BELAJAR EMPATIK</span>
-              <span className="marquee-dot">•</span>
+              <span className="marquee-pill">
+                <span className="marquee-dot-pulse" />
+                PENURUNAN RUMUS KONTINU
+              </span>
+              <span className="marquee-separator">•</span>
+              <span className="marquee-pill">
+                <span className="marquee-dot-pulse" />
+                TUTOR NARA SIAGA 24 JAM
+              </span>
+              <span className="marquee-separator">•</span>
+              <span className="marquee-pill">
+                <span className="marquee-dot-pulse" />
+                MODUL PER BAB SIAP SANTAP
+              </span>
+              <span className="marquee-separator">•</span>
+              <span className="marquee-pill">
+                <span className="marquee-dot-pulse" />
+                KUIS DETERMINISTIK ATOMIK
+              </span>
+              <span className="marquee-separator">•</span>
+              <span className="marquee-pill">
+                <span className="marquee-dot-pulse" />
+                FOKUS BELAJAR BEBAS DISTRAKSI
+              </span>
+              <span className="marquee-separator">•</span>
+              <span className="marquee-pill">
+                <span className="marquee-dot-pulse" />
+                PEMAHAMAN BERBASIS BUKTI
+              </span>
+              <span className="marquee-separator">•</span>
             </div>
           ))}
         </div>
@@ -2168,7 +2285,7 @@ export function LandingPage({
         </div>
 
         {/* The Unified Living Cockpit / Stage */}
-        <div className="studio-cockpit-canvas reveal-scroll">
+        <div className="studio-cockpit-canvas bento-card reveal-scroll">
           {/* Left Spec & Rationale Rail */}
           <div className="studio-spec-rail">
             {studioMode === "nara" && (

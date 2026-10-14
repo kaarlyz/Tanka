@@ -187,9 +187,12 @@ export function LandingPage({
           right: 0;
           bottom: 0;
           width: 100%;
+          max-width: 100vw;
           height: 100%;
           overflow-y: auto;
           overflow-x: hidden;
+          box-sizing: border-box;
+          contain: paint;
           -webkit-overflow-scrolling: touch;
           background-color: #fbfdf9;
           background-image: 
@@ -867,16 +870,6 @@ export function LandingPage({
           display: block;
           font-size: 11px;
           color: #60706a;
-        }
-
-        @media (max-width: 860px) {
-          .hero-float-badge {
-            display: none !important;
-          }
-          .hero-split-grid {
-            grid-template-columns: 1fr;
-            gap: 36px;
-          }
         }
 
         /* Mockup Window with 3D Perspective Tilt */
@@ -1610,40 +1603,294 @@ export function LandingPage({
           }
         }
 
-        /* Responsive Adjustments */
+        /* ========================================================
+           COMPREHENSIVE MOBILE ERGONOMICS (<860px & 390px Viewport)
+           ======================================================== */
         @media (max-width: 860px) {
+          /* 1. Global Viewport & Ambient Containment */
+          .landing-ambient-orb-1,
+          .landing-ambient-orb-2,
+          .hero-float-badge {
+            display: none !important;
+          }
+
           .landing-nav-links {
-            display: none;
+            display: none !important;
           }
+
+          .landing-nav-inner {
+            padding: 12px 16px !important;
+          }
+
+          .landing-section {
+            padding: 44px 16px !important;
+            max-width: 100vw !important;
+            box-sizing: border-box !important;
+          }
+
+          .section-header-left,
+          .section-header-center {
+            margin-bottom: 28px !important;
+          }
+
+          .section-title {
+            font-size: clamp(1.65rem, 5.8vw, 2.1rem) !important;
+            line-height: 1.2 !important;
+          }
+
+          .section-desc {
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+          }
+
+          /* 2. Hero Section Mobile Optimization */
+          .landing-hero-asymmetric {
+            padding: 24px 16px 20px !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
+          }
+
           .hero-split-grid {
-            grid-template-columns: 1fr;
-            gap: 36px;
+            grid-template-columns: minmax(0, 1fr) !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            gap: 24px !important;
           }
-          .feature-hero-split,
-          .feature-dual-grid,
-          .feature-dual-asym {
-            grid-template-columns: 1fr;
-            gap: 28px;
+
+          .hero-split-grid > * {
+            min-width: 0 !important;
+            max-width: 100% !important;
           }
-          .bento-span-2 {
-            grid-column: span 1;
+
+          .hero-title-left {
+            font-size: clamp(1.75rem, 6.8vw, 2.3rem) !important;
+            line-height: 1.15 !important;
+            word-break: break-word !important;
+            margin-bottom: 14px !important;
           }
-          .bento-two-col {
-            grid-template-columns: 1fr;
+
+          .hero-subtitle-left {
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+            margin-bottom: 22px !important;
+            max-width: 100% !important;
           }
-          .stepper-tabs {
-            grid-template-columns: 1fr 1fr;
+
+          .hero-cta-left {
+            width: 100% !important;
+            margin-bottom: 0 !important;
           }
-          .stepper-card {
-            grid-template-columns: 1fr;
+
+          .hero-btn-main {
+            width: 100% !important;
+            justify-content: center !important;
+            min-height: 48px !important;
+            font-size: 14.5px !important;
           }
+
+          /* Simulator Card Mobile Optimization */
+          .hero-simulator-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            border-radius: 14px !important;
+          }
+
+          .simulator-header {
+            padding: 10px 14px !important;
+          }
+
+          .simulator-chip-selector {
+            padding: 10px 14px 6px !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+          }
+
+          .simulator-chat-body {
+            padding: 14px !important;
+            min-height: 110px !important;
+          }
+
+          .sim-bubble-ai {
+            max-width: 100% !important;
+            padding: 12px 14px !important;
+            font-size: 13px !important;
+          }
+
+          .katex-display {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            max-width: 100% !important;
+            padding: 4px 0 !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+
+          .simulator-input-seamless {
+            padding: 8px 12px 12px !important;
+          }
+
+          /* Mockup Break Section */
+          .mockup-break-section {
+            margin: 36px auto 24px !important;
+            padding: 0 16px !important;
+          }
+
+          .mockup-window {
+            transform: none !important;
+            border-radius: 14px !important;
+          }
+
+          /* 3. Studio Cockpit Mobile Optimization */
+          .studio-dock-container {
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 18px !important;
+            scrollbar-width: none !important;
+          }
+
+          .studio-dock {
+            flex-wrap: nowrap !important;
+            padding: 4px !important;
+          }
+
+          .studio-dock-btn {
+            padding: 8px 14px !important;
+            font-size: 12.5px !important;
+          }
+
+          .studio-cockpit-canvas {
+            grid-template-columns: minmax(0, 1fr) !important;
+            padding: 22px 16px !important;
+            gap: 28px !important;
+            border-radius: 20px !important;
+            min-height: auto !important;
+          }
+
+          .studio-cockpit-canvas > * {
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+
+          .spec-title {
+            font-size: 1.45rem !important;
+            line-height: 1.22 !important;
+            margin-bottom: 12px !important;
+          }
+
+          .spec-desc {
+            font-size: 13.5px !important;
+            line-height: 1.6 !important;
+            margin-bottom: 18px !important;
+          }
+
+          .spec-action-btn {
+            width: 100% !important;
+            justify-content: center !important;
+            min-height: 46px !important;
+          }
+
+          /* 4. Comparison Section Mobile */
           .comparison-dual-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 18px !important;
           }
+
+          .comparison-dual-grid > * {
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+
+          .battle-card {
+            padding: 24px 18px !important;
+            border-radius: 18px !important;
+          }
+
+          .battle-title {
+            font-size: 19px !important;
+          }
+
+          .battle-desc {
+            font-size: 13.5px !important;
+            margin-bottom: 18px !important;
+          }
+
+          .battle-list {
+            gap: 14px !important;
+          }
+
+          .battle-item {
+            font-size: 13.5px !important;
+            gap: 10px !important;
+          }
+
+          /* 5. Personas / Testimonials Mobile */
           .persona-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 16px !important;
+          }
+
+          .persona-card {
+            padding: 22px 16px !important;
+            border-radius: 16px !important;
+          }
+
+          /* 6. Stepper Tabs & Card Mobile */
+          .stepper-tabs {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            margin-bottom: 20px !important;
+          }
+
+          .stepper-tab {
+            padding: 12px !important;
+            border-radius: 12px !important;
+          }
+
+          .stepper-tab-title {
+            font-size: 12.5px !important;
+          }
+
+          .stepper-card {
+            grid-template-columns: minmax(0, 1fr) !important;
+            padding: 22px 16px !important;
+            gap: 24px !important;
+            border-radius: 18px !important;
+          }
+
+          .stepper-card > * {
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+
+          /* 7. Banner & Footer Mobile */
+          .landing-cta-banner {
+            padding: 44px 18px !important;
+            margin: 36px 16px 48px !important;
+            border-radius: 20px !important;
+          }
+
+          .landing-footer {
+            padding: 44px 16px 36px !important;
+          }
+
+          .footer-top {
+            grid-template-columns: 1fr !important;
+            gap: 28px !important;
+          }
+
+          .footer-bottom {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            padding-top: 18px !important;
           }
         }
+
       `}</style>
 
       {/* Ambient Radial Glowing Orbs */}

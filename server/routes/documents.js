@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const zlib = require("zlib");
 const { execFileSync } = require("node:child_process");
 const { db } = require("../db");
 const {
@@ -146,6 +147,18 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
   // 1. GET /api/documents - list all documents
   if (req.method === "GET" && pathname === "/api/documents") {
     const docs = db.prepare("SELECT * FROM documents ORDER BY created_at DESC").all();
+    const acceptEncoding = (req.headers && req.headers["accept-encoding"]) || "";
+    if (acceptEncoding.includes("gzip")) {
+      const jsonStr = JSON.stringify({ ok: true, success: true, documents: docs });
+      const compressed = zlib.gzipSync(Buffer.from(jsonStr));
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Content-Encoding": "gzip",
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
+      });
+      return res.end(compressed);
+    }
     return sendJSON(res, { documents: docs });
   }
 

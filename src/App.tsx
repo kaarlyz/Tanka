@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { CheckCircle2, MessageSquare } from "lucide-react";
 import { ActiveTab, QuizQuestion } from "./types";
-import { normalizeDiagramsInMarkdown } from "./components/common/DiagramRenderer";
+import { normalizeDiagramsInMarkdown } from "./utils/diagramNormalizer";
 
 // Layout & Modals (Static)
 import { Sidebar } from "./components/layout/Sidebar";
@@ -10,9 +10,11 @@ import { MobileBottomNav } from "./components/layout/MobileBottomNav";
 
 // Tabs (Static Primary)
 import { HomeHubTab } from "./components/tabs/HomeHubTab";
-import { MaterialTab } from "./components/tabs/MaterialTab";
 
 // Lazy Tabs
+const MaterialTab = lazy(() =>
+  import("./components/tabs/MaterialTab").then((m) => ({ default: m.MaterialTab }))
+);
 const QuizTab = lazy(() => import("./components/tabs/QuizTab").then(m => ({ default: m.QuizTab })));
 const FlashcardsTab = lazy(() => import("./components/tabs/FlashcardsTab").then(m => ({ default: m.FlashcardsTab })));
 const FeynmanTab = lazy(() => import("./components/tabs/FeynmanTab").then(m => ({ default: m.FeynmanTab })));
@@ -126,6 +128,21 @@ export default function App() {
       console.warn("Parse room URL param error:", e);
     }
   }, [showNotice]);
+
+  useEffect(() => {
+    const prefetch = () => {
+      import("./components/tabs/MaterialTab");
+    };
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        const id = (window as any).requestIdleCallback(prefetch, { timeout: 2500 });
+        return () => (window as any).cancelIdleCallback(id);
+      } else {
+        const timer = setTimeout(prefetch, 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
 
   // 3. UI State
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -889,51 +906,51 @@ export default function App() {
                 />
               )}
 
-              {activeTab === "material" && (
-                <MaterialTab
-                  documents={documents}
-                  loadDocument={loadDocument}
-                  activeDocId={activeDocId}
-                  activeDocTitle={activeDocTitle}
-                  setActiveDocTitle={setActiveDocTitle}
-                  activeDocContent={activeDocContent}
-                  setActiveDocContent={setActiveDocContent}
-                  activeDocSummary={activeDocSummary}
-                  formattedContent={formattedContent}
-                  wordCount={wordCount}
-                  flashcards={flashcards}
-                  quizQuestions={quizQuestions}
-                  isDetectingTitle={isDetectingTitle}
-                  handleAutoDetectTitle={handleAutoDetectTitle}
-                  fileInputRef={fileInputRef}
-                  setIsEnrichModalOpen={setIsEnrichModalOpen}
-                  copyToClipboard={copyToClipboard}
-                  copiedId={copiedId}
-                  handleSaveDocument={handleSaveDocument}
-                  setActiveTab={setActiveTab}
-                  materialCreationTab={materialCreationTab}
-                  setMaterialCreationTab={setMaterialCreationTab}
-                  cameraInputRef={cameraInputRef}
-                  handleGenerateSummary={handleGenerateSummary}
-                  isUploading={isUploading}
-                  uploadError={uploadError}
-                  topicInput={topicInput}
-                  setTopicInput={setTopicInput}
-                  setIsTopicModalOpen={setIsTopicModalOpen}
-                  setIsYouTubeModalOpen={setIsYouTubeModalOpen}
-                  handleStartTopicClarify={handleStartTopicClarify}
-                  isEnriching={isEnriching}
-                  showRawText={showRawText}
-                  setShowRawText={setShowRawText}
-                  isDragging={isDragging}
-                  setIsDragging={setIsDragging}
-                  handleDrop={handleDrop}
-                  handleGenerateQuiz={handleGenerateQuiz}
-                  handleGenerateFlashcards={handleGenerateFlashcards}
-                />
-              )}
-
               <Suspense fallback={<TabFallbackSkeleton />}>
+                {activeTab === "material" && (
+                  <MaterialTab
+                    documents={documents}
+                    loadDocument={loadDocument}
+                    activeDocId={activeDocId}
+                    activeDocTitle={activeDocTitle}
+                    setActiveDocTitle={setActiveDocTitle}
+                    activeDocContent={activeDocContent}
+                    setActiveDocContent={setActiveDocContent}
+                    activeDocSummary={activeDocSummary}
+                    formattedContent={formattedContent}
+                    wordCount={wordCount}
+                    flashcards={flashcards}
+                    quizQuestions={quizQuestions}
+                    isDetectingTitle={isDetectingTitle}
+                    handleAutoDetectTitle={handleAutoDetectTitle}
+                    fileInputRef={fileInputRef}
+                    setIsEnrichModalOpen={setIsEnrichModalOpen}
+                    copyToClipboard={copyToClipboard}
+                    copiedId={copiedId}
+                    handleSaveDocument={handleSaveDocument}
+                    setActiveTab={setActiveTab}
+                    materialCreationTab={materialCreationTab}
+                    setMaterialCreationTab={setMaterialCreationTab}
+                    cameraInputRef={cameraInputRef}
+                    handleGenerateSummary={handleGenerateSummary}
+                    isUploading={isUploading}
+                    uploadError={uploadError}
+                    topicInput={topicInput}
+                    setTopicInput={setTopicInput}
+                    setIsTopicModalOpen={setIsTopicModalOpen}
+                    setIsYouTubeModalOpen={setIsYouTubeModalOpen}
+                    handleStartTopicClarify={handleStartTopicClarify}
+                    isEnriching={isEnriching}
+                    showRawText={showRawText}
+                    setShowRawText={setShowRawText}
+                    isDragging={isDragging}
+                    setIsDragging={setIsDragging}
+                    handleDrop={handleDrop}
+                    handleGenerateQuiz={handleGenerateQuiz}
+                    handleGenerateFlashcards={handleGenerateFlashcards}
+                  />
+                )}
+
                 {activeTab === "quiz" && (
                   <QuizTab
                     quizQuestions={quizQuestions}

@@ -15,13 +15,20 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 600,
+    modulePreload: {
+      resolveDependencies(filename, deps) {
+        return deps.filter(
+          (url) => !url.includes("katex") && !url.includes("markdown")
+        );
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes("/node_modules/react/") || id.includes("/node_modules/react-dom/")) {
             return "vendor-react";
           }
-          if (id.includes("/node_modules/katex/")) {
+          if (id.includes("/node_modules/katex/") && !id.endsWith(".css")) {
             return "vendor-katex";
           }
           if (

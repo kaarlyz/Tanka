@@ -2,7 +2,7 @@ import React from "react";
 import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2, Video, X, Camera, Compass, Flame } from "lucide-react";
 import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, DocumentItem, QuizQuestion, Flashcard, MistakeItem, UserAccount } from "../../types";
-import { MathView, getSubjectBadge } from "../common/MathView";
+import { getSubjectBadge } from "../../utils/subjectBadge";
 
 export interface HomeHubTabProps {
   activeTab: ActiveTab;

@@ -38,6 +38,7 @@ export function FormulaDrawer({
 
   return (
     <div
+      className="modal-backdrop"
       style={{
         position: "fixed",
         top: 0,

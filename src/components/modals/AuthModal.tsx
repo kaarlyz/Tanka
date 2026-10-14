@@ -43,6 +43,7 @@ export function AuthModal({
 
   return (
     <div
+      className="modal-backdrop"
       style={{
         position: "fixed",
         inset: 0,

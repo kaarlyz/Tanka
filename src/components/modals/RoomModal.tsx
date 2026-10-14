@@ -286,6 +286,7 @@ export function RoomModal({
   if (!currentUser) {
     return (
       <div
+        className="modal-backdrop"
         style={{
           position: "fixed",
           inset: 0,
@@ -299,6 +300,7 @@ export function RoomModal({
         }}
       >
         <div
+          className="modal-scale-in"
           style={{
             backgroundColor: "#161b19",
             color: "#e6ece9",
@@ -574,6 +576,7 @@ export function RoomModal({
 
   return (
     <div
+      className="modal-backdrop"
       style={{
         position: "fixed",
         inset: 0,

@@ -34,6 +34,7 @@ export function EnrichModal({
 
   return (
                 <div
+                  className="modal-backdrop"
                   style={{
                     position: "fixed",
                     top: 0,
@@ -53,6 +54,7 @@ export function EnrichModal({
                   }}
                 >
                   <div
+                    className="modal-scale-in"
                     style={{
                       backgroundColor: "#ffffff",
                       border: "1px solid #dde1da",

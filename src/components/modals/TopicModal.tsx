@@ -49,6 +49,7 @@ export function TopicModal({
 
   return (
               <div
+              className="modal-backdrop"
               style={{
               position: "fixed",
               top: 0,
@@ -68,6 +69,7 @@ export function TopicModal({
               }}
               >
               <div
+              className="modal-scale-in"
               onClick={(e) => e.stopPropagation()}
               style={{
               width: "100%",

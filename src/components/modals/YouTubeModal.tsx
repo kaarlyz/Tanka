@@ -60,6 +60,7 @@ export function YouTubeModal({
 
   return (
     <div
+      className="modal-backdrop"
       style={{
         position: "fixed",
         top: 0,
@@ -79,6 +80,7 @@ export function YouTubeModal({
       }}
     >
       <div
+        className="modal-scale-in"
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%",

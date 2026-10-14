@@ -46,6 +46,7 @@ export function StagingUploadModal({
 
   return (
         <div
+          className="modal-backdrop"
           style={{
             position: "fixed",
             inset: 0,
@@ -62,6 +63,7 @@ export function StagingUploadModal({
           }}
         >
           <div
+            className="modal-scale-in"
             style={{
               backgroundColor: "#ffffff",
               borderRadius: 14,

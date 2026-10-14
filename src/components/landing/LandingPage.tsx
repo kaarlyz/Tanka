@@ -1,20 +1,12 @@
 import React, { useState } from "react";
 import {
   ArrowRight,
-  Check,
   CheckCircle2,
   Lock,
   Star,
   ExternalLink,
   Zap,
-  BookOpen,
-  Cpu,
-  Layers,
-  Shield,
-  Brain,
-  Sparkles,
-  ChevronRight,
-  HelpCircle
+  ChevronRight
 } from "lucide-react";
 import { UserAccount } from "../../types";
 
@@ -34,43 +26,43 @@ export function LandingPage({
   const steps = [
     {
       num: "01",
-      tag: "INGESTION",
-      title: "Unggah Dokumen / Tempel Tautan YouTube",
+      tag: "INPUT MATERI",
+      title: "Unggah Dokumen atau Tempel Link YouTube",
       summary:
-        "Tarik materi dari PDF, PPTX, gambar berbasis OCR lokal, atau transkrip video YouTube otomatis.",
+        "Tarik intisari dari file PDF, catatan foto, slide PPTX, atau video YouTube secara instan.",
       detail:
-        "Engine Tanka memproses berkas materi kuliah, buku teks, atau video referensi tanpa perlu mengirim dokumen mentah ke server pihak ketiga. Semua teks diekstrak, dinormalisasi, dan dibersihkan secara lokal.",
-      chips: ["Multi-format PDF/PPTX/Image", "Transkrip Video Otomatis", "Sanitasi Karakter KaTeX"]
+        "Cukup masukkan bahan belajarmu. Tanka otomatis mengekstrak materi dan merapikannya menjadi modul siap baca tanpa iklan dan tanpa ribet.",
+      chips: ["Multi-format PDF, Foto & PPTX", "Transkrip Video YouTube Otomatis", "Ekstraksi Rapi & Cepat"]
     },
     {
       num: "02",
-      tag: "SYNTHESIS",
-      title: "AI Menyusun Kurikulum Modular Per Bab",
+      tag: "STRUKTUR BAB",
+      title: "Rangkuman Terstruktur Bab demi Bab",
       summary:
-        "Dekomposisi konsep kanonikal menjadi pohon hierarkis terstruktur dengan prasyarat keterhubungan.",
+        "Materi panjang dipecah jadi modul-modul kecil terstruktur agar mudah dipelajari berurutan.",
       detail:
-        "Materi dipecah menjadi modul-modul belajar terisolasi. Setiap bab memuat penjelasan mendalam, rumus matematika KaTeX presisi, dan kaitan langsung dengan materi prasyarat.",
-      chips: ["Modular Chapter Engine", "Prerequisite Concept Edges", "Auto-Repair Coverage"]
+        "Tidak ada lagi tumpukan materi tebal yang bikin pusing. Tanka merapikan materi menjadi bab-bab terurut lengkap dengan penurunan rumus matematika yang jelas.",
+      chips: ["Modul Belajar Ringkas", "Urutan Materi Logis", "Rumus Ditata Rapi"]
     },
     {
       num: "03",
-      tag: "INTERACTIVE TUTOR",
-      title: "Diskusi & Bedah Soal Bersama Nara AI",
+      tag: "TANYA NARA AI",
+      title: "Diskusi & Tanya Rumus Sepuasnya",
       summary:
-        "Tutor berlatensi sub-0.2ms untuk tanya jawab interaktif, penurunan rumus, dan klarifikasi bertingkat.",
+        "Tutor AI pribadi yang sabar menerangkan konsep sulit dan penurunan rumus kapan saja.",
       detail:
-        "Nara mendampingi setiap baris bacaanmu. State colocation menjaga pengetikan rumus dan rendering KaTeX tetap halus di 60 FPS tanpa jeda frame.",
-      chips: ["Sub-0.2ms Input Latency", "Formula Breakdown", "State Colocation 60 FPS"]
+        "Nara mendampingi setiap halaman belajarmu. Tanya rumus yang belum dipahami, dan Nara akan menjelaskannya dengan contoh analogi nyata langkah demi langkah.",
+      chips: ["Penjelasan Langkah demi Langkah", "Analogi Ramah & Sederhana", "Respon Cepat Kapan Saja"]
     },
     {
       num: "04",
-      tag: "RETENTION DRILL",
-      title: "Uji Retensi Kognitif (Feynman & Bank Salah)",
+      tag: "UJI PEMAHAMAN",
+      title: "Latihan Kuis Pintar & Lacak Bank Salah",
       summary:
-        "Pengujian pemahaman aktif dengan teknik Feynman deterministik dan isolasi kelemahan di Bank Soal Salah.",
+        "Uji pemahaman dengan kuis fakta objektif dan arsipkan materi yang belum dikuasai ke Bank Salah.",
       detail:
-        "Selesaikan kuis atomik berbasis rubrik objektif. Setiap jawaban salah langsung diarsipkan ke Bank Soal Salah untuk ditinjau ulang hingga pemahaman konsep tuntas 100%.",
-      chips: ["Deterministic Scoring Rubric", "Anti-Halusinasi Evaluator", "Auto Mistake Isolation"]
+        "Selesaikan kuis interaktif tanpa soal jebakan. Setiap jawaban yang salah otomatis masuk ke Bank Salah agar kamu bisa mereview materi tersebut sampai siap ujian.",
+      chips: ["Kuis Akurat Anti-Halusinasi", "Pembahasan Otomatis", "Bank Khusus Soal Salah"]
     }
   ];
 
@@ -233,6 +225,19 @@ export function LandingPage({
           margin-bottom: 24px;
         }
 
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+            box-shadow: 0 0 8px rgba(200, 240, 100, 0.9);
+          }
+          50% {
+            transform: scale(1.15);
+            opacity: 0.85;
+            box-shadow: 0 0 14px rgba(200, 240, 100, 1);
+          }
+        }
+
         .hero-pill-dot {
           width: 8px;
           height: 8px;
@@ -240,16 +245,26 @@ export function LandingPage({
           background: #c8f064;
           border: 1.5px solid #18221f;
           box-shadow: 0 0 8px rgba(200, 240, 100, 0.9);
+          animation: pulse 2s infinite ease-in-out;
         }
 
         .hero-title {
           font-size: clamp(2.2rem, 5.5vw, 3.8rem);
           font-weight: 800;
-          line-height: 1.12;
+          line-height: 1.15;
           letter-spacing: -0.035em;
           color: #18221f;
           max-width: 880px;
           margin: 0 auto 20px;
+        }
+
+        .hero-title-sub {
+          display: block;
+          font-size: clamp(1.1rem, 2.8vw, 1.8rem);
+          font-weight: 700;
+          color: #45544e;
+          margin-top: 8px;
+          letter-spacing: -0.02em;
         }
 
         .hero-subtitle {
@@ -319,7 +334,7 @@ export function LandingPage({
           border-radius: 14px;
           border: 1px solid #dce2da;
           background: #ffffff;
-          box-shadow: 0 26px 70px -15px rgba(24, 34, 31, 0.12), 0 0 0 1px rgba(24, 34, 31, 0.03);
+          box-shadow: 0 24px 64px -12px rgba(24, 34, 31, 0.12), 0 0 0 1px rgba(24, 34, 31, 0.03);
           overflow: hidden;
         }
 
@@ -423,12 +438,15 @@ export function LandingPage({
           flex-direction: column;
           justify-content: space-between;
           overflow: hidden;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .bento-card:hover {
-          border-color: #cbd4c8;
-          box-shadow: 0 12px 36px rgba(24, 34, 31, 0.07);
+        @media (hover: hover) and (pointer: fine) {
+          .bento-card:hover {
+            transform: translateY(-3px);
+            border-color: #a8c48a !important;
+            box-shadow: 0 16px 36px rgba(24, 34, 31, 0.08) !important;
+          }
         }
 
         .bento-span-2 {
@@ -658,7 +676,7 @@ export function LandingPage({
 
           <div className="landing-nav-links">
             <a href="#fitur" className="landing-nav-link">Fitur Inti</a>
-            <a href="#arsitektur" className="landing-nav-link">Arsitektur Bento</a>
+            <a href="#keunggulan" className="landing-nav-link">Keunggulan</a>
             <a href="#alur" className="landing-nav-link">Alur Belajar</a>
             <a
               href="https://github.com/kaarlyz/Tanka"
@@ -709,21 +727,23 @@ export function LandingPage({
       <section className="landing-hero">
         <div className="hero-pill">
           <span className="hero-pill-dot" />
-          <span>Sistem Studi Otonom Berbasis Bukti • Local-First</span>
+          <span>⚡ Belajar Cepat & Tuntas • 100% Bebas Iklan</span>
         </div>
 
         <h1 className="hero-title">
-          Belajar Mandiri Tanpa Kebisingan.<br />
-          Sistem Studi Otonom Berbasis Bukti.
+          Ubah Materi Apapun Jadi Paham Seketika.
+          <span className="hero-title-sub">
+            Belajar Mandiri Berdaya Tinggi, Bebas Gimmick.
+          </span>
         </h1>
 
         <p className="hero-subtitle">
-          Ubah dokumen tebal, catatan kuliah, atau video YouTube menjadi modul kurikulum terstruktur dalam hitungan detik. Diperkuat tutor AI berlatensi sub-0.2ms, formula KaTeX presisi, dan uji retensi deterministik.
+          Pecah PDF tebal, catatan kuliah, atau video YouTube 1 jam menjadi bab bacaan modular dalam hitungan detik. Didampingi tutor Nara AI yang sabar menjelaskan rumus langkah demi langkah.
         </p>
 
         <div className="hero-cta-group">
           <button className="hero-btn-launch" onClick={onLaunchApp}>
-            <span>Buka Aplikasi Sekarang</span>
+            <span>Mulai Belajar Sekarang (Gratis)</span>
             <ArrowRight size={16} />
           </button>
           <a
@@ -732,8 +752,8 @@ export function LandingPage({
             rel="noopener noreferrer"
             className="hero-btn-github"
           >
+            <span>Lihat Sumber Terbuka (GitHub)</span>
             <Star size={16} color="#eab308" fill="#eab308" />
-            <span>Lihat di GitHub</span>
           </a>
         </div>
 
@@ -761,29 +781,29 @@ export function LandingPage({
       </section>
 
       {/* Bento Grid Showcase Section */}
-      <section id="arsitektur" className="landing-section">
+      <section id="keunggulan" className="landing-section">
         <div className="section-header">
-          <span className="section-tag">ENGINE ARCHITECTURE</span>
-          <h2 className="section-title">Engine Belajar Otonom Tanpa Kompromi</h2>
+          <span className="section-tag">KEUNGGULAN UTAMA</span>
+          <h2 className="section-title">Belajar Lebih Efektif Tanpa Rasa Frustrasi</h2>
           <p className="section-desc">
-            Arsitektur teruji yang memisahkan latensi antarmuka pengguna dari beban inferensi AI. Berjalan lokal, deterministik, dan bebas distorsi.
+            Dirancang khusus untuk memecah kerumitan materi belajar. Pahami konsep sulit lebih cepat, bebas distraksi iklan, dan didampingi tutor AI 24/7.
           </p>
         </div>
 
         <div className="bento-grid">
-          {/* Card 1: 2 Kolom Lebar */}
+          {/* Card 1: 2 Kolom Lebar (Nara AI) */}
           <div className="bento-card bento-span-2">
             <div className="bento-two-col">
               <div>
-                <div className="bento-label">ENGINE PERFORMANCE</div>
-                <h3 className="bento-title">Sub-0.2ms Input Latency & Zero Frame Drop</h3>
+                <div className="bento-label">TUTOR PRIBADI 24/7</div>
+                <h3 className="bento-title">Tanya Rumus & Konsep Tanpa Rasa Malu</h3>
                 <p className="bento-desc">
-                  Engine rendering Markdown & KaTeX terisolasi dengan state colocation. Mengetik rumus dan berdiskusi dengan Nara AI tetap stabil di 60 FPS bahkan di smartphone terendah.
+                  Gak paham satu langkah di soal matematika atau konsep teori rumit? Tanya Nara AI. Dijelaskan dengan analogi sederhana dan penurunan rumus bertahap sampai kamu benar-benar paham.
                 </p>
                 <div className="chip-group">
-                  <span className="metric-chip">State Colocation</span>
-                  <span className="metric-chip">Zero Frame Drop</span>
-                  <span className="metric-chip">Isolated KaTeX Cache</span>
+                  <span className="metric-chip">Analogi Ramah</span>
+                  <span className="metric-chip">Penjelasan Bertahap</span>
+                  <span className="metric-chip">Respon Seketika</span>
                 </div>
               </div>
               <div className="mini-device-frame">
@@ -792,12 +812,12 @@ export function LandingPage({
                   <span className="mini-device-dot" />
                   <span className="mini-device-dot" />
                   <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#798782", marginLeft: 4 }}>
-                    tanya-nara.tsx [sub-0.2ms]
+                    tanya-nara.ai [asisten-belajar]
                   </span>
                 </div>
                 <img
                   src="/assets/landing/bento-nara.png"
-                  alt="Tanya Nara AI Engine Sub-0.2ms"
+                  alt="Tanya Nara AI Tutor Pribadi"
                   className="mockup-img"
                   loading="eager"
                 />
@@ -805,14 +825,19 @@ export function LandingPage({
             </div>
           </div>
 
-          {/* Card 2: 1 Kolom */}
+          {/* Card 2: 1 Kolom (Atomic Quiz) */}
           <div className="bento-card" id="fitur">
             <div>
-              <div className="bento-label">COGNITIVE DRILL</div>
-              <h3 className="bento-title">Atomic Fact Verification</h3>
+              <div className="bento-label">LATIHAN TERUJI</div>
+              <h3 className="bento-title">Kuis Pintar 1 Kartu 1 Fakta</h3>
               <p className="bento-desc">
-                1 kartu 1 fakta atomik. Kuis dirancang dengan rubrik deterministik, menolak halusinasi AI dan melatih retensi kognitif aktif.
+                Bukan kuis tebak-tebakan asal jadi. Setiap soal menguji inti logika materi tanpa soal jebakan halusinasi, dilengkapi pembahasan instan.
               </p>
+              <div className="chip-group" style={{ marginBottom: 20 }}>
+                <span className="metric-chip">Anti-Halusinasi</span>
+                <span className="metric-chip">Pembahasan Lengkap</span>
+                <span className="metric-chip">Lacak Bank Salah</span>
+              </div>
             </div>
             <div className="mini-device-frame">
               <div className="mini-device-header">
@@ -820,26 +845,31 @@ export function LandingPage({
                 <span className="mini-device-dot" />
                 <span className="mini-device-dot" />
                 <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#798782", marginLeft: 4 }}>
-                  quiz-validator.ts [deterministic]
+                  kuis-pemahaman.ai [evaluasi-akurat]
                 </span>
               </div>
               <img
                 src="/assets/landing/bento-quiz.png"
-                alt="Atomic Quiz Verification"
+                alt="Kuis Pintar 1 Kartu 1 Fakta"
                 className="mockup-img"
                 loading="eager"
               />
             </div>
           </div>
 
-          {/* Card 3: 1 Kolom */}
+          {/* Card 4: 1 Kolom (Peta Konsep) */}
           <div className="bento-card">
             <div>
-              <div className="bento-label">KNOWLEDGE GRAPH</div>
-              <h3 className="bento-title">Peta Konsep Radial Interaktif</h3>
+              <div className="bento-label">VISUAL RETENTION</div>
+              <h3 className="bento-title">Petakan Hubungan Antar-Konsep</h3>
               <p className="bento-desc">
-                Visualisasi hierarki bab dan keterhubungan materi secara grafis dengan kurva bezier zaitun, memetakan alur prasyarat sebelum ujian.
+                Visualisasikan alur keterkaitan materi secara menyeluruh agar tidak ada mata rantai ilmu yang tercecer sebelum ujian.
               </p>
+              <div className="chip-group" style={{ marginBottom: 20 }}>
+                <span className="metric-chip">Peta Radial</span>
+                <span className="metric-chip">Navigasi Cepat</span>
+                <span className="metric-chip">Retensi Jangka Panjang</span>
+              </div>
             </div>
             <div className="mini-device-frame">
               <div className="mini-device-header">
@@ -847,32 +877,47 @@ export function LandingPage({
                 <span className="mini-device-dot" />
                 <span className="mini-device-dot" />
                 <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#798782", marginLeft: 4 }}>
-                  radial-graph.svg [bezier-curves]
+                  peta-konsep.ai [visual-roadmap]
                 </span>
               </div>
               <img
                 src="/assets/landing/bento-mindmap.png"
-                alt="Peta Konsep Radial Interaktif"
+                alt="Petakan Hubungan Antar-Konsep"
                 className="mockup-img"
                 loading="eager"
               />
             </div>
           </div>
 
-          {/* Card 4: 2 Kolom Lebar */}
-          <div className="bento-card bento-span-2">
+          {/* Card 3: 1 Kolom (YouTube & Dokumen) */}
+          <div className="bento-card">
             <div>
-              <div className="bento-label">PIPELINE & OFFLINE RESILIENCE</div>
-              <h3 className="bento-title">YouTube to Structured Curriculum & Offline Resilience</h3>
+              <div className="bento-label">INSTANT SUMMARY</div>
+              <h3 className="bento-title">Video YouTube 1 Jam Jadi Rangkuman 3 Menit</h3>
               <p className="bento-desc">
-                Keringkan video materi 1 jam menjadi intisari bab terstruktur, tabel rumus, dan flashcards. Didukung database SQLite WAL mode dan PWA.
+                Cukup tempel link video YouTube atau unggah dokumen. Tanka otomatis merapikannya menjadi modul bab interaktif layaknya buku saku digital.
               </p>
-              <div className="chip-group" style={{ marginTop: 12 }}>
-                <span className="metric-chip">[ 100% Offline-First ]</span>
-                <span className="metric-chip">[ SQLite WAL Engine ]</span>
-                <span className="metric-chip">[ Zero Vendor Lock-in ]</span>
-                <span className="metric-chip">[ KaTeX Math Native ]</span>
-              </div>
+            </div>
+            <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
+              <span className="metric-chip">Auto-Chapter</span>
+              <span className="metric-chip">Rangkuman Rumus</span>
+              <span className="metric-chip">Estetika Paper-Ledger</span>
+            </div>
+          </div>
+
+          {/* Card 5: 1 Kolom (Offline & Ringan) */}
+          <div className="bento-card">
+            <div>
+              <div className="bento-label">HEMAT & PRIVAT</div>
+              <h3 className="bento-title">Bisa Dipelajari Offline & Hemat Kuota</h3>
+              <p className="bento-desc">
+                Semua data materi tersimpan di perangkatmu sendiri. Buka materi di mana saja tanpa pusing jaringan internet putus-nyambung.
+              </p>
+            </div>
+            <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
+              <span className="metric-chip">Local-First</span>
+              <span className="metric-chip">Ringan di HP</span>
+              <span className="metric-chip">Nol Iklan Mengganggu</span>
             </div>
           </div>
         </div>
@@ -881,10 +926,10 @@ export function LandingPage({
       {/* Feature Stepper Section */}
       <section id="alur" className="landing-section" style={{ paddingTop: 20 }}>
         <div className="section-header">
-          <span className="section-tag">ALUR KERJA DETERMINISTIK</span>
-          <h2 className="section-title">Dari Tumpukan Bahan Jadi Penguasaan Konsep</h2>
+          <span className="section-tag">CARA KERJA</span>
+          <h2 className="section-title">Dari Tumpukan Materi Jadi Paham Tuntas</h2>
           <p className="section-desc">
-            Empat tahapan otomatis tanpa friksi untuk memecah materi sulit menjadi unit belajar siap uji.
+            Empat langkah mudah untuk memecah materi sulit menjadi unit belajar yang siap kamu kuasai.
           </p>
         </div>
 
@@ -954,7 +999,7 @@ export function LandingPage({
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
               <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#c8f064", letterSpacing: "0.05em" }}>
-                PIPELINE STATUS: DETERMINISTIC
+                METODE BELAJAR TERUJI
               </span>
               <Zap size={14} color="#c8f064" />
             </div>
@@ -979,7 +1024,7 @@ export function LandingPage({
                 gap: 8
               }}
             >
-              <span>Uji di Workspace Nyata</span>
+              <span>Mulai Belajar Sekarang</span>
               <ChevronRight size={14} />
             </button>
           </div>
@@ -989,10 +1034,10 @@ export function LandingPage({
       {/* Call to Action Banner */}
       <div className="landing-cta-banner">
         <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 14, color: "#ffffff" }}>
-          Siap Membangun Fondasi Pemahaman Berbasis Bukti?
+          Siap Paham Materi Lebih Cepat dan Tuntas?
         </h2>
         <p style={{ fontSize: 16, color: "#b5c2bc", maxWidth: 640, margin: "0 auto 32px", lineHeight: 1.6 }}>
-          Mulai olah modul belajarmu sekarang. 100% bebas biaya, tanpa iklan, dan data materi tetap tersimpan privat di browser dan perangkat lokalmu.
+          Mulai olah materi belajarmu sekarang. 100% bebas biaya, tanpa iklan mengganggu, dan catatan belajarmu tersimpan aman di perangkatmu.
         </p>
         <button
           onClick={onLaunchApp}
@@ -1011,7 +1056,7 @@ export function LandingPage({
             boxShadow: "0 8px 24px rgba(200, 240, 100, 0.3)"
           }}
         >
-          <span>Luncurkan Tanka Sekarang</span>
+          <span>Mulai Belajar Sekarang (Gratis)</span>
           <ArrowRight size={18} />
         </button>
       </div>
@@ -1026,7 +1071,7 @@ export function LandingPage({
                 <span className="landing-brand-text">tanka.</span>
               </div>
               <p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#5f6b66" }}>
-                Tanka — Platform Belajar Mandiri Otonom untuk Pelajar & Mahasiswa Berorientasi Bukti.
+                Tanka — Platform Belajar Mandiri Cerdas untuk Pelajar SMA, Pejuang UTBK & Mahasiswa.
               </p>
             </div>
 
@@ -1057,14 +1102,14 @@ export function LandingPage({
 
               <div>
                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#18221f", marginBottom: 12, letterSpacing: "0.06em" }}>
-                  PRIVASI & SPESIFIKASI
+                  PRIVASI & KEAMANAN
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <span style={{ fontSize: 13, color: "#5f6b66" }}>
-                    Local-First SQLite Storage
+                    Data Privat di Perangkat
                   </span>
                   <span style={{ fontSize: 13, color: "#5f6b66" }}>
-                    Deterministic Evaluation
+                    Kuis Akurat & Bebas Halusinasi
                   </span>
                 </div>
               </div>
@@ -1074,7 +1119,7 @@ export function LandingPage({
           <div className="footer-bottom">
             <span>© 2026 Tanka by kaarlyz. All rights reserved.</span>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12 }}>
-              Built with React 19 • KaTeX • Local SQLite WAL
+              Belajar Mandiri Cerdas • Bebas Iklan • 100% Privat
             </span>
           </div>
         </div>

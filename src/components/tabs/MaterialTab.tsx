@@ -30,7 +30,6 @@ import {
 import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, Flashcard, QuizQuestion, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
-import { normalizeMathExpression } from "../../utils/mathNormalizer";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeMathMarkdown } from "../common/DiagramRenderer";
 
 const InteractiveMindMap = React.lazy(() =>
@@ -53,7 +52,7 @@ const MemoizedMarkdownBody = React.memo(function MemoizedMarkdownBody({
   className,
   style
 }: MemoizedMarkdownBodyProps) {
-  const sanitized = React.useMemo(() => normalizeMathExpression(sanitizeMathMarkdown(content)), [content]);
+  const sanitized = React.useMemo(() => sanitizeMathMarkdown(content), [content]);
   return (
     <div className={className} style={style}>
       <ReactMarkdown
@@ -153,12 +152,16 @@ export const MaterialTab = React.memo(function MaterialTab({
   const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full">("chapters");
   const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
+  const [isPendingChapter, startChapterTransition] = React.useTransition();
 
   const handleSelectChapter = (idx: number | ((prev: number) => number)) => {
     const scrollContainer = document.querySelector(".content-scroll");
     if (scrollContainer) scrollContainer.scrollTop = 0;
     window.scrollTo(0, 0);
-    setCurrentChapterIdx(idx);
+
+    startChapterTransition(() => {
+      setCurrentChapterIdx(idx);
+    });
   };
 
   // Reset chapter index to 0 whenever a new document is opened
@@ -965,7 +968,7 @@ export const MaterialTab = React.memo(function MaterialTab({
 
                           <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
                             <button
-                              disabled={currentChapterIdx === 0}
+                              disabled={currentChapterIdx === 0 || isPendingChapter}
                               onClick={() => handleSelectChapter((i) => Math.max(0, i - 1))}
                               style={{
                                 width: 30,
@@ -974,11 +977,13 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 border: "1px solid #dde1da",
                                 backgroundColor: currentChapterIdx === 0 ? "#f4f6f1" : "#ffffff",
                                 color: currentChapterIdx === 0 ? "#a8b3af" : "#17201d",
-                                cursor: currentChapterIdx === 0 ? "not-allowed" : "pointer",
+                                cursor: isPendingChapter ? "wait" : currentChapterIdx === 0 ? "not-allowed" : "pointer",
+                                opacity: isPendingChapter ? 0.75 : 1,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                fontSize: 11
+                                fontSize: 11,
+                                transition: "all 0.15s ease"
                               }}
                               title="Bab Sebelumnya"
                             >
@@ -988,7 +993,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                               {currentChapterIdx + 1}/{chapters.length}
                             </span>
                             <button
-                              disabled={currentChapterIdx >= chapters.length - 1}
+                              disabled={currentChapterIdx >= chapters.length - 1 || isPendingChapter}
                               onClick={() => handleSelectChapter((i) => Math.min(chapters.length - 1, i + 1))}
                               style={{
                                 width: 30,
@@ -997,11 +1002,13 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 border: "1px solid #dde1da",
                                 backgroundColor: currentChapterIdx >= chapters.length - 1 ? "#f4f6f1" : "#ffffff",
                                 color: currentChapterIdx >= chapters.length - 1 ? "#a8b3af" : "#17201d",
-                                cursor: currentChapterIdx >= chapters.length - 1 ? "not-allowed" : "pointer",
+                                cursor: isPendingChapter ? "wait" : currentChapterIdx >= chapters.length - 1 ? "not-allowed" : "pointer",
+                                opacity: isPendingChapter ? 0.75 : 1,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                fontSize: 11
+                                fontSize: 11,
+                                transition: "all 0.15s ease"
                               }}
                               title="Bab Berikutnya"
                             >
@@ -1050,6 +1057,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 <div
                                   key={ch.id}
                                   onClick={() => {
+                                    if (isPendingChapter) return;
                                     handleSelectChapter(idx);
                                     setIsChapterDrawerOpen(false);
                                   }}
@@ -1058,7 +1066,8 @@ export const MaterialTab = React.memo(function MaterialTab({
                                     borderRadius: 12,
                                     border: isCurrent ? "1.5px solid #4b6623" : "1px solid #e2e8e0",
                                     backgroundColor: isCurrent ? "#eef8db" : isDone ? "#f0fdf4" : "#fbfcf9",
-                                    cursor: "pointer",
+                                    cursor: isPendingChapter ? "wait" : "pointer",
+                                    opacity: isPendingChapter ? 0.7 : 1,
                                     display: "flex",
                                     alignItems: "flex-start",
                                     gap: 10,
@@ -1138,16 +1147,19 @@ export const MaterialTab = React.memo(function MaterialTab({
                           )}
 
                           {/* Literary Reader Markdown Body */}
-                          <MemoizedMarkdownBody
-                            className="markdown-body book-reader"
-                            content={chapters[currentChapterIdx]?.content || ""}
-                            components={markdownComponents}
-                          />
+                          <div style={{ opacity: isPendingChapter ? 0.65 : 1, transition: "opacity 0.15s ease" }}>
+                            <MemoizedMarkdownBody
+                              key={`chapter-body-${chapters[currentChapterIdx]?.id ?? currentChapterIdx}`}
+                              className="markdown-body book-reader"
+                              content={chapters[currentChapterIdx]?.content || ""}
+                              components={markdownComponents}
+                            />
+                          </div>
 
                           {/* Chapter Pagination & Completion Footer */}
                           <div style={{ maxWidth: 820, margin: "36px auto 0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 20, borderTop: "1px solid #edf1eb", flexWrap: "wrap", gap: 10 }}>
                             <button
-                              disabled={currentChapterIdx === 0}
+                              disabled={currentChapterIdx === 0 || isPendingChapter}
                               onClick={() => handleSelectChapter((i) => Math.max(0, i - 1))}
                               style={{
                                 display: "flex",
@@ -1160,7 +1172,8 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 border: "1px solid #dce1da",
                                 backgroundColor: currentChapterIdx === 0 ? "#f4f6f2" : "#ffffff",
                                 color: currentChapterIdx === 0 ? "#a3ada8" : "#17201d",
-                                cursor: currentChapterIdx === 0 ? "not-allowed" : "pointer",
+                                cursor: isPendingChapter ? "wait" : currentChapterIdx === 0 ? "not-allowed" : "pointer",
+                                opacity: isPendingChapter ? 0.75 : 1,
                                 transition: "all 0.15s ease"
                               }}
                             >
@@ -1193,6 +1206,7 @@ export const MaterialTab = React.memo(function MaterialTab({
 
                             {currentChapterIdx < chapters.length - 1 ? (
                               <button
+                                disabled={isPendingChapter}
                                 onClick={() => {
                                   const chId = chapters[currentChapterIdx]?.id;
                                   if (chId) setCompletedChapters((prev) => ({ ...prev, [chId]: true }));
@@ -1209,7 +1223,8 @@ export const MaterialTab = React.memo(function MaterialTab({
                                   border: "none",
                                   backgroundColor: "#18221f",
                                   color: "#c8f064",
-                                  cursor: "pointer",
+                                  cursor: isPendingChapter ? "wait" : "pointer",
+                                  opacity: isPendingChapter ? 0.75 : 1,
                                   transition: "all 0.15s ease"
                                 }}
                               >

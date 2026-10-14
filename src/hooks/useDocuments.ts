@@ -79,11 +79,20 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       const data = await res.json();
       if (data.document) {
         setActiveDocId(data.document.id);
-        setActiveDocTitle(data.document.title || "");
-        setActiveDocContent(data.document.content || "");
-        setActiveDocSummary(data.document.summary || "");
-        if (callback) callback(data.document);
-        if (onDocumentLoaded) onDocumentLoaded(data.document);
+        if (data.document.title && data.document.title !== local?.title) {
+          setActiveDocTitle(data.document.title);
+        }
+        // Cegah re-render berat jika isi konten sama persis dengan yang sudah dimuat di memori
+        if (data.document.content && data.document.content !== local?.content) {
+          setActiveDocContent(data.document.content);
+        }
+        if (data.document.summary && data.document.summary !== local?.summary) {
+          setActiveDocSummary(data.document.summary);
+        }
+        if (!local) {
+          if (callback) callback(data.document);
+          if (onDocumentLoaded) onDocumentLoaded(data.document);
+        }
 
         // Jika dokumen berstatus processing atau baru dibuat dan masih teks mentah, poll otomatis sampai bab Nara selesai
         const isProcessing = data.document.status === "processing" || 

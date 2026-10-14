@@ -27,6 +27,14 @@ import {
 import { ActiveTab, QuizQuestion, MistakeItem, ChatMessage } from "../../types";
 import { MathView } from "../common/MathView";
 import { AIProcessLoader } from "../common/AIProcessLoader";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import { sanitizeMathMarkdown } from "../common/DiagramRenderer";
+
+const STATIC_REMARK_PLUGINS = [remarkGfm, remarkMath];
+const STATIC_REHYPE_PLUGINS = [rehypeKatex];
 
 function TailorQuizBox({
   activeDocId,
@@ -221,6 +229,15 @@ export function QuizTab({
   showNotice
 }: QuizTabProps) {
   const [isTailoring, setIsTailoring] = React.useState(false);
+  const [copiedQuizChatId, setCopiedQuizChatId] = React.useState<string | null>(null);
+
+  const handleCopyQuizChat = React.useCallback((id: string, text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+    setCopiedQuizChatId(id);
+    setTimeout(() => setCopiedQuizChatId(null), 2000);
+  }, []);
 
   const currentQuestion = quizQuestions[currentQuestionIndex];
   const isCorrect = isAnswerSubmitted && selectedOption === currentQuestion?.correctIndex;
@@ -1531,7 +1548,7 @@ export function QuizTab({
                           </div>
 
                           {/* Chat messages thread */}
-                          <div style={{ maxHeight: 280, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 12, paddingRight: 4 }}>
+                          <div style={{ maxHeight: 380, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 12, paddingRight: 4 }}>
                             {(!Array.isArray(quizChatMessages?.[currentQuestionIndex]) || quizChatMessages[currentQuestionIndex].length === 0) ? (
                               <div
                                 style={{
@@ -1552,24 +1569,68 @@ export function QuizTab({
                             ) : (
                               (quizChatMessages[currentQuestionIndex] as any[]).map((m: any, i: number) => {
                                 const isUser = m.role === "user";
+                                const msgId = m.id || `msg_${i}`;
                                 return (
                                   <div
-                                    key={i}
+                                    key={msgId}
                                     style={{
                                       alignSelf: isUser ? "flex-end" : "flex-start",
-                                      maxWidth: "88%",
+                                      maxWidth: isUser ? "85%" : "95%",
                                       backgroundColor: isUser ? "#18221f" : "#ffffff",
                                       color: isUser ? "#eff5ec" : "#17201d",
                                       border: isUser ? "none" : "1px solid #dde1da",
                                       borderRadius: isUser ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                                      padding: isUser ? "9px 13px" : "11px 14px",
-                                      fontSize: 12.5,
-                                      lineHeight: "1.55",
-                                      boxShadow: isUser ? "0 2px 8px rgba(24, 34, 31, 0.1)" : "0 2px 8px rgba(27, 39, 35, 0.02)",
-                                      whiteSpace: "pre-wrap"
+                                      padding: isUser ? "9px 13px" : "12px 15px",
+                                      fontSize: 13,
+                                      lineHeight: "1.58",
+                                      boxShadow: isUser ? "0 2px 8px rgba(24, 34, 31, 0.1)" : "0 2px 8px rgba(27, 39, 35, 0.02)"
                                     }}
                                   >
-                                    <MathView text={m.content} />
+                                    {isUser ? (
+                                      <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.content}</div>
+                                    ) : (
+                                      <>
+                                        <div className="nara-md-response" style={{ fontSize: 13, lineHeight: 1.58 }}>
+                                          <ReactMarkdown
+                                            remarkPlugins={STATIC_REMARK_PLUGINS}
+                                            rehypePlugins={STATIC_REHYPE_PLUGINS}
+                                          >
+                                            {sanitizeMathMarkdown(m.content)}
+                                          </ReactMarkdown>
+                                        </div>
+                                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6, paddingTop: 4, borderTop: "1px solid #edf1ea" }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleCopyQuizChat(msgId, m.content)}
+                                            title="Salin penjelasan"
+                                            style={{
+                                              background: "none",
+                                              border: "none",
+                                              cursor: "pointer",
+                                              color: "#74827b",
+                                              fontSize: 11,
+                                              display: "inline-flex",
+                                              alignItems: "center",
+                                              gap: 4,
+                                              padding: "2px 6px",
+                                              borderRadius: 4
+                                            }}
+                                          >
+                                            {copiedQuizChatId === msgId ? (
+                                              <>
+                                                <Check size={11} color="#457025" />
+                                                <span style={{ color: "#457025", fontWeight: 600 }}>Tersalin</span>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Copy size={11} />
+                                                <span>Salin</span>
+                                              </>
+                                            )}
+                                          </button>
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
                                 );
                               })

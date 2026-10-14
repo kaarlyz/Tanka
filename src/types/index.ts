@@ -108,8 +108,7 @@ export type ActiveTab =
   | "mistakes"
   | "feynman"
   | "flashcards"
-  | "summary"
-  | "chat";
+  | "summary";
 
 export interface StagedFile {
   id: string;

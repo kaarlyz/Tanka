@@ -25,10 +25,12 @@ export function isAsciiDiagramText(text: string): boolean {
   return false;
 }
 
+import { normalizeMathExpression } from "../../utils/mathNormalizer";
+
 export function sanitizeMathMarkdown(md: string): string {
   if (!md) return "";
 
-  let text = md.replace(/\r\n/g, "\n");
+  let text = normalizeMathExpression(md).replace(/\r\n/g, "\n");
 
   const lines = text.split("\n");
   const processedLines: string[] = [];

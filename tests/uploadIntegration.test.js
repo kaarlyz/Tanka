@@ -16,6 +16,34 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { db } = require("../server/db");
+
+// ─── Module-level stubs ──────────────────────────────────────────────────────
+// We patch callRouter in the ai module so LLM calls are controlled.
+// The stub is set per-test via a shared state object.
+
+const aiModule = require("../server/ai");
+const originalCallRouter = aiModule.callRouter;
+
+let callRouterStub = null;   // set per test; null = use real gateway
+const stubCallRouter = async (messages, model, temp, maxTok, timeoutMs) => {
+  if (callRouterStub) return callRouterStub(messages, model, temp, maxTok, timeoutMs);
+  return originalCallRouter(messages, model, temp, maxTok, timeoutMs);
+};
+
+// Monkey-patch (module cache is shared across requires in same process)
+Object.defineProperty(aiModule, "callRouter", {
+  get: () => stubCallRouter,
+  set: () => {},
+  configurable: true,
+});
+
+function setLLM(fn) { callRouterStub = fn; }
+function resetLLM() { callRouterStub = null; }
+
+// NOTE: executePythonScriptAsync cannot be stubbed via module property because
+// documents.js destructures it at import time (local variable, not live binding).
+// OCR-failure tests use real extract_text.py with genuinely invalid input instead.
+
 const { handleDocumentsRoutes } = require("../server/routes/documents");
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -49,33 +77,6 @@ function cleanupDoc(docId) {
   }
   try { db.prepare("DELETE FROM documents WHERE id = ?").run(docId); } catch {}
 }
-
-// ─── Module-level stubs ──────────────────────────────────────────────────────
-// We patch callRouter in the ai module so LLM calls are controlled.
-// The stub is set per-test via a shared state object.
-
-const aiModule = require("../server/ai");
-const originalCallRouter = aiModule.callRouter;
-
-let callRouterStub = null;   // set per test; null = use real gateway
-const stubCallRouter = async (messages, model, temp, maxTok, timeoutMs) => {
-  if (callRouterStub) return callRouterStub(messages, model, temp, maxTok, timeoutMs);
-  return originalCallRouter(messages, model, temp, maxTok, timeoutMs);
-};
-
-// Monkey-patch (module cache is shared across requires in same process)
-Object.defineProperty(aiModule, "callRouter", {
-  get: () => stubCallRouter,
-  set: () => {},
-  configurable: true,
-});
-
-function setLLM(fn) { callRouterStub = fn; }
-function resetLLM() { callRouterStub = null; }
-
-// NOTE: executePythonScriptAsync cannot be stubbed via module property because
-// documents.js destructures it at import time (local variable, not live binding).
-// OCR-failure tests use real extract_text.py with genuinely invalid input instead.
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Upload, Camera, Compass, X, ChevronLeft, ArrowLeft, Video, Search, User, Target, Trophy, Swords, LogOut, Flame, Sparkles } from "lucide-react";
-import { YouTubeIcon } from "../common/YouTubeIcon";
+import { ChevronLeft, User, Target, Trophy, Swords, LogOut } from "lucide-react";
 import { ActiveTab, DocumentItem, QuizQuestion, MistakeItem, Flashcard, UserAccount } from "../../types";
 
 export interface SidebarProps {
@@ -8,11 +7,11 @@ export interface SidebarProps {
   setIsMobileDrawerOpen: (val: boolean) => void;
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
-  setIsAiPanelOpen: (val: boolean) => void;
-  documents: DocumentItem[];
-  activeDocId: string | null;
-  loadDocument: (id: string) => void;
-  handleDeleteDocument: (id: string, e: React.MouseEvent) => void;
+  setIsAiPanelOpen?: (val: boolean) => void;
+  documents?: DocumentItem[];
+  activeDocId?: string | null;
+  loadDocument?: (id: string) => void;
+  handleDeleteDocument?: (id: string, e: React.MouseEvent) => void;
   handleDeleteAllDocuments?: () => void;
   docSearchQuery?: string;
   setDocSearchQuery?: (val: string) => void;
@@ -20,17 +19,17 @@ export interface SidebarProps {
   activeDocMistakes?: MistakeItem[];
   mistakes?: MistakeItem[];
   flashcards?: Flashcard[];
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  cameraInputRef: React.RefObject<HTMLInputElement | null>;
+  fileInputRef?: React.RefObject<HTMLInputElement | null>;
+  cameraInputRef?: React.RefObject<HTMLInputElement | null>;
   isUploading?: boolean;
-  handleStageFiles: (files: FileList | File[]) => void;
-  setIsTopicModalOpen: (val: boolean) => void;
+  handleStageFiles?: (files: FileList | File[]) => void;
+  setIsTopicModalOpen?: (val: boolean) => void;
   setIsYouTubeModalOpen?: (val: boolean) => void;
   setIsStagingModalOpen?: (val: boolean) => void;
   handleCreateNewDoc?: () => void;
   setTopicStep?: (step: 1 | 2 | 3) => void;
   currentUser?: UserAccount | null;
-  onOpenAuthModal?: () => void;
+  onOpenAuthModal?: (mode?: "login" | "register") => void;
   onLogout?: () => void;
   onOpenProfileModal?: (tab?: "profile" | "stats" | "leaderboard" | "room") => void;
   onOpenRoomModal?: () => void;
@@ -214,284 +213,6 @@ export function Sidebar({
               </button>
             )}
           </nav>
-
-          {/* Materi Tersimpan & Actions */}
-          <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, padding: "0 4px" }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#86938e", fontFamily: "'DM Mono', monospace", letterSpacing: 1.2 }}>
-                MATERI TERSIMPAN ({documents.length})
-              </span>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                {documents.length > 0 && handleDeleteAllDocuments && (
-                  <button
-                    onClick={handleDeleteAllDocuments}
-                    title="Hapus Semua Modul Materi"
-                    style={{
-                      backgroundColor: "rgba(239, 68, 68, 0.12)",
-                      color: "#f87171",
-                      border: "1px solid rgba(239, 68, 68, 0.25)",
-                      borderRadius: 6,
-                      padding: "2px 6px",
-                      fontSize: 10,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2
-                    }}
-                  >
-                    <Trash2 size={10} /> Hapus Semua
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    setIsMobileDrawerOpen(false);
-                    if (handleCreateNewDoc) handleCreateNewDoc();
-                  }}
-                  style={{
-                    backgroundColor: "#25322e",
-                    color: "#d6f58d",
-                    border: "1px solid #34413c",
-                    borderRadius: 6,
-                    padding: "2px 8px",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 3
-                  }}
-                >
-                  <Plus size={11} /> Baru
-                </button>
-              </div>
-            </div>
-
-            {/* Kotak Pencarian Modul */}
-            {documents.length > 0 && (
-              <div style={{ position: "relative", marginBottom: 8 }}>
-                <Search size={11} color="#7a8a84" style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)" }} />
-                <input
-                  type="text"
-                  className="clean-input"
-                  value={docSearchQuery || ""}
-                  onChange={(e) => setDocSearchQuery && setDocSearchQuery(e.target.value)}
-                  placeholder="Cari modul..."
-                  style={{
-                    width: "100%",
-                    backgroundColor: "#18221f",
-                    border: "1px solid #2e3a35",
-                    borderRadius: 6,
-                    padding: "5px 24px 5px 25px",
-                    fontSize: 11,
-                    color: "#eff5ec",
-                    outline: "none",
-                    boxSizing: "border-box"
-                  }}
-                />
-                {docSearchQuery && (
-                  <button
-                    onClick={() => setDocSearchQuery && setDocSearchQuery("")}
-                    style={{
-                      position: "absolute",
-                      right: 6,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "none",
-                      border: "none",
-                      color: "#7a8a84",
-                      cursor: "pointer",
-                      padding: 2,
-                      display: "flex"
-                    }}
-                  >
-                    <X size={11} />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Document list */}
-            {(() => {
-              const filteredDocs = documents.filter((doc) => {
-                if (!docSearchQuery) return true;
-                return doc.title.toLowerCase().includes(docSearchQuery.toLowerCase());
-              });
-
-              return (
-                <div className="no-scrollbar" style={{ maxHeight: 200, overflowY: "auto", paddingRight: 2 }}>
-                  {documents.length === 0 ? (
-                    <div style={{ padding: "18px 8px", color: "#6e7c77", fontSize: 12.5, textAlign: "center" }}>
-                      Belum ada dokumen. Unggah atau buat modul baru.
-                    </div>
-                  ) : filteredDocs.length === 0 ? (
-                    <div style={{ padding: "14px 8px", color: "#6e7c77", fontSize: 11.5, textAlign: "center" }}>
-                      Tidak ada modul "{docSearchQuery}".
-                    </div>
-                  ) : (
-                    filteredDocs.map((doc, idx) => {
-                      const isSelected = doc.id === activeDocId;
-                      return (
-                        <div
-                          key={doc.id}
-                          className={`module-item ${isSelected ? "active" : ""}`}
-                          onClick={() => {
-                            loadDocument(doc.id);
-                            setIsMobileDrawerOpen(false);
-                          }}
-                        >
-                          <span className="module-number">
-                            {String(idx + 1).padStart(2, "0")}
-                          </span>
-                          <span className="module-copy" style={{ flex: 1, minWidth: 0 }}>
-                            <strong>{doc.title}</strong>
-                            <small>{doc.flashcard_count || 0} kartu • {doc.question_count || 0} soal</small>
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteDocument(doc.id, e);
-                            }}
-                            style={{ background: "none", border: "none", color: "#7a8a84", cursor: "pointer", padding: 4, flexShrink: 0 }}
-                            title="Hapus dokumen"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* Quick Action Buttons */}
-            {/* Action Grid: Upload, Camera, Topic AI, YouTube */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
-              <button
-                onClick={() => {
-                  setIsMobileDrawerOpen(false);
-                  fileInputRef.current?.click();
-                }}
-                disabled={isUploading}
-                style={{
-                  backgroundColor: "#212d29",
-                  border: "1px solid #34413c",
-                  color: "#d6f58d",
-                  borderRadius: 8,
-                  padding: "7px 6px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: isUploading ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4
-                }}
-              >
-                <Upload size={12} />
-                <span>Unggah</span>
-              </button>
-              <button
-                onClick={() => {
-                  setIsMobileDrawerOpen(false);
-                  cameraInputRef.current?.click();
-                }}
-                disabled={isUploading}
-                style={{
-                  backgroundColor: "#212d29",
-                  border: "1px solid #34413c",
-                  color: "#c8f064",
-                  borderRadius: 8,
-                  padding: "7px 6px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: isUploading ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4
-                }}
-              >
-                <Camera size={12} />
-                <span>Foto Soal</span>
-              </button>
-              <button
-                onClick={() => {
-                  setIsMobileDrawerOpen(false);
-                  setIsTopicModalOpen(true);
-                  if (setTopicStep) setTopicStep(1);
-                }}
-                style={{
-                  backgroundColor: "#212d29",
-                  border: "1px solid #34413c",
-                  color: "#c8f064",
-                  borderRadius: 8,
-                  padding: "7px 6px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4
-                }}
-              >
-                <Compass size={12} />
-                <span>Topik AI</span>
-              </button>
-              <button
-                onClick={() => {
-                  setIsMobileDrawerOpen(false);
-                  if (setIsYouTubeModalOpen) setIsYouTubeModalOpen(true);
-                }}
-                style={{
-                  backgroundColor: "#212d29",
-                  border: "1px solid #33403b",
-                  color: "#e6ece8",
-                  borderRadius: 8,
-                  padding: "7px 6px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4
-                }}
-              >
-                <YouTubeIcon size={12} color="#c8f064" />
-                <span>YouTube</span>
-              </button>
-            </div>
-
-            <input
-              type="file"
-              ref={cameraInputRef}
-              accept="image/*"
-              capture="environment"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  handleStageFiles(e.target.files);
-                  e.target.value = "";
-                }
-              }}
-            />
-            <input
-              type="file"
-              ref={fileInputRef}
-              multiple
-              accept=".pdf,.docx,.pptx,.xlsx,.xls,.doc,.ppt,.txt,.md,.csv,.tsv,.rtf,.png,.jpg,.jpeg,.webp,.bmp,.heic,.heif,.avif"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  handleStageFiles(e.target.files);
-                  e.target.value = "";
-                }
-              }}
-            />
-          </div>
         </div>
 
         {/* Sidebar Bottom: Dynamic Streak Widget & Profile Row with Action Popover */}
@@ -504,7 +225,7 @@ export function Sidebar({
               if (onOpenProfileModal) {
                 onOpenProfileModal("stats");
               } else if (onOpenAuthModal && !currentUser) {
-                onOpenAuthModal();
+                onOpenAuthModal("register");
               }
             }}
             title="Klik untuk melihat statistik & target mingguan"
@@ -691,7 +412,7 @@ export function Sidebar({
               if (currentUser) {
                 setIsProfileMenuOpen(prev => !prev);
               } else if (onOpenAuthModal) {
-                onOpenAuthModal();
+                onOpenAuthModal("login");
               }
             }}
             style={{ cursor: "pointer", width: "100%", textAlign: "left" }}

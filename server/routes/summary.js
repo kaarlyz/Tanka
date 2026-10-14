@@ -74,6 +74,15 @@ async function handleSummaryRoutes(req, res, pathname, helpers) {
 
     const isMathDomain = detectRealMath(doc.content);
 
+    let conceptsList = [];
+    try {
+      conceptsList = db.prepare("SELECT name, definisi_baku FROM document_concepts WHERE doc_id = ? ORDER BY id ASC").all(docId);
+    } catch (e) {}
+
+    const conceptsClause = conceptsList.length > 0
+      ? `\nDAFTAR KONSEP BAKU & FORMULA KANONIKAL YANG WAJIB DICAKUP:\n${conceptsList.map((c, idx) => `${idx + 1}. **${c.name}**: ${c.definisi_baku || ""}`).join("\n")}\n`
+      : "";
+
     let styleGuidance = "";
     if (style === "tutor") {
       styleGuidance = `GAYA PENULISAN: MENTOR STEP-BY-STEP (TRANSPARAN & TIDAK MELOMPAT)
@@ -114,7 +123,7 @@ async function handleSummaryRoutes(req, res, pathname, helpers) {
 Pelajari materi di bawah dan susun panduan belajar bertahap yang hidup, kreatif, dan adaptif:
 
 ${styleGuidance}
-
+${conceptsClause}
 Format dengan Markdown rapi, KaTeX LaTeX ($...$ inline atau $$...$$ blok) untuk rumus/angka, dan kotak penekanan untuk trik kunci.
 
 Materi Lengkap:
@@ -125,7 +134,7 @@ ${doc.content.slice(0, 25000)}
 Susun Catatan Inti & Peta Konsep Komprehensif yang MENCAKUP SELURUH materi tanpa ada bagian penting yang terlewat.
 
 ${styleGuidance}
-
+${conceptsClause}
 STRUKTUR SISTEMATIS CATATAN:
 1. **Peta Konsep & Kerangka Besar**: Alur proses, tabel komparasi, atau pembagian kategori yang paling cocok.
 2. **Bedah Konsep Kunci & Analogi Nyata**: Minimal 1 analogi konkret atau contoh kasus nyata per istilah.

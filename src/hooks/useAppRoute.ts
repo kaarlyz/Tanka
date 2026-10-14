@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ActiveTab } from "../types";
 
-const VALID_TABS: ActiveTab[] = ["home", "material", "quiz", "mistakes", "feynman", "flashcards", "summary", "chat"];
+const VALID_TABS: ActiveTab[] = ["home", "material", "quiz", "mistakes", "feynman", "flashcards", "summary"];
 
 export function useAppRoute(defaultTab: ActiveTab = "home") {
   const getTabFromLocation = useCallback((): ActiveTab => {

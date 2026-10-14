@@ -53,6 +53,10 @@ export function useAuth(showNotice: (msg: string) => void) {
       setAuthError("Username dan password wajib diisi");
       return;
     }
+    if (authPassword.trim().length < 8) {
+      setAuthError("Password minimal 8 karakter demi keamanan akun");
+      return;
+    }
     setIsAuthLoading(true);
     setAuthError("");
     try {

@@ -823,6 +823,21 @@
       .nara-md-response pre code { background: none; padding: 0; color: inherit; }
       .nara-md-response strong { font-weight: 700; }
       .nara-md-response .katex { font-size: 0.95em; }
+      /* Nara AI blockquote & callout response styling */
+      .nara-md-response blockquote {
+        background: #f7f9f4 !important;
+        border: 1px solid #dce4d6 !important;
+        border-left: 4px solid #4b6623 !important;
+        border-radius: 0 10px 10px 0 !important;
+        padding: 10px 16px 10px 18px !important;
+        margin: 10px 0 !important;
+        color: #1e2c26 !important;
+        line-height: 1.6 !important;
+      }
+      .nara-md-response blockquote p {
+        margin: 0 !important;
+        color: inherit !important;
+      }
 
       /* KaTeX global overflow protection */
       .katex-block-wrapper {
@@ -1350,7 +1365,28 @@
         }
       }
 
+      @media (hover: none) and (pointer: coarse) {
+        * {
+          scrollbar-width: none !important;
+        }
+        *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      }
+
       @media (max-width: 768px) {
+        /* Mobile Scrollbar Reset: sembunyikan scrollbar vertikal desktop di tampilan mobile */
+        * {
+          scrollbar-width: none !important;
+        }
+        *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+
         .desktop-only {
           display: none !important;
         }
@@ -1443,6 +1479,16 @@
         }
         .topbar-eyebrow {
           display: none !important;
+        }
+        /* Global Mobile Touch Scrollbar Suppression */
+        ::-webkit-scrollbar {
+          display: none !important;
+          width: 0px !important;
+          height: 0px !important;
+        }
+        html, body, #root, * {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
         }
         .topbar-title {
           font-size: 13.5px !important;
@@ -2017,6 +2063,19 @@
         animation: scaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
       }
 
+      .auth-modal-close {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+      .auth-modal-close:hover {
+        background-color: #f4f6f1 !important;
+        color: #18211e !important;
+      }
+      .auth-modal-close:active {
+        transform: scale(0.95);
+      }
+
       .card-hover-lift {
         transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
       }
@@ -2326,7 +2385,7 @@
         border-radius: 6px !important;
       }
 
-      [role="dialog"], [class*="modal"] > div {
+      [role="dialog"], [class*="modal-overlay"] > div, [class*="modal-backdrop"] > div {
         border-radius: 8px !important;
       }
 
@@ -2372,9 +2431,13 @@
       }
 
       /* 2. Modals & Dialogs: Deep technical edge border */
-      [role="dialog"], [class*="modal"] > div {
+      [role="dialog"], [class*="modal-overlay"] > div, [class*="modal-backdrop"] > div {
         border: 1px solid #c8d4c6 !important;
         box-shadow: 0 16px 40px rgba(15, 23, 20, 0.18), 0 0 0 1px rgba(27, 39, 35, 0.04) !important;
+      }
+      .clean-header {
+        border: none !important;
+        box-shadow: none !important;
       }
 
       /* 3. Inputs & Textboxes: Inset precision stroke with active focus */
@@ -2414,8 +2477,19 @@
 
       /* 6. Blockquote & Notes: Tactical accent stroke */
       blockquote, .formula-note {
-        border: 1px solid #d8e4cf !important;
-        border-left: 3.5px solid #557922 !important;
+        border: 1px solid #dce4d6 !important;
+        border-left: 4px solid #4b6623 !important;
+        background: #f7f9f4 !important;
+        border-radius: 0 10px 10px 0 !important;
+        padding: 10px 16px 10px 18px !important;
+        margin: 12px 0 !important;
+        color: #1e2c26 !important;
+      }
+      blockquote p {
+        margin: 0 0 4px 0;
+      }
+      blockquote p:last-child {
+        margin-bottom: 0;
       }
 
       /* ==========================================================================

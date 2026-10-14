@@ -727,7 +727,7 @@ export function HomeHubTab({
                                   }}
                                 >
                                   <BookOpen size={13} />
-                                  <span>Buka Modul</span>
+                                  <span>Baca Materi</span>
                                 </button>
 
                                 <button
@@ -751,7 +751,7 @@ export function HomeHubTab({
                                   }}
                                 >
                                   <Target size={13} color="#72a728" />
-                                  <span>Kuis</span>
+                                  <span>Latihan Soal</span>
                                 </button>
 
                                 <button
@@ -775,6 +775,7 @@ export function HomeHubTab({
                                   }}
                                 >
                                   <Layers size={13} color="#3b82f6" />
+                                  <span>Flashcards</span>
                                 </button>
                               </div>
                             </div>

@@ -30,6 +30,7 @@ import {
 import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, Flashcard, QuizQuestion, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
+import { normalizeMathExpression } from "../../utils/mathNormalizer";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeMathMarkdown } from "../common/DiagramRenderer";
 import { InteractiveMindMap } from "../common/InteractiveMindMap";
 
@@ -49,7 +50,7 @@ const MemoizedMarkdownBody = React.memo(function MemoizedMarkdownBody({
   className,
   style
 }: MemoizedMarkdownBodyProps) {
-  const sanitized = React.useMemo(() => sanitizeMathMarkdown(content), [content]);
+  const sanitized = React.useMemo(() => normalizeMathExpression(sanitizeMathMarkdown(content)), [content]);
   return (
     <div className={className} style={style}>
       <ReactMarkdown
@@ -1081,6 +1082,20 @@ export function MaterialTab({
                               {chapters[currentChapterIdx]?.title}
                             </h1>
                           </div>
+
+                          {currentChapterIdx === 0 && activeDocSummary && (
+                            <div style={{ maxWidth: 820, margin: "0 auto 24px auto", padding: "14px 18px", backgroundColor: "#f8faf5", borderLeft: "4px solid #779f2f", borderRadius: "0 10px 10px 0" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                                <Sparkles size={13} color="#4b6623" />
+                                <span style={{ fontSize: 11, fontWeight: 800, color: "#3d541b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                  Esensi Modul Pembelajaran
+                                </span>
+                              </div>
+                              <p style={{ fontSize: 14, lineHeight: 1.7, color: "#24322c", margin: 0 }}>
+                                {activeDocSummary.length > 350 ? activeDocSummary.slice(0, 350) + "..." : activeDocSummary}
+                              </p>
+                            </div>
+                          )}
 
                           {/* Literary Reader Markdown Body */}
                           <MemoizedMarkdownBody

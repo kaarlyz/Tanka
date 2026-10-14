@@ -36,6 +36,7 @@ async function handleChatRoutes(req, res, pathname, helpers) {
 
   // 1. POST /api/ai/chat - conversational grounded tutor with image & document upload support
   if (req.method === "POST" && pathname === "/api/ai/chat") {
+    console.log("[Chat-Nara] Menerima pesan chat...");
     const body = await getBody(req);
     const { docId, message, attachment, history = [], model = "ag/gemini-3.8-flash-low" } = body;
     const userId = getUserId ? getUserId(req, body) : (body.userId || "anon");
@@ -161,7 +162,28 @@ ${documentSection}`;
       { role: "user", content: userMessageForAI }
     ];
 
-    const reply = await callRouter(messages, model, 0.65);
+    console.log(`[Chat-Nara] Menerima pesan untuk docId="${docId || 'global'}" dengan model="${model}" (history: ${cleanedHistory.length} pesan)`);
+
+    let reply = "";
+    let effectiveModel = model || "ag/gemini-3.8-flash-low";
+    try {
+      // Set timeout per-call ke 45 detik agar tidak melebihi proxy timeout Cloudflare 100 detik
+      reply = await callRouter(messages, effectiveModel, 0.65, null, 45000);
+    } catch (err) {
+      if (effectiveModel !== "ag/gemini-3.8-flash-low") {
+        console.warn(`[Chat-Nara] Gagal dengan model ${effectiveModel}: ${err.message}. Mencoba fallback ke ag/gemini-3.8-flash-low...`);
+        try {
+          effectiveModel = "ag/gemini-3.8-flash-low";
+          reply = await callRouter(messages, effectiveModel, 0.65, null, 30000);
+        } catch (fallbackErr) {
+          console.error("[Chat-Nara] Fallback AI juga gagal:", fallbackErr.message);
+          return sendJSON(res, { error: "Layanan AI sedang sibuk atau mengalami antrean panjang. Silakan coba kirim ulang sesaat lagi." }, 503);
+        }
+      } else {
+        console.error("[Chat-Nara] AI call gagal:", err.message);
+        return sendJSON(res, { error: "Layanan AI sedang sibuk atau mengalami antrean panjang. Silakan coba kirim ulang sesaat lagi." }, 503);
+      }
+    }
 
     const msgId = "msg_" + Date.now();
     const storedUserContent = attachment
@@ -171,11 +193,11 @@ ${documentSection}`;
     const targetDocId = (docId && docId !== "global") ? docId : "global";
 
     db.prepare("INSERT INTO chat_messages (id, doc_id, user_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run(msgId, targetDocId, userId, "user", storedUserContent, model, Date.now());
+      .run(msgId, targetDocId, userId, "user", storedUserContent, effectiveModel, Date.now());
     db.prepare("INSERT INTO chat_messages (id, doc_id, user_id, role, content, model, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run(msgId + "_r", targetDocId, userId, "assistant", reply, model, Date.now());
+      .run(msgId + "_r", targetDocId, userId, "assistant", reply, effectiveModel, Date.now());
 
-    return sendJSON(res, { reply, model });
+    return sendJSON(res, { reply, model: effectiveModel });
   }
 
   // 2. GET /api/documents/:id/chat - get chat history

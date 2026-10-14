@@ -1,5 +1,5 @@
-import React from "react";
-import { X, UserPlus, LogIn, User, Lock, AlertCircle } from "lucide-react";
+import React, { useState } from "react";
+import { X, UserPlus, LogIn, User, Lock, AlertCircle, Smile, Eye, EyeOff } from "lucide-react";
 
 export interface AuthModalProps {
   isOpen: boolean;
@@ -36,6 +36,9 @@ export function AuthModal({
   onLogin,
   onRegister
 }: AuthModalProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
   return (
@@ -51,112 +54,86 @@ export function AuthModal({
         zIndex: 10001,
         padding: 16
       }}
+      onClick={onClose}
     >
       <div
         className="modal-scale-in"
+        onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: "#ffffff",
           borderRadius: 20,
           maxWidth: 400,
           width: "100%",
-          padding: "24px 20px",
+          padding: "26px 22px",
           boxShadow: "0 24px 60px rgba(0, 0, 0, 0.25)",
           border: "1.5px solid #dce4d6",
           position: "relative"
         }}
       >
         <button
+          type="button"
           onClick={onClose}
+          className="auth-modal-close"
           style={{
             position: "absolute",
             top: 16,
             right: 16,
-            background: "transparent",
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            backgroundColor: "transparent",
             border: "none",
             color: "#6b7280",
             cursor: "pointer",
-            padding: 4
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.15s ease"
           }}
+          aria-label="Tutup"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        {/* Modal Header */}
+        <div
+          className="clean-header"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 20,
+            paddingRight: 32,
+            border: "none",
+            boxShadow: "none",
+            outline: "none",
+            background: "transparent"
+          }}
+        >
           <div
             style={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               borderRadius: 12,
               backgroundColor: "#f4f8ed",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#4b6623",
-              border: "1px solid #c8e6a0"
+              border: "1.5px solid #c8e6a0",
+              flexShrink: 0
             }}
           >
-            {mode === "login" ? <LogIn size={20} /> : <UserPlus size={20} />}
+            {mode === "login" ? <LogIn size={22} /> : <UserPlus size={22} />}
           </div>
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#18211e", margin: 0 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#18211e", margin: 0, letterSpacing: "-0.02em" }}>
               {mode === "login" ? "Masuk ke Akun" : "Buat Akun Baru"}
             </h2>
-            <p style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 0" }}>
-              {mode === "login" ? "Akses materi dan riwayat belajar Anda" : "Mulai belajar cerdas dengan akun pribadi"}
+            <p style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 0", lineHeight: 1.4 }}>
+              {mode === "login" ? "Akses materi dan riwayat belajar Anda" : "Mulai simpan progres dan materi belajar mandiri"}
             </p>
           </div>
-        </div>
-
-        {/* Tab Mode Switcher */}
-        <div
-          style={{
-            display: "flex",
-            backgroundColor: "#f3f5ef",
-            borderRadius: 10,
-            padding: 3,
-            marginBottom: 16
-          }}
-        >
-          <button
-            onClick={() => {
-              setMode("register");
-              setError("");
-            }}
-            style={{
-              flex: 1,
-              padding: "7px",
-              borderRadius: 8,
-              border: "none",
-              fontSize: 12.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              backgroundColor: mode === "register" ? "#ffffff" : "transparent",
-              color: mode === "register" ? "#18211e" : "#6b7280",
-              boxShadow: mode === "register" ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
-            }}
-          >
-            Daftar Baru
-          </button>
-          <button
-            onClick={() => {
-              setMode("login");
-              setError("");
-            }}
-            style={{
-              flex: 1,
-              padding: "7px",
-              borderRadius: 8,
-              border: "none",
-              fontSize: 12.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              backgroundColor: mode === "login" ? "#ffffff" : "transparent",
-              color: mode === "login" ? "#18211e" : "#6b7280",
-              boxShadow: mode === "login" ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
-            }}
-          >
-            Sudah Punya Akun
-          </button>
         </div>
 
         {error && (
@@ -166,15 +143,15 @@ export function AuthModal({
               border: "1px solid #fecaca",
               color: "#991b1b",
               borderRadius: 8,
-              padding: "8px 12px",
+              padding: "9px 12px",
               fontSize: 12,
               display: "flex",
               alignItems: "center",
-              gap: 6,
+              gap: 8,
               marginBottom: 14
             }}
           >
-            <AlertCircle size={15} />
+            <AlertCircle size={15} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
@@ -185,36 +162,42 @@ export function AuthModal({
             if (mode === "login") onLogin();
             else onRegister();
           }}
-          style={{ display: "flex", flexDirection: "column", gap: 12 }}
+          style={{ display: "flex", flexDirection: "column", gap: 13 }}
         >
           {mode === "register" && (
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>
-                Nama Panggilan (Opsional)
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 5 }}>
+                Nama Panggilan
               </label>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  border: "1.5px solid #d1d5db",
+                  border: focusedField === "name" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
+                  boxShadow: focusedField === "name" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
                   borderRadius: 10,
                   padding: "0 10px",
-                  backgroundColor: "#ffffff"
+                  backgroundColor: "#ffffff",
+                  transition: "border-color 0.15s ease, box-shadow 0.15s ease"
                 }}
               >
-                <User size={16} color="#9ca3af" />
+                <Smile size={16} color={focusedField === "name" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
                 <input
                   type="text"
-                  placeholder="Contoh: Eka"
+                  className="clean-input"
+                  placeholder="Nama sapaan (contoh: Eka)"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  onFocus={() => setFocusedField("name")}
+                  onBlur={() => setFocusedField(null)}
                   style={{
-                    width: "100%",
+                    flex: 1,
                     padding: "9px 8px",
                     border: "none",
                     outline: "none",
                     fontSize: 13,
-                    color: "#18211e"
+                    color: "#18211e",
+                    backgroundColor: "transparent"
                   }}
                 />
               </div>
@@ -222,68 +205,109 @@ export function AuthModal({
           )}
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>
-              Username
-            </label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
+                Username
+              </label>
+              {mode === "register" && (
+                <span style={{ fontSize: 11, color: "#6b7280" }}>ID masuk tanpa spasi</span>
+              )}
+            </div>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                border: "1.5px solid #d1d5db",
+                border: focusedField === "username" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
+                boxShadow: focusedField === "username" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
                 borderRadius: 10,
                 padding: "0 10px",
-                backgroundColor: "#ffffff"
+                backgroundColor: "#ffffff",
+                transition: "border-color 0.15s ease, box-shadow 0.15s ease"
               }}
             >
-              <User size={16} color="#9ca3af" />
+              <User size={16} color={focusedField === "username" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
               <input
                 type="text"
                 required
-                placeholder="Username (huruf/angka)"
+                className="clean-input"
+                autoComplete="username"
+                placeholder={mode === "login" ? "Masukkan username" : "Username akun Anda"}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onFocus={() => setFocusedField("username")}
+                onBlur={() => setFocusedField(null)}
                 style={{
-                  width: "100%",
+                  flex: 1,
                   padding: "9px 8px",
                   border: "none",
                   outline: "none",
                   fontSize: 13,
-                  color: "#18211e"
+                  color: "#18211e",
+                  backgroundColor: "transparent"
                 }}
               />
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>
-              Password
-            </label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
+                Password
+              </label>
+              {mode === "register" && (
+                <span style={{ fontSize: 11, color: "#6b7280" }}>Minimal 8 karakter</span>
+              )}
+            </div>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                border: "1.5px solid #d1d5db",
+                border: focusedField === "password" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
+                boxShadow: focusedField === "password" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
                 borderRadius: 10,
                 padding: "0 10px",
-                backgroundColor: "#ffffff"
+                backgroundColor: "#ffffff",
+                transition: "border-color 0.15s ease, box-shadow 0.15s ease"
               }}
             >
-              <Lock size={16} color="#9ca3af" />
+              <Lock size={16} color={focusedField === "password" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
-                placeholder="Minimal 4 karakter"
+                className="clean-input"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                placeholder={mode === "login" ? "Masukkan password" : "Minimal 8 karakter"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setFocusedField("password")}
+                onBlur={() => setFocusedField(null)}
                 style={{
-                  width: "100%",
+                  flex: 1,
                   padding: "9px 8px",
                   border: "none",
                   outline: "none",
                   fontSize: 13,
-                  color: "#18211e"
+                  color: "#18211e",
+                  backgroundColor: "transparent"
                 }}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(p => !p)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: "4px",
+                  cursor: "pointer",
+                  color: "#9ca3af",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                title={showPassword ? "Sembunyikan password" : "Lihat password"}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
@@ -291,7 +315,7 @@ export function AuthModal({
             type="submit"
             disabled={isLoading}
             style={{
-              marginTop: 6,
+              marginTop: 4,
               backgroundColor: "#18211e",
               color: "#c8f064",
               border: "none",
@@ -305,7 +329,7 @@ export function AuthModal({
               justifyContent: "center",
               gap: 8,
               opacity: isLoading ? 0.7 : 1,
-              transition: "transform 0.1s active"
+              transition: "all 0.15s ease"
             }}
           >
             {isLoading ? (
@@ -313,7 +337,7 @@ export function AuthModal({
             ) : mode === "login" ? (
               <>
                 <LogIn size={16} />
-                <span>Masuk</span>
+                <span>Masuk Sekarang</span>
               </>
             ) : (
               <>
@@ -322,6 +346,55 @@ export function AuthModal({
               </>
             )}
           </button>
+
+          {/* Footer switcher link */}
+          <div style={{ textAlign: "center", marginTop: 4, fontSize: 12, color: "#6b7280" }}>
+            {mode === "login" ? (
+              <span>
+                Belum punya akun?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("register");
+                    setError("");
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#4b6623",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    padding: 0,
+                    textDecoration: "underline"
+                  }}
+                >
+                  Daftar gratis
+                </button>
+              </span>
+            ) : (
+              <span>
+                Sudah punya akun?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("login");
+                    setError("");
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#4b6623",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    padding: 0,
+                    textDecoration: "underline"
+                  }}
+                >
+                  Masuk di sini
+                </button>
+              </span>
+            )}
+          </div>
         </form>
       </div>
     </div>

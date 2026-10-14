@@ -23,7 +23,6 @@ import { MistakesTab } from "./components/tabs/MistakesTab";
 import { FeynmanTab } from "./components/tabs/FeynmanTab";
 import { FlashcardsTab } from "./components/tabs/FlashcardsTab";
 import { SummaryTab } from "./components/tabs/SummaryTab";
-import { ChatTab } from "./components/tabs/ChatTab";
 
 // Domain Hooks
 import { useAppRoute } from "./hooks/useAppRoute";
@@ -85,6 +84,12 @@ export default function App() {
     quickRegisterGuest,
     recordActivity
   } = useAuth(showNotice);
+
+  const handleOpenAuth = useCallback((mode: "login" | "register" = "login") => {
+    setAuthMode(mode);
+    setAuthError("");
+    setIsAuthModalOpen(true);
+  }, [setAuthMode, setAuthError, setIsAuthModalOpen]);
 
   // 2.6 Multiplayer Room Modal
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
@@ -700,11 +705,7 @@ export default function App() {
         activeDocTitle={activeDocTitle}
         documents={documents}
         showNotice={showNotice}
-        onOpenAuthModal={() => {
-          setAuthMode("register");
-          setAuthError("");
-          setIsAuthModalOpen(true);
-        }}
+        onOpenAuthModal={handleOpenAuth}
         onStartRoomExam={handleStartRoomExam}
         initialRoomId={roomModalRoomId}
         initialViewState={roomModalInitialView}
@@ -743,11 +744,7 @@ export default function App() {
         isUploading={isUploading}
         setIsStagingModalOpen={setIsStagingModalOpen}
         currentUser={currentUser}
-        onOpenAuthModal={() => {
-          setAuthMode("register");
-          setAuthError("");
-          setIsAuthModalOpen(true);
-        }}
+        onOpenAuthModal={handleOpenAuth}
         onLogout={handleLogout}
         handleDeleteDocument={(id, e) => handleDeleteDocument(id, e, () => {
           setFlashcards([]);
@@ -794,12 +791,9 @@ export default function App() {
           models={models}
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
+          showNotice={showNotice}
           currentUser={currentUser}
-          onOpenAuthModal={() => {
-            setAuthMode("register");
-            setAuthError("");
-            setIsAuthModalOpen(true);
-          }}
+          onOpenAuthModal={handleOpenAuth}
           onLogout={handleLogout}
           onOpenProfileModal={() => {
             setProfileModalTab("profile");
@@ -813,7 +807,7 @@ export default function App() {
               <div className="mode-tabs" role="tablist" aria-label="Mode belajar" style={{ flexShrink: 0 }}>
                 {[
                   { id: "material", label: "Materi", count: "01" },
-                  { id: "summary", label: "Rangkuman", count: activeDocSummary ? "✓" : "AI" },
+                  { id: "summary", label: "Rangkuman", count: (activeDocSummary && activeDocSummary.trim().length >= 500) ? "✓" : "AI" },
                   { id: "flashcards", label: "Flashcards", count: String((flashcards || []).length).padStart(2, "0") },
                   { id: "quiz", label: "Latihan Soal", count: String((quizQuestions || []).length).padStart(2, "0") },
                   { id: "feynman", label: "Uji Feynman", count: "01" },
@@ -1048,19 +1042,6 @@ export default function App() {
                 />
               )}
 
-              {activeTab === "chat" && (
-                <ChatTab
-                  activeDocTitle={activeDocTitle}
-                  selectedModel={selectedModel}
-                  messages={messages}
-                  handleSendMessage={handleSendMessage}
-                  isChatSending={isChatSending}
-                  stagedAttachment={stagedAttachment}
-                  handleAttachFile={handleAttachFile}
-                  handleClearAttachment={handleClearAttachment}
-                  handleClearChat={handleClearChat}
-                />
-              )}
               </div>
             </div>
           </section>
@@ -1187,6 +1168,34 @@ export default function App() {
         isAiPanelOpen={isAiPanelOpen}
         setIsAiPanelOpen={setIsAiPanelOpen}
         mistakes={mistakes}
+      />
+
+      {/* Hidden File & Camera Inputs for Global Upload Access */}
+      <input
+        type="file"
+        ref={cameraInputRef}
+        accept="image/*"
+        capture="environment"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleStageFiles(e.target.files);
+            e.target.value = "";
+          }
+        }}
+      />
+      <input
+        type="file"
+        ref={fileInputRef}
+        multiple
+        accept=".pdf,.docx,.pptx,.xlsx,.xls,.doc,.ppt,.txt,.md,.csv,.tsv,.rtf,.png,.jpg,.jpeg,.webp,.bmp,.heic,.heif,.avif"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleStageFiles(e.target.files);
+            e.target.value = "";
+          }
+        }}
       />
     </div>
   );

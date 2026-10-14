@@ -19,8 +19,8 @@ async function handleAuthRoutes(req, res, pathname, { sendJSON, getBody }) {
       if (username.length < 3) {
         return sendJSON(res, { error: "Username minimal 3 karakter" }, 400);
       }
-      if (password.length < 4) {
-        return sendJSON(res, { error: "Password minimal 4 karakter" }, 400);
+      if (password.length < 8) {
+        return sendJSON(res, { error: "Password minimal 8 karakter demi keamanan akun" }, 400);
       }
 
       const existing = db.prepare("SELECT id FROM users WHERE username = ?").get(username);

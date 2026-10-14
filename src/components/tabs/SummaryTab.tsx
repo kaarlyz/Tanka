@@ -6,6 +6,7 @@ import rehypeKatex from "rehype-katex";
 import { Sparkles, Download, Copy, Volume2, VolumeX, CheckCircle2, ChevronRight, BookOpen, Layers, Target, Printer, FileText, Check } from "lucide-react";
 import { DocumentItem, QuizQuestion, Flashcard } from "../../types";
 import { MathView } from "../common/MathView";
+import { normalizeMathExpression } from "../../utils/mathNormalizer";
 import { AIProcessLoader } from "../common/AIProcessLoader";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText } from "../common/DiagramRenderer";
 
@@ -138,6 +139,8 @@ export function SummaryTab({
   showNotice
 }: SummaryTabProps) {
   const [isTailoring, setIsTailoring] = React.useState(false);
+  const isTeaserOnly = Boolean(activeDocSummary && activeDocSummary.trim().length < 500);
+  const hasFullSummary = Boolean(activeDocSummary && activeDocSummary.trim().length >= 500);
 
   return (
               <div className="summary-view tab-pane-animate">
@@ -150,28 +153,11 @@ export function SummaryTab({
                     </p>
                   </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span className="card-count">± 3 menit</span>
+                    <span className="card-count">{hasFullSummary ? "± 3 menit" : "Ringkasan"}</span>
                   </div>
                 </div>
 
-                {/* Summary Style Selection from Figma Make */}
-                <div className="summary-style-picker print-hidden" style={{ marginBottom: 20 }}>
-                  {[
-                    { id: "tutor", label: "Tutor", note: "Dibimbing bertahap & latihan" },
-                    { id: "intuitive", label: "Intuitif", note: "Analogi & konsep santai" },
-                    { id: "memorization", label: "Hafalan", note: "Pola cepat diingat & rumus" }
-                  ].map((s) => (
-                    <button
-                      key={s.id}
-                      className={summaryStyle === s.id ? "active" : ""}
-                      onClick={() => setSummaryStyle(s.id as any)}
-                    >
-                      <strong>{s.label}</strong>
-                      <small>{s.note}</small>
-                    </button>
-                  ))}
-                </div>
-
+                {hasFullSummary && (
                 <div className="print-hidden" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 8 }}>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                     {activeDocSummary && (
@@ -285,6 +271,7 @@ export function SummaryTab({
                     </button>
                   </div>
                 </div>
+                )}
 
                 {isGeneratingSummary || isTailoring ? (
                   <AIProcessLoader
@@ -316,8 +303,8 @@ export function SummaryTab({
                     <div style={{ fontSize: 16, fontWeight: 700, color: "#17201d" }}>
                       Belum Ada Rangkuman
                     </div>
-                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 380, margin: "6px auto 16px" }}>
-                      Klik tombol di atas untuk menghasilkan ringkasan poin inti materi dan daftar jebakan soal.
+                    <p style={{ fontSize: 13, color: "#6f7975", maxWidth: 420, margin: "6px auto 16px" }}>
+                      Klik tombol di bawah ini untuk menghasilkan rangkuman komprehensif, peta konsep, dan poin jebakan ujian dengan AI.
                     </p>
                     <button
                       onClick={() => handleGenerateSummary()}
@@ -330,11 +317,67 @@ export function SummaryTab({
                         padding: "10px 20px",
                         fontSize: 13,
                         fontWeight: 700,
-                        cursor: "pointer"
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6
                       }}
                     >
+                      <Sparkles size={14} />
                       Buat Rangkuman AI
                     </button>
+                  </div>
+                ) : isTeaserOnly ? (
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #dde1da",
+                      borderRadius: 16,
+                      padding: "26px",
+                      boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                      <BookOpen size={16} color="#4b6623" />
+                      <span style={{ fontSize: 12, fontWeight: 800, color: "#3d541b", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                        Ringkasan Eksekutif Pengantar
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 15, lineHeight: 1.8, color: "#22312b", marginBottom: 20 }}>
+                      {activeDocSummary}
+                    </p>
+
+                    <div style={{ backgroundColor: "#f8faf5", border: "1.5px dashed #c2e28f", borderRadius: 12, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <Sparkles size={15} color="#4b6623" />
+                        <strong style={{ fontSize: 13.5, color: "#18211e" }}>Rangkuman Komprehensif Belum Dibuat</strong>
+                      </div>
+                      <p style={{ fontSize: 13, color: "#5a6b63", margin: 0, lineHeight: 1.6 }}>
+                        Teks di atas adalah ringkasan pengantar singkat (2-3 kalimat). Buat rangkuman belajar mendalam yang mencakup seluruh konsep, formula KaTeX, tabel komparasi, dan analisis pola jebakan ujian.
+                      </p>
+                      <div style={{ marginTop: 4 }}>
+                        <button
+                          onClick={() => handleGenerateSummary()}
+                          disabled={isGeneratingSummary}
+                          style={{
+                            backgroundColor: "#18221f",
+                            color: "#c8f064",
+                            border: "none",
+                            borderRadius: 8,
+                            padding: "10px 20px",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: isGeneratingSummary ? "not-allowed" : "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                        >
+                          <Sparkles size={14} />
+                          {isGeneratingSummary ? "Meringkas..." : "✨ Buat Rangkuman Lengkap & Poin Ujian (AI)"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div
@@ -458,7 +501,7 @@ export function SummaryTab({
                         ),
                       }}
                     >
-                      {formattedSummary}
+                      {normalizeMathExpression(formattedSummary)}
                     </ReactMarkdown>
 
                     {/* AI Tailoring Input */}

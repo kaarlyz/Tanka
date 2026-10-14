@@ -44,10 +44,35 @@ export interface TopBarProps {
   models: Array<string | any>;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
+  showNotice?: (msg: string) => void;
   currentUser?: UserAccount | null;
-  onOpenAuthModal?: () => void;
+  onOpenAuthModal?: (mode?: "login" | "register") => void;
   onLogout?: () => void;
   onOpenProfileModal?: () => void;
+}
+
+export function formatModelName(modelId: string): string {
+  if (!modelId) return "";
+  const clean = modelId.replace(/^ag\//, "").replace(/^xai\//, "").replace(/^gcli\//, "");
+  if (clean.includes("gemini")) {
+    return clean
+      .replace("gemini-", "Gemini ")
+      .replace("-high", " (High)")
+      .replace("-medium", " (Med)")
+      .replace("-low", " (Low)")
+      .replace("-flash", " Flash")
+      .replace("-pro", " Pro");
+  }
+  if (clean.includes("claude-sonnet-")) {
+    return clean.replace("claude-sonnet-", "Sonnet ").replace("-high", " (High)").replace("-medium", " (Med)").replace("-low", " (Low)");
+  }
+  if (clean.includes("claude-opus-")) {
+    return clean.replace("claude-opus-", "Opus ").replace("-high", " (High)").replace("-medium", " (Med)").replace("-low", " (Low)");
+  }
+  if (clean.includes("grok")) {
+    return clean.replace("grok-", "Grok ");
+  }
+  return clean;
 }
 
 export function TopBar({
@@ -76,6 +101,7 @@ export function TopBar({
   models,
   selectedModel,
   setSelectedModel,
+  showNotice,
   currentUser,
   onOpenAuthModal,
   onLogout,
@@ -125,30 +151,6 @@ export function TopBar({
         </button>
 
         <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
-          {currentUser && (
-            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  color: "#4b6623",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase"
-                }}
-              >
-                {currentUser.name || currentUser.username}
-              </span>
-              <span
-                style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: "50%",
-                  backgroundColor: "#65a30d"
-                }}
-              />
-            </div>
-          )}
-
           <h1
             style={{
               fontSize: 15,
@@ -173,6 +175,7 @@ export function TopBar({
         {/* Timer Pill */}
         <div style={{ position: "relative" }}>
           <div
+            onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
             style={{
               display: "flex",
               alignItems: "center",
@@ -183,11 +186,15 @@ export function TopBar({
               padding: "4px 8px",
               fontFamily: "'DM Mono', monospace",
               flexShrink: 0,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
+              boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+              cursor: "pointer"
             }}
           >
             <button
-              onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsTimerSettingsOpen(!isTimerSettingsOpen);
+              }}
               style={{ background: "none", border: "none", padding: 0, display: "flex", alignItems: "center", cursor: "pointer" }}
               title="Setel durasi waktu"
             >
@@ -195,7 +202,10 @@ export function TopBar({
             </button>
 
             <span
-              onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsTimerSettingsOpen(!isTimerSettingsOpen);
+              }}
               style={{
                 fontSize: 12.5,
                 fontWeight: 800,
@@ -209,7 +219,11 @@ export function TopBar({
             </span>
 
             <button
-              onClick={() => setIsTimerRunning(!isTimerRunning)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsTimerRunning(!isTimerRunning);
+              }}
+              className="desktop-only"
               style={{
                 background: timerMode === "focus" ? "#e2f2cd" : "#fde68a",
                 border: "none",
@@ -229,7 +243,11 @@ export function TopBar({
             </button>
 
             <button
-              onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsTimerSettingsOpen(!isTimerSettingsOpen);
+              }}
+              className="desktop-only"
               style={{
                 background: "none",
                 border: "none",
@@ -271,6 +289,52 @@ export function TopBar({
                   style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", padding: 2 }}
                 >
                   <X size={13} />
+                </button>
+              </div>
+
+              {/* Play/Pause & Reset Controls */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setIsTimerRunning(!isTimerRunning)}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    padding: "7px 12px",
+                    borderRadius: 8,
+                    border: "none",
+                    backgroundColor: isTimerRunning ? "#fef3c7" : "#4b6623",
+                    color: isTimerRunning ? "#92400e" : "#ffffff",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: "pointer"
+                  }}
+                >
+                  {isTimerRunning ? <Pause size={13} /> : <Play size={13} />}
+                  <span>{isTimerRunning ? "Jeda" : "Mulai"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyTimerDuration(timerDurationMinutes, false)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "7px 10px",
+                    borderRadius: 8,
+                    border: "1px solid #dce1da",
+                    backgroundColor: "#f4f8ed",
+                    color: "#3b531a",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    cursor: "pointer"
+                  }}
+                  title="Reset Timer"
+                >
+                  <RotateCw size={13} />
                 </button>
               </div>
 
@@ -386,23 +450,23 @@ export function TopBar({
           </button>
         ) : (
           <button
-            onClick={onOpenAuthModal}
+            onClick={() => onOpenAuthModal && onOpenAuthModal("login")}
             style={{
               backgroundColor: "#18211e",
               border: "none",
               color: "#c8f064",
               borderRadius: 8,
-              padding: "5px 9px",
+              padding: "5px 10px",
               fontSize: 11.5,
               fontWeight: 800,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 4
+              gap: 5
             }}
           >
             <UserPlus size={12} />
-            <span>Akun</span>
+            <span>Masuk</span>
           </button>
         )}
 
@@ -449,18 +513,47 @@ export function TopBar({
           <span>Tanya Nara</span>
         </button>
 
-        <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 6, backgroundColor: "#ffffff", border: "1px solid #dce1da", borderRadius: 8, padding: "5px 8px" }}>
-          <Cpu size={12} color="#4b6623" />
+        <div
+          className="desktop-only"
+          title="Pilih Model / Mesin AI Aktif"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            backgroundColor: "#ffffff",
+            border: "1px solid #dce1da",
+            borderRadius: 8,
+            padding: "4px 8px",
+            boxShadow: "0 1px 2px rgba(27, 39, 35, 0.03)"
+          }}
+        >
+          <Cpu size={12} color="#4b6623" style={{ flexShrink: 0 }} />
           <select
+            className="clean-input"
             value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            style={{ backgroundColor: "transparent", color: "#17201d", border: "none", fontSize: 11, outline: "none", cursor: "pointer", maxWidth: 120 }}
+            onChange={(e) => {
+              const next = e.target.value;
+              setSelectedModel(next);
+              if (showNotice) {
+                showNotice(`Mesin AI dialihkan ke: ${formatModelName(next)}`);
+              }
+            }}
+            style={{
+              backgroundColor: "transparent",
+              color: "#17201d",
+              border: "none",
+              fontSize: 11.5,
+              fontWeight: 600,
+              outline: "none",
+              cursor: "pointer",
+              maxWidth: 160
+            }}
           >
             {models.map((m) => {
               const id = typeof m === "string" ? m : (m?.id || "");
               return (
                 <option key={id} value={id}>
-                  {id.replace("ag/", "")}
+                  {formatModelName(id)}
                 </option>
               );
             })}

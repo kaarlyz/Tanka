@@ -260,11 +260,32 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
             fileData: currentAttachment.base64,
             fileType: currentAttachment.type
           } : null,
-          model: selectedModel,
-          history: messages.slice(-20).map(m => ({ role: m.role, content: m.content }))
+          model: selectedModel || "ag/gemini-3.8-flash-low",
+          history: messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
         })
       });
-      const data = await res.json();
+
+      const rawText = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok) {
+        const errorMsg = (data && data.error)
+          ? data.error
+          : "Server AI sedang sibuk atau respon melebihi batas waktu. Silakan kirim ulang.";
+        showNotice(errorMsg);
+        return;
+      }
+
+      if (!data || !data.reply) {
+        showNotice((data && data.error) || "Server AI sedang sibuk atau respon melebihi batas waktu. Silakan kirim ulang.");
+        return;
+      }
+
       if (data.reply) {
         const assistantMsg: ChatMessage = {
           id: "reply_" + Date.now(),
@@ -292,11 +313,10 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
             }
           }
         }, 100);
-      } else {
-        showNotice(data.error || "Gagal menghubungi Tutor AI");
       }
-    } catch {
-      showNotice("Koneksi ke server AI gagal");
+    } catch (err: any) {
+      console.warn("[Tanya-Nara] Chat request failed:", err);
+      showNotice("Server AI sedang sibuk atau respon melebihi batas waktu. Silakan kirim ulang.");
     } finally {
       setIsChatSending(false);
     }

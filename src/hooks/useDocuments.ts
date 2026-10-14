@@ -15,7 +15,20 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
   const [activeDocSummary, setActiveDocSummary] = useState("");
   const [isDetectingTitle, setIsDetectingTitle] = useState(false);
   const [models, setModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState("ag/gemini-3.8-flash-low");
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("tanka_selected_model");
+      if (saved) return saved;
+    }
+    return "ag/gemini-3.8-flash-low";
+  });
+
+  const handleSetSelectedModel = useCallback((model: string) => {
+    setSelectedModel(model);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("tanka_selected_model", model);
+    }
+  }, []);
 
   const fetchModels = useCallback(async () => {
     try {
@@ -23,8 +36,15 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       const data = await res.json();
       if (data.models && data.models.length > 0) {
         setModels(data.models);
-        if (!selectedModel || !data.models.includes(selectedModel)) {
-          setSelectedModel(data.models[0]);
+        const saved = typeof window !== "undefined" ? localStorage.getItem("tanka_selected_model") : null;
+        if (saved && data.models.includes(saved)) {
+          setSelectedModel(saved);
+        } else if (!data.models.includes(selectedModel)) {
+          const fallback = data.models.includes("ag/gemini-3.8-flash-low") ? "ag/gemini-3.8-flash-low" : data.models[0];
+          setSelectedModel(fallback);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("tanka_selected_model", fallback);
+          }
         }
       }
     } catch {
@@ -208,7 +228,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     setIsDetectingTitle,
     models,
     selectedModel,
-    setSelectedModel,
+    setSelectedModel: handleSetSelectedModel,
     fetchDocuments,
     loadDocument,
     handleDeleteDocument,

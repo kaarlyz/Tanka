@@ -62,75 +62,91 @@ export function AIProcessLoader({
       style={{
         backgroundColor: "#ffffff",
         border: "1px solid #dce2da",
-        borderRadius: 14,
-        padding: "24px 20px",
-        boxShadow: "0 10px 30px rgba(24, 34, 31, 0.06)",
-        maxWidth: 560,
-        margin: "16px auto",
-        width: "100%"
+        borderRadius: 16,
+        padding: "28px 24px 20px 24px",
+        boxShadow: "0 14px 40px rgba(24, 34, 31, 0.07)",
+        maxWidth: 580,
+        margin: "18px auto",
+        width: "100%",
+        boxSizing: "border-box"
       }}
     >
-      {/* Header with animated orb */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+      {/* Symmetrical & Centered AI Header */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 20 }}>
+        {/* Animated Glowing AI Orb */}
         <div
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
+            width: 54,
+            height: 54,
+            borderRadius: "50%",
             backgroundColor: "#f4f8ed",
-            border: "1.5px solid #c8e6a0",
+            border: "2px solid #c8e6a0",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             position: "relative",
-            flexShrink: 0
+            marginBottom: 12,
+            boxShadow: "0 0 24px rgba(119, 159, 47, 0.22)"
           }}
         >
-          <Sparkles size={22} color={accentColor} style={{ animation: "spinSlow 12s linear infinite" }} />
+          <Sparkles size={26} color={accentColor} style={{ animation: "spinSlow 12s linear infinite" }} />
           <span
             style={{
               position: "absolute",
-              top: -3,
-              right: -3,
+              top: 1,
+              right: 1,
               width: 9,
               height: 9,
               borderRadius: "50%",
               backgroundColor: "#779f2f",
-              boxShadow: "0 0 8px #779f2f"
+              boxShadow: "0 0 8px #779f2f",
+              animation: "pulse 2s infinite"
             }}
           />
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: "#3f6212",
-                backgroundColor: "#ecfccb",
-                padding: "2px 7px",
-                borderRadius: 4,
-                letterSpacing: "0.06em",
-                fontFamily: "'DM Mono', monospace"
-              }}
-            >
-              {badge.toUpperCase()}
-            </span>
-            <span style={{ fontSize: 11, color: "#78857f", fontFamily: "'DM Mono', monospace" }}>
-              {progress}% SELESAI
-            </span>
-          </div>
-          <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 800, color: "#17201d", letterSpacing: "-0.02em" }}>
-            {title}
-          </h3>
-          <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6f7975" }}>
-            {subtitle}
-          </p>
+
+        {/* Badge & Progress Chips */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap", justifyContent: "center" }}>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              color: "#3f6212",
+              backgroundColor: "#ecfccb",
+              padding: "3px 9px",
+              borderRadius: 6,
+              letterSpacing: "0.06em",
+              fontFamily: "'DM Mono', monospace"
+            }}
+          >
+            {badge.toUpperCase()}
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#475950",
+              backgroundColor: "#f3f5ee",
+              border: "1px solid #dce2d7",
+              padding: "2px 8px",
+              borderRadius: 6,
+              fontFamily: "'DM Mono', monospace"
+            }}
+          >
+            {progress}% SELESAI
+          </span>
         </div>
+
+        <h3 style={{ margin: "2px 0 0", fontSize: 17.5, fontWeight: 800, color: "#17201d", letterSpacing: "-0.02em", lineHeight: 1.3 }}>
+          {title}
+        </h3>
+        <p style={{ margin: "4px 0 0", fontSize: 12.5, color: "#6f7975", maxWidth: 440, lineHeight: 1.5 }}>
+          {subtitle}
+        </p>
       </div>
 
       {/* Animated Linear Progress Bar */}
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 18 }}>
         <div
           style={{
             width: "100%",
@@ -165,7 +181,7 @@ export function AIProcessLoader({
       </div>
 
       {/* Steps Timeline */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 18 }}>
         {steps.map((st, idx) => {
           const isDone = idx < currentStep;
           const isCurrent = idx === currentStep;
@@ -177,8 +193,8 @@ export function AIProcessLoader({
                 display: "flex",
                 alignItems: "flex-start",
                 gap: 12,
-                padding: "8px 12px",
-                borderRadius: 8,
+                padding: "9px 13px",
+                borderRadius: 10,
                 backgroundColor: isCurrent ? "#f6faf0" : isDone ? "#fafbf9" : "transparent",
                 border: `1px solid ${isCurrent ? "#c8e6a0" : isDone ? "#e2e8df" : "#edf0eb"}`,
                 transition: "all 0.25s ease",
@@ -187,8 +203,8 @@ export function AIProcessLoader({
             >
               <div
                 style={{
-                  width: 20,
-                  height: 20,
+                  width: 22,
+                  height: 22,
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
@@ -203,7 +219,7 @@ export function AIProcessLoader({
                 }}
               >
                 {isDone ? (
-                  <Check size={11} strokeWidth={3} />
+                  <Check size={12} strokeWidth={3} />
                 ) : isCurrent ? (
                   <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#566b36", animation: "pulse 1s infinite" }} />
                 ) : (
@@ -211,15 +227,15 @@ export function AIProcessLoader({
                 )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: isCurrent ? 800 : 600, color: isCurrent ? "#1f3810" : "#2d3833", display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ fontSize: 12.5, fontWeight: isCurrent ? 800 : 600, color: isCurrent ? "#1f3810" : "#2d3833", display: "flex", alignItems: "center", gap: 6 }}>
                   <span>{st.label}</span>
                   {isCurrent && (
-                    <span style={{ fontSize: 9, padding: "1px 5px", backgroundColor: "#dcfce7", color: "#166534", borderRadius: 4, fontWeight: 700, letterSpacing: "0.04em" }}>
+                    <span style={{ fontSize: 9, padding: "1px 6px", backgroundColor: "#dcfce7", color: "#166534", borderRadius: 4, fontWeight: 700, letterSpacing: "0.04em" }}>
                       PROSES
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 11, color: "#6f7975", marginTop: 2, lineHeight: 1.35 }}>
+                <div style={{ fontSize: 11.5, color: "#6f7975", marginTop: 2, lineHeight: 1.4 }}>
                   {st.detail}
                 </div>
               </div>
@@ -231,17 +247,17 @@ export function AIProcessLoader({
       {/* Rotating Study Tip Banner */}
       <div
         style={{
-          padding: "10px 12px",
+          padding: "10px 14px",
           backgroundColor: "#f7f9f5",
           border: "1px dashed #d5ded1",
-          borderRadius: 8,
+          borderRadius: 10,
           display: "flex",
           alignItems: "center",
-          gap: 9
+          gap: 10
         }}
       >
         <div style={{ fontSize: 14 }}>💡</div>
-        <div style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: "#4f5e57", lineHeight: 1.4 }}>
+        <div style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: "#4f5e57", lineHeight: 1.45 }}>
           <strong style={{ color: "#24322c" }}>Tahukah Anda? </strong>
           {tips[tipIndex]}
         </div>

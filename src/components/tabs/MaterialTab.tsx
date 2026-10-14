@@ -106,7 +106,7 @@ export interface MaterialTabProps {
   loadDocument?: (id: string) => void;
 }
 
-export function MaterialTab({
+export const MaterialTab = React.memo(function MaterialTab({
   activeDocId,
   activeDocTitle,
   setActiveDocTitle,
@@ -1309,26 +1309,10 @@ export function MaterialTab({
                   </div>
                 ) : (
                   /* Single Unified Create / Ingest Hub */
-                  <div
-                    style={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #dde1da",
-                      borderRadius: 24,
-                      padding: "26px 30px",
-                      boxShadow: "0 8px 32px rgba(27, 39, 35, 0.04)"
-                    }}
-                  >
+                  <div className="material-hub-card">
                     {/* Shortcut Pemilihan Materi Tersimpan */}
                     {documents && documents.length > 0 && (
-                      <div
-                        style={{
-                          backgroundColor: "#f7f9f4",
-                          border: "1px solid #dce4d6",
-                          borderRadius: 20,
-                          padding: "16px 20px",
-                          marginBottom: 22
-                        }}
-                      >
+                      <div className="saved-modules-card">
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 6 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <BookOpen size={16} color="#4b6623" />
@@ -1341,33 +1325,40 @@ export function MaterialTab({
                           </span>
                         </div>
 
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 8, width: "100%", boxSizing: "border-box" }}>
                           {documents.map((doc) => (
                             <button
                               key={doc.id}
                               type="button"
                               onClick={() => loadDocument(doc.id)}
                               style={{
-                                display: "inline-flex",
+                                display: "flex",
                                 alignItems: "center",
-                                gap: 7,
-                                padding: "8px 15px",
+                                justifyContent: "space-between",
+                                gap: 8,
+                                width: "100%",
+                                maxWidth: "100%",
+                                boxSizing: "border-box",
+                                padding: "9px 13px",
                                 backgroundColor: "#ffffff",
                                 border: "1px solid #dce2d8",
-                                borderRadius: 9999,
+                                borderRadius: 10,
                                 color: "#17201d",
                                 fontSize: 12.5,
                                 fontWeight: 600,
                                 cursor: "pointer",
+                                textAlign: "left",
                                 transition: "all 0.15s ease",
-                                boxShadow: "0 1px 4px rgba(0,0,0,0.03)"
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
                               }}
                               title={doc.title}
                             >
-                              <span style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: "#65a30d", flexShrink: 0 }} />
-                              <span style={{ maxWidth: 450, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {doc.title || "Modul Tanpa Judul"}
-                              </span>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 }}>
+                                <span style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: "#65a30d", flexShrink: 0 }} />
+                                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
+                                  {doc.title || "Modul Tanpa Judul"}
+                                </span>
+                              </div>
                               <ChevronRight size={13} color="#8a9691" style={{ flexShrink: 0 }} />
                             </button>
                           ))}
@@ -1636,4 +1627,4 @@ export function MaterialTab({
                 )}
               </div>
   );
-}
+});

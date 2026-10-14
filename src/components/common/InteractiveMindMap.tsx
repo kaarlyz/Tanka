@@ -69,15 +69,16 @@ interface Connection {
   toX: number;
   toY: number;
   color: string;
+  isMain?: boolean;
 }
 
 const PALETTE: MindMapColor[] = [
-  { primary: "#18221f", light: "#f4f6f3", border: "#d5ded3", text: "#18221f" },
-  { primary: "#2563eb", light: "#eff6ff", border: "#bfdbfe", text: "#1e40af" },
-  { primary: "#059669", light: "#ecfdf5", border: "#a7f3d0", text: "#065f46" },
-  { primary: "#d97706", light: "#fffbeb", border: "#fde68a", text: "#92400e" },
-  { primary: "#7c3aed", light: "#f5f3ff", border: "#ddd6fe", text: "#5b21b6" },
-  { primary: "#0891b2", light: "#ecfeff", border: "#a5f3fc", text: "#155e75" },
+  { primary: "#4b6623", light: "#f7f9f4", border: "#c2d4bc", text: "#243419" }, // Tanka Deep Forest Green
+  { primary: "#38541e", light: "#f4f8ed", border: "#b8cca8", text: "#1e2e13" }, // Tanka Olive Green
+  { primary: "#2d4420", light: "#f1f6ec", border: "#a8c298", text: "#182612" }, // Tanka Sage Green
+  { primary: "#55732c", light: "#f8fbf5", border: "#d0dfcb", text: "#2c3e17" }, // Tanka Moss
+  { primary: "#405b22", light: "#f5f8f0", border: "#bed1b0", text: "#213214" }, // Tanka Fern
+  { primary: "#30481d", light: "#eef4e8", border: "#adc49e", text: "#192811" }, // Tanka Pine
 ];
 
 /**
@@ -394,21 +395,34 @@ export function InteractiveMindMap({
 
     if (tree.children.length === 0) return { nodes: items, connections: conns };
 
-    const rightBranches: MindMapStage[] = [];
     const leftBranches: MindMapStage[] = [];
-    tree.children.forEach((c, idx) => {
-      if (idx % 2 === 0) rightBranches.push(c);
-      else leftBranches.push(c);
-    });
+    const rightBranches: MindMapStage[] = [];
+
+    // Natural LTR Cognitive Flow:
+    // If only 1 child: place on the right.
+    // If <= 3 stages: place stage 1 on the left, advancing stages on the right.
+    // If > 3 stages: distribute first half on the left, second half on the right.
+    if (tree.children.length === 1) {
+      rightBranches.push(tree.children[0]);
+    } else if (tree.children.length <= 3) {
+      leftBranches.push(tree.children[0]);
+      rightBranches.push(...tree.children.slice(1));
+    } else {
+      const half = Math.ceil(tree.children.length / 2);
+      tree.children.forEach((c, idx) => {
+        if (idx < half) leftBranches.push(c);
+        else rightBranches.push(c);
+      });
+    }
 
     const getStageHeight = (stage: MindMapStage): number => {
-      if (collapsedNodes[stage.id] || stage.children.length === 0) return 56;
+      if (collapsedNodes[stage.id] || stage.children.length === 0) return 60;
       let h = 0;
       stage.children.forEach((sub) => {
-        if (collapsedNodes[sub.id] || sub.children.length === 0) h += 46;
-        else h += 46 + sub.children.length * 34;
+        if (collapsedNodes[sub.id] || sub.children.length === 0) h += 50;
+        else h += 50 + sub.children.length * 36;
       });
-      return Math.max(56, h);
+      return Math.max(60, h);
     };
 
     const layoutSide = (branches: MindMapStage[], side: "left" | "right") => {
@@ -418,9 +432,9 @@ export function InteractiveMindMap({
       branches.forEach((b) => {
         const bHeight = getStageHeight(b);
         const bCenterY = currentY + bHeight / 2;
-        const bWidth = Math.min(240, Math.max(150, b.title.length * 7.5 + 36));
-        const bX = side === "right" ? 180 : -180 - bWidth;
-        const bY = bCenterY - 22;
+        const bWidth = Math.min(260, Math.max(170, Math.min(b.title.length * 7.5 + 36, 250)));
+        const bX = side === "right" ? 190 : -190 - bWidth;
+        const bY = bCenterY - 24;
 
         items.push({
           id: b.id,
@@ -430,7 +444,7 @@ export function InteractiveMindMap({
           x: bX,
           y: bY,
           width: bWidth,
-          height: 44,
+          height: 48,
           depth: 1,
           side,
           color: b.color || PALETTE[0],
@@ -446,8 +460,9 @@ export function InteractiveMindMap({
           fromX: side === "right" ? rootWidth / 2 : -rootWidth / 2,
           fromY: 0,
           toX: side === "right" ? bX : bX + bWidth,
-          toY: bY + 22,
-          color: b.color?.primary || "#18221f"
+          toY: bY + 24,
+          color: "#4b6623",
+          isMain: true
         });
 
         // Sub-modules
@@ -482,17 +497,18 @@ export function InteractiveMindMap({
             conns.push({
               id: `${b.id}->${sub.id}`,
               fromX: side === "right" ? bX + bWidth : bX,
-              fromY: bY + 22,
+              fromY: bY + 24,
               toX: side === "right" ? subX : subX + subWidth,
               toY: itemY + 19,
-              color: b.color?.primary || "#18221f"
+              color: "#9ab88f",
+              isMain: false
             });
 
             // Atomic concepts
             if (!collapsedNodes[sub.id] && sub.children.length > 0) {
-              let leafY = subCenterY - (sub.children.length * 34) / 2;
+              let leafY = subCenterY - (sub.children.length * 36) / 2;
               sub.children.forEach((leaf) => {
-                const lWidth = Math.min(190, Math.max(110, leaf.title.length * 7 + 24));
+                const lWidth = Math.min(210, Math.max(120, leaf.title.length * 7 + 24));
                 const lX = side === "right" ? subX + subWidth + 50 : subX - 50 - lWidth;
                 const lItemY = leafY + 2;
 
@@ -503,7 +519,7 @@ export function InteractiveMindMap({
                   x: lX,
                   y: lItemY,
                   width: lWidth,
-                  height: 30,
+                  height: 32,
                   depth: 3,
                   side,
                   color: b.color || PALETTE[0],
@@ -519,11 +535,12 @@ export function InteractiveMindMap({
                   fromX: side === "right" ? subX + subWidth : subX,
                   fromY: itemY + 19,
                   toX: side === "right" ? lX : lX + lWidth,
-                  toY: lItemY + 15,
-                  color: b.color?.border || "#94a3b8"
+                  toY: lItemY + 16,
+                  color: "#9ab88f",
+                  isMain: false
                 });
 
-                leafY += 34;
+                leafY += 36;
               });
             }
 
@@ -541,12 +558,6 @@ export function InteractiveMindMap({
     return { nodes: items, connections: conns };
   }, [tree, collapsedNodes]);
 
-  // Reset Canvas View
-  const handleResetView = useCallback(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, []);
-
   // Canvas container ref (ONLY for Mind Map mode)
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const panRef = useRef(pan);
@@ -555,6 +566,74 @@ export function InteractiveMindMap({
   zoomRef.current = zoom;
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const pinchStartRef = useRef<{ dist: number; zoom: number } | null>(null);
+
+  // Auto-fit & Center Canvas Viewport
+  const autoFitView = useCallback(() => {
+    if (nodes.length === 0) {
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+
+    const container = canvasContainerRef.current;
+    const containerWidth = container?.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 800);
+    const containerHeight = container?.clientHeight || 600;
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    nodes.forEach((n) => {
+      if (n.x < minX) minX = n.x;
+      if (n.x + n.width > maxX) maxX = n.x + n.width;
+      if (n.y < minY) minY = n.y;
+      if (n.y + n.height > maxY) maxY = n.y + n.height;
+    });
+
+    const graphWidth = maxX - minX;
+    const graphHeight = maxY - minY;
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const padX = containerWidth < 500 ? 16 : 48;
+    const padY = containerWidth < 500 ? 16 : 48;
+    const availW = Math.max(100, containerWidth - padX * 2);
+    const availH = Math.max(100, containerHeight - padY * 2);
+
+    const fitScale = Math.min(availW / Math.max(graphWidth, 1), availH / Math.max(graphHeight, 1));
+    const minZoom = containerWidth < 500 ? 0.28 : 0.38;
+    const targetZoom = Math.max(minZoom, Math.min(1.0, Number(fitScale.toFixed(2))));
+
+    setZoom(targetZoom);
+    setPan({
+      x: Math.round(-centerX * targetZoom),
+      y: Math.round(-centerY * targetZoom)
+    });
+  }, [nodes]);
+
+  // Reset / Fit Canvas View
+  const handleResetView = useCallback(() => {
+    autoFitView();
+  }, [autoFitView]);
+
+  // Auto-fit on switching to or mounting "mindmap" mode
+  useEffect(() => {
+    if (viewMode === "mindmap") {
+      const timer = setTimeout(() => {
+        autoFitView();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode, autoFitView]);
+
+  // Auto-fit on window resize
+  useEffect(() => {
+    if (viewMode !== "mindmap") return;
+    const handleResize = () => autoFitView();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [viewMode, autoFitView]);
 
   // Attach touch pan/zoom ONLY when in "mindmap" mode
   useEffect(() => {
@@ -1375,22 +1454,44 @@ export function InteractiveMindMap({
                 const y1 = c.fromY + offsetY;
                 const x2 = c.toX + offsetX;
                 const y2 = c.toY + offsetY;
-                const dx = Math.abs(x2 - x1) * 0.55;
+                const dx = Math.max(36, Math.abs(x2 - x1) * 0.52);
                 const cpx1 = x1 + (x2 > x1 ? dx : -dx);
                 const cpx2 = x2 - (x2 > x1 ? dx : -dx);
+
+                const isConnected = selectedNode?.id
+                  ? c.id.includes(selectedNode.id) || selectedNode.id === c.id
+                  : false;
+                const isMain = c.isMain ?? c.id.startsWith("root->");
+
+                const strokeColor = isConnected
+                  ? "#283918"
+                  : isMain
+                  ? "#4b6623"
+                  : "#9ab88f";
+
+                const strokeWidth = isConnected
+                  ? "2.5"
+                  : isMain
+                  ? "2"
+                  : "1.5";
+
+                const strokeOpacity = selectedNode
+                  ? isConnected
+                    ? 0.95
+                    : 0.35
+                  : isMain
+                  ? 0.85
+                  : 0.75;
 
                 return (
                   <path
                     key={c.id}
                     d={`M ${x1} ${y1} C ${cpx1} ${y1}, ${cpx2} ${y2}, ${x2} ${y2}`}
                     fill="none"
-                    stroke={c.color}
-                    strokeWidth={
-                      selectedNode?.id && (c.id.includes(selectedNode.id) || selectedNode.id === c.id)
-                        ? "2.5"
-                        : "1.6"
-                    }
-                    strokeOpacity={selectedNode ? (c.id.includes(selectedNode.id) ? 0.95 : 0.4) : 0.65}
+                    stroke={strokeColor}
+                    strokeWidth={strokeWidth}
+                    strokeOpacity={strokeOpacity}
+                    strokeLinecap="round"
                   />
                 );
               })}
@@ -1470,8 +1571,15 @@ export function InteractiveMindMap({
                         color: isRoot ? "#ffffff" : "#18181b",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        lineHeight: 1.25
+                        whiteSpace: isRoot ? "nowrap" : "normal",
+                        wordBreak: "break-word",
+                        lineHeight: 1.35,
+                        maxWidth: 240,
+                        width: node.depth === 1 ? "100%" : undefined,
+                        display: "-webkit-box",
+                        WebkitLineClamp: isRoot ? 1 : 2,
+                        WebkitBoxOrient: "vertical",
+                        textAlign: "left"
                       }}
                     >
                       {node.title}

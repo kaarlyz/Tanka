@@ -10,7 +10,7 @@ interface MathViewProps {
   className?: string;
 }
 
-export function MathView({ text, style, className }: MathViewProps) {
+export const MathView = React.memo(function MathView({ text, style, className }: MathViewProps) {
   if (!text) return null;
 
   // Ultra-fast path: If string contains zero math tokens, bypass regexes entirely
@@ -135,7 +135,7 @@ export function MathView({ text, style, className }: MathViewProps) {
       dangerouslySetInnerHTML={{ __html: renderedHTML }}
     />
   );
-}
+});
 
 export function getSubjectBadge(title: string) {
   const t = (title || "").toLowerCase();

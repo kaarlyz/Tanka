@@ -659,6 +659,21 @@ export function TanyaNaraPanel({
     }
   }, [messages, isChatSending]);
 
+  // Lock body scroll on mobile touch when drawer is open
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isAiPanelOpen) {
+      const prevOverflow = document.body.style.overflow;
+      const prevTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        document.body.style.touchAction = prevTouchAction;
+      };
+    }
+  }, [isAiPanelOpen]);
+
   const activeTabLabel =
     activeTab === "quiz"
       ? "Kuis"
@@ -924,6 +939,8 @@ export function TanyaNaraPanel({
               minHeight: 0,
               overflowY: "auto",
               overscrollBehavior: "contain",
+              WebkitOverflowScrolling: "touch",
+              touchAction: "pan-y",
               display: "flex",
               flexDirection: "column",
               gap: 10,

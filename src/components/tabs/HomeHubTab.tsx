@@ -34,7 +34,7 @@ export interface HomeHubTabProps {
   handleStartTopicClarify?: (topicText?: string) => void;
 }
 
-export function HomeHubTab({
+export const HomeHubTab = React.memo(function HomeHubTab({
   activeTab,
   setActiveTab,
   documents,
@@ -787,4 +787,4 @@ export function HomeHubTab({
                 </div>
               </div>
   );
-}
+});

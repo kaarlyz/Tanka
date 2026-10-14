@@ -117,6 +117,89 @@ function TailorQuizBox({
   );
 }
 
+interface QuizTutorInputBarProps {
+  isAnswerSubmitted: boolean;
+  isQuizChatSending: boolean;
+  onSend: (text: string) => void;
+}
+
+const QuizTutorInputBar = React.memo(function QuizTutorInputBar({
+  isAnswerSubmitted,
+  isQuizChatSending,
+  onSend
+}: QuizTutorInputBarProps) {
+  const [localInput, setLocalInput] = React.useState("");
+
+  const handleSend = () => {
+    if (!localInput.trim() || isQuizChatSending) return;
+    onSend(localInput.trim());
+    setLocalInput("");
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: "#ffffff",
+        border: "1px solid #d6ded4",
+        borderRadius: 10,
+        padding: "4px 6px 4px 12px",
+        boxShadow: "0 2px 8px rgba(27, 39, 35, 0.03)"
+      }}
+    >
+      <input
+        type="text"
+        className="clean-input"
+        value={localInput}
+        onChange={(e) => setLocalInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        }}
+        placeholder={isAnswerSubmitted ? "Tanyakan hal spesifik tentang pembahasan..." : "Minta petunjuk atau klarifikasi soal..."}
+        style={{
+          flex: 1,
+          backgroundColor: "transparent",
+          border: "none",
+          fontSize: 12.5,
+          fontFamily: "inherit",
+          color: "#17201d",
+          outline: "none",
+          padding: "6px 0"
+        }}
+      />
+      <button
+        type="button"
+        onClick={handleSend}
+        disabled={isQuizChatSending || !localInput.trim()}
+        style={{
+          backgroundColor: "#18221f",
+          color: "#c8f064",
+          border: "none",
+          borderRadius: 8,
+          padding: "0 12px",
+          height: 32,
+          fontSize: 12.5,
+          fontWeight: 700,
+          cursor: isQuizChatSending || !localInput.trim() ? "not-allowed" : "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          opacity: isQuizChatSending || !localInput.trim() ? 0.45 : 1,
+          transition: "0.15s ease"
+        }}
+      >
+        <Send size={12} />
+        <span>Kirim</span>
+      </button>
+    </div>
+  );
+});
+
 export interface QuizTabProps {
   quizQuestions: QuizQuestion[];
   currentQuestionIndex: number;
@@ -173,7 +256,7 @@ export interface QuizTabProps {
   showNotice?: (msg: string) => void;
 }
 
-export function QuizTab({
+export const QuizTab = React.memo(function QuizTab({
   quizQuestions,
   currentQuestionIndex,
   setCurrentQuestionIndex,
@@ -1656,65 +1739,12 @@ export function QuizTab({
                             )}
                           </div>
 
-                          {/* Chat input box */}
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 8,
-                              backgroundColor: "#ffffff",
-                              border: "1px solid #d6ded4",
-                              borderRadius: 10,
-                              padding: "4px 6px 4px 12px",
-                              boxShadow: "0 2px 8px rgba(27, 39, 35, 0.03)"
-                            }}
-                          >
-                            <input
-                              type="text"
-                              value={quizChatInput}
-                              onChange={(e) => setQuizChatInput(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleSendQuizQuestionChat();
-                                }
-                              }}
-                              placeholder={isAnswerSubmitted ? "Tanyakan hal spesifik tentang pembahasan..." : "Minta petunjuk atau klarifikasi soal..."}
-                              style={{
-                                flex: 1,
-                                backgroundColor: "transparent",
-                                border: "none",
-                                fontSize: 12.5,
-                                fontFamily: "inherit",
-                                color: "#17201d",
-                                outline: "none",
-                                padding: "6px 0"
-                              }}
-                            />
-                            <button
-                              onClick={() => handleSendQuizQuestionChat()}
-                              disabled={isQuizChatSending || !quizChatInput.trim()}
-                              style={{
-                                backgroundColor: "#18221f",
-                                color: "#c8f064",
-                                border: "none",
-                                borderRadius: 8,
-                                padding: "0 12px",
-                                height: 32,
-                                fontSize: 12.5,
-                                fontWeight: 700,
-                                cursor: isQuizChatSending || !quizChatInput.trim() ? "not-allowed" : "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 5,
-                                opacity: isQuizChatSending || !quizChatInput.trim() ? 0.45 : 1,
-                                transition: "0.15s ease"
-                              }}
-                            >
-                              <Send size={12} />
-                              <span>Kirim</span>
-                            </button>
-                          </div>
+                          {/* Chat input box: Colocated local input to prevent App/QuizTab re-render avalanche */}
+                          <QuizTutorInputBar
+                            isAnswerSubmitted={isAnswerSubmitted}
+                            isQuizChatSending={isQuizChatSending}
+                            onSend={(text) => handleSendQuizQuestionChat(text)}
+                          />
                         </div>
                       )}
                     </div>
@@ -1737,4 +1767,4 @@ export function QuizTab({
                 )}
               </div>
   );
-}
+});

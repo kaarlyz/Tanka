@@ -10,6 +10,9 @@ import { normalizeMathExpression } from "../../utils/mathNormalizer";
 import { AIProcessLoader } from "../common/AIProcessLoader";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText } from "../common/DiagramRenderer";
 
+const STATIC_REMARK_PLUGINS = [remarkGfm, remarkMath];
+const STATIC_REHYPE_PLUGINS = [rehypeKatex];
+
 function TailorSummaryBox({ 
   activeDocId, 
   activeDocSummary, 
@@ -117,7 +120,7 @@ export interface SummaryTabProps {
   showNotice?: (msg: string) => void;
 }
 
-export function SummaryTab({
+export const SummaryTab = React.memo(function SummaryTab({
   activeDoc,
   activeDocTitle,
   activeDocSummary,
@@ -420,8 +423,8 @@ export function SummaryTab({
                     </div>
 
                     <ReactMarkdown
-                      remarkPlugins={[remarkGfm, remarkMath]}
-                      rehypePlugins={[rehypeKatex]}
+                      remarkPlugins={STATIC_REMARK_PLUGINS}
+                      rehypePlugins={STATIC_REHYPE_PLUGINS}
                       components={{
                         h1: ({ children }) => (
                           <h1 style={{ fontSize: 21, fontWeight: 800, color: "#17201d", marginTop: 20, marginBottom: 10, borderBottom: "1px solid #dde1da", paddingBottom: 6 }}>
@@ -579,4 +582,4 @@ export function SummaryTab({
                 )}
               </div>
   );
-}
+});

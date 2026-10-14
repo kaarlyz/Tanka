@@ -804,7 +804,18 @@ export default function App() {
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative", minHeight: 0, height: "100%" }}>
           <section className="main-scroll-section" style={{ flex: 1, minWidth: 0, minHeight: 0, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
             {activeTab !== "home" && (
-              <div className="mode-tabs" role="tablist" aria-label="Mode belajar" style={{ flexShrink: 0 }}>
+              <div
+                className="mode-tabs"
+                role="tablist"
+                aria-label="Mode belajar"
+                style={{
+                  flexShrink: 0,
+                  maxWidth: "100%",
+                  width: "100%",
+                  overflowX: "auto",
+                  WebkitOverflowScrolling: "touch"
+                }}
+              >
                 {[
                   { id: "material", label: "Materi", count: "01" },
                   { id: "summary", label: "Rangkuman", count: (activeDocSummary && activeDocSummary.trim().length >= 500) ? "✓" : "AI" },

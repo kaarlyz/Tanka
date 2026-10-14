@@ -2071,11 +2071,17 @@
       }
 
       /* Global organic motion rules */
-      button, a, .tab-pill, .bento-stat-card, .learning-card-white, .study-card {
+      .tab-pill, .bento-stat-card, .learning-card-white, .study-card {
         transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
                     box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
                     background-color 0.15s ease,
                     border-color 0.15s ease !important;
+      }
+
+      /* Biarkan tombol responsif seketika tanpa transisi universal yang menahan */
+      button, a {
+        -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
       }
 
       /* Unified Figma button focus & tactile states */
@@ -2098,7 +2104,8 @@
       }
 
       .tab-pane-animate {
-        animation: fadeInUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+        /* Render instan tanpa delay opacity */
+        animation: none !important;
       }
 
       .modal-scale-in {

@@ -152,16 +152,13 @@ export const MaterialTab = React.memo(function MaterialTab({
 }: MaterialTabProps) {
   const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full">("chapters");
   const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
-  const [isChapterPending, startChapterTransition] = React.useTransition();
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
 
   const handleSelectChapter = (idx: number | ((prev: number) => number)) => {
     const scrollContainer = document.querySelector(".content-scroll");
     if (scrollContainer) scrollContainer.scrollTop = 0;
     window.scrollTo(0, 0);
-    startChapterTransition(() => {
-      setCurrentChapterIdx(idx);
-    });
+    setCurrentChapterIdx(idx);
   };
 
   // Reset chapter index to 0 whenever a new document is opened
@@ -1141,13 +1138,11 @@ export const MaterialTab = React.memo(function MaterialTab({
                           )}
 
                           {/* Literary Reader Markdown Body */}
-                          <div className="chapter-content-fade" key={currentChapterIdx}>
-                            <MemoizedMarkdownBody
-                              className="markdown-body book-reader"
-                              content={chapters[currentChapterIdx]?.content || ""}
-                              components={markdownComponents}
-                            />
-                          </div>
+                          <MemoizedMarkdownBody
+                            className="markdown-body book-reader"
+                            content={chapters[currentChapterIdx]?.content || ""}
+                            components={markdownComponents}
+                          />
 
                           {/* Chapter Pagination & Completion Footer */}
                           <div style={{ maxWidth: 820, margin: "36px auto 0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 20, borderTop: "1px solid #edf1eb", flexWrap: "wrap", gap: 10 }}>

@@ -871,7 +871,7 @@ export default function App() {
             )}
 
             <div className="content-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: "16px 20px max(112px, calc(80px + env(safe-area-inset-bottom, 0px))) 20px" }}>
-              <div style={{ maxWidth: activeTab === "material" ? 1440 : 1080, margin: "0 auto", width: "100%", transition: "max-width 0.2s ease" }}>
+              <div style={{ maxWidth: activeTab === "material" ? 1440 : 1080, margin: "0 auto", width: "100%" }}>
                 {activeTab === "home" && (
                 <HomeHubTab
                   activeTab={activeTab}

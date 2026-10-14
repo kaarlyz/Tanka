@@ -11,7 +11,7 @@ export interface MobileBottomNavProps {
   mistakes: MistakeItem[];
 }
 
-export function MobileBottomNav({
+export const MobileBottomNav = React.memo(function MobileBottomNav({
   activeTab,
   setActiveTab,
   isAiPanelOpen,
@@ -127,4 +127,4 @@ export function MobileBottomNav({
 
       </nav>
   );
-}
+});

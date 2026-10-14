@@ -152,12 +152,28 @@ export const MaterialTab = React.memo(function MaterialTab({
 }: MaterialTabProps) {
   const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full">("chapters");
   const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
+  const [isChapterPending, startChapterTransition] = React.useTransition();
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
+
+  const handleSelectChapter = (idx: number | ((prev: number) => number)) => {
+    startChapterTransition(() => {
+      setCurrentChapterIdx(idx);
+    });
+  };
 
   // Reset chapter index to 0 whenever a new document is opened
   React.useEffect(() => {
     setCurrentChapterIdx(0);
   }, [activeDocId]);
+
+  // Auto-scroll reset to top on chapter change
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const scrollContainer = document.querySelector(".content-scroll");
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentChapterIdx]);
   const [isRestructuring, setIsRestructuring] = React.useState(false);
   const [restructureNotice, setRestructureNotice] = React.useState<string | null>(null);
   const [isTailorOpen, setIsTailorOpen] = React.useState(false);
@@ -950,7 +966,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                           <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
                             <button
                               disabled={currentChapterIdx === 0}
-                              onClick={() => setCurrentChapterIdx((i) => Math.max(0, i - 1))}
+                              onClick={() => handleSelectChapter((i) => Math.max(0, i - 1))}
                               style={{
                                 width: 30,
                                 height: 30,
@@ -973,7 +989,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                             </span>
                             <button
                               disabled={currentChapterIdx >= chapters.length - 1}
-                              onClick={() => setCurrentChapterIdx((i) => Math.min(chapters.length - 1, i + 1))}
+                              onClick={() => handleSelectChapter((i) => Math.min(chapters.length - 1, i + 1))}
                               style={{
                                 width: 30,
                                 height: 30,
@@ -1034,7 +1050,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 <div
                                   key={ch.id}
                                   onClick={() => {
-                                    setCurrentChapterIdx(idx);
+                                    handleSelectChapter(idx);
                                     setIsChapterDrawerOpen(false);
                                   }}
                                   style={{
@@ -1122,17 +1138,19 @@ export const MaterialTab = React.memo(function MaterialTab({
                           )}
 
                           {/* Literary Reader Markdown Body */}
-                          <MemoizedMarkdownBody
-                            className="markdown-body book-reader"
-                            content={chapters[currentChapterIdx]?.content || ""}
-                            components={markdownComponents}
-                          />
+                          <div className="chapter-content-fade" key={currentChapterIdx}>
+                            <MemoizedMarkdownBody
+                              className="markdown-body book-reader"
+                              content={chapters[currentChapterIdx]?.content || ""}
+                              components={markdownComponents}
+                            />
+                          </div>
 
                           {/* Chapter Pagination & Completion Footer */}
                           <div style={{ maxWidth: 820, margin: "36px auto 0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 20, borderTop: "1px solid #edf1eb", flexWrap: "wrap", gap: 10 }}>
                             <button
                               disabled={currentChapterIdx === 0}
-                              onClick={() => setCurrentChapterIdx((i) => Math.max(0, i - 1))}
+                              onClick={() => handleSelectChapter((i) => Math.max(0, i - 1))}
                               style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -1180,7 +1198,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 onClick={() => {
                                   const chId = chapters[currentChapterIdx]?.id;
                                   if (chId) setCompletedChapters((prev) => ({ ...prev, [chId]: true }));
-                                  setCurrentChapterIdx((i) => Math.min(chapters.length - 1, i + 1));
+                                  handleSelectChapter((i) => Math.min(chapters.length - 1, i + 1));
                                 }}
                                 style={{
                                   display: "flex",

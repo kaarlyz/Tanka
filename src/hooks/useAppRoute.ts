@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, startTransition } from "react";
 import { ActiveTab } from "../types";
 
 const VALID_TABS: ActiveTab[] = ["home", "material", "quiz", "mistakes", "feynman", "flashcards", "summary"];
@@ -25,13 +25,17 @@ export function useAppRoute(defaultTab: ActiveTab = "home") {
     if (window.location.pathname !== targetPath) {
       window.history.pushState({ tab }, "", targetPath);
     }
-    setActiveTabState(tab);
+    startTransition(() => {
+      setActiveTabState(tab);
+    });
   }, []);
 
   useEffect(() => {
     const handlePopState = () => {
       const current = getTabFromLocation();
-      setActiveTabState(current);
+      startTransition(() => {
+        setActiveTabState(current);
+      });
     };
 
     window.addEventListener("popstate", handlePopState);

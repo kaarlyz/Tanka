@@ -2895,6 +2895,41 @@
         will-change: transform, opacity;
         backface-visibility: hidden;
       }
+
+      /* Snappy Mobile Touch & Manipulation */
+      button,
+      a,
+      .mobile-bottom-btn,
+      .mobile-bottom-nav,
+      .mobile-drawer-edge-tab {
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+      }
+
+      .mobile-bottom-btn {
+        user-select: none;
+        -webkit-user-select: none;
+        transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease !important;
+      }
+
+      .mobile-bottom-btn:active {
+        transform: scale(0.92) !important;
+      }
+
+      @keyframes chapterCrossfade {
+        from {
+          opacity: 0.5;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chapter-content-fade {
+        animation: chapterCrossfade 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
     </style>
   </head>
   <body>

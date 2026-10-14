@@ -102,15 +102,15 @@ Selesaikan 3 akar masalah laten performa mobile pada Tanka:
 ---
 
 ## 4. ACCEPTANCE CRITERIA
-- [ ] Static asset handler di `server.js` mengembalikan `Content-Encoding: gzip` untuk `.js`, `.css`, `.html`, `.json`, `.svg` ketika client mengirim `Accept-Encoding: gzip`.
-- [ ] Transfer asset vendor (`vendor-katex`, `vendor-react`, `vendor-markdown`) menyusut ~70% lewat jaringan.
-- [ ] `public/sw.js` menggunakan cache name `tanka-pwa-v2`, membersihkan cache v1 di event `activate`, dan memanggil `self.clients.claim()`.
-- [ ] `.chapter-content-fade` di-set `animation: none !important;` di `src/index.css`.
-- [ ] `button:hover` diisolasi di dalam `@media (hover: hover) and (pointer: fine)`.
-- [ ] `npm run build` berhasil tanpa error.
-- [ ] `env TANKA_DB_PATH=:memory: node --test tests/*.test.js` 83/83 pass.
-- [ ] Uji curl `curl -I -H "Accept-Encoding: gzip" http://localhost:3001/assets/vendor-katex-*.js` mengembalikan `Content-Encoding: gzip`.
-- [ ] DILARANG melakukan `git push` ke remote GitHub.
+- [x] Static asset handler di `server.js` mengembalikan `Content-Encoding: gzip` untuk `.js`, `.css`, `.html`, `.json`, `.svg` ketika client mengirim `Accept-Encoding: gzip`.
+- [x] Transfer asset vendor (`vendor-katex`, `vendor-react`, `vendor-markdown`) menyusut ~70% lewat jaringan.
+- [x] `public/sw.js` menggunakan cache name `tanka-pwa-v2`, membersihkan cache v1 di event `activate`, dan memanggil `self.clients.claim()`.
+- [x] `.chapter-content-fade` di-set `animation: none !important;` di `src/index.css`.
+- [x] `button:hover` diisolasi di dalam `@media (hover: hover) and (pointer: fine)`.
+- [x] `npm run build` berhasil tanpa error.
+- [x] `env TANKA_DB_PATH=:memory: node --test tests/*.test.js` 83/83 pass.
+- [x] Uji curl `curl -I -H "Accept-Encoding: gzip" http://localhost:3001/assets/vendor-katex-*.js` mengembalikan `Content-Encoding: gzip`.
+- [x] DILARANG melakukan `git push` ke remote GitHub.
 
 ---
 
@@ -121,3 +121,16 @@ env TANKA_DB_PATH=:memory: node --test --test-concurrency=1 tests/*.test.js
 systemctl --user restart tanka
 curl -I -H "Accept-Encoding: gzip" http://localhost:3001/assets/vendor-katex-g6y2NZt4.js
 ```
+
+---
+
+## 6. VERIFICATION RESULTS & EVIDENCE (MARAKA)
+- `npm run build`: Berhasil tanpa error (dist terupdate).
+- `vendor-katex-g6y2NZt4.js`: 520,502 byte -> 154,815 byte gzip (~70.26% reduction).
+- `vendor-react-BKtby74I.js`: 210,624 byte -> 65,008 byte gzip (~69.13% reduction).
+- `vendor-markdown-Bl_0EmJ2.js`: 175,869 byte -> 53,103 byte gzip (~69.81% reduction).
+- `curl -I -H "Accept-Encoding: gzip"` mengonfirmasi header `Content-Encoding: gzip` & `Vary: Accept-Encoding`.
+- `public/sw.js` & `dist/sw.js`: `CACHE_NAME = "tanka-pwa-v2"`, `self.skipWaiting()`, auto-delete cache lama, dan `self.clients.claim()`.
+- `src/index.css`: `.chapter-content-fade { animation: none !important; }`, `:hover` diisolasi di `@media (hover: hover) and (pointer: fine)`, `touch-action: manipulation !important` & `-webkit-tap-highlight-color: transparent !important`.
+- Test suite: `env TANKA_DB_PATH=:memory: node --test --test-concurrency=1 tests/*.test.js` 83/83 pass.
+- Remote Git: Tidak ada git push.

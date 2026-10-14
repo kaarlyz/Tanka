@@ -405,32 +405,48 @@ export function LandingPage({
           animation: heroFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        .hero-kicker-wrap {
+        /* Architectural Minimalist Eyebrow (No Border Box) */
+        .hero-kicker-tag {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          padding: 6px 14px;
-          border-radius: 999px;
-          background: rgba(200, 240, 100, 0.22);
-          color: #273e1c;
+          gap: 10px;
+          font-family: 'DM Mono', monospace;
           font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.03em;
-          margin-bottom: 18px;
+          font-weight: 800;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: #4b6623;
+          margin-bottom: 20px;
         }
 
-        .hero-kicker-dot {
+        .hero-radar-pulse {
+          position: relative;
+          width: 8px;
+          height: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .radar-core {
           width: 7px;
           height: 7px;
           border-radius: 50%;
           background: #4b6623;
-          box-shadow: 0 0 10px rgba(75, 102, 35, 0.8);
-          animation: dotPulse 2s infinite ease-in-out;
         }
 
-        @keyframes dotPulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.3); opacity: 0.65; }
+        .radar-wave {
+          position: absolute;
+          inset: -4px;
+          border-radius: 50%;
+          border: 1.5px solid #4b6623;
+          animation: radarWave 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+          opacity: 0.8;
+        }
+
+        @keyframes radarWave {
+          0% { transform: scale(0.6); opacity: 0.9; }
+          100% { transform: scale(2.2); opacity: 0; }
         }
 
         .hero-title-left {
@@ -480,7 +496,9 @@ export function LandingPage({
           display: inline-flex;
           align-items: center;
           gap: 10px;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
+          overflow: hidden;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
           box-shadow: 0 10px 28px -4px rgba(24, 34, 31, 0.25);
         }
 
@@ -488,6 +506,27 @@ export function LandingPage({
           background: #24352f;
           transform: translateY(-2px);
           box-shadow: 0 14px 36px -4px rgba(24, 34, 31, 0.35);
+        }
+
+        .hero-btn-main:active {
+          transform: scale(0.97);
+        }
+
+        .hero-btn-main::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -60%;
+          width: 20%;
+          height: 200%;
+          background: linear-gradient(to right, transparent, rgba(200, 240, 100, 0.35), transparent);
+          transform: rotate(30deg);
+          animation: btnShimmer 4.5s ease-in-out infinite;
+        }
+
+        @keyframes btnShimmer {
+          0%, 80% { left: -60%; }
+          100% { left: 140%; }
         }
 
         .hero-btn-sub {
@@ -1080,12 +1119,22 @@ export function LandingPage({
         }
 
         .spec-content-fade {
-          animation: specFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation: specSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        @keyframes specFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes specSlideIn {
+          from { opacity: 0; transform: translateY(12px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Pulse glow for neural central node */
+        .neural-center-pulsing {
+          animation: centerNodePulse 2.5s infinite ease-in-out;
+        }
+
+        @keyframes centerNodePulse {
+          0%, 100% { filter: drop-shadow(0 0 6px rgba(200, 240, 100, 0.6)); }
+          50% { filter: drop-shadow(0 0 16px rgba(200, 240, 100, 0.95)); }
         }
 
         .spec-eyebrow {
@@ -1658,9 +1707,12 @@ export function LandingPage({
         <div className="hero-split-grid">
           {/* Kolom Kiri: Headline & Value Proposition Rata Kiri */}
           <div className="hero-split-left">
-            <div className="hero-kicker-wrap">
-              <span className="hero-kicker-dot" />
-              <span>Belajar Mandiri Lebih Tenang & Tuntas</span>
+            <div className="hero-kicker-tag">
+              <span className="hero-radar-pulse">
+                <span className="radar-core" />
+                <span className="radar-wave" />
+              </span>
+              <span>BELAJAR MANDIRI LEBIH TENANG & TUNTAS</span>
             </div>
 
             <h1 className="hero-title-left">

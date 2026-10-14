@@ -266,9 +266,9 @@ export function LandingPage({
         }
 
         .landing-nav-inner {
-          max-width: 1260px;
+          max-width: 1440px;
           margin: 0 auto;
-          padding: 14px 28px;
+          padding: 16px clamp(24px, 4.5vw, 64px);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -374,15 +374,15 @@ export function LandingPage({
         .landing-hero-asymmetric {
           position: relative;
           z-index: 1;
-          max-width: 1260px;
+          max-width: 1440px;
           margin: 0 auto;
-          padding: 24px 28px 16px;
+          padding: clamp(56px, 8vh, 96px) clamp(24px, 4.5vw, 64px) clamp(44px, 6vh, 68px);
         }
 
         .hero-split-grid {
           display: grid;
-          grid-template-columns: 1.05fr 1fr;
-          gap: 36px;
+          grid-template-columns: 1.12fr 1fr;
+          gap: clamp(40px, 5vw, 72px);
           align-items: center;
         }
 
@@ -406,14 +406,14 @@ export function LandingPage({
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 4px 12px;
+          padding: 6px 14px;
           border-radius: 999px;
           background: rgba(200, 240, 100, 0.22);
           color: #273e1c;
-          font-size: 11.5px;
+          font-size: 12px;
           font-weight: 700;
           letter-spacing: 0.03em;
-          margin-bottom: 10px;
+          margin-bottom: 18px;
         }
 
         .hero-kicker-dot {
@@ -431,18 +431,18 @@ export function LandingPage({
         }
 
         .hero-title-left {
-          font-size: clamp(1.75rem, 2.7vw, 2.35rem);
+          font-size: clamp(2.35rem, 4.1vw, 3.85rem);
           font-weight: 800;
-          line-height: 1.15;
+          line-height: 1.12;
           letter-spacing: -0.035em;
           color: #18221f;
-          margin-bottom: 10px;
+          margin-bottom: 20px;
         }
 
         .hero-title-highlight {
           display: block;
           color: #4b6623;
-          margin-top: 4px;
+          margin-top: 6px;
           letter-spacing: -0.025em;
           background: linear-gradient(135deg, #18221f 20%, #4b6623 85%);
           -webkit-background-clip: text;
@@ -450,33 +450,33 @@ export function LandingPage({
         }
 
         .hero-subtitle-left {
-          font-size: 14px;
-          line-height: 1.55;
-          color: #55635e;
-          margin-bottom: 18px;
-          max-width: 500px;
+          font-size: clamp(15px, 1.15vw, 17.5px);
+          line-height: 1.68;
+          color: #52605b;
+          margin-bottom: 32px;
+          max-width: 580px;
         }
 
         .hero-cta-left {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 16px;
           flex-wrap: wrap;
-          margin-bottom: 18px;
+          margin-bottom: 28px;
         }
 
         .hero-btn-main {
           background: #18221f;
           color: #c8f064;
           border: 1px solid #18221f;
-          padding: 11px 22px;
-          border-radius: 10px;
-          font-size: 14px;
+          padding: 14px 28px;
+          border-radius: 12px;
+          font-size: 15px;
           font-weight: 700;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           box-shadow: 0 10px 28px -4px rgba(24, 34, 31, 0.25);
         }
@@ -491,9 +491,9 @@ export function LandingPage({
           background: #ffffff;
           color: #18221f;
           border: 1px solid #dce2da;
-          padding: 11px 18px;
-          border-radius: 10px;
-          font-size: 13.5px;
+          padding: 14px 22px;
+          border-radius: 12px;
+          font-size: 14.5px;
           font-weight: 600;
           text-decoration: none;
           display: inline-flex;
@@ -512,8 +512,8 @@ export function LandingPage({
         .hero-trust-row {
           display: flex;
           align-items: center;
-          gap: 16px;
-          font-size: 12px;
+          gap: 24px;
+          font-size: 13px;
           color: #60706a;
           font-weight: 600;
         }
@@ -1338,21 +1338,22 @@ export function LandingPage({
         .comparison-dual-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 28px;
-          margin-top: 10px;
+          gap: clamp(30px, 3.5vw, 48px);
+          margin-top: 16px;
         }
 
         .battle-card {
-          border-radius: 20px;
-          padding: 38px 34px;
+          border-radius: 26px;
+          padding: clamp(40px, 4.2vw, 54px);
           display: flex;
           flex-direction: column;
-          box-shadow: 0 10px 32px rgba(24, 34, 31, 0.04);
+          justify-content: space-between;
+          box-shadow: 0 16px 40px rgba(24, 34, 31, 0.04);
         }
 
         .battle-card.old-way {
-          background: #fcf6f3;
-          border: 1px solid #f3d8cc;
+          background: #f3f5f0;
+          border: 1px solid #e1e7dc;
         }
 
         @keyframes rotateBorderBeam {
@@ -1362,22 +1363,26 @@ export function LandingPage({
         }
 
         .battle-card.tanka-way {
-          background: #f4faee;
-          border: 1.5px solid transparent;
+          background: #141f1a;
+          color: #eff5ec;
+          border: 1px solid rgba(200, 240, 100, 0.35);
           position: relative;
-          box-shadow: 0 16px 44px rgba(75, 102, 35, 0.12);
+          box-shadow: 0 30px 75px -15px rgba(20, 31, 26, 0.45);
         }
 
-        .battle-card.tanka-way::before {
-          content: "";
-          position: absolute;
-          inset: -1.5px;
-          border-radius: 21px;
-          background: linear-gradient(135deg, #c8f064, #4b6623, #c8f064, #7ca836);
-          background-size: 300% 300%;
-          animation: rotateBorderBeam 6s linear infinite;
-          z-index: -1;
-          opacity: 0.85;
+        .battle-card.tanka-way .battle-title {
+          color: #ffffff;
+          font-size: clamp(23px, 2.3vw, 27px);
+        }
+
+        .battle-card.tanka-way .battle-desc {
+          color: #b5c4bd;
+          font-size: 15px;
+        }
+
+        .battle-card.tanka-way .battle-item {
+          color: #f0f5ee;
+          font-size: 15px;
         }
 
         .battle-header-pill {
@@ -1399,8 +1404,9 @@ export function LandingPage({
         }
 
         .battle-header-pill.tanka {
-          background: #18221f;
-          color: #c8f064;
+          background: #c8f064;
+          color: #18221f;
+          font-weight: 800;
         }
 
         .battle-title {
@@ -1437,15 +1443,15 @@ export function LandingPage({
         .persona-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
+          gap: clamp(24px, 3vw, 36px);
         }
 
         .persona-card {
           background: #ffffff;
-          border: 1px solid #e2e8df;
-          border-radius: 18px;
-          padding: 30px;
-          box-shadow: 0 8px 24px rgba(24, 34, 31, 0.04);
+          border: 1px solid rgba(226, 232, 223, 0.85);
+          border-radius: 24px;
+          padding: clamp(32px, 3.2vw, 42px);
+          box-shadow: 0 16px 42px -10px rgba(24, 34, 31, 0.05);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -1461,15 +1467,15 @@ export function LandingPage({
         .stepper-tabs {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 14px;
-          margin-bottom: 28px;
+          gap: 16px;
+          margin-bottom: 32px;
         }
 
         .stepper-tab {
           background: #ffffff;
-          border: 1px solid #e2e8df;
-          border-radius: 14px;
-          padding: 18px;
+          border: 1px solid rgba(226, 232, 223, 0.85);
+          border-radius: 16px;
+          padding: 20px;
           text-align: left;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -1500,7 +1506,7 @@ export function LandingPage({
         }
 
         .stepper-tab-title {
-          font-size: 14px;
+          font-size: 14.5px;
           font-weight: 700;
           color: #18221f;
           line-height: 1.3;
@@ -1512,63 +1518,45 @@ export function LandingPage({
 
         .stepper-card {
           background: #ffffff;
-          border: 1px solid #e2e8df;
-          border-radius: 18px;
-          padding: 40px;
-          box-shadow: 0 8px 30px rgba(24, 34, 31, 0.04);
+          border: 1px solid rgba(226, 232, 223, 0.85);
+          border-radius: 26px;
+          padding: clamp(40px, 4.2vw, 54px);
+          box-shadow: 0 20px 50px -12px rgba(24, 34, 31, 0.06);
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 40px;
+          grid-template-columns: 1.15fr 1fr;
+          gap: clamp(36px, 4vw, 56px);
           align-items: center;
         }
 
         /* Banner CTA */
         .landing-cta-banner {
-          background: #18221f;
+          background: #101915;
           color: #eff5ec;
-          border-radius: 24px;
-          padding: 64px 40px;
+          border-radius: 32px;
+          padding: clamp(80px, 10vh, 120px) clamp(24px, 5vw, 64px);
           text-align: center;
-          margin: 40px auto 90px;
-          max-width: 1260px;
+          margin: clamp(70px, 9vh, 110px) auto clamp(90px, 11vh, 130px);
+          max-width: 1440px;
           position: relative;
           overflow: hidden;
-          box-shadow: 0 24px 60px -10px rgba(24, 34, 31, 0.32);
+          box-shadow: 0 32px 80px -12px rgba(16, 25, 21, 0.45);
         }
 
         /* Footer */
         .landing-footer {
           border-top: 1px solid #e2e8df;
           background: #f6f8f3;
-          padding: 60px 24px 48px;
+          padding: clamp(64px, 8vh, 88px) 0 clamp(48px, 6vh, 64px);
         }
 
         .landing-footer-inner {
-          max-width: 1260px;
+          max-width: 1440px;
           margin: 0 auto;
+          padding-left: clamp(24px, 4.5vw, 64px);
+          padding-right: clamp(24px, 4.5vw, 64px);
           display: flex;
           flex-direction: column;
-          gap: 40px;
-        }
-
-        .footer-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          flex-wrap: wrap;
-          gap: 32px;
-        }
-
-        .footer-bottom {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-top: 1px solid #e2e8df;
-          padding-top: 26px;
-          font-size: 13.5px;
-          color: #65746e;
-          flex-wrap: wrap;
-          gap: 12px;
+          gap: 48px;
         }
 
         /* Responsive Adjustments */
@@ -2186,7 +2174,7 @@ export function LandingPage({
       </section>
 
       {/* Dual Side-by-Side Visual Battle: Cara Lama vs Cara Tanka (Rhythm Header Kiri) */}
-      <section id="perbandingan" className="landing-section" style={{ paddingTop: 30 }}>
+      <section id="perbandingan" className="landing-section">
         <div className="section-header-left reveal-scroll">
           <span className="section-kicker">PERBANDINGAN NYATA</span>
           <h2 className="section-title">Tinggalkan Frustrasi Belajar Cara Lama</h2>
@@ -2266,7 +2254,7 @@ export function LandingPage({
       </section>
 
       {/* Social Proof: 3 Student Personas (Rhythm Header Center) */}
-      <section id="testimoni" className="landing-section" style={{ paddingTop: 30 }}>
+      <section id="testimoni" className="landing-section">
         <div className="section-header-center reveal-scroll">
           <span className="section-kicker">CERITA TEMAN BELAJAR</span>
           <h2 className="section-title">Teman Belajar Pejuang Ujian & Mahasiswa</h2>
@@ -2348,7 +2336,7 @@ export function LandingPage({
       </section>
 
       {/* Feature Stepper Section (Rhythm Header Kiri) */}
-      <section id="alur" className="landing-section" style={{ paddingTop: 20 }}>
+      <section id="alur" className="landing-section">
         <div className="section-header-left reveal-scroll">
           <span className="section-kicker">CARA KERJA</span>
           <h2 className="section-title">4 Langkah Menguasai Materi Apapun</h2>

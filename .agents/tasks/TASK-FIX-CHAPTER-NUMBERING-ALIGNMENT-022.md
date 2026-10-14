@@ -109,9 +109,9 @@ Gunakan `currentChapterIdx + 1` agar konsisten dengan `chapters[currentChapterId
 ---
 
 ## 3. ACCEPTANCE CRITERIA
-- [ ] Dokumen H1 (`# ...`) tidak lagi diparsing sebagai Bab 1 terpisah.
-- [ ] Bab 1 selalu memuat judul bab 1 (`## Bab 1...`), Bab 2 memuat bab 2 (`## Bab 2...`), Bab 3 memuat bab 3 (`## Bab 3...`).
-- [ ] Nomor badge (*"Bab X dari N"*), dropdown (*"Bab X / N"*), judul H1, dan tombol *"Lanjut ke Bab X+1"* 100% selaras tanpa selisih indeks.
-- [ ] `npm run build` sukses.
-- [ ] `env TANKA_DB_PATH=:memory: node --test tests/*.test.js` 83/83 pass.
-- [ ] DILARANG melakukan `git push` ke remote GitHub.
+- [x] Dokumen H1 (`# ...`) tidak lagi diparsing sebagai Bab 1 terpisah.
+- [x] Bab 1 selalu memuat judul bab 1 (`## Bab 1...`), Bab 2 memuat bab 2 (`## Bab 2...`), Bab 3 memuat bab 3 (`## Bab 3...`).
+- [x] Nomor badge (*"Bab X dari N"*), dropdown (*"Bab X / N"*), judul H1, dan tombol *"Lanjut ke Bab X+1"* 100% selaras tanpa selisih indeks.
+- [x] `npm run build` sukses.
+- [x] `env TANKA_DB_PATH=:memory: node --test tests/*.test.js` 83/83 pass.
+- [x] DILARANG melakukan `git push` ke remote GitHub.

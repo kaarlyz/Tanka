@@ -1707,23 +1707,15 @@ export function LandingPage({
         <div className="hero-split-grid">
           {/* Kolom Kiri: Headline & Value Proposition Rata Kiri */}
           <div className="hero-split-left">
-            <div className="hero-kicker-tag">
-              <span className="hero-radar-pulse">
-                <span className="radar-core" />
-                <span className="radar-wave" />
-              </span>
-              <span>BELAJAR MANDIRI LEBIH TENANG & TUNTAS</span>
-            </div>
-
             <h1 className="hero-title-left">
-              Gak ada lagi cerita mentok belajar sendirian.
+              Ubah materi apapun,
               <span className="hero-title-highlight">
-                Pecah materi tersulit jadi bab santai 3 menit.
+                jadi langsung bisa dipahami.
               </span>
             </h1>
 
             <p className="hero-subtitle-left">
-              Punya file PDF setebal skripsi atau video materi YouTube 2 jam yang bikin ngantuk? Cukup masukkan ke Tanka. Materi langsung diringkas per topik, rumus KaTeX diterjemahkan jelas, dan kamu didampingi Nara — tutor AI yang sabar menjelaskan sampai tuntas.
+              Tumpahkan materi kuliah, buku tebal, atau video YouTube panjang. Tanka membedahnya jadi bab terstruktur dan mendampingimu langkah demi langkah sampai benar-benar mengerti konsep dasarnya.
             </p>
 
             <div className="hero-cta-left">
@@ -1731,24 +1723,6 @@ export function LandingPage({
                 <span>Mulai Belajar Sekarang — Gratis</span>
                 <ArrowRight size={17} />
               </button>
-              <a
-                href="#keunggulan"
-                className="hero-btn-sub"
-              >
-                <Sparkles size={16} color="#4b6623" />
-                <span>Eksplorasi Fitur</span>
-              </a>
-            </div>
-
-            <div className="hero-trust-row">
-              <div className="hero-trust-item">
-                <CheckCircle2 size={15} color="#4b6623" />
-                <span>100% Bebas Iklan</span>
-              </div>
-              <div className="hero-trust-item">
-                <CheckCircle2 size={15} color="#4b6623" />
-                <span>Bisa Offline & Hemat Kuota</span>
-              </div>
             </div>
           </div>
 
@@ -1759,10 +1733,6 @@ export function LandingPage({
                 <div className="simulator-title-left">
                   <Bot size={17} color="#4b6623" />
                   <span>Coba Tanya Nara Sekarang</span>
-                </div>
-                <div className="simulator-badge">
-                  <Zap size={11} color="#4b6623" />
-                  <span>Tutor Pribadi Siap Sedia</span>
                 </div>
               </div>
 
@@ -1854,13 +1824,7 @@ export function LandingPage({
             </div>
           </div>
 
-          <div className="hero-float-badge float-mid-left">
-            <span className="float-badge-icon">🛡️</span>
-            <div className="float-badge-text">
-              <strong>Bisa Dibuka Offline</strong>
-              <small>Data tersimpan di perangkat</small>
-            </div>
-          </div>
+
 
           <div className="mockup-window">
             <div className="mockup-chrome">
@@ -1890,7 +1854,7 @@ export function LandingPage({
         <div className="landing-marquee-track">
           {[...Array(2)].map((_, trackIdx) => (
             <div className="landing-marquee-content" key={trackIdx}>
-              <span>✨ 100% BEBAS IKLAN</span>
+              <span>✨ PENURUNAN RUMUS KONTINU</span>
               <span className="marquee-dot">•</span>
               <span>⚡ TANYA RUMUS SEPUASNYA</span>
               <span className="marquee-dot">•</span>
@@ -1898,9 +1862,9 @@ export function LandingPage({
               <span className="marquee-dot">•</span>
               <span>🎯 KUIS PINTAR 1 KARTU 1 FAKTA</span>
               <span className="marquee-dot">•</span>
-              <span>📱 RINGAN DI SEMUA HP</span>
+              <span>📱 RINGAN DI SEMUA PERANGKAT</span>
               <span className="marquee-dot">•</span>
-              <span>🛡️ DATA PRIVAT TERSIMPAN LOKAL</span>
+              <span>🛡️ PENDAMPING BELAJAR EMPATIK</span>
               <span className="marquee-dot">•</span>
             </div>
           ))}
@@ -1913,7 +1877,7 @@ export function LandingPage({
           <span className="section-kicker">ARSITEKTUR BELAJAR TANKA</span>
           <h2 className="section-title">Bukan Sekadar Baca Materi. Ini Mesin Belajar Mandiri.</h2>
           <p className="section-desc">
-            Coba langsung 5 instrumen inti Tanka di bawah. Klik tiap mode untuk merasakan bagaimana materi tersulit dipecah menjadi pemahaman utuh.
+            Coba langsung 4 instrumen inti Tanka di bawah. Klik tiap mode untuk merasakan bagaimana materi tersulit dipecah menjadi pemahaman utuh.
           </p>
         </div>
 
@@ -1952,13 +1916,7 @@ export function LandingPage({
               <span>Peta Saraf Materi</span>
             </button>
 
-            <button
-              className={`studio-dock-btn ${studioMode === "offline" ? "active" : ""}`}
-              onClick={() => setStudioMode("offline")}
-            >
-              <WifiOff size={15} />
-              <span>100% Offline</span>
-            </button>
+
           </div>
         </div>
 
@@ -2090,36 +2048,7 @@ export function LandingPage({
               </div>
             )}
 
-            {studioMode === "offline" && (
-              <div className="spec-content-fade" key="offline-spec">
-                <span className="spec-eyebrow">
-                  <WifiOff size={14} color="#4b6623" />
-                  <span>KAPABILITAS 05 // INDEPENDENSI LOKAL</span>
-                </span>
-                <h3 className="spec-title">100% Offline & Tersimpan di Perangkatmu</h3>
-                <p className="spec-desc">
-                  Semua modul, rumus, dan catatan belajarmu tersimpan di memori HP atau laptopmu sendiri (SQLite lokal). Bebas dibuka di pesawat, perpustakaan, atau saat kuota habis.
-                </p>
-                <div className="spec-chips-row">
-                  <div className="spec-chip">
-                    <CheckCircle2 size={16} color="#4b6623" />
-                    <span>Tanpa Kuota Internet Sepeserpun</span>
-                  </div>
-                  <div className="spec-chip">
-                    <CheckCircle2 size={16} color="#4b6623" />
-                    <span>Nol Iklan & Nol Pelacak</span>
-                  </div>
-                  <div className="spec-chip">
-                    <CheckCircle2 size={16} color="#4b6623" />
-                    <span>Sangat Ringan di Semua HP</span>
-                  </div>
-                </div>
-                <button className="spec-action-btn" onClick={onLaunchApp}>
-                  <span>Mulai Belajar Mandiri</span>
-                  <ArrowRight size={15} />
-                </button>
-              </div>
-            )}
+
           </div>
 
           {/* Right Apparatus Screen */}
@@ -2303,53 +2232,7 @@ export function LandingPage({
               </div>
             )}
 
-            {studioMode === "offline" && (
-              <div className="spec-content-fade cockpit-offline-box" key="offline-apparatus">
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#273e1c", background: "#f1f6ed", border: "1px solid #dce5d6", padding: "5px 10px", borderRadius: 6 }}>
-                    SQLite WAL Engine
-                  </span>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#273e1c", background: "#f1f6ed", border: "1px solid #dce5d6", padding: "5px 10px", borderRadius: 6 }}>
-                    38.4 MB Tersimpan
-                  </span>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#273e1c", background: "#f1f6ed", border: "1px solid #dce5d6", padding: "5px 10px", borderRadius: 6 }}>
-                    0 KB Data Digunakan
-                  </span>
-                </div>
 
-                <button
-                  className={`offline-toggle-hardware-btn ${isOfflineMode ? "active" : ""}`}
-                  onClick={() => setIsOfflineMode(!isOfflineMode)}
-                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: isOfflineMode ? "#18221f" : "#ffffff", color: isOfflineMode ? "#c8f064" : "#18221f", border: "1.5px solid #dce2da", padding: "14px 18px", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 700, transition: "all 0.2s ease" }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    {isOfflineMode ? <WifiOff size={18} color="#c8f064" /> : <Wifi size={18} color="#18221f" />}
-                    <span>{isOfflineMode ? "Mode Offline / Tanpa Internet Aktif" : "Mode Online (Tersinkron)"}</span>
-                  </div>
-                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", padding: "3px 8px", borderRadius: 6, background: isOfflineMode ? "rgba(200, 240, 100, 0.2)" : "#f1f4ee" }}>
-                    [Klik untuk Uji]
-                  </span>
-                </button>
-
-                <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 12, background: "#f4f7f1", border: "1px solid #e2e8df", fontSize: 13, lineHeight: 1.55, color: "#3b4b44" }}>
-                  {isOfflineMode ? (
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <CheckCircle2 size={17} color="#4b6623" style={{ flexShrink: 0, marginTop: 1 }} />
-                      <div>
-                        <strong>Simulasi Sinyal Mati:</strong> Seluruh modul bab, rumus KaTeX, dan kuis tetap terbuka instan tanpa kuota.
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <Zap size={17} color="#18221f" style={{ flexShrink: 0, marginTop: 1 }} />
-                      <div>
-                        <strong>Perangkat Siaga:</strong> Data tersimpan lokal di HP/laptopmu. Coba klik sakelar di atas untuk simulasi belajar di pesawat/kafe.
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </section>
@@ -2664,12 +2547,9 @@ export function LandingPage({
                 <div className="landing-brand-box">t</div>
                 <span className="landing-brand-text">tanka.</span>
               </div>
-              <p style={{ fontSize: 14.5, lineHeight: 1.68, color: "#55635e", marginBottom: 18, maxWidth: 380 }}>
+              <p style={{ fontSize: 14.5, lineHeight: 1.68, color: "#55635e", maxWidth: 380 }}>
                 Platform Belajar Mandiri Adaptif dengan Pendamping AI Nara untuk Siswa SMA & Mahasiswa.
               </p>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", background: "#ffffff", border: "1px solid #dce2da", borderRadius: 8, fontSize: 12.5, color: "#273e1c", fontWeight: 700 }}>
-                <span>✨ Karya Mandiri oleh <strong>Eka Restu Syahputra</strong></span>
-              </div>
             </div>
 
             <div>
@@ -2701,10 +2581,10 @@ export function LandingPage({
                   100% Data Privat di Perangkat
                 </span>
                 <span style={{ fontSize: 13.5, color: "#55635e" }}>
-                  Nol Iklan & Nol Pelacak
+                  Fokus Penuh pada Materi
                 </span>
                 <span style={{ fontSize: 13.5, color: "#55635e" }}>
-                  Bisa Dibuka Tanpa Kuota
+                  Pendamping AI Nara 24 Jam
                 </span>
                 <span style={{ fontSize: 13.5, color: "#55635e" }}>
                   Arsitektur Berintegritas Tinggi
@@ -2714,9 +2594,9 @@ export function LandingPage({
           </div>
 
           <div className="footer-bottom">
-            <span>© 2026 Tanka oleh <strong>Eka Restu Syahputra</strong>. Seluruh hak cipta dilindungi.</span>
+            <span>© 2026 Tanka. Seluruh hak cipta dilindungi.</span>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12.5, color: "#4b6623", fontWeight: 700 }}>
-              Belajar Mandiri • Bebas Iklan • 100% Privat
+              Platform Belajar Mandiri Adaptif
             </span>
           </div>
         </div>

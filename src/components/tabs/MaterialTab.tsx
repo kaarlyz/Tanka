@@ -156,6 +156,9 @@ export const MaterialTab = React.memo(function MaterialTab({
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
 
   const handleSelectChapter = (idx: number | ((prev: number) => number)) => {
+    const scrollContainer = document.querySelector(".content-scroll");
+    if (scrollContainer) scrollContainer.scrollTop = 0;
+    window.scrollTo(0, 0);
     startChapterTransition(() => {
       setCurrentChapterIdx(idx);
     });
@@ -168,11 +171,11 @@ export const MaterialTab = React.memo(function MaterialTab({
 
   // Auto-scroll reset to top on chapter change
   React.useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
     const scrollContainer = document.querySelector(".content-scroll");
     if (scrollContainer) {
-      scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+      scrollContainer.scrollTop = 0;
     }
+    window.scrollTo(0, 0);
   }, [currentChapterIdx]);
   const [isRestructuring, setIsRestructuring] = React.useState(false);
   const [restructureNotice, setRestructureNotice] = React.useState<string | null>(null);

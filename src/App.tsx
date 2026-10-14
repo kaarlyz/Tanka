@@ -130,6 +130,13 @@ export default function App() {
     }
   }, [showNotice]);
 
+  // Auto-transition from landing to home when user is logged in
+  useEffect(() => {
+    if (currentUser && activeTab === "landing") {
+      setActiveTab("home");
+    }
+  }, [currentUser, activeTab, setActiveTab]);
+
   useEffect(() => {
     const prefetch = () => {
       import("./components/tabs/MaterialTab");
@@ -186,6 +193,15 @@ export default function App() {
     setActiveTab,
     onDocumentLoaded: () => setShowRawText(false)
   });
+
+  const handleLogoutWithReset = useCallback(() => {
+    handleLogout();
+    setActiveDocId(null);
+    setActiveDocTitle("");
+    setActiveDocContent("");
+    setActiveDocSummary("");
+    setActiveTab("landing");
+  }, [handleLogout, setActiveDocId, setActiveDocTitle, setActiveDocContent, setActiveDocSummary, setActiveTab]);
 
   // 6. Domain Hook: Mistakes Bank
   const {
@@ -725,7 +741,7 @@ export default function App() {
           activeTab={profileModalTab}
           setActiveTab={setProfileModalTab}
           onUpdateProfile={updateProfile}
-          onLogout={handleLogout}
+          onLogout={handleLogoutWithReset}
           onOpenRoomModal={handleOpenRoomHub}
         />
 
@@ -749,7 +765,13 @@ export default function App() {
       {activeTab === "landing" ? (
         <Suspense fallback={<div style={{ display: "flex", height: "100%", width: "100%", alignItems: "center", justifyContent: "center", background: "#fcfdfa", color: "#5f6b66", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>Memuat Tanka...</div>}>
           <LandingPage
-            onLaunchApp={() => setActiveTab("home")}
+            onLaunchApp={() => {
+              if (currentUser) {
+                setActiveTab("home");
+              } else {
+                handleOpenAuth("register");
+              }
+            }}
             onOpenAuth={handleOpenAuth}
             currentUser={currentUser}
           />
@@ -789,7 +811,7 @@ export default function App() {
         setIsStagingModalOpen={setIsStagingModalOpen}
         currentUser={currentUser}
         onOpenAuthModal={handleOpenAuth}
-        onLogout={handleLogout}
+        onLogout={handleLogoutWithReset}
         handleDeleteDocument={(id, e) => handleDeleteDocument(id, e, () => {
           setFlashcards([]);
           setQuizQuestions([]);
@@ -838,7 +860,7 @@ export default function App() {
           showNotice={showNotice}
           currentUser={currentUser}
           onOpenAuthModal={handleOpenAuth}
-          onLogout={handleLogout}
+          onLogout={handleLogoutWithReset}
           onOpenProfileModal={() => {
             setProfileModalTab("profile");
             setIsProfileModalOpen(true);

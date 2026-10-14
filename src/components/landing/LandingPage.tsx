@@ -36,6 +36,14 @@ export function LandingPage({
   onOpenAuth,
   currentUser
 }: LandingPageProps) {
+  const handleActionLaunch = () => {
+    if (currentUser) {
+      onLaunchApp();
+    } else {
+      onOpenAuth("register");
+    }
+  };
+
   // Stepper state
   const [activeStep, setActiveStep] = useState(0);
 
@@ -1995,7 +2003,7 @@ export function LandingPage({
       {/* Top Navigation Bar */}
       <nav className="landing-nav">
         <div className="landing-nav-inner">
-          <div className="landing-brand" onClick={onLaunchApp}>
+          <div className="landing-brand" onClick={handleActionLaunch}>
             <div className="landing-brand-box">t</div>
             <span className="landing-brand-text">tanka.</span>
           </div>
@@ -2026,14 +2034,14 @@ export function LandingPage({
             ) : (
               <button
                 className="landing-btn-ghost"
-                onClick={() => onOpenAuth("login")}
+                onClick={() => onOpenAuth("register")}
               >
                 Masuk
               </button>
             )}
             <button
               className="landing-btn-primary"
-              onClick={onLaunchApp}
+              onClick={handleActionLaunch}
             >
               <span>Buka Aplikasi</span>
               <ArrowRight size={14} />
@@ -2061,7 +2069,7 @@ export function LandingPage({
             </p>
 
             <div className="hero-cta-left">
-              <button className="hero-btn-main" onClick={onLaunchApp}>
+              <button className="hero-btn-main" onClick={handleActionLaunch}>
                 <span>Mulai Belajar Sekarang — Gratis</span>
                 <ArrowRight size={17} />
               </button>
@@ -2123,7 +2131,7 @@ export function LandingPage({
                     value={heroPromptInput}
                     onChange={(e) => setHeroPromptInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") onLaunchApp();
+                      if (e.key === "Enter") handleActionLaunch();
                     }}
                     className="clean-input sim-input-field"
                     style={{
@@ -2134,7 +2142,7 @@ export function LandingPage({
                     }}
                   />
                 </div>
-                <button className="sim-input-submit-btn" onClick={onLaunchApp}>
+                <button className="sim-input-submit-btn sim-btn-send" onClick={handleActionLaunch}>
                   <span>Tanya Nara</span>
                   <Send size={13} />
                 </button>
@@ -2312,7 +2320,7 @@ export function LandingPage({
                     <span>Bebas Bertanya Kapan Saja 24 Jam</span>
                   </div>
                 </div>
-                <button className="spec-action-btn" onClick={onLaunchApp}>
+                <button className="spec-action-btn" onClick={handleActionLaunch}>
                   <span>Mulai Tanya Nara Sekarang</span>
                   <ArrowRight size={15} />
                 </button>
@@ -2343,7 +2351,7 @@ export function LandingPage({
                     <span>Estimasi Waktu Baca 3 Menitan</span>
                   </div>
                 </div>
-                <button className="spec-action-btn" onClick={onLaunchApp}>
+                <button className="spec-action-btn" onClick={handleActionLaunch}>
                   <span>Coba Rangkum Video Sekarang</span>
                   <ArrowRight size={15} />
                 </button>
@@ -2374,7 +2382,7 @@ export function LandingPage({
                     <span>Pembahasan Deterministik Akurat</span>
                   </div>
                 </div>
-                <button className="spec-action-btn" onClick={onLaunchApp}>
+                <button className="spec-action-btn" onClick={handleActionLaunch}>
                   <span>Buka Arena Kuis</span>
                   <ArrowRight size={15} />
                 </button>
@@ -2405,7 +2413,7 @@ export function LandingPage({
                     <span>Tingkatkan Daya Ingat Jangka Panjang</span>
                   </div>
                 </div>
-                <button className="spec-action-btn" onClick={onLaunchApp}>
+                <button className="spec-action-btn" onClick={handleActionLaunch}>
                   <span>Eksplorasi Peta Konsep</span>
                   <ArrowRight size={15} />
                 </button>
@@ -2846,7 +2854,8 @@ export function LandingPage({
               "{steps[activeStep].summary}"
             </p>
             <button
-              onClick={onLaunchApp}
+              className="stepper-cta-btn"
+              onClick={handleActionLaunch}
               style={{
                 width: "100%",
                 background: "#c8f064",
@@ -2880,7 +2889,8 @@ export function LandingPage({
           Buka materi pertamamu sekarang. 100% bebas biaya, tanpa iklan mengganggu, dan catatan belajarmu tersimpan aman di perangkatmu.
         </p>
         <button
-          onClick={onLaunchApp}
+          className="landing-cta-btn"
+          onClick={handleActionLaunch}
           style={{
             background: "#c8f064",
             color: "#18221f",
@@ -2907,7 +2917,7 @@ export function LandingPage({
         <div className="landing-footer-inner">
           <div className="footer-top">
             <div>
-              <div className="landing-brand" onClick={onLaunchApp} style={{ marginBottom: 14 }}>
+              <div className="landing-brand" onClick={handleActionLaunch} style={{ marginBottom: 14 }}>
                 <div className="landing-brand-box">t</div>
                 <span className="landing-brand-text">tanka.</span>
               </div>

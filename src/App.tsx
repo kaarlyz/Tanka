@@ -1,35 +1,48 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { CheckCircle2, MessageSquare } from "lucide-react";
 import { ActiveTab, QuizQuestion } from "./types";
 import { normalizeDiagramsInMarkdown } from "./components/common/DiagramRenderer";
 
-// Layout & Modals
+// Layout & Modals (Static)
 import { Sidebar } from "./components/layout/Sidebar";
 import { TopBar } from "./components/layout/TopBar";
 import { MobileBottomNav } from "./components/layout/MobileBottomNav";
-import { TanyaNaraPanel } from "./components/modals/TanyaNaraPanel";
-import { FormulaDrawer } from "./components/modals/FormulaDrawer";
-import { TopicModal } from "./components/modals/TopicModal";
-import { EnrichModal } from "./components/modals/EnrichModal";
-import { StagingUploadModal } from "./components/modals/StagingUploadModal";
-import { YouTubeModal } from "./components/modals/YouTubeModal";
-import { TimerAlarmModal } from "./components/modals/TimerAlarmModal";
 
-// Tabs
+// Tabs (Static Primary)
 import { HomeHubTab } from "./components/tabs/HomeHubTab";
 import { MaterialTab } from "./components/tabs/MaterialTab";
-import { QuizTab } from "./components/tabs/QuizTab";
-import { MistakesTab } from "./components/tabs/MistakesTab";
-import { FeynmanTab } from "./components/tabs/FeynmanTab";
-import { FlashcardsTab } from "./components/tabs/FlashcardsTab";
-import { SummaryTab } from "./components/tabs/SummaryTab";
+
+// Lazy Tabs
+const QuizTab = lazy(() => import("./components/tabs/QuizTab").then(m => ({ default: m.QuizTab })));
+const FlashcardsTab = lazy(() => import("./components/tabs/FlashcardsTab").then(m => ({ default: m.FlashcardsTab })));
+const FeynmanTab = lazy(() => import("./components/tabs/FeynmanTab").then(m => ({ default: m.FeynmanTab })));
+const SummaryTab = lazy(() => import("./components/tabs/SummaryTab").then(m => ({ default: m.SummaryTab })));
+const MistakesTab = lazy(() => import("./components/tabs/MistakesTab").then(m => ({ default: m.MistakesTab })));
+
+// Lazy Modals (Fallback null)
+const TanyaNaraPanel = lazy(() => import("./components/modals/TanyaNaraPanel").then(m => ({ default: m.TanyaNaraPanel })));
+const FormulaDrawer = lazy(() => import("./components/modals/FormulaDrawer").then(m => ({ default: m.FormulaDrawer })));
+const TopicModal = lazy(() => import("./components/modals/TopicModal").then(m => ({ default: m.TopicModal })));
+const EnrichModal = lazy(() => import("./components/modals/EnrichModal").then(m => ({ default: m.EnrichModal })));
+const StagingUploadModal = lazy(() => import("./components/modals/StagingUploadModal").then(m => ({ default: m.StagingUploadModal })));
+const YouTubeModal = lazy(() => import("./components/modals/YouTubeModal").then(m => ({ default: m.YouTubeModal })));
+const TimerAlarmModal = lazy(() => import("./components/modals/TimerAlarmModal").then(m => ({ default: m.TimerAlarmModal })));
+const AuthModal = lazy(() => import("./components/modals/AuthModal").then(m => ({ default: m.AuthModal })));
+const ProfileModal = lazy(() => import("./components/modals/ProfileModal").then(m => ({ default: m.ProfileModal })));
+const RoomModal = lazy(() => import("./components/modals/RoomModal").then(m => ({ default: m.RoomModal })));
+
+function TabFallbackSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "50vh", gap: 12, color: "#617169" }}>
+      <div style={{ width: 32, height: 32, border: "3px solid #dce2d8", borderTopColor: "#4b6623", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <span style={{ fontSize: 13, fontWeight: 600 }}>Memuat fitur...</span>
+    </div>
+  );
+}
 
 // Domain Hooks
 import { useAppRoute } from "./hooks/useAppRoute";
 import { useAuth } from "./hooks/useAuth";
-import { AuthModal } from "./components/modals/AuthModal";
-import { ProfileModal } from "./components/modals/ProfileModal";
-import { RoomModal } from "./components/modals/RoomModal";
 import { useDocuments } from "./hooks/useDocuments";
 import { useQuiz } from "./hooks/useQuiz";
 import { useMistakes } from "./hooks/useMistakes";
@@ -653,64 +666,67 @@ export default function App() {
         </div>
       )}
 
-      {/* Timer Alarm Modal */}
-      <TimerAlarmModal
-        isAlarmActive={isAlarmActive}
-        setIsAlarmActive={setIsAlarmActive}
-        timerMode={timerMode}
-        setTimerMode={setTimerMode}
-        timerDurationMinutes={timerDurationMinutes}
-        setTimerSeconds={setTimerSeconds}
-        setIsTimerRunning={setIsTimerRunning}
-        showNotice={showNotice}
-      />
+      {/* User & Room Modals */}
+      <Suspense fallback={null}>
+        {/* Timer Alarm Modal */}
+        <TimerAlarmModal
+          isAlarmActive={isAlarmActive}
+          setIsAlarmActive={setIsAlarmActive}
+          timerMode={timerMode}
+          setTimerMode={setTimerMode}
+          timerDurationMinutes={timerDurationMinutes}
+          setTimerSeconds={setTimerSeconds}
+          setIsTimerRunning={setIsTimerRunning}
+          showNotice={showNotice}
+        />
 
-      {/* User Auth Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        mode={authMode}
-        setMode={setAuthMode}
-        username={authUsername}
-        setUsername={setAuthUsername}
-        password={authPassword}
-        setPassword={setAuthPassword}
-        name={authName}
-        setName={setAuthName}
-        isLoading={isAuthLoading}
-        error={authError}
-        setError={setAuthError}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
-      />
+        {/* User Auth Modal */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          mode={authMode}
+          setMode={setAuthMode}
+          username={authUsername}
+          setUsername={setAuthUsername}
+          password={authPassword}
+          setPassword={setAuthPassword}
+          name={authName}
+          setName={setAuthName}
+          isLoading={isAuthLoading}
+          error={authError}
+          setError={setAuthError}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+        />
 
-      {/* User Profile, Weekly Target, & Leaderboard Modal */}
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        currentUser={currentUser}
-        activeTab={profileModalTab}
-        setActiveTab={setProfileModalTab}
-        onUpdateProfile={updateProfile}
-        onLogout={handleLogout}
-        onOpenRoomModal={handleOpenRoomHub}
-      />
+        {/* User Profile, Weekly Target, & Leaderboard Modal */}
+        <ProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          currentUser={currentUser}
+          activeTab={profileModalTab}
+          setActiveTab={setProfileModalTab}
+          onUpdateProfile={updateProfile}
+          onLogout={handleLogout}
+          onOpenRoomModal={handleOpenRoomHub}
+        />
 
-      {/* Multiplayer Study Room & Challenge Modal */}
-      <RoomModal
-        isOpen={isRoomModalOpen}
-        onClose={handleCloseRoomModal}
-        currentUser={currentUser}
-        activeDocId={activeDocId}
-        activeDocTitle={activeDocTitle}
-        documents={documents}
-        showNotice={showNotice}
-        onOpenAuthModal={handleOpenAuth}
-        onStartRoomExam={handleStartRoomExam}
-        initialRoomId={roomModalRoomId}
-        initialViewState={roomModalInitialView}
-        onQuickRegisterGuest={quickRegisterGuest}
-      />
+        {/* Multiplayer Study Room & Challenge Modal */}
+        <RoomModal
+          isOpen={isRoomModalOpen}
+          onClose={handleCloseRoomModal}
+          currentUser={currentUser}
+          activeDocId={activeDocId}
+          activeDocTitle={activeDocTitle}
+          documents={documents}
+          showNotice={showNotice}
+          onOpenAuthModal={handleOpenAuth}
+          onStartRoomExam={handleStartRoomExam}
+          initialRoomId={roomModalRoomId}
+          initialViewState={roomModalInitialView}
+          onQuickRegisterGuest={quickRegisterGuest}
+        />
+      </Suspense>
 
       {/* Backdrop overlay for mobile drawer */}
       {isMobileDrawerOpen && (
@@ -917,257 +933,264 @@ export default function App() {
                 />
               )}
 
-              {activeTab === "quiz" && (
-                <QuizTab
-                  quizQuestions={quizQuestions}
-                  currentQuestionIndex={currentQuestionIndex}
-                  setCurrentQuestionIndex={setCurrentQuestionIndex}
-                  quizQuestionCount={quizQuestionCount}
-                  setQuizQuestionCount={setQuizQuestionCount}
-                  quizMode={quizMode}
-                  setQuizMode={setQuizMode}
-                  quizType={quizType}
-                  setQuizType={setQuizType}
-                  isDrillingMistakes={isDrillingMistakes}
-                  userAnswers={userAnswers}
-                  selectedOption={selectedOption}
-                  setSelectedOption={setSelectedOption}
-                  isAnswerSubmitted={isAnswerSubmitted}
-                  isQuizCompleted={isQuizCompleted}
-                  score={score}
-                  solutionStep={solutionStep}
-                  setSolutionStep={setSolutionStep}
-                  examTimeLeft={examTimeLeft}
-                  setExamTimeLeft={setExamTimeLeft}
-                  examDurationSeconds={examDurationSeconds}
-                  setExamDurationSeconds={setExamDurationSeconds}
-                  isExamTimerRunning={isExamTimerRunning}
-                  setIsExamTimerRunning={setIsExamTimerRunning}
-                  examFlagged={examFlagged}
-                  toggleFlagQuestion={toggleFlagQuestion}
-                  examSubmitted={examSubmitted}
-                  setExamSubmitted={setExamSubmitted}
-                  isGeneratingQuiz={isGeneratingQuiz}
-                  handleGenerateQuiz={handleGenerateQuiz}
-                  handleSelectQuizOption={handleSelectQuizOption}
-                  handlePrevQuizQuestion={handlePrevQuizQuestion}
-                  handleNextQuizQuestion={handleNextQuizQuestion}
-                  handleExamSubmit={handleExamSubmit}
-                  resetQuizState={resetQuizState}
-                  activeDocId={activeDocId}
-                  activeDocTitle={activeDocTitle}
-                  isQuizChatOpen={isQuizChatOpen}
-                  setIsQuizChatOpen={setIsQuizChatOpen}
-                  quizChatMessages={quizChatMessages}
-                  quizChatInput={quizChatInput}
-                  setQuizChatInput={setQuizChatInput}
-                  isQuizChatSending={isQuizChatSending}
-                  handleSendQuizQuestionChat={handleSendQuizQuestionChat}
-                  setActiveTab={setActiveTab}
-                  setMistakeFilterScope={setMistakeFilterScope}
-                  activeDocMistakes={activeDocMistakes}
-                  mistakes={mistakes}
-                  selectedModel={selectedModel}
-                  setQuizQuestions={setQuizQuestions}
-                  activeRoomSession={activeRoomSession}
-                  onOpenRoomLeaderboard={() => {
-                    setRoomModalInitialView("result");
-                    if (activeRoomSession) setRoomModalRoomId(activeRoomSession.roomId);
-                    setIsRoomModalOpen(true);
-                  }}
-                  showNotice={showNotice}
-                />
-              )}
+              <Suspense fallback={<TabFallbackSkeleton />}>
+                {activeTab === "quiz" && (
+                  <QuizTab
+                    quizQuestions={quizQuestions}
+                    currentQuestionIndex={currentQuestionIndex}
+                    setCurrentQuestionIndex={setCurrentQuestionIndex}
+                    quizQuestionCount={quizQuestionCount}
+                    setQuizQuestionCount={setQuizQuestionCount}
+                    quizMode={quizMode}
+                    setQuizMode={setQuizMode}
+                    quizType={quizType}
+                    setQuizType={setQuizType}
+                    isDrillingMistakes={isDrillingMistakes}
+                    userAnswers={userAnswers}
+                    selectedOption={selectedOption}
+                    setSelectedOption={setSelectedOption}
+                    isAnswerSubmitted={isAnswerSubmitted}
+                    isQuizCompleted={isQuizCompleted}
+                    score={score}
+                    solutionStep={solutionStep}
+                    setSolutionStep={setSolutionStep}
+                    examTimeLeft={examTimeLeft}
+                    setExamTimeLeft={setExamTimeLeft}
+                    examDurationSeconds={examDurationSeconds}
+                    setExamDurationSeconds={setExamDurationSeconds}
+                    isExamTimerRunning={isExamTimerRunning}
+                    setIsExamTimerRunning={setIsExamTimerRunning}
+                    examFlagged={examFlagged}
+                    toggleFlagQuestion={toggleFlagQuestion}
+                    examSubmitted={examSubmitted}
+                    setExamSubmitted={setExamSubmitted}
+                    isGeneratingQuiz={isGeneratingQuiz}
+                    handleGenerateQuiz={handleGenerateQuiz}
+                    handleSelectQuizOption={handleSelectQuizOption}
+                    handlePrevQuizQuestion={handlePrevQuizQuestion}
+                    handleNextQuizQuestion={handleNextQuizQuestion}
+                    handleExamSubmit={handleExamSubmit}
+                    resetQuizState={resetQuizState}
+                    activeDocId={activeDocId}
+                    activeDocTitle={activeDocTitle}
+                    isQuizChatOpen={isQuizChatOpen}
+                    setIsQuizChatOpen={setIsQuizChatOpen}
+                    quizChatMessages={quizChatMessages}
+                    quizChatInput={quizChatInput}
+                    setQuizChatInput={setQuizChatInput}
+                    isQuizChatSending={isQuizChatSending}
+                    handleSendQuizQuestionChat={handleSendQuizQuestionChat}
+                    setActiveTab={setActiveTab}
+                    setMistakeFilterScope={setMistakeFilterScope}
+                    activeDocMistakes={activeDocMistakes}
+                    mistakes={mistakes}
+                    selectedModel={selectedModel}
+                    setQuizQuestions={setQuizQuestions}
+                    activeRoomSession={activeRoomSession}
+                    onOpenRoomLeaderboard={() => {
+                      setRoomModalInitialView("result");
+                      if (activeRoomSession) setRoomModalRoomId(activeRoomSession.roomId);
+                      setIsRoomModalOpen(true);
+                    }}
+                    showNotice={showNotice}
+                  />
+                )}
 
-              {activeTab === "mistakes" && (
-                <MistakesTab
-                  mistakes={mistakes}
-                  displayedMistakes={displayedMistakes}
-                  activeDocMistakes={activeDocMistakes}
-                  activeDocId={activeDocId}
-                  activeDocTitle={activeDocTitle}
-                  mistakeFilterScope={mistakeFilterScope}
-                  setMistakeFilterScope={setMistakeFilterScope}
-                  resolveMistake={resolveMistake}
-                  deleteMistake={deleteMistake}
-                  handleClearMistakes={handleClearMistakes}
-                  startMistakeDrill={startMistakeDrill}
-                  loadDocument={loadDocument}
-                  setActiveTab={setActiveTab}
-                  setQuizQuestions={setQuizQuestions}
-                  setUserAnswers={setUserAnswers}
-                  setIsAnswerSubmitted={setIsAnswerSubmitted}
-                />
-              )}
+                {activeTab === "mistakes" && (
+                  <MistakesTab
+                    mistakes={mistakes}
+                    displayedMistakes={displayedMistakes}
+                    activeDocMistakes={activeDocMistakes}
+                    activeDocId={activeDocId}
+                    activeDocTitle={activeDocTitle}
+                    mistakeFilterScope={mistakeFilterScope}
+                    setMistakeFilterScope={setMistakeFilterScope}
+                    resolveMistake={resolveMistake}
+                    deleteMistake={deleteMistake}
+                    handleClearMistakes={handleClearMistakes}
+                    startMistakeDrill={startMistakeDrill}
+                    loadDocument={loadDocument}
+                    setActiveTab={setActiveTab}
+                    setQuizQuestions={setQuizQuestions}
+                    setUserAnswers={setUserAnswers}
+                    setIsAnswerSubmitted={setIsAnswerSubmitted}
+                  />
+                )}
 
-              {activeTab === "feynman" && (
-                <FeynmanTab
-                  feynmanTopic={feynmanTopic}
-                  setFeynmanTopic={setFeynmanTopic}
-                  feynmanExplanation={feynmanExplanation}
-                  setFeynmanExplanation={setFeynmanExplanation}
-                  isEvaluatingFeynman={isEvaluatingFeynman}
-                  feynmanResult={feynmanResult}
-                  handleEvaluateFeynman={handleEvaluateFeynman}
-                  isRecordingFeynman={isRecordingFeynman}
-                  isTranscribing={isTranscribing}
-                  feynmanRecordingSeconds={feynmanRecordingSeconds}
-                  handleToggleFeynmanRecording={handleToggleFeynmanRecording}
-                />
-              )}
+                {activeTab === "feynman" && (
+                  <FeynmanTab
+                    feynmanTopic={feynmanTopic}
+                    setFeynmanTopic={setFeynmanTopic}
+                    feynmanExplanation={feynmanExplanation}
+                    setFeynmanExplanation={setFeynmanExplanation}
+                    isEvaluatingFeynman={isEvaluatingFeynman}
+                    feynmanResult={feynmanResult}
+                    handleEvaluateFeynman={handleEvaluateFeynman}
+                    isRecordingFeynman={isRecordingFeynman}
+                    isTranscribing={isTranscribing}
+                    feynmanRecordingSeconds={feynmanRecordingSeconds}
+                    handleToggleFeynmanRecording={handleToggleFeynmanRecording}
+                  />
+                )}
 
-              {activeTab === "flashcards" && (
-                <FlashcardsTab
-                  flashcards={flashcards}
-                  currentCardIndex={currentCardIndex}
-                  setCurrentCardIndex={setCurrentCardIndex}
-                  isFlipped={isFlipped}
-                  setIsFlipped={setIsFlipped}
-                  handleGenerateFlashcards={handleGenerateFlashcards}
-                  handleReviewCard={handleReviewCard}
-                  isGeneratingCards={isGeneratingCards}
-                />
-              )}
+                {activeTab === "flashcards" && (
+                  <FlashcardsTab
+                    flashcards={flashcards}
+                    currentCardIndex={currentCardIndex}
+                    setCurrentCardIndex={setCurrentCardIndex}
+                    isFlipped={isFlipped}
+                    setIsFlipped={setIsFlipped}
+                    handleGenerateFlashcards={handleGenerateFlashcards}
+                    handleReviewCard={handleReviewCard}
+                    isGeneratingCards={isGeneratingCards}
+                  />
+                )}
 
-              {activeTab === "summary" && (
-                <SummaryTab
-                  activeDoc={activeDoc}
-                  activeDocTitle={activeDocTitle}
-                  activeDocSummary={activeDocSummary}
-                  formattedSummary={formattedSummary}
-                  summaryStyle={summaryStyle}
-                  setSummaryStyle={setSummaryStyle}
-                  isGeneratingSummary={isGeneratingSummary}
-                  handleGenerateSummary={handleGenerateSummary}
-                  isSpeaking={isSpeaking}
-                  toggleSpeech={toggleSpeech}
-                  downloadAsMarkdown={downloadAsMarkdown}
-                  copyToClipboard={copyToClipboard}
-                  copiedId={copiedId}
-                  quizQuestions={quizQuestions}
-                  flashcards={flashcards}
-                  activeDocId={activeDocId}
-                  selectedModel={selectedModel}
-                  setActiveDocSummary={setActiveDocSummary}
-                  showNotice={showNotice}
-                />
-              )}
+                {activeTab === "summary" && (
+                  <SummaryTab
+                    activeDoc={activeDoc}
+                    activeDocTitle={activeDocTitle}
+                    activeDocSummary={activeDocSummary}
+                    formattedSummary={formattedSummary}
+                    summaryStyle={summaryStyle}
+                    setSummaryStyle={setSummaryStyle}
+                    isGeneratingSummary={isGeneratingSummary}
+                    handleGenerateSummary={handleGenerateSummary}
+                    isSpeaking={isSpeaking}
+                    toggleSpeech={toggleSpeech}
+                    downloadAsMarkdown={downloadAsMarkdown}
+                    copyToClipboard={copyToClipboard}
+                    copiedId={copiedId}
+                    quizQuestions={quizQuestions}
+                    flashcards={flashcards}
+                    activeDocId={activeDocId}
+                    selectedModel={selectedModel}
+                    setActiveDocSummary={setActiveDocSummary}
+                    showNotice={showNotice}
+                  />
+                )}
+              </Suspense>
 
               </div>
             </div>
           </section>
 
           {/* Right Column: Tanya Nara AI Panel */}
-          <TanyaNaraPanel
-            activeTab={activeTab}
-            isAiPanelOpen={isAiPanelOpen}
-            setIsAiPanelOpen={setIsAiPanelOpen}
-            activeDocTitle={activeDocTitle}
-            messages={messages}
-            setMessages={setMessages}
-            isChatSending={isChatSending}
-            chatEndRef={chatEndRef}
-            handleSendMessage={handleSendMessage}
-            stagedAttachment={stagedAttachment}
-            handleAttachFile={handleAttachFile}
-            handleClearAttachment={handleClearAttachment}
-            handleClearChat={handleClearChat}
-            isFreeMode={isFreeMode}
-            setIsFreeMode={setIsFreeMode}
-            effectiveDocId={effectiveDocId}
-          />
+          <Suspense fallback={null}>
+            <TanyaNaraPanel
+              activeTab={activeTab}
+              isAiPanelOpen={isAiPanelOpen}
+              setIsAiPanelOpen={setIsAiPanelOpen}
+              activeDocTitle={activeDocTitle}
+              messages={messages}
+              setMessages={setMessages}
+              isChatSending={isChatSending}
+              chatEndRef={chatEndRef}
+              handleSendMessage={handleSendMessage}
+              stagedAttachment={stagedAttachment}
+              handleAttachFile={handleAttachFile}
+              handleClearAttachment={handleClearAttachment}
+              handleClearChat={handleClearChat}
+              isFreeMode={isFreeMode}
+              setIsFreeMode={setIsFreeMode}
+              effectiveDocId={effectiveDocId}
+            />
+          </Suspense>
         </div>
       </div>
 
-      {/* Formula Cheatsheet Drawer */}
-      <FormulaDrawer
-        isFormulaDrawerOpen={isFormulaDrawerOpen}
-        setIsFormulaDrawerOpen={setIsFormulaDrawerOpen}
-        activeDocTitle={activeDocTitle}
-        activeDocId={activeDocId}
-        selectedModel={selectedModel}
-        formulas={formulas}
-        setFormulas={setFormulas}
-        isLoadingFormulas={isLoadingFormulas}
-        setIsLoadingFormulas={setIsLoadingFormulas}
-        formulaFilter={formulaFilter}
-        setFormulaFilter={setFormulaFilter}
-        fetchOrExtractFormulas={fetchOrExtractFormulas}
-        downloadAsMarkdown={downloadAsMarkdown}
-      />
+      {/* Drawers & Feature Modals */}
+      <Suspense fallback={null}>
+        {/* Formula Cheatsheet Drawer */}
+        <FormulaDrawer
+          isFormulaDrawerOpen={isFormulaDrawerOpen}
+          setIsFormulaDrawerOpen={setIsFormulaDrawerOpen}
+          activeDocTitle={activeDocTitle}
+          activeDocId={activeDocId}
+          selectedModel={selectedModel}
+          formulas={formulas}
+          setFormulas={setFormulas}
+          isLoadingFormulas={isLoadingFormulas}
+          setIsLoadingFormulas={setIsLoadingFormulas}
+          formulaFilter={formulaFilter}
+          setFormulaFilter={setFormulaFilter}
+          fetchOrExtractFormulas={fetchOrExtractFormulas}
+          downloadAsMarkdown={downloadAsMarkdown}
+        />
 
-      {/* AI Topic Discovery & Generator Modal */}
-      <TopicModal
-        isTopicModalOpen={isTopicModalOpen}
-        setIsTopicModalOpen={setIsTopicModalOpen}
-        topicStep={topicStep}
-        setTopicStep={setTopicStep}
-        topicInput={topicInput}
-        setTopicInput={setTopicInput}
-        isClarifyingTopic={isClarifyingTopic}
-        isGeneratingTopic={isGeneratingTopic}
-        topicClarificationData={topicClarificationData}
-        topicAnswers={topicAnswers}
-        setTopicAnswers={setTopicAnswers}
-        handleStartTopicClarify={handleStartTopicClarify}
-        handleGenerateTopicDocument={handleGenerateTopicDocument}
-      />
+        {/* AI Topic Discovery & Generator Modal */}
+        <TopicModal
+          isTopicModalOpen={isTopicModalOpen}
+          setIsTopicModalOpen={setIsTopicModalOpen}
+          topicStep={topicStep}
+          setTopicStep={setTopicStep}
+          topicInput={topicInput}
+          setTopicInput={setTopicInput}
+          isClarifyingTopic={isClarifyingTopic}
+          isGeneratingTopic={isGeneratingTopic}
+          topicClarificationData={topicClarificationData}
+          topicAnswers={topicAnswers}
+          setTopicAnswers={setTopicAnswers}
+          handleStartTopicClarify={handleStartTopicClarify}
+          handleGenerateTopicDocument={handleGenerateTopicDocument}
+        />
 
-      {/* AI Web Research & Enrichment Modal */}
-      <EnrichModal
-        isEnrichModalOpen={isEnrichModalOpen}
-        setIsEnrichModalOpen={setIsEnrichModalOpen}
-        activeDocTitle={activeDocTitle}
-        isEnriching={isEnriching}
-        enrichSuggestions={enrichSuggestions}
-        isLoadingSuggestions={isLoadingSuggestions}
-        selectedEnrichTitles={selectedEnrichTitles}
-        setSelectedEnrichTitles={setSelectedEnrichTitles}
-        enrichFocus={enrichFocus}
-        setEnrichFocus={setEnrichFocus}
-        handleEnrichDocument={handleEnrichDocument}
-      />
+        {/* AI Web Research & Enrichment Modal */}
+        <EnrichModal
+          isEnrichModalOpen={isEnrichModalOpen}
+          setIsEnrichModalOpen={setIsEnrichModalOpen}
+          activeDocTitle={activeDocTitle}
+          isEnriching={isEnriching}
+          enrichSuggestions={enrichSuggestions}
+          isLoadingSuggestions={isLoadingSuggestions}
+          selectedEnrichTitles={selectedEnrichTitles}
+          setSelectedEnrichTitles={setSelectedEnrichTitles}
+          enrichFocus={enrichFocus}
+          setEnrichFocus={setEnrichFocus}
+          handleEnrichDocument={handleEnrichDocument}
+        />
 
-      {/* Upload & Photo Staging Tray */}
-      <StagingUploadModal
-        isStagingModalOpen={isStagingModalOpen}
-        setIsStagingModalOpen={setIsStagingModalOpen}
-        stagedFiles={stagedFiles}
-        isUploading={isUploading}
-        uploadError={uploadError}
-        stagedDocTitle={stagedDocTitle}
-        setStagedDocTitle={setStagedDocTitle}
-        stagedGoal={stagedGoal}
-        setStagedGoal={setStagedGoal}
-        stagedCustomInstruction={stagedCustomInstruction}
-        setStagedCustomInstruction={setStagedCustomInstruction}
-        fileInputRef={fileInputRef}
-        cameraInputRef={cameraInputRef}
-        handleStageFiles={handleStageFiles}
-        handleCancelStaging={handleCancelStaging}
-        handleRemoveStagedFile={handleRemoveStagedFile}
-        handleConfirmStagedUpload={handleConfirmStagedUpload}
-      />
+        {/* Upload & Photo Staging Tray */}
+        <StagingUploadModal
+          isStagingModalOpen={isStagingModalOpen}
+          setIsStagingModalOpen={setIsStagingModalOpen}
+          stagedFiles={stagedFiles}
+          isUploading={isUploading}
+          uploadError={uploadError}
+          stagedDocTitle={stagedDocTitle}
+          setStagedDocTitle={setStagedDocTitle}
+          stagedGoal={stagedGoal}
+          setStagedGoal={setStagedGoal}
+          stagedCustomInstruction={stagedCustomInstruction}
+          setStagedCustomInstruction={setStagedCustomInstruction}
+          fileInputRef={fileInputRef}
+          cameraInputRef={cameraInputRef}
+          handleStageFiles={handleStageFiles}
+          handleCancelStaging={handleCancelStaging}
+          handleRemoveStagedFile={handleRemoveStagedFile}
+          handleConfirmStagedUpload={handleConfirmStagedUpload}
+        />
 
-      {/* YouTube Video Learning Ingestion Modal */}
-      <YouTubeModal
-        isYouTubeModalOpen={isYouTubeModalOpen}
-        setIsYouTubeModalOpen={setIsYouTubeModalOpen}
-        ytUrl={ytUrl}
-        setYtUrl={setYtUrl}
-        ytGoal={ytGoal}
-        setYtGoal={setYtGoal}
-        ytInstruction={ytInstruction}
-        setYtInstruction={setYtInstruction}
-        isCheckingUrl={isCheckingUrl}
-        isGeneratingYt={isGeneratingYt}
-        ytInfo={ytInfo}
-        ytError={ytError}
-        setYtError={setYtError}
-        handleCheckUrl={handleCheckUrl}
-        handleGenerateDocument={handleGenerateYtDocument}
-        handleReset={handleResetYt}
-      />
+        {/* YouTube Video Learning Ingestion Modal */}
+        <YouTubeModal
+          isYouTubeModalOpen={isYouTubeModalOpen}
+          setIsYouTubeModalOpen={setIsYouTubeModalOpen}
+          ytUrl={ytUrl}
+          setYtUrl={setYtUrl}
+          ytGoal={ytGoal}
+          setYtGoal={setYtGoal}
+          ytInstruction={ytInstruction}
+          setYtInstruction={setYtInstruction}
+          isCheckingUrl={isCheckingUrl}
+          isGeneratingYt={isGeneratingYt}
+          ytInfo={ytInfo}
+          ytError={ytError}
+          setYtError={setYtError}
+          handleCheckUrl={handleCheckUrl}
+          handleGenerateDocument={handleGenerateYtDocument}
+          handleReset={handleResetYt}
+        />
+      </Suspense>
 
       {/* Mobile Bottom Navigation Bar (With integrated Tanya Nara center button, no floating FAB overlay) */}
 

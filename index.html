@@ -2829,6 +2829,25 @@
           margin-bottom: 24px !important;
         }
       }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      /* GPU Composite Acceleration */
+      .modal-scale-in,
+      .modal-overlay,
+      .modal-backdrop,
+      .ai-panel-box,
+      .ai-panel-backdrop,
+      .sidebar-drawer,
+      .formula-drawer-box,
+      [role="dialog"] {
+        transform: translateZ(0);
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+      }
     </style>
   </head>
   <body>

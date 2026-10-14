@@ -32,7 +32,10 @@ import { ActiveTab, Flashcard, QuizQuestion, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
 import { normalizeMathExpression } from "../../utils/mathNormalizer";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeMathMarkdown } from "../common/DiagramRenderer";
-import { InteractiveMindMap } from "../common/InteractiveMindMap";
+
+const InteractiveMindMap = React.lazy(() =>
+  import("../common/InteractiveMindMap").then((m) => ({ default: m.InteractiveMindMap }))
+);
 
 const STATIC_REMARK_PLUGINS = [remarkGfm, remarkMath];
 const STATIC_REHYPE_PLUGINS = [rehypeKatex];
@@ -852,12 +855,28 @@ export const MaterialTab = React.memo(function MaterialTab({
                     {/* View Mode 1: Mind Map Interaktif */}
                     {materialViewMode === "mindmap" && (
                       <div style={{ marginTop: 14 }}>
-                        <InteractiveMindMap
-                          markdown={formattedContent || activeDocContent}
-                          title={activeDocTitle}
-                          docId={activeDocId || undefined}
-                          height="640px"
-                        />
+                        <React.Suspense
+                          fallback={
+                            <div
+                              style={{
+                                height: "400px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "#60706a",
+                              }}
+                            >
+                              Memuat Peta Konsep...
+                            </div>
+                          }
+                        >
+                          <InteractiveMindMap
+                            markdown={formattedContent || activeDocContent}
+                            title={activeDocTitle}
+                            docId={activeDocId || undefined}
+                            height="640px"
+                          />
+                        </React.Suspense>
                       </div>
                     )}
 

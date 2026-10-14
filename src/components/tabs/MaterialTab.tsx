@@ -276,7 +276,8 @@ export const MaterialTab = React.memo(function MaterialTab({
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (/^#{1,2}\s+(BAB\s+\d+|[A-Z0-9\s:.-]{4,})/i.test(line.trim()) || line.trim().startsWith("## ")) {
+      // Hanya tangkap heading level 2 ('## '), abaikan judul dokumen level 1 ('# ')
+      if (/^##\s+(BAB\s+\d+|[^\n]+)/i.test(line.trim())) {
         if (buffer.length > 0 && buffer.some((l) => l.trim().length > 0)) {
           const rawTitle = currentTitle || "Pengantar";
           const short = rawTitle.replace(/^Bab\s+\d+[:.]?\s*/i, "").trim() || rawTitle;
@@ -288,7 +289,7 @@ export const MaterialTab = React.memo(function MaterialTab({
           });
           buffer = [];
         }
-        currentTitle = line.replace(/^#{1,3}\s+/, "").replace(/[*_#]/g, "").trim();
+        currentTitle = line.replace(/^##\s+/, "").replace(/[*_#]/g, "").trim();
       } else {
         buffer.push(line);
       }
@@ -305,8 +306,8 @@ export const MaterialTab = React.memo(function MaterialTab({
       });
     }
 
-    // Merge introductory snippet if first chapter is not a "Bab" heading and is short overview
-    if (list.length > 1 && !/^Bab\s+\d+/i.test(list[0].title) && list[0].content.length < 800) {
+    // Jika blok pertama adalah teks pengantar sebelum '## Bab 1', gabungkan ke Bab 1 agar nomor bab 100% selaras
+    if (list.length > 1 && !/^Bab\s+\d+/i.test(list[0].title)) {
       const intro = list.shift()!;
       const cleanIntro = intro.content.replace(/\n*---\s*$/, "").trim();
       list[0].content = cleanIntro ? cleanIntro + "\n\n---\n\n" + list[0].content : list[0].content;
@@ -1153,7 +1154,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                                 <span style={{ fontSize: 11.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#3d541b", fontFamily: "'DM Mono', monospace", backgroundColor: "#f0f6ea", border: "1px solid #cce2a3", padding: "3px 12px", borderRadius: 9999 }}>
-                                  Bab {chapters[currentChapterIdx]?.id || 1} dari {chapters.length}
+                                  Bab {currentChapterIdx + 1} dari {chapters.length}
                                 </span>
                                 <span style={{ fontSize: 11, fontWeight: 600, color: "#617169", backgroundColor: "#f4f6f1", border: "1px solid #dde3d9", padding: "3px 10px", borderRadius: 9999, display: "inline-flex", alignItems: "center", gap: 4 }}>
                                   ⏱️ ~{Math.max(1, Math.round((chapters[currentChapterIdx]?.content || "").split(/\s+/).length / 160))} mnt baca

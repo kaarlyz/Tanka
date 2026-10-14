@@ -28,6 +28,14 @@ export const MathView = React.memo(function MathView({ text, style, className }:
       // 0. Pre-normalize delimiters \(, \[, unclosed \begin{...}, table pipes
       let str = normalizeMathExpression(text);
 
+      // Support basic markdown formatting (bold & linebreaks) in inline MathView
+      if (str.includes("**")) {
+        str = str.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      }
+      if (str.includes("\n")) {
+        str = str.replace(/\n\n/g, "<br/><br/>").replace(/([^>\n])\n([^<\n])/g, "$1<br/>$2");
+      }
+
       // 0a. Pre-normalize fractions with slash: (A)/(B) -> $\frac{A}{B}$
       if (str.includes("/")) {
         str = str.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);

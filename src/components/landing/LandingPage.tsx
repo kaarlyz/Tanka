@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -14,7 +14,13 @@ import {
   Check,
   X,
   BookOpen,
-  Send
+  Send,
+  HelpCircle,
+  Layers,
+  Brain,
+  Flame,
+  FileText,
+  Play
 } from "lucide-react";
 import { UserAccount } from "../../types";
 import { MathView } from "../common/MathView";
@@ -43,178 +49,216 @@ export function LandingPage({
       q: "Bagaimana cara mencari irisan himpunan A ∩ B?",
       chip: "Irisan Himpunan A ∩ B",
       answer:
-        "Irisan dua himpunan $A \\cap B$ adalah himpunan anggota yang ada di **himpunan A sekaligus himpunan B**:\n\n$$A \\cap B = \\{x \\mid x \\in A \\land x \\in B\\}$$\n\n**Contoh:**\nJika $A = \\{2, 4, 6\\}$ dan $B = \\{4, 6, 8\\}$, maka angka yang sama di kedua himpunan adalah $\\{4, 6\\}$."
+        "Irisan dua himpunan $A \\cap B$ adalah anggota yang ada di **kedua himpunan sekaligus**:\n\n$$A \\cap B = \\{x \\mid x \\in A \\land x \\in B\\}$$\n\n**Contoh simpel:**\nKalau $A = \\{2, 4, 6\\}$ dan $B = \\{4, 6, 8\\}$, angka yang kembar di dua himpunan itu cuma $\\{4, 6\\}$. Gampang kan?"
     },
     {
       q: "Jelaskan hukum fotosintesis secara singkat",
-      chip: "Hukum Fotosintesis",
+      chip: "Fotosintesis Singkat",
       answer:
-        "Fotosintesis adalah reaksi pembentukan energi glukosa oleh klorofil tanaman memanfaatkan sinar matahari:\n\n$$6CO_2 + 6H_2O \\xrightarrow{\\text{cahaya}} C_6H_{12}O_6 + 6O_2$$\n\nKarbon dioksida ($CO_2$) dan air ($H_2O$) diubah menjadi glukosa ($C_6H_{12}O_6$) untuk cadangan makanan serta oksigen ($O_2$) untuk bernapas."
+        "Intinya, tanaman memasak makanannya sendiri memanfaatkan sinar matahari:\n\n$$6CO_2 + 6H_2O \\xrightarrow{\\text{cahaya}} C_6H_{12}O_6 + 6O_2$$\n\nKarbon dioksida dan air diubah jadi **gula (energi tanaman)** plus melepas **oksigen bersih** yang kita hirup setiap hari."
     },
     {
       q: "Kenapa rumus pythagoras a² + b² = c²?",
-      chip: "Rumus Pythagoras a² + b² = c²",
+      chip: "Kenapa Rumus Pythagoras Berlaku?",
       answer:
-        "Pada setiap segitiga siku-siku, luas bujur sangkar di sisi miring ($c$) selalu sama dengan jumlah luas bujur sangkar kedua sisi penyikunya ($a$ dan $b$):\n\n$$a^2 + b^2 = c^2 \\implies c = \\sqrt{a^2 + b^2}$$\n\nIni hukum fundamental ruang Euclidean: jarak terpendek yang menghubungkan dua titik tegak lurus selalu merupakan hipotenusa."
+        "Pada segitiga siku-siku, luas bujur sangkar di sisi miring ($c$) selalu persis sama dengan gabungan luas kedua sisi lainnya:\n\n$$a^2 + b^2 = c^2 \\implies c = \\sqrt{a^2 + b^2}$$\n\nIni bukti kenapa jalan pintas diagonal selalu jadi rute paling efisien saat mengukur jarak lurus."
     }
   ];
 
   const handleSelectHeroQuestion = (idx: number) => {
-    if (idx === activeHeroQ) return;
+    if (idx === activeHeroQ && !isHeroThinking) return;
     setIsHeroThinking(true);
     setActiveHeroQ(idx);
     setTimeout(() => {
       setIsHeroThinking(false);
-    }, 220);
+    }, 450);
   };
 
-  // Bento Card 2: Interactive Atomic Quiz state
+  // Bento Interactive Quiz state
   const [quizSelected, setQuizSelected] = useState<string | null>(null);
 
-  // Bento Card 3: Interactive YouTube summary simulator state
-  const [ytSimulating, setYtSimulating] = useState(false);
-  const [ytSimulated, setYtSimulated] = useState(false);
-  const [ytProgress, setYtProgress] = useState(0);
+  // Bento YouTube Simulator state
+  const [ytUrlInput, setYtUrlInput] = useState("https://youtube.com/watch?v=kalkulus-dasar");
+  const [isYtProcessing, setIsYtProcessing] = useState(false);
+  const [ytProcessed, setYtProcessed] = useState(true);
 
-  const handleSimulateYouTube = () => {
-    if (ytSimulating) return;
-    setYtSimulating(true);
-    setYtProgress(20);
-    setTimeout(() => setYtProgress(55), 200);
-    setTimeout(() => setYtProgress(85), 450);
+  const handleSimulateYt = () => {
+    setIsYtProcessing(true);
+    setYtProcessed(false);
     setTimeout(() => {
-      setYtProgress(100);
-      setYtSimulating(false);
-      setYtSimulated(true);
+      setIsYtProcessing(false);
+      setYtProcessed(true);
     }, 700);
   };
 
-  // Bento Card 4: Radial Knowledge Graph state
+  // Bento Radial Graph state
   const [activeGraphNode, setActiveGraphNode] = useState("Kalkulus Dasar");
 
-  // Bento Card 5: Offline vs Online switch state
+  // Bento Offline state
   const [isOfflineMode, setIsOfflineMode] = useState(false);
 
-  // Section Comparison state: 'both' | 'old' | 'tanka'
-  const [comparisonView, setComparisonView] = useState<"both" | "old" | "tanka">("both");
+  // Scroll Reveal Observer
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-revealed");
+          }
+        });
+      },
+      {
+        threshold: 0.12,
+        rootMargin: "0px 0px -40px 0px"
+      }
+    );
+
+    const elements = document.querySelectorAll(".reveal-scroll");
+    elements.forEach((el) => observer.observe(el));
+
+    return () => {
+      elements.forEach((el) => observer.unobserve(el));
+      observer.disconnect();
+    };
+  }, []);
 
   const steps = [
     {
       num: "01",
-      tag: "INPUT MATERI",
-      title: "Unggah Dokumen atau Tempel Link YouTube",
-      summary:
-        "Tarik intisari dari file PDF, catatan foto, slide PPTX, atau video YouTube secara instan.",
+      tag: "INPUT BAHAN",
+      title: "Tumpahkan Materi Belajarmu",
       detail:
-        "Cukup masukkan bahan belajarmu. Tanka otomatis mengekstrak materi dan merapikannya menjadi modul siap baca tanpa iklan dan tanpa ribet.",
-      chips: ["Multi-format PDF, Foto & PPTX", "Transkrip Video YouTube Otomatis", "Ekstraksi Rapi & Cepat"]
+        "Punya PDF 200 halaman, slide presentasi dosen, foto catatan di buku tulis, atau video YouTube 2 jam? Cukup unggah ke Tanka. Sistem akan langsung membersihkan teks dan merapikannya.",
+      chips: ["Multi-format PDF & Dokumen", "Transkrip YouTube Otomatis", "Bebas Iklan & Bersih"],
+      summary: "Gak perlu lagi buang waktu berjam-jam cuma buat merapikan atau mencatat ulang materi."
     },
     {
       num: "02",
-      tag: "STRUKTUR BAB",
-      title: "Rangkuman Terstruktur Bab demi Bab",
-      summary:
-        "Materi panjang dipecah jadi modul-modul kecil terstruktur agar mudah dipelajari berurutan.",
+      tag: "BACA RINGKAS",
+      title: "Materi Jadi Bab Kecil Siap Santap",
       detail:
-        "Tidak ada lagi tumpukan materi tebal yang bikin pusing. Tanka merapikan materi menjadi bab-bab terurut lengkap dengan penurunan rumus matematika yang jelas.",
-      chips: ["Modul Belajar Ringkas", "Urutan Materi Logis", "Rumus Ditata Rapi"]
+        "Tanka memotong materi tebal menjadi modul bab terstruktur yang bisa diselesaikan dalam 3-5 menit baca. Rumus matematika dan grafik diterjemahkan presisi tanpa font rusak.",
+      chips: ["Modul Bab 3 Menitan", "Penurunan Rumus Rapi", "Tampilan Ramah Mata"],
+      summary: "Belajar jadi gak kerasa berat karena materi dipecah jadi potongan-potongan kecil yang ringan."
     },
     {
       num: "03",
-      tag: "TANYA NARA AI",
-      title: "Diskusi & Tanya Rumus Sepuasnya",
-      summary:
-        "Tutor AI pribadi yang sabar menerangkan konsep sulit dan penurunan rumus kapan saja.",
+      tag: "TANYA TUTOR",
+      title: "Tanya Rumus Kapan Saja Tanpa Rasa Malu",
       detail:
-        "Nara mendampingi setiap halaman belajarmu. Tanya rumus yang belum dipahami, dan Nara akan menjelaskannya dengan contoh analogi nyata langkah demi langkah.",
-      chips: ["Penjelasan Langkah demi Langkah", "Analogi Ramah & Sederhana", "Respon Cepat Kapan Saja"]
+        "Mentok di baris rumus tertentu? Langsung buka Nara AI. Tanya dari mana asal suatu angka atau minta analogi sehari-hari. Nara menerangkan langkah demi langkah tanpa menghakimi.",
+      chips: ["Tutor Siaga 24 Jam", "Analogi Sederhana", "Respon Langsung Tanpa Jeda"],
+      summary: "Keleluasaan bertanya sepuasnya sampai kepalamu bener-bener ngeh konsep dasarnya."
     },
     {
       num: "04",
       tag: "UJI PEMAHAMAN",
-      title: "Latihan Kuis Pintar & Lacak Bank Salah",
-      summary:
-        "Uji pemahaman dengan kuis fakta objektif dan arsipkan materi yang belum dikuasai ke Bank Salah.",
+      title: "Kuis Pintar & Bank Salah Pribadi",
       detail:
-        "Selesaikan kuis interaktif tanpa soal jebakan. Setiap jawaban yang salah otomatis masuk ke Bank Salah agar kamu bisa mereview materi tersebut sampai siap ujian.",
-      chips: ["Kuis Akurat Anti-Halusinasi", "Pembahasan Otomatis", "Bank Khusus Soal Salah"]
+        "Uji ingatanmu lewat kuis 1 kartu 1 fakta. Setiap kesalahan otomatis dicatat ke Bank Salah pribadimu, jadi kamu tahu persis titik lemah yang perlu diulang sebelum hari H ujian.",
+      chips: ["Kuis Logika Teruji", "Bank Salah Otomatis", "Peta Konsep Menyeluruh"],
+      summary: "Bukan sekadar merasa sudah baca, tapi kamu benar-benar siap saat ujian di depan mata."
     }
   ];
 
   return (
-    <div className="tanka-landing-container">
+    <div className="tanka-landing-container" ref={containerRef}>
       <style>{`
         .tanka-landing-container {
-          position: relative;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
           width: 100%;
           height: 100%;
-          min-height: 100vh;
           overflow-y: auto;
           overflow-x: hidden;
-          background-color: #fcfdfa;
+          -webkit-overflow-scrolling: touch;
+          background-color: #fbfdf9;
           background-image: 
-            linear-gradient(to right, rgba(24, 34, 31, 0.035) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(24, 34, 31, 0.035) 1px, transparent 1px);
-          background-size: 32px 32px;
+            radial-gradient(circle at 50% 0%, rgba(200, 240, 100, 0.12) 0%, transparent 60%),
+            linear-gradient(to right, rgba(24, 34, 31, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(24, 34, 31, 0.03) 1px, transparent 1px);
+          background-size: 100% 100%, 36px 36px, 36px 36px;
           color: #18221f;
           font-family: 'Plus Jakarta Sans', 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
           -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
+          scroll-behavior: smooth;
         }
 
-        /* Ambient Glowing Orbs */
+        /* Ambient Glowing Background Orbs */
         .landing-ambient-orb-1 {
           position: absolute;
-          top: 100px;
+          top: 80px;
           left: 50%;
           transform: translateX(-50%);
-          width: 700px;
-          height: 400px;
-          background: radial-gradient(ellipse at center, rgba(200, 240, 100, 0.16) 0%, rgba(75, 102, 35, 0.06) 50%, transparent 75%);
-          filter: blur(64px);
+          width: 720px;
+          height: 420px;
+          background: radial-gradient(ellipse at center, rgba(200, 240, 100, 0.22) 0%, rgba(75, 102, 35, 0.08) 50%, transparent 75%);
+          filter: blur(70px);
           pointer-events: none;
           z-index: 0;
-          animation: orbFloat 8s ease-in-out infinite alternate;
+          animation: orbDrift 9s ease-in-out infinite alternate;
         }
 
         .landing-ambient-orb-2 {
           position: absolute;
-          top: 1600px;
-          right: 4%;
-          width: 600px;
-          height: 380px;
-          background: radial-gradient(ellipse at center, rgba(168, 196, 138, 0.15) 0%, rgba(24, 34, 31, 0.04) 55%, transparent 75%);
-          filter: blur(72px);
+          top: 1400px;
+          right: 2%;
+          width: 620px;
+          height: 400px;
+          background: radial-gradient(ellipse at center, rgba(168, 196, 138, 0.18) 0%, rgba(24, 34, 31, 0.05) 55%, transparent 75%);
+          filter: blur(80px);
           pointer-events: none;
           z-index: 0;
-          animation: orbFloatReverse 10s ease-in-out infinite alternate;
+          animation: orbDriftReverse 11s ease-in-out infinite alternate;
         }
 
-        @keyframes orbFloat {
+        @keyframes orbDrift {
           0% { transform: translateX(-50%) translateY(0) scale(1); }
-          100% { transform: translateX(-48%) translateY(26px) scale(1.07); }
+          100% { transform: translateX(-47%) translateY(32px) scale(1.08); }
         }
 
-        @keyframes orbFloatReverse {
+        @keyframes orbDriftReverse {
           0% { transform: translateY(0) scale(1); }
-          100% { transform: translateY(-28px) scale(1.06); }
+          100% { transform: translateY(-36px) scale(1.06); }
         }
 
-        /* Nav */
+        /* Scroll Reveal Utility */
+        .reveal-scroll {
+          opacity: 0;
+          transform: translateY(32px);
+          transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: opacity, transform;
+        }
+
+        .reveal-scroll.is-revealed {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+
+        /* Top Navigation */
         .landing-nav {
           position: sticky;
           top: 0;
           z-index: 1000;
-          background: rgba(252, 253, 250, 0.90);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          border-bottom: 1px solid #e2e8df;
+          background: rgba(251, 253, 249, 0.88);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-bottom: 1px solid rgba(226, 232, 223, 0.8);
         }
 
         .landing-nav-inner {
           max-width: 1200px;
           margin: 0 auto;
-          padding: 12px 24px;
+          padding: 14px 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -224,29 +268,29 @@ export function LandingPage({
         .landing-brand {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 9px;
           cursor: pointer;
           user-select: none;
           text-decoration: none;
         }
 
         .landing-brand-box {
-          width: 26px;
-          height: 26px;
-          border-radius: 6px;
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
           background: #18221f;
           color: #c8f064;
           display: flex;
           align-items: center;
           justify-content: center;
           font-family: 'DM Mono', monospace;
-          font-weight: 700;
-          font-size: 15px;
-          line-height: 1;
+          font-weight: 800;
+          font-size: 16px;
+          box-shadow: 0 2px 8px rgba(24, 34, 31, 0.12);
         }
 
         .landing-brand-text {
-          font-size: 18px;
+          font-size: 19px;
           font-weight: 800;
           letter-spacing: -0.03em;
           color: #18221f;
@@ -255,13 +299,13 @@ export function LandingPage({
         .landing-nav-links {
           display: flex;
           align-items: center;
-          gap: 22px;
+          gap: 26px;
         }
 
         .landing-nav-link {
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 600;
-          color: #5f6b66;
+          color: #55635e;
           text-decoration: none;
           transition: color 0.15s ease;
         }
@@ -273,16 +317,16 @@ export function LandingPage({
         .landing-nav-actions {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
         }
 
         .landing-btn-ghost {
           background: transparent;
-          border: 1px solid transparent;
+          border: none;
           color: #18221f;
-          padding: 7px 14px;
+          padding: 8px 16px;
           border-radius: 8px;
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.15s ease;
@@ -290,165 +334,145 @@ export function LandingPage({
 
         .landing-btn-ghost:hover {
           background: rgba(24, 34, 31, 0.05);
-          border-color: #e2e8df;
         }
 
         .landing-btn-primary {
           background: #18221f;
           color: #c8f064;
           border: 1px solid #18221f;
-          padding: 8px 18px;
-          border-radius: 8px;
-          font-size: 13.5px;
+          padding: 9px 20px;
+          border-radius: 10px;
+          font-size: 14px;
           font-weight: 700;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          transition: all 0.15s ease;
-          box-shadow: 0 4px 12px rgba(24, 34, 31, 0.1);
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 4px 14px rgba(24, 34, 31, 0.12);
         }
 
         .landing-btn-primary:hover {
-          background: #24342f;
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(24, 34, 31, 0.16);
+          background: #24352f;
+          transform: translateY(-1.5px);
+          box-shadow: 0 8px 20px rgba(24, 34, 31, 0.2);
         }
 
-        /* Hero */
+        /* Hero Section */
         .landing-hero {
           position: relative;
           z-index: 1;
           max-width: 1200px;
           margin: 0 auto;
-          padding: 54px 24px 64px;
+          padding: 60px 24px 70px;
           text-align: center;
         }
 
-        .hero-pill {
+        /* Borderless Ambient Kicker */
+        .hero-kicker-wrap {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 6px 14px;
+          padding: 6px 16px;
           border-radius: 999px;
-          background: #ffffff;
-          border: 1px solid #dce2da;
-          box-shadow: 0 2px 8px rgba(24, 34, 31, 0.04);
-          font-family: 'DM Mono', monospace;
-          font-size: 12px;
-          font-weight: 600;
-          color: #18221f;
-          letter-spacing: 0.02em;
-          margin-bottom: 22px;
+          background: rgba(200, 240, 100, 0.2);
+          color: #273e1c;
+          font-size: 12.5px;
+          font-weight: 700;
+          letter-spacing: 0.03em;
+          margin-bottom: 24px;
         }
 
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-            box-shadow: 0 0 8px rgba(200, 240, 100, 0.9);
-          }
-          50% {
-            transform: scale(1.15);
-            opacity: 0.85;
-            box-shadow: 0 0 14px rgba(200, 240, 100, 1);
-          }
-        }
-
-        .hero-pill-dot {
-          width: 8px;
-          height: 8px;
+        .hero-kicker-dot {
+          width: 7px;
+          height: 7px;
           border-radius: 50%;
-          background: #c8f064;
-          border: 1.5px solid #18221f;
-          box-shadow: 0 0 8px rgba(200, 240, 100, 0.9);
-          animation: pulse 2s infinite ease-in-out;
+          background: #4b6623;
+          box-shadow: 0 0 10px rgba(75, 102, 35, 0.8);
+          animation: dotPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes dotPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.65; }
         }
 
         .hero-title {
-          font-size: clamp(2.2rem, 5.2vw, 3.8rem);
+          font-size: clamp(2.3rem, 5.4vw, 4rem);
           font-weight: 800;
-          line-height: 1.15;
+          line-height: 1.14;
           letter-spacing: -0.035em;
           color: #18221f;
-          max-width: 890px;
+          max-width: 920px;
           margin: 0 auto 18px;
         }
 
-        .hero-title-sub {
+        .hero-title-highlight {
           display: block;
-          font-size: clamp(1.1rem, 2.7vw, 1.8rem);
-          font-weight: 700;
-          color: #45544e;
+          color: #4b6623;
           margin-top: 8px;
-          letter-spacing: -0.02em;
+          letter-spacing: -0.025em;
+          background: linear-gradient(135deg, #18221f 20%, #4b6623 85%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
 
         .hero-subtitle {
-          font-size: clamp(1rem, 2vw, 1.15rem);
-          line-height: 1.62;
-          color: #5f6b66;
-          max-width: 720px;
-          margin: 0 auto 30px;
+          font-size: clamp(1.05rem, 2.1vw, 1.2rem);
+          line-height: 1.68;
+          color: #55635e;
+          max-width: 760px;
+          margin: 0 auto 34px;
         }
 
         .hero-cta-group {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 14px;
+          gap: 16px;
           flex-wrap: wrap;
-          margin-bottom: 36px;
+          margin-bottom: 42px;
         }
 
-        @keyframes ctaGlow {
-          0%, 100% {
-            box-shadow: 0 10px 24px -4px rgba(24, 34, 31, 0.22);
-          }
-          50% {
-            box-shadow: 0 12px 30px rgba(200, 240, 100, 0.45);
-          }
-        }
-
-        .hero-btn-launch {
+        .hero-btn-main {
           background: #18221f;
           color: #c8f064;
           border: 1px solid #18221f;
-          padding: 14px 28px;
-          border-radius: 10px;
-          font-size: 15px;
+          padding: 15px 32px;
+          border-radius: 12px;
+          font-size: 15.5px;
           font-weight: 700;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           gap: 10px;
-          animation: ctaGlow 4s infinite ease-in-out;
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 10px 28px -4px rgba(24, 34, 31, 0.25);
         }
 
-        .hero-btn-launch:hover {
-          background: #24342f;
+        .hero-btn-main:hover {
+          background: #24352f;
           transform: translateY(-2px);
-          box-shadow: 0 14px 34px -4px rgba(24, 34, 31, 0.32);
+          box-shadow: 0 14px 36px -4px rgba(24, 34, 31, 0.35);
         }
 
-        .hero-btn-github {
+        .hero-btn-sub {
           background: #ffffff;
           color: #18221f;
           border: 1px solid #dce2da;
-          padding: 14px 24px;
-          border-radius: 10px;
+          padding: 15px 26px;
+          border-radius: 12px;
           font-size: 15px;
           font-weight: 600;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          box-shadow: 0 2px 8px rgba(24, 34, 31, 0.04);
           transition: all 0.2s ease;
+          box-shadow: 0 2px 8px rgba(24, 34, 31, 0.04);
         }
 
-        .hero-btn-github:hover {
+        .hero-btn-sub:hover {
           background: #f7f9f5;
           border-color: #cbd4c8;
           transform: translateY(-1px);
@@ -456,30 +480,31 @@ export function LandingPage({
 
         /* Hero Live Simulator */
         .hero-simulator-wrapper {
-          max-width: 820px;
-          margin: 0 auto 46px;
+          max-width: 840px;
+          margin: 0 auto 54px;
           text-align: left;
         }
 
         .hero-simulator-card {
           background: #ffffff;
-          border: 1px solid #dce2da;
-          border-radius: 16px;
-          box-shadow: 0 16px 40px -10px rgba(24, 34, 31, 0.08), 0 0 0 1px rgba(24, 34, 31, 0.02);
+          border: 1px solid #dce3d8;
+          border-radius: 18px;
+          box-shadow: 0 20px 50px -12px rgba(24, 34, 31, 0.09), 0 0 0 1px rgba(24, 34, 31, 0.02);
           overflow: hidden;
-          transition: border-color 0.25s ease;
+          transition: border-color 0.25s ease, box-shadow 0.25s ease;
         }
 
         .hero-simulator-card:hover {
           border-color: #8da868;
+          box-shadow: 0 24px 60px -12px rgba(24, 34, 31, 0.13);
         }
 
         .simulator-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 12px 18px;
-          background: #f7f9f5;
+          padding: 14px 20px;
+          background: #f6f8f4;
           border-bottom: 1px solid #e2e8df;
         }
 
@@ -487,28 +512,25 @@ export function LandingPage({
           display: flex;
           align-items: center;
           gap: 8px;
-          font-family: 'DM Mono', monospace;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 700;
-          color: #283832;
+          color: #18221f;
         }
 
         .simulator-badge {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          font-family: 'DM Mono', monospace;
-          font-size: 11px;
+          font-size: 11.5px;
           font-weight: 600;
-          color: #2f4520;
-          background: #eef8da;
-          padding: 4px 9px;
-          border-radius: 6px;
-          border: 1px solid #cbe5a3;
+          color: #273e1c;
+          background: rgba(200, 240, 100, 0.25);
+          padding: 4px 10px;
+          border-radius: 999px;
         }
 
         .simulator-chip-selector {
-          padding: 14px 18px 8px;
+          padding: 14px 20px 8px;
           display: flex;
           align-items: center;
           gap: 8px;
@@ -524,11 +546,11 @@ export function LandingPage({
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 7px 12px;
-          border-radius: 8px;
-          background: #f2f5ef;
-          border: 1px solid #dde3d8;
-          font-size: 12.5px;
+          padding: 8px 14px;
+          border-radius: 10px;
+          background: #f3f6f0;
+          border: 1px solid #dfe5da;
+          font-size: 13px;
           font-weight: 600;
           color: #45544e;
           cursor: pointer;
@@ -537,7 +559,7 @@ export function LandingPage({
         }
 
         .sim-chip:hover {
-          background: #e6ece0;
+          background: #e7ede2;
           color: #18221f;
         }
 
@@ -549,22 +571,22 @@ export function LandingPage({
         }
 
         .simulator-chat-body {
-          padding: 18px 20px;
-          min-height: 155px;
+          padding: 20px 22px;
+          min-height: 160px;
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 16px;
         }
 
         .sim-bubble-user {
           align-self: flex-end;
           background: #18221f;
           color: #f7f9f5;
-          padding: 10px 16px;
-          border-radius: 12px 12px 2px 12px;
-          font-size: 13.5px;
+          padding: 11px 18px;
+          border-radius: 14px 14px 2px 14px;
+          font-size: 14px;
           max-width: 85%;
-          line-height: 1.45;
+          line-height: 1.5;
           font-weight: 500;
         }
 
@@ -573,19 +595,19 @@ export function LandingPage({
           background: #f8faf6;
           border: 1px solid #e2e8df;
           color: #18221f;
-          padding: 14px 18px;
-          border-radius: 12px 12px 12px 2px;
-          font-size: 13.5px;
-          line-height: 1.6;
-          max-width: 92%;
-          box-shadow: 0 4px 12px rgba(24, 34, 31, 0.03);
+          padding: 16px 20px;
+          border-radius: 14px 14px 14px 2px;
+          font-size: 14px;
+          line-height: 1.65;
+          max-width: 94%;
+          box-shadow: 0 4px 14px rgba(24, 34, 31, 0.03);
         }
 
         .sim-typing-indicator {
           display: flex;
           align-items: center;
-          gap: 5px;
-          padding: 10px 14px;
+          gap: 6px;
+          padding: 12px 16px;
         }
 
         .sim-dot {
@@ -604,82 +626,111 @@ export function LandingPage({
           40% { transform: scale(1.1); opacity: 1; }
         }
 
-        .simulator-input-fake {
+        /* Seamless Single-Border Input Bar (No Box Inside A Box) */
+        .simulator-input-seamless {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 10px 16px 14px;
-          border-top: 1px solid #f0f3ed;
+          gap: 10px;
+          padding: 12px 18px 16px;
+          background: #ffffff;
+          border-top: 1px solid #eef2eb;
         }
 
-        .sim-input-box {
+        .sim-input-shell {
           flex: 1;
           display: flex;
           align-items: center;
-          gap: 8px;
-          background: #f7f9f5;
-          border: 1px solid #dde3d8;
-          border-radius: 8px;
-          padding: 8px 12px;
-          font-size: 13px;
-          color: #798782;
+          gap: 10px;
+          background: #f4f7f1;
+          border-radius: 12px;
+          padding: 10px 14px;
+          border: 1px solid #e2e8df;
+          transition: all 0.2s ease;
         }
 
-        .sim-input-send-btn {
-          background: #18221f;
-          color: #c8f064;
-          border: none;
-          padding: 8px 14px;
-          border-radius: 8px;
-          font-size: 12.5px;
-          font-weight: 700;
+        .sim-input-shell:focus-within {
+          background: #ffffff;
+          border-color: #8da868;
+          box-shadow: 0 0 0 3px rgba(141, 168, 104, 0.15);
+        }
+
+        input.sim-input-field,
+        .sim-input-shell input {
+          border: none !important;
+          background: transparent !important;
+          outline: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          width: 100% !important;
+          font-size: 13.5px !important;
+          color: #18221f !important;
+          font-family: inherit !important;
+        }
+
+        .sim-input-submit-btn {
+          background: #c8f064 !important;
+          color: #18221f !important;
+          border: 1px solid #b2dc4a !important;
+          padding: 10px 20px;
+          border-radius: 10px;
+          font-size: 13.5px;
+          font-weight: 800;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 7px;
+          transition: all 0.15s ease;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(75, 102, 35, 0.15);
+        }
+
+        .sim-input-submit-btn:hover {
+          background: #d4f87c !important;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(75, 102, 35, 0.22);
         }
 
         /* Mockup Window */
         .mockup-window {
           max-width: 1100px;
           margin: 0 auto;
-          border-radius: 14px;
+          border-radius: 16px;
           border: 1px solid #dce2da;
           background: #ffffff;
-          box-shadow: 0 24px 64px -12px rgba(24, 34, 31, 0.12), 0 0 0 1px rgba(24, 34, 31, 0.03);
+          box-shadow: 0 28px 70px -14px rgba(24, 34, 31, 0.14), 0 0 0 1px rgba(24, 34, 31, 0.03);
           overflow: hidden;
         }
 
         .mockup-chrome {
-          height: 40px;
+          height: 42px;
           background: #f4f6f1;
           border-bottom: 1px solid #e2e8df;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 14px;
+          padding: 0 16px;
         }
 
         .mockup-dots {
           display: flex;
-          gap: 6px;
+          gap: 7px;
           align-items: center;
         }
 
         .mockup-dot {
-          width: 10px;
-          height: 10px;
+          width: 11px;
+          height: 11px;
           border-radius: 50%;
         }
 
         .mockup-url-pill {
           background: #ffffff;
           border: 1px solid #e2e8df;
-          border-radius: 6px;
-          padding: 3px 16px;
-          font-size: 11.5px;
+          border-radius: 8px;
+          padding: 4px 18px;
+          font-size: 12px;
           font-family: 'DM Mono', monospace;
-          color: #5f6b66;
+          color: #55635e;
           display: flex;
           align-items: center;
           gap: 6px;
@@ -691,76 +742,74 @@ export function LandingPage({
           display: block;
         }
 
-        /* Bento Section */
+        /* Generic Section Elements */
         .landing-section {
           position: relative;
           z-index: 1;
           max-width: 1200px;
           margin: 0 auto;
-          padding: 80px 24px;
+          padding: 90px 24px;
         }
 
         .section-header {
           text-align: center;
-          max-width: 760px;
-          margin: 0 auto 48px;
+          max-width: 800px;
+          margin: 0 auto 52px;
         }
 
-        .section-tag {
+        /* Borderless Section Kicker */
+        .section-kicker {
+          display: inline-block;
           font-family: 'DM Mono', monospace;
           font-size: 11.5px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          color: #283832;
+          font-weight: 800;
+          letter-spacing: 0.16em;
           text-transform: uppercase;
-          background: rgba(40, 56, 50, 0.08);
-          border: 1px solid rgba(40, 56, 50, 0.14);
-          padding: 4px 10px;
-          border-radius: 6px;
-          display: inline-block;
-          margin-bottom: 14px;
+          color: #4b6623;
+          margin-bottom: 12px;
         }
 
         .section-title {
-          font-size: clamp(1.8rem, 4vw, 2.6rem);
+          font-size: clamp(2rem, 4.2vw, 2.9rem);
           font-weight: 800;
           letter-spacing: -0.03em;
           color: #18221f;
-          margin-bottom: 14px;
+          margin-bottom: 16px;
           line-height: 1.2;
         }
 
         .section-desc {
-          font-size: 15.5px;
-          line-height: 1.6;
-          color: #5f6b66;
+          font-size: 16px;
+          line-height: 1.65;
+          color: #55635e;
         }
 
+        /* Bento Grid */
         .bento-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 24px;
+          gap: 26px;
         }
 
         .bento-card {
           position: relative;
           background: #ffffff;
           border: 1px solid #e2e8df;
-          border-radius: 16px;
-          padding: 32px;
+          border-radius: 18px;
+          padding: 34px;
           box-shadow: 0 8px 30px rgba(24, 34, 31, 0.04);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           overflow: hidden;
-          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
         }
 
         @media (hover: hover) and (pointer: fine) {
           .bento-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-5px);
             border-color: #8da868 !important;
-            box-shadow: 0 20px 40px rgba(24, 34, 31, 0.09) !important;
+            box-shadow: 0 22px 48px rgba(24, 34, 31, 0.1) !important;
           }
         }
 
@@ -771,44 +820,44 @@ export function LandingPage({
         .bento-label {
           font-family: 'DM Mono', monospace;
           font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          color: #5f6b66;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          color: #4b6623;
           text-transform: uppercase;
           margin-bottom: 8px;
         }
 
         .bento-title {
-          font-size: 21px;
+          font-size: 22px;
           font-weight: 800;
           letter-spacing: -0.02em;
           color: #18221f;
-          margin-bottom: 10px;
-          line-height: 1.25;
+          margin-bottom: 12px;
+          line-height: 1.3;
         }
 
         .bento-desc {
-          font-size: 14px;
-          line-height: 1.6;
-          color: #5f6b66;
-          margin-bottom: 20px;
+          font-size: 14.5px;
+          line-height: 1.65;
+          color: #55635e;
+          margin-bottom: 22px;
         }
 
         .mini-device-frame {
-          border-radius: 10px;
+          border-radius: 12px;
           border: 1px solid #e2e8df;
           background: #f7f9f5;
           overflow: hidden;
-          box-shadow: 0 6px 18px rgba(24, 34, 31, 0.05);
+          box-shadow: 0 8px 24px rgba(24, 34, 31, 0.05);
         }
 
         .mini-device-header {
-          height: 28px;
-          background: #eef2eb;
+          height: 30px;
+          background: #edf1e9;
           border-bottom: 1px solid #e2e8df;
           display: flex;
           align-items: center;
-          padding: 0 10px;
+          padding: 0 12px;
           gap: 6px;
         }
 
@@ -816,13 +865,13 @@ export function LandingPage({
           width: 7px;
           height: 7px;
           border-radius: 50%;
-          background: #c5cec3;
+          background: #c2cbbd;
         }
 
         .bento-two-col {
           display: grid;
-          grid-template-columns: 1.1fr 1.3fr;
-          gap: 28px;
+          grid-template-columns: 1.15fr 1.25fr;
+          gap: 32px;
           align-items: center;
         }
 
@@ -834,23 +883,22 @@ export function LandingPage({
         }
 
         .metric-chip {
-          font-family: 'DM Mono', monospace;
-          font-size: 11.5px;
+          font-size: 12px;
           font-weight: 600;
-          background: #18221f;
-          color: #c8f064;
+          background: #f2f6ee;
+          color: #273e1c;
           padding: 6px 12px;
-          border-radius: 6px;
-          border: 1px solid #283832;
+          border-radius: 8px;
+          border: 1px solid #dce4d5;
         }
 
         /* Interactive Quiz Card Styles */
         .quiz-demo-box {
-          background: #f7f9f5;
-          border: 1px solid #dde3d8;
-          border-radius: 12px;
-          padding: 16px;
-          margin-top: 14px;
+          background: #f7f9f4;
+          border: 1px solid #dce3d6;
+          border-radius: 14px;
+          padding: 18px;
+          margin-top: 12px;
         }
 
         .quiz-option-btn {
@@ -858,12 +906,12 @@ export function LandingPage({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 10px 14px;
+          padding: 11px 16px;
           margin-top: 8px;
-          border-radius: 8px;
-          border: 1px solid #dde3d8;
+          border-radius: 10px;
+          border: 1px solid #dce3d6;
           background: #ffffff;
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 600;
           color: #18221f;
           cursor: pointer;
@@ -877,33 +925,33 @@ export function LandingPage({
         }
 
         .quiz-option-btn.selected-correct {
-          background: #f3fae8;
-          border-color: #c8f064 !important;
-          box-shadow: 0 0 0 2px #c8f064;
-          color: #1b3814;
+          background: #f2fae6;
+          border-color: #8da868 !important;
+          box-shadow: 0 0 0 2px #8da868;
+          color: #183312;
         }
 
         .quiz-option-btn.selected-wrong {
-          background: #fdf2f2;
+          background: #fef2f2;
           border-color: #fca5a5;
           color: #991b1b;
         }
 
         .quiz-feedback-banner {
-          margin-top: 12px;
-          padding: 10px 12px;
-          border-radius: 8px;
-          font-size: 12.5px;
-          line-height: 1.5;
+          margin-top: 14px;
+          padding: 12px 14px;
+          border-radius: 10px;
+          font-size: 13px;
+          line-height: 1.55;
           display: flex;
           align-items: flex-start;
-          gap: 8px;
+          gap: 10px;
         }
 
         .quiz-feedback-banner.correct {
-          background: #eef8da;
-          color: #2b421c;
-          border: 1px solid #c8e89f;
+          background: #eff8db;
+          color: #273e1c;
+          border: 1px solid #c7e89d;
         }
 
         .quiz-feedback-banner.wrong {
@@ -916,9 +964,9 @@ export function LandingPage({
         .yt-demo-box {
           background: #f8faf6;
           border: 1px solid #e2e8df;
-          border-radius: 12px;
-          padding: 14px;
-          margin-top: 16px;
+          border-radius: 14px;
+          padding: 16px;
+          margin-top: 14px;
         }
 
         .yt-input-row {
@@ -932,8 +980,8 @@ export function LandingPage({
           background: #ffffff;
           border: 1px solid #dce2da;
           border-radius: 8px;
-          padding: 8px 12px;
-          font-size: 12px;
+          padding: 9px 12px;
+          font-size: 12.5px;
           font-family: 'DM Mono', monospace;
           color: #45544e;
           outline: none;
@@ -943,9 +991,9 @@ export function LandingPage({
           background: #18221f;
           color: #c8f064;
           border: none;
-          padding: 8px 14px;
+          padding: 9px 16px;
           border-radius: 8px;
-          font-size: 12px;
+          font-size: 12.5px;
           font-weight: 700;
           cursor: pointer;
           white-space: nowrap;
@@ -953,34 +1001,34 @@ export function LandingPage({
         }
 
         .yt-action-btn:hover {
-          background: #24342f;
+          background: #24352f;
         }
 
         .yt-progress-bar-bg {
           width: 100%;
-          height: 5px;
+          height: 6px;
           background: #e2e8df;
           border-radius: 4px;
-          margin-top: 10px;
+          margin-top: 12px;
           overflow: hidden;
         }
 
         .yt-progress-bar-fill {
           height: 100%;
-          background: #8da868;
-          transition: width 0.25s ease;
+          background: #4b6623;
+          transition: width 0.3s ease;
         }
 
         .yt-chapter-pill {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 7px 10px;
+          padding: 8px 12px;
           background: #ffffff;
           border: 1px solid #e2e8df;
-          border-radius: 6px;
-          margin-top: 6px;
-          font-size: 12px;
+          border-radius: 8px;
+          margin-top: 7px;
+          font-size: 12.5px;
           font-weight: 600;
           color: #18221f;
         }
@@ -989,8 +1037,8 @@ export function LandingPage({
         .radial-graph-wrapper {
           background: #f7f9f5;
           border: 1px solid #e2e8df;
-          border-radius: 12px;
-          padding: 12px;
+          border-radius: 14px;
+          padding: 14px;
           margin-top: 14px;
           text-align: center;
         }
@@ -1017,9 +1065,9 @@ export function LandingPage({
         .offline-toggle-container {
           background: #f7f9f5;
           border: 1px solid #dde3d8;
-          border-radius: 12px;
+          border-radius: 14px;
           padding: 16px;
-          margin-top: 16px;
+          margin-top: 14px;
         }
 
         .offline-toggle-btn {
@@ -1029,10 +1077,10 @@ export function LandingPage({
           justify-content: space-between;
           background: #ffffff;
           border: 1px solid #dce2da;
-          padding: 10px 14px;
-          border-radius: 8px;
+          padding: 11px 16px;
+          border-radius: 10px;
           cursor: pointer;
-          font-size: 13px;
+          font-size: 13.5px;
           font-weight: 700;
           color: #18221f;
           transition: all 0.2s ease;
@@ -1048,71 +1096,79 @@ export function LandingPage({
           border-color: #18221f;
         }
 
-        /* Section Comparison */
-        .comparison-tabs {
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          margin-bottom: 32px;
-          flex-wrap: wrap;
-        }
-
-        .comp-tab-btn {
-          padding: 9px 18px;
-          border-radius: 999px;
-          font-size: 13.5px;
-          font-weight: 700;
-          cursor: pointer;
-          border: 1px solid #dce2da;
-          background: #ffffff;
-          color: #5f6b66;
-          transition: all 0.15s ease;
-        }
-
-        .comp-tab-btn:hover {
-          border-color: #8da868;
-          color: #18221f;
-        }
-
-        .comp-tab-btn.active {
-          background: #18221f;
-          color: #c8f064;
-          border-color: #18221f;
-          box-shadow: 0 4px 14px rgba(24, 34, 31, 0.12);
-        }
-
-        .comparison-grid {
+        /* Side-By-Side Visual Battle Comparison (Realitas Belajar) */
+        .comparison-dual-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 28px;
+          margin-top: 10px;
         }
 
-        .comparison-card {
-          border-radius: 16px;
-          padding: 32px;
-          border: 1px solid #e2e8df;
-          box-shadow: 0 8px 30px rgba(24, 34, 31, 0.04);
-        }
-
-        .comparison-card.old-way {
-          background: #fdfaf8;
-          border-color: #edd5cb;
-        }
-
-        .comparison-card.tanka-way {
-          background: #f6faf3;
-          border-color: #cbe3b3;
-          box-shadow: 0 12px 36px rgba(141, 168, 104, 0.12);
-        }
-
-        .comp-list {
+        .battle-card {
+          border-radius: 20px;
+          padding: 38px 34px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
-          margin-top: 22px;
+          box-shadow: 0 10px 32px rgba(24, 34, 31, 0.04);
         }
 
-        .comp-item {
+        .battle-card.old-way {
+          background: #fcf6f3;
+          border: 1px solid #f3d8cc;
+        }
+
+        .battle-card.tanka-way {
+          background: #f4faee;
+          border: 1px solid #c8e89f;
+          box-shadow: 0 16px 44px rgba(75, 102, 35, 0.1);
+          position: relative;
+        }
+
+        .battle-header-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 11.5px;
+          font-weight: 800;
+          padding: 4px 10px;
+          border-radius: 999px;
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .battle-header-pill.old {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+
+        .battle-header-pill.tanka {
+          background: #18221f;
+          color: #c8f064;
+        }
+
+        .battle-title {
+          font-size: 23px;
+          font-weight: 800;
+          color: #18221f;
+          margin-bottom: 8px;
+          line-height: 1.25;
+        }
+
+        .battle-desc {
+          font-size: 14.5px;
+          line-height: 1.6;
+          color: #55635e;
+          margin-bottom: 26px;
+        }
+
+        .battle-list {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
+
+        .battle-item {
           display: flex;
           align-items: flex-start;
           gap: 12px;
@@ -1125,23 +1181,23 @@ export function LandingPage({
         .persona-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 22px;
+          gap: 24px;
         }
 
         .persona-card {
           background: #ffffff;
           border: 1px solid #e2e8df;
-          border-radius: 16px;
-          padding: 28px;
+          border-radius: 18px;
+          padding: 30px;
           box-shadow: 0 8px 24px rgba(24, 34, 31, 0.04);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          transition: transform 0.2s ease, border-color 0.2s ease;
+          transition: transform 0.25s ease, border-color 0.25s ease;
         }
 
         .persona-card:hover {
-          transform: translateY(-3px);
+          transform: translateY(-4px);
           border-color: #8da868;
         }
 
@@ -1149,15 +1205,15 @@ export function LandingPage({
         .stepper-tabs {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 12px;
-          margin-bottom: 24px;
+          gap: 14px;
+          margin-bottom: 28px;
         }
 
         .stepper-tab {
           background: #ffffff;
           border: 1px solid #e2e8df;
-          border-radius: 12px;
-          padding: 16px;
+          border-radius: 14px;
+          padding: 18px;
           text-align: left;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -1173,7 +1229,7 @@ export function LandingPage({
         .stepper-tab.active {
           background: #18221f;
           border-color: #18221f;
-          box-shadow: 0 6px 20px rgba(24, 34, 31, 0.12);
+          box-shadow: 0 8px 24px rgba(24, 34, 31, 0.14);
         }
 
         .stepper-num {
@@ -1188,7 +1244,7 @@ export function LandingPage({
         }
 
         .stepper-tab-title {
-          font-size: 13.5px;
+          font-size: 14px;
           font-weight: 700;
           color: #18221f;
           line-height: 1.3;
@@ -1201,12 +1257,12 @@ export function LandingPage({
         .stepper-card {
           background: #ffffff;
           border: 1px solid #e2e8df;
-          border-radius: 16px;
-          padding: 36px;
+          border-radius: 18px;
+          padding: 40px;
           box-shadow: 0 8px 30px rgba(24, 34, 31, 0.04);
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 36px;
+          gap: 40px;
           align-items: center;
         }
 
@@ -1214,21 +1270,21 @@ export function LandingPage({
         .landing-cta-banner {
           background: #18221f;
           color: #eff5ec;
-          border-radius: 20px;
-          padding: 56px 36px;
+          border-radius: 24px;
+          padding: 64px 40px;
           text-align: center;
-          margin: 40px auto 80px;
+          margin: 40px auto 90px;
           max-width: 1200px;
           position: relative;
           overflow: hidden;
-          box-shadow: 0 20px 50px -10px rgba(24, 34, 31, 0.3);
+          box-shadow: 0 24px 60px -10px rgba(24, 34, 31, 0.32);
         }
 
         /* Footer */
         .landing-footer {
           border-top: 1px solid #e2e8df;
-          background: #f7f9f5;
-          padding: 54px 24px 44px;
+          background: #f6f8f3;
+          padding: 60px 24px 48px;
         }
 
         .landing-footer-inner {
@@ -1236,7 +1292,7 @@ export function LandingPage({
           margin: 0 auto;
           display: flex;
           flex-direction: column;
-          gap: 36px;
+          gap: 40px;
         }
 
         .footer-top {
@@ -1244,7 +1300,7 @@ export function LandingPage({
           justify-content: space-between;
           align-items: flex-start;
           flex-wrap: wrap;
-          gap: 28px;
+          gap: 32px;
         }
 
         .footer-bottom {
@@ -1252,9 +1308,9 @@ export function LandingPage({
           justify-content: space-between;
           align-items: center;
           border-top: 1px solid #e2e8df;
-          padding-top: 24px;
-          font-size: 13px;
-          color: #798782;
+          padding-top: 26px;
+          font-size: 13.5px;
+          color: #65746e;
           flex-wrap: wrap;
           gap: 12px;
         }
@@ -1279,7 +1335,7 @@ export function LandingPage({
           .stepper-card {
             grid-template-columns: 1fr;
           }
-          .comparison-grid {
+          .comparison-dual-grid {
             grid-template-columns: 1fr;
           }
           .persona-grid {
@@ -1301,11 +1357,11 @@ export function LandingPage({
           </div>
 
           <div className="landing-nav-links">
-            <a href="#demo-nara" className="landing-nav-link">Demo Nara AI</a>
+            <a href="#tanya-nara" className="landing-nav-link">Tanya Nara</a>
             <a href="#keunggulan" className="landing-nav-link">Keunggulan</a>
-            <a href="#perbandingan" className="landing-nav-link">Cara Tanka</a>
-            <a href="#testimoni" className="landing-nav-link">Kata Mereka</a>
-            <a href="#alur" className="landing-nav-link">Alur Belajar</a>
+            <a href="#perbandingan" className="landing-nav-link">Bandingkan</a>
+            <a href="#alur" className="landing-nav-link">Cara Kerja</a>
+            <a href="#testimoni" className="landing-nav-link">Cerita Mereka</a>
             <a
               href="https://github.com/kaarlyz/Tanka"
               target="_blank"
@@ -1325,9 +1381,9 @@ export function LandingPage({
                   fontFamily: "'DM Mono', monospace",
                   fontWeight: 600,
                   color: "#283832",
-                  padding: "6px 10px",
+                  padding: "6px 12px",
                   background: "#eef2eb",
-                  borderRadius: 6
+                  borderRadius: 8
                 }}
               >
                 @{currentUser.username}
@@ -1353,54 +1409,56 @@ export function LandingPage({
 
       {/* Hero Section */}
       <section className="landing-hero">
-        <div className="hero-pill">
-          <span className="hero-pill-dot" />
-          <span>⚡ Belajar Cepat & Tuntas • 100% Bebas Iklan</span>
+        <div className="reveal-scroll">
+          <div className="hero-kicker-wrap">
+            <span className="hero-kicker-dot" />
+            <span>Belajar Mandiri Lebih Tenang & Tuntas</span>
+          </div>
         </div>
 
-        <h1 className="hero-title">
-          Ubah Materi Apapun Jadi Paham Seketika.
-          <span className="hero-title-sub">
-            Belajar Mandiri Berdaya Tinggi, Bebas Gimmick.
+        <h1 className="hero-title reveal-scroll delay-1">
+          Gak ada lagi cerita mentok belajar sendirian.
+          <span className="hero-title-highlight">
+            Pecah materi tersulit jadi bab santai 3 menit.
           </span>
         </h1>
 
-        <p className="hero-subtitle">
-          Pecah PDF tebal, catatan kuliah, atau video YouTube 1 jam menjadi bab bacaan modular dalam hitungan detik. Didampingi tutor Nara AI yang sabar menjelaskan rumus langkah demi langkah.
+        <p className="hero-subtitle reveal-scroll delay-2">
+          Punya file PDF setebal skripsi atau video materi YouTube 2 jam yang bikin ngantuk? Cukup masukkan ke Tanka. Materi langsung diringkas per topik, rumus KaTeX diterjemahkan jelas, dan kamu didampingi Nara — tutor AI yang sabar menjelaskan sampai tuntas.
         </p>
 
-        <div className="hero-cta-group">
-          <button className="hero-btn-launch" onClick={onLaunchApp}>
-            <span>Mulai Belajar Sekarang (Gratis)</span>
-            <ArrowRight size={16} />
+        <div className="hero-cta-group reveal-scroll delay-3">
+          <button className="hero-btn-main" onClick={onLaunchApp}>
+            <span>Mulai Belajar Sekarang — Gratis</span>
+            <ArrowRight size={17} />
           </button>
           <a
             href="https://github.com/kaarlyz/Tanka"
             target="_blank"
             rel="noopener noreferrer"
-            className="hero-btn-github"
+            className="hero-btn-sub"
           >
-            <span>Lihat Sumber Terbuka (GitHub)</span>
             <Star size={16} color="#eab308" fill="#eab308" />
+            <span>Lihat Repositori GitHub</span>
           </a>
         </div>
 
         {/* Live Interactive Nara AI Simulator in Hero */}
-        <div className="hero-simulator-wrapper" id="demo-nara">
+        <div className="hero-simulator-wrapper reveal-scroll" id="tanya-nara">
           <div className="hero-simulator-card">
             <div className="simulator-header">
               <div className="simulator-title-left">
-                <Bot size={16} color="#45544e" />
-                <span>Simulasi Langsung: Tanya Nara AI</span>
+                <Bot size={17} color="#4b6623" />
+                <span>Coba Tanya Nara Sekarang</span>
               </div>
               <div className="simulator-badge">
-                <Zap size={11} color="#527928" />
-                <span>⚡ Dijawab dalam 0.18ms • Nara AI Model 3.8</span>
+                <Zap size={11} color="#4b6623" />
+                <span>Tutor Pribadi Siap Sedia</span>
               </div>
             </div>
 
             <div className="simulator-chip-selector">
-              <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#798782", marginRight: 4, textTransform: "uppercase" }}>
+              <span style={{ fontSize: 11.5, fontFamily: "'DM Mono', monospace", color: "#60706a", marginRight: 4, textTransform: "uppercase" }}>
                 Pilih Contoh:
               </span>
               {heroQuestions.map((item, idx) => (
@@ -1425,7 +1483,7 @@ export function LandingPage({
                   <span className="sim-dot" />
                   <span className="sim-dot" />
                   <span className="sim-dot" />
-                  <span style={{ fontSize: 12, color: "#798782", marginLeft: 6 }}>Nara sedang merumuskan jawaban...</span>
+                  <span style={{ fontSize: 12.5, color: "#60706a", marginLeft: 8 }}>Nara sedang menerangkan konsep...</span>
                 </div>
               ) : (
                 <div className="sim-bubble-ai">
@@ -1434,37 +1492,37 @@ export function LandingPage({
               )}
             </div>
 
-            <div className="simulator-input-fake">
-              <div className="sim-input-box">
-                <BookOpen size={14} color="#798782" />
+            {/* Clean Single Input Bar (No Box Inside A Box) */}
+            <div className="simulator-input-seamless">
+              <div className="sim-input-shell">
+                <BookOpen size={16} color="#798782" />
                 <input
                   type="text"
-                  placeholder="Ketik pertanyaan atau rumusmu sendiri..."
+                  placeholder="Ketik topik atau rumus yang bikin kamu bingung..."
                   value={heroPromptInput}
                   onChange={(e) => setHeroPromptInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") onLaunchApp();
                   }}
+                  className="clean-input sim-input-field"
                   style={{
                     border: "none",
                     background: "transparent",
                     outline: "none",
-                    width: "100%",
-                    fontSize: 13,
-                    color: "#18221f"
+                    boxShadow: "none"
                   }}
                 />
               </div>
-              <button className="sim-input-send-btn" onClick={onLaunchApp}>
+              <button className="sim-input-submit-btn" onClick={onLaunchApp}>
                 <span>Tanya Nara</span>
-                <Send size={12} />
+                <Send size={13} />
               </button>
             </div>
           </div>
         </div>
 
         {/* Hero Device Mockup Frame */}
-        <div className="mockup-window">
+        <div className="mockup-window reveal-scroll">
           <div className="mockup-chrome">
             <div className="mockup-dots">
               <span className="mockup-dot" style={{ background: "#ff5f56" }} />
@@ -1473,7 +1531,7 @@ export function LandingPage({
             </div>
             <div className="mockup-url-pill">
               <Lock size={11} />
-              <span>tanka.app/study/operasi-himpunan</span>
+              <span>tanka.app/modul/operasi-himpunan</span>
             </div>
             <div style={{ width: 48 }} />
           </div>
@@ -1488,28 +1546,28 @@ export function LandingPage({
 
       {/* Bento Grid Showcase Section */}
       <section id="keunggulan" className="landing-section">
-        <div className="section-header">
-          <span className="section-tag">KEUNGGULAN UTAMA</span>
-          <h2 className="section-title">Belajar Lebih Efektif Tanpa Rasa Frustrasi</h2>
+        <div className="section-header reveal-scroll">
+          <span className="section-kicker">MENGAPA TANKA BERBEDA</span>
+          <h2 className="section-title">Dibuat Buat Kamu yang Mau Paham, Bukan Cuma Menghafal</h2>
           <p className="section-desc">
-            Dirancang khusus untuk memecah kerumitan materi belajar. Pahami konsep sulit lebih cepat, bebas distraksi iklan, dan didampingi tutor AI 24/7.
+            Tinggalkan metode belajar yang bertele-tele dan penuh iklan. Tanka mendampingimu menguasai konsep inti materi langkah demi langkah.
           </p>
         </div>
 
         <div className="bento-grid">
           {/* Card 1: 2 Kolom Lebar (Nara AI) */}
-          <div className="bento-card bento-span-2">
+          <div className="bento-card bento-span-2 reveal-scroll">
             <div className="bento-two-col">
               <div>
-                <div className="bento-label">TUTOR PRIBADI 24/7</div>
-                <h3 className="bento-title">Tanya Rumus & Konsep Tanpa Rasa Malu</h3>
+                <div className="bento-label">TUTOR PRIBADI 24 JAM</div>
+                <h3 className="bento-title">Tanya Rumus & Konsep Sepuasnya Tanpa Rasa Malu</h3>
                 <p className="bento-desc">
-                  Gak paham satu langkah di soal matematika atau konsep teori rumit? Tanya Nara AI. Dijelaskan dengan analogi sederhana dan penurunan rumus bertahap sampai kamu benar-benar paham.
+                  Sering ragu bertanya di kelas karena takut dibilang gak nyimak? Di sini kamu bebas menanyakan rumus serumit apapun. Nara menjelaskan memakai analogi sehari-hari sampai kamu benar-benar paham.
                 </p>
                 <div className="chip-group">
-                  <span className="metric-chip">Analogi Ramah</span>
+                  <span className="metric-chip">Analogi Sederhana</span>
                   <span className="metric-chip">Penjelasan Bertahap</span>
-                  <span className="metric-chip">Respon Seketika</span>
+                  <span className="metric-chip">Ramah & Siap Siaga</span>
                 </div>
               </div>
               <div className="mini-device-frame">
@@ -1517,8 +1575,8 @@ export function LandingPage({
                   <span className="mini-device-dot" />
                   <span className="mini-device-dot" />
                   <span className="mini-device-dot" />
-                  <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#798782", marginLeft: 4 }}>
-                    tanya-nara.ai [asisten-belajar]
+                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#60706a", marginLeft: 6 }}>
+                    tanya-nara.ai • tutor pribadi
                   </span>
                 </div>
                 <img
@@ -1532,20 +1590,20 @@ export function LandingPage({
           </div>
 
           {/* Card 2: 1 Kolom (Interactive Atomic Quiz) */}
-          <div className="bento-card" id="fitur">
+          <div className="bento-card reveal-scroll delay-1">
             <div>
-              <div className="bento-label">LATIHAN INTERAKTIF TERUJI</div>
-              <h3 className="bento-title">Kuis Pintar 1 Kartu 1 Fakta</h3>
+              <div className="bento-label">LATIHAN TERARAH</div>
+              <h3 className="bento-title">Kuis Cerdas: Uji Logika, Bukan Tebak-Tebakan</h3>
               <p className="bento-desc">
-                Coba langsung kuis interaktif di bawah. Setiap butir soal menguji inti logika tanpa jebakan halusinasi:
+                Coba langsung kuis interaktif di bawah. Soal dirancang untuk menguji pemahaman intimu tanpa jebakan ngawur:
               </p>
 
               {/* Interactive Quiz Box */}
               <div className="quiz-demo-box">
-                <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#798782", marginBottom: 6 }}>
+                <div style={{ fontSize: 11.5, fontFamily: "'DM Mono', monospace", color: "#60706a", marginBottom: 6 }}>
                   SOAL LATIHAN INTERAKTIF:
                 </div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: "#18221f", lineHeight: 1.45 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#18221f", lineHeight: 1.45 }}>
                   <MathView text="Jika himpunan $A = \{2, 4, 6\}$ dan $B = \{4, 6, 8\}$, maka anggota $A \cap B$ adalah..." />
                 </div>
 
@@ -1554,7 +1612,7 @@ export function LandingPage({
                     className={`quiz-option-btn ${quizSelected === "A" ? "selected-wrong" : ""}`}
                     onClick={() => setQuizSelected("A")}
                   >
-                    <span>[A] <MathView text="$\{2, 8\}$" /></span>
+                    <span>[A] <MathView text="$\\{2, 8\\}$" /></span>
                     {quizSelected === "A" && <X size={15} color="#dc2626" />}
                   </button>
 
@@ -1562,7 +1620,7 @@ export function LandingPage({
                     className={`quiz-option-btn ${quizSelected === "B" ? "selected-correct" : ""}`}
                     onClick={() => setQuizSelected("B")}
                   >
-                    <span>[B] <MathView text="$\{4, 6\}$" /></span>
+                    <span>[B] <MathView text="$\\{4, 6\\}$" /></span>
                     {quizSelected === "B" && <Check size={15} color="#15803d" />}
                   </button>
 
@@ -1570,7 +1628,7 @@ export function LandingPage({
                     className={`quiz-option-btn ${quizSelected === "C" ? "selected-wrong" : ""}`}
                     onClick={() => setQuizSelected("C")}
                   >
-                    <span>[C] <MathView text="$\{2, 4, 6, 8\}$" /></span>
+                    <span>[C] <MathView text="$\\{2, 4, 6, 8\\}$" /></span>
                     {quizSelected === "C" && <X size={15} color="#dc2626" />}
                   </button>
                 </div>
@@ -1579,7 +1637,7 @@ export function LandingPage({
                   <div className="quiz-feedback-banner correct">
                     <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} />
                     <div>
-                      <strong>✓ Jawaban Benar!</strong> Irisan adalah elemen yang ada di kedua himpunan ($4$ dan $6$).
+                      <strong>✓ Jawaban Benar!</strong> Irisan adalah angka yang ada di kedua himpunan ($4$ dan $6$).
                     </div>
                   </div>
                 )}
@@ -1589,8 +1647,8 @@ export function LandingPage({
                     <X size={16} style={{ flexShrink: 0, marginTop: 1 }} />
                     <div>
                       {quizSelected === "A"
-                        ? "Kurang tepat. Angka 2 tidak ada di B, dan angka 8 tidak ada di A. Irisan hanya mengambil yang sama di keduanya."
-                        : "Kurang tepat. Itu adalah hasil gabungan (A ∪ B), bukan irisan (A ∩ B)."}
+                        ? "Kurang pas. Angka 2 tidak ada di B, dan angka 8 tidak ada di A. Irisan cuma mengambil yang sama di dua-duanya."
+                        : "Kurang pas. Itu hasil gabungan (A ∪ B), bukan irisan (A ∩ B)."}
                       <button
                         onClick={() => setQuizSelected(null)}
                         style={{
@@ -1602,7 +1660,7 @@ export function LandingPage({
                           fontWeight: 700,
                           cursor: "pointer",
                           textDecoration: "underline",
-                          fontSize: 11.5,
+                          fontSize: 12,
                           padding: 0
                         }}
                       >
@@ -1615,67 +1673,54 @@ export function LandingPage({
             </div>
 
             <div className="chip-group" style={{ marginTop: 20 }}>
-              <span className="metric-chip">Anti-Halusinasi</span>
               <span className="metric-chip">Pembahasan Lengkap</span>
-              <span className="metric-chip">Lacak Bank Salah</span>
+              <span className="metric-chip">Otomatis Catat Bank Salah</span>
             </div>
           </div>
 
-          {/* Card 3: 1 Kolom (Interactive YouTube to Summary Preview) */}
-          <div className="bento-card">
+          {/* Card 3: 1 Kolom (Interactive YouTube to Summary) */}
+          <div className="bento-card reveal-scroll delay-2">
             <div>
-              <div className="bento-label">INSTANT SUMMARY</div>
-              <h3 className="bento-title">Video YouTube 1 Jam Jadi Rangkuman 3 Menit</h3>
+              <div className="bento-label">RINGKASAN CEPAT</div>
+              <h3 className="bento-title">Video 2 Jam Dirangkum Jadi Bacaan 3 Menit</h3>
               <p className="bento-desc">
-                Cukup tempel link video YouTube. Tanka otomatis merapikannya menjadi modul bab interaktif layaknya buku saku digital.
+                Cukup tempel tautan video YouTube. Tanka otomatis merapikannya menjadi modul bab siap baca:
               </p>
 
-              {/* Interactive YouTube Simulator */}
+              {/* YouTube Demo Interactive Box */}
               <div className="yt-demo-box">
-                <div style={{ fontSize: 11.5, fontFamily: "'DM Mono', monospace", color: "#798782", marginBottom: 6 }}>
-                  SIMULASI INPUT YOUTUBE:
-                </div>
                 <div className="yt-input-row">
                   <input
                     type="text"
-                    readOnly
-                    value="youtube.com/watch?v=kalkulus-dasar-1"
+                    value={ytUrlInput}
+                    onChange={(e) => setYtUrlInput(e.target.value)}
                     className="yt-input-field"
+                    placeholder="Tempel link video YouTube..."
                   />
-                  <button
-                    className="yt-action-btn"
-                    onClick={handleSimulateYouTube}
-                    disabled={ytSimulating}
-                  >
-                    {ytSimulating ? "Meringkas..." : ytSimulated ? "Ulangi" : "Simulasikan"}
+                  <button className="yt-action-btn" onClick={handleSimulateYt}>
+                    {isYtProcessing ? "Merangkum..." : "Simulasikan"}
                   </button>
                 </div>
 
-                {ytSimulating && (
+                {isYtProcessing && (
                   <div className="yt-progress-bar-bg">
-                    <div
-                      className="yt-progress-bar-fill"
-                      style={{ width: `${ytProgress}%` }}
-                    />
+                    <div className="yt-progress-bar-fill" style={{ width: "70%" }} />
                   </div>
                 )}
 
-                {ytSimulated && (
-                  <div style={{ marginTop: 10 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#283832", marginBottom: 6 }}>
-                      ⚡ Hasil Ekstraksi Otomatis (3 Bab Ringkas):
+                {ytProcessed && !isYtProcessing && (
+                  <div style={{ marginTop: 12 }}>
+                    <div className="yt-chapter-pill">
+                      <span>Bab 1: Konsep Dasar Limit & Gradien</span>
+                      <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>2 mnt baca</span>
                     </div>
                     <div className="yt-chapter-pill">
-                      <span>1. Konsep Limit & Laju Perubahan</span>
-                      <span style={{ color: "#5f6b66", fontSize: 11 }}>⏱️ 3 mnt</span>
+                      <span>Bab 2: Turunan Fungsi Aljabar</span>
+                      <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>3 mnt baca</span>
                     </div>
                     <div className="yt-chapter-pill">
-                      <span>2. Pembuktian Rumus Turunan Pertama</span>
-                      <span style={{ color: "#5f6b66", fontSize: 11 }}>⏱️ 4 mnt</span>
-                    </div>
-                    <div className="yt-chapter-pill">
-                      <span>3. Aplikasi Nilai Maksimum & Minimum</span>
-                      <span style={{ color: "#5f6b66", fontSize: 11 }}>⏱️ 3 mnt</span>
+                      <span>Bab 3: Aturan Rantai & Aplikasi Nilai Maksimum</span>
+                      <span style={{ fontSize: 11, color: "#4b6623", fontWeight: 700 }}>4 mnt baca</span>
                     </div>
                   </div>
                 )}
@@ -1685,23 +1730,22 @@ export function LandingPage({
             <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
               <span className="metric-chip">Auto-Chapter</span>
               <span className="metric-chip">Rangkuman Rumus</span>
-              <span className="metric-chip">Estetika Paper-Ledger</span>
+              <span className="metric-chip">Buku Saku Digital</span>
             </div>
           </div>
 
-          {/* Card 4: 1 Kolom (Radial Knowledge Graph Visualizer) */}
-          <div className="bento-card">
+          {/* Card 4: 1 Kolom (Radial Knowledge Graph) */}
+          <div className="bento-card reveal-scroll delay-1">
             <div>
-              <div className="bento-label">VISUAL RETENTION</div>
-              <h3 className="bento-title">Petakan Hubungan Antar-Konsep</h3>
+              <div className="bento-label">PETA BESAR MATERI</div>
+              <h3 className="bento-title">Petakan Hubungan Antar-Konsep Sebelum Ujian</h3>
               <p className="bento-desc">
-                Visualisasikan alur keterkaitan materi secara menyeluruh agar tidak ada konsep yang tercecer. Klik simpul di bawah untuk eksplorasi:
+                Lihat keterkaitan materi secara menyeluruh agar tidak ada mata rantai ilmu yang bolong. Klik salah satu simpul untuk melihat hubungannya:
               </p>
 
               {/* Radial Graph Visualizer */}
               <div className="radial-graph-wrapper">
                 <svg width="100%" height="150" viewBox="0 0 320 150">
-                  {/* Curved Connection Lines with olive green pulsing glow */}
                   <path d="M 160 75 Q 110 35 60 40" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
                   <path d="M 160 75 Q 210 35 260 40" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
                   <path d="M 160 75 Q 110 115 60 115" stroke="#8da868" strokeWidth="1.5" fill="none" strokeDasharray="3 3" className="graph-link-pulse" />
@@ -1735,33 +1779,33 @@ export function LandingPage({
                   </g>
                 </svg>
 
-                <div style={{ marginTop: 6, fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#283832" }}>
-                  Simpul Terpilih: <strong>{activeGraphNode}</strong>
-                  <span style={{ display: "block", color: "#798782", fontSize: 11, marginTop: 2 }}>
-                    {activeGraphNode === "Kalkulus Dasar" && "Pusat fondasi keterkaitan aljabar limit, turunan, dan integral."}
-                    {activeGraphNode === "Limit Aljabar" && "Prasyarat mutlak untuk memahami konsep turunan dan kemiringan kurva."}
-                    {activeGraphNode === "Turunan Fungsi" && "Dipakai langsung untuk menyelesaikan persoalan laju perubahan dan optimasi."}
-                    {activeGraphNode === "Integral Riemann" && "Operasi kebalikan turunan untuk menghitung akumulasi volume dan luas."}
-                    {activeGraphNode === "Optimasi Nilai" && "Aplikasi praktis turunan pertama bernilai nol untuk mencari titik ekstrim."}
+                <div style={{ marginTop: 8, fontSize: 12.5, color: "#18221f" }}>
+                  Konsep Terpilih: <strong>{activeGraphNode}</strong>
+                  <span style={{ display: "block", color: "#60706a", fontSize: 11.5, marginTop: 3 }}>
+                    {activeGraphNode === "Kalkulus Dasar" && "Pusat fondasi aljabar menghubungkan materi limit, turunan, dan integral."}
+                    {activeGraphNode === "Limit Aljabar" && "Syarat utama sebelum bisa memahami rumus turunan dan gradien garis."}
+                    {activeGraphNode === "Turunan Fungsi" && "Kunci menyelesaikan soal laju perubahan dan mencari nilai maksimum."}
+                    {activeGraphNode === "Integral Riemann" && "Operasi kebalikan turunan untuk menghitung total akumulasi dan luas daerah."}
+                    {activeGraphNode === "Optimasi Nilai" && "Aplikasi praktis turunan pertama bernilai nol untuk mencari titik puncak."}
                   </span>
                 </div>
               </div>
             </div>
 
             <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
-              <span className="metric-chip">Peta Radial</span>
-              <span className="metric-chip">Navigasi Simpul</span>
-              <span className="metric-chip">Retensi Jangka Panjang</span>
+              <span className="metric-chip">Peta Visual</span>
+              <span className="metric-chip">Kaitkan Prasyarat</span>
+              <span className="metric-chip">Ingatan Jangka Panjang</span>
             </div>
           </div>
 
-          {/* Card 5: 1 Kolom (Interactive Offline & Ringan) */}
-          <div className="bento-card">
+          {/* Card 5: 1 Kolom (Interactive Offline) */}
+          <div className="bento-card reveal-scroll delay-2">
             <div>
-              <div className="bento-label">HEMAT & PRIVAT</div>
-              <h3 className="bento-title">Bisa Dipelajari Offline & Hemat Kuota</h3>
+              <div className="bento-label">HEMAT & MANDIRI</div>
+              <h3 className="bento-title">Tetap Bisa Belajar Walau Kuota Habis</h3>
               <p className="bento-desc">
-                Semua data materi tersimpan di perangkatmu sendiri. Buka materi di mana saja tanpa pusing jaringan internet putus-nyambung:
+                Semua materi dan catatanmu tersimpan di HP/laptopmu sendiri. Bebas dibuka di mana saja tanpa pusing sinyal internet putus-nyambung:
               </p>
 
               {/* Interactive Offline Switch */}
@@ -1772,23 +1816,23 @@ export function LandingPage({
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {isOfflineMode ? <WifiOff size={16} color="#c8f064" /> : <Wifi size={16} color="#18221f" />}
-                    <span>{isOfflineMode ? "Mode Pesawat / Offline Aktif" : "Mode Standar (Online)"}</span>
+                    <span>{isOfflineMode ? "Mode Offline / Tanpa Internet Aktif" : "Mode Online"}</span>
                   </div>
                   <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace" }}>
-                    [Klik Switch]
+                    [Coba Klik]
                   </span>
                 </button>
 
-                <div style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.5, color: "#45544e" }}>
+                <div style={{ marginTop: 12, fontSize: 13, lineHeight: 1.55, color: "#45544e" }}>
                   {isOfflineMode ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <CheckCircle2 size={15} color="#527928" />
-                      <span>Data tetap terbuka instan <strong>0 ms</strong> walau tanpa kuota atau internet di kafe / perpus.</span>
+                      <CheckCircle2 size={16} color="#4b6623" />
+                      <span>Semua modul tetap terbuka lancar tanpa kuota internet di kafe atau perpustakaan.</span>
                     </div>
                   ) : (
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Zap size={15} color="#18221f" />
-                      <span>Tersinkron otomatis. Coba klik tombol di atas untuk simulasi buka offline.</span>
+                      <Zap size={16} color="#18221f" />
+                      <span>Data otomatis tersimpan di perangkatmu. Coba klik tombol di atas untuk simulasi buka offline.</span>
                     </div>
                   )}
                 </div>
@@ -1796,7 +1840,7 @@ export function LandingPage({
             </div>
 
             <div className="chip-group" style={{ marginTop: "auto", paddingTop: 16 }}>
-              <span className="metric-chip">Local-First</span>
+              <span className="metric-chip">Bisa Offline</span>
               <span className="metric-chip">Ringan di HP</span>
               <span className="metric-chip">Nol Iklan Mengganggu</span>
             </div>
@@ -1804,168 +1848,137 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* Interactive Comparison Section: Cara Lama vs Cara Tanka */}
+      {/* Dual Side-by-Side Visual Battle: Cara Lama vs Cara Tanka */}
       <section id="perbandingan" className="landing-section" style={{ paddingTop: 30 }}>
-        <div className="section-header">
-          <span className="section-tag">PERBANDINGAN NYATA</span>
-          <h2 className="section-title">Tinggalkan Frustrasi Belajar Konvensional</h2>
+        <div className="section-header reveal-scroll">
+          <span className="section-kicker">PERBANDINGAN NYATA</span>
+          <h2 className="section-title">Tinggalkan Frustrasi Belajar Cara Lama</h2>
           <p className="section-desc">
-            Lihat bagaimana Tanka mengubah cara belajarmu dari scroll tanpa arah menjadi penguasaan materi yang terarah dan menyenangkan.
+            Bandingkan rasanya belajar konvensional yang menguras tenaga dengan sistem belajar mandiri di Tanka.
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="comparison-tabs">
-          <button
-            className={`comp-tab-btn ${comparisonView === "both" ? "active" : ""}`}
-            onClick={() => setComparisonView("both")}
-          >
-            Bandingkan Berdampingan
-          </button>
-          <button
-            className={`comp-tab-btn ${comparisonView === "old" ? "active" : ""}`}
-            onClick={() => setComparisonView("old")}
-          >
-            Belajar Cara Lama (Bikin Pusing)
-          </button>
-          <button
-            className={`comp-tab-btn ${comparisonView === "tanka" ? "active" : ""}`}
-            onClick={() => setComparisonView("tanka")}
-          >
-            Belajar Cara Tanka (Otonom & Cepat)
-          </button>
-        </div>
-
-        <div className="comparison-grid">
-          {(comparisonView === "both" || comparisonView === "old") && (
-            <div className="comparison-card old-way">
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#991b1b", background: "#fee2e2", padding: "3px 8px", borderRadius: 4 }}>
-                  CARA LAMA
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#7f1d1d" }}>
-                  Bikin Pusing & Boros Waktu
-                </span>
+        {/* Side-by-side permanent comparison cards */}
+        <div className="comparison-dual-grid reveal-scroll">
+          {/* Left Card: Cara Lama */}
+          <div className="battle-card old-way">
+            <div>
+              <div className="battle-header-pill old">
+                <X size={12} />
+                <span>CARA LAMA YANG MENGURAS ENERGI</span>
               </div>
-              <h3 style={{ fontSize: 20, fontWeight: 800, color: "#18221f", marginBottom: 6 }}>
-                Belajar Konvensional Tanpa Arah
-              </h3>
-              <p style={{ fontSize: 13.5, color: "#6b7280", lineHeight: 1.5 }}>
-                Tumpukan materi tebal yang sering membuat lelah sebelum paham intinya.
+              <h3 className="battle-title">Bikin Lelah Sebelum Paham Intinya</h3>
+              <p className="battle-desc">
+                Tumpukan materi tebal yang sering membuat overthinking dan bingung harus mulai dari mana.
               </p>
+            </div>
 
-              <div className="comp-list">
-                <div className="comp-item">
-                  <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>Nonton video 2 jam, baru paham 1 rumus di menit 45.</span>
-                </div>
-                <div className="comp-item">
-                  <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>Buka PDF 200 halaman, scroll tanpa arah dan hilang fokus.</span>
-                </div>
-                <div className="comp-item">
-                  <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>Tanya guru/teman malu takut dikira tidak menyimak.</span>
-                </div>
-                <div className="comp-item">
-                  <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>Belajar terdistraksi pop-up iklan dan notifikasi media sosial.</span>
-                </div>
+            <div className="battle-list">
+              <div className="battle-item">
+                <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Nonton video penjelasan 2 jam, baru paham 1 rumus di menit ke-45.</span>
+              </div>
+              <div className="battle-item">
+                <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Buka PDF 200 halaman, scroll tanpa arah sampai mata capek dan hilang fokus.</span>
+              </div>
+              <div className="battle-item">
+                <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Mau nanya guru atau teman segan dan malu, takut dikira gak memperhatikan.</span>
+              </div>
+              <div className="battle-item">
+                <X size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Belajar di internet sering terdistraksi pop-up iklan dan notifikasi aplikasi lain.</span>
               </div>
             </div>
-          )}
+          </div>
 
-          {(comparisonView === "both" || comparisonView === "tanka") && (
-            <div className="comparison-card tanka-way">
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#18221f", background: "#c8f064", padding: "3px 8px", borderRadius: 4 }}>
-                  DENGAN TANKA
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#283832" }}>
-                  Otonom & Cepat
-                </span>
+          {/* Right Card: Cara Tanka */}
+          <div className="battle-card tanka-way">
+            <div>
+              <div className="battle-header-pill tanka">
+                <Check size={12} />
+                <span>BERSAMA TANKA</span>
               </div>
-              <h3 style={{ fontSize: 20, fontWeight: 800, color: "#18221f", marginBottom: 6 }}>
-                Langsung Paham Inti Materi
-              </h3>
-              <p style={{ fontSize: 13.5, color: "#45544e", lineHeight: 1.5 }}>
-                Modul kecil terstruktur yang dirancang agar retensi materi bertahan lama.
+              <h3 className="battle-title">Langsung Paham, Terarah & Cepat</h3>
+              <p className="battle-desc">
+                Pecah materi jadi modul kecil yang dirancang agar pemahamanmu bertahan lama sampai ujian.
               </p>
+            </div>
 
-              <div className="comp-list">
-                <div className="comp-item">
-                  <CheckCircle2 size={18} color="#527928" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>Video 2 jam langsung diringkas jadi 4 bab modul baca 3 menit.</span>
-                </div>
-                <div className="comp-item">
-                  <CheckCircle2 size={18} color="#527928" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>PDF tebal otomatis dipotong per topik logis + penurunan rumus KaTeX rapi.</span>
-                </div>
-                <div className="comp-item">
-                  <CheckCircle2 size={18} color="#527928" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>Tanya Nara AI 24 jam tanpa rasa malu, dijelaskan dari dasar sampai paham.</span>
-                </div>
-                <div className="comp-item">
-                  <CheckCircle2 size={18} color="#527928" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>100% bebas iklan, local-first, hemat kuota dan fokus terjaga.</span>
-                </div>
+            <div className="battle-list">
+              <div className="battle-item">
+                <CheckCircle2 size={18} color="#4b6623" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Video panjang dipadatkan jadi 3 bab modul bacaan 3 menitan siap santap.</span>
+              </div>
+              <div className="battle-item">
+                <CheckCircle2 size={18} color="#4b6623" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Dokumen tebal otomatis dipotong per konsep logis lengkap dengan rumus KaTeX rapi.</span>
+              </div>
+              <div className="battle-item">
+                <CheckCircle2 size={18} color="#4b6623" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Tanya tutor Nara AI kapan saja tanpa rasa malu, diterangkan sampai kamu benar-benar paham.</span>
+              </div>
+              <div className="battle-item">
+                <CheckCircle2 size={18} color="#4b6623" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>100% bebas iklan, catatan tersimpan aman di perangkatmu sendiri, dan bisa dibuka offline.</span>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
       {/* Social Proof: 3 Student Personas */}
       <section id="testimoni" className="landing-section" style={{ paddingTop: 30 }}>
-        <div className="section-header">
-          <span className="section-tag">CERITA PELAJAR</span>
-          <h2 className="section-title">Dipercaya Siswa, Pejuang UTBK & Mahasiswa</h2>
+        <div className="section-header reveal-scroll">
+          <span className="section-kicker">CERITA TEMAN BELAJAR</span>
+          <h2 className="section-title">Teman Belajar Pejuang Ujian & Mahasiswa</h2>
           <p className="section-desc">
-            Bukan klaim kosong. Inilah pengalaman nyata mereka yang belajar mandiri lebih cepat bersama Tanka.
+            Bukan sekadar klaim. Inilah pengalaman nyata teman-teman yang belajar lebih tenang bersama Tanka.
           </p>
         </div>
 
         <div className="persona-grid">
           {/* Persona 1: Dafa */}
-          <div className="persona-card">
+          <div className="persona-card reveal-scroll">
             <div>
-              <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={15} color="#eab308" fill="#eab308" />
                 ))}
               </div>
-              <p style={{ fontSize: 14.5, lineHeight: 1.6, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
+              <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
                 "Paling kebantu sama Bank Salah dan kuis 1 kartu 1 fakta. Gak ada soal jebakan ngaco, rumus matematika langsung diterjemahin step by step."
               </p>
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: 15, color: "#18221f" }}>Dafa</div>
-              <div style={{ fontSize: 12.5, color: "#5f6b66" }}>Siswa Kelas XII / Pejuang UTBK</div>
+              <div style={{ fontSize: 12.5, color: "#60706a" }}>Siswa Kelas XII / Pejuang SNBT</div>
               <div style={{ marginTop: 8 }}>
-                <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "3px 8px", borderRadius: 4, color: "#283832", fontWeight: 600 }}>
-                  ✓ Pejuang SNBT 2026
+                <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "4px 9px", borderRadius: 6, color: "#283832", fontWeight: 600 }}>
+                  ✓ Pejuang Ujian 2026
                 </span>
               </div>
             </div>
           </div>
 
           {/* Persona 2: Nadia */}
-          <div className="persona-card">
+          <div className="persona-card reveal-scroll delay-1">
             <div>
-              <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={15} color="#eab308" fill="#eab308" />
                 ))}
               </div>
-              <p style={{ fontSize: 14.5, lineHeight: 1.6, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
+              <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
                 "Kuliah sering dikasih jurnal 40 halaman. Dimasukin ke Tanka langsung jadi bab-bab kecil yang gampang dicerna sebelum kuis mingguan."
               </p>
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: 15, color: "#18221f" }}>Nadia</div>
-              <div style={{ fontSize: 12.5, color: "#5f6b66" }}>Mahasiswi Biologi</div>
+              <div style={{ fontSize: 12.5, color: "#60706a" }}>Mahasiswi Biologi</div>
               <div style={{ marginTop: 8 }}>
-                <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "3px 8px", borderRadius: 4, color: "#283832", fontWeight: 600 }}>
+                <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "4px 9px", borderRadius: 6, color: "#283832", fontWeight: 600 }}>
                   ✓ Rangkum Jurnal Cepat
                 </span>
               </div>
@@ -1973,22 +1986,22 @@ export function LandingPage({
           </div>
 
           {/* Persona 3: Rian */}
-          <div className="persona-card">
+          <div className="persona-card reveal-scroll delay-2">
             <div>
-              <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={15} color="#eab308" fill="#eab308" />
                 ))}
               </div>
-              <p style={{ fontSize: 14.5, lineHeight: 1.6, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
-                "Bisa belajar offline di cafe atau perpus tanpa takut kuota jebol. Tampilannya bersih banget kayak aplikasi luar negeri."
+              <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
+                "Bisa belajar offline di cafe atau perpus tanpa takut kuota jebol. Tampilannya bersih banget dan gak ada iklan bikin pusing."
               </p>
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: 15, color: "#18221f" }}>Rian</div>
-              <div style={{ fontSize: 12.5, color: "#5f6b66" }}>Gap Year</div>
+              <div style={{ fontSize: 12.5, color: "#60706a" }}>Gap Year Pejuang Kampus</div>
               <div style={{ marginTop: 8 }}>
-                <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "3px 8px", borderRadius: 4, color: "#283832", fontWeight: 600 }}>
+                <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "4px 9px", borderRadius: 6, color: "#283832", fontWeight: 600 }}>
                   ✓ 100% Offline di Kafe
                 </span>
               </div>
@@ -1999,16 +2012,16 @@ export function LandingPage({
 
       {/* Feature Stepper Section */}
       <section id="alur" className="landing-section" style={{ paddingTop: 20 }}>
-        <div className="section-header">
-          <span className="section-tag">CARA KERJA</span>
-          <h2 className="section-title">Dari Tumpukan Materi Jadi Paham Tuntas</h2>
+        <div className="section-header reveal-scroll">
+          <span className="section-kicker">CARA KERJA</span>
+          <h2 className="section-title">4 Langkah Menguasai Materi Apapun</h2>
           <p className="section-desc">
             Empat langkah mudah untuk memecah materi sulit menjadi unit belajar yang siap kamu kuasai.
           </p>
         </div>
 
         {/* Stepper Tabs */}
-        <div className="stepper-tabs">
+        <div className="stepper-tabs reveal-scroll">
           {steps.map((s, idx) => (
             <button
               key={idx}
@@ -2022,7 +2035,7 @@ export function LandingPage({
         </div>
 
         {/* Stepper Active Detail Card */}
-        <div className="stepper-card">
+        <div className="stepper-card reveal-scroll delay-1">
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <span
@@ -2032,13 +2045,13 @@ export function LandingPage({
                   fontWeight: 700,
                   color: "#18221f",
                   background: "#c8f064",
-                  padding: "3px 8px",
-                  borderRadius: 4
+                  padding: "4px 10px",
+                  borderRadius: 6
                 }}
               >
-                TAHAP {steps[activeStep].num}
+                LANGKAH {steps[activeStep].num}
               </span>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#798782" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#60706a" }}>
                 {steps[activeStep].tag}
               </span>
             </div>
@@ -2047,14 +2060,14 @@ export function LandingPage({
               {steps[activeStep].title}
             </h3>
 
-            <p style={{ fontSize: 15, lineHeight: 1.65, color: "#5f6b66", marginBottom: 24 }}>
+            <p style={{ fontSize: 15, lineHeight: 1.68, color: "#55635e", marginBottom: 24 }}>
               {steps[activeStep].detail}
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {steps[activeStep].chips.map((c, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: "#18221f", fontWeight: 600 }}>
-                  <CheckCircle2 size={16} color="#283832" />
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#18221f", fontWeight: 600 }}>
+                  <CheckCircle2 size={16} color="#4b6623" />
                   <span>{c}</span>
                 </div>
               ))}
@@ -2065,19 +2078,19 @@ export function LandingPage({
             style={{
               background: "#18221f",
               color: "#eff5ec",
-              borderRadius: 14,
-              padding: 28,
+              borderRadius: 16,
+              padding: 30,
               border: "1px solid #283832",
               boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)"
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#c8f064", letterSpacing: "0.05em" }}>
-                METODE BELAJAR TERUJI
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: "#c8f064", letterSpacing: "0.06em", fontWeight: 700 }}>
+                METODE TERARAH
               </span>
-              <Zap size={14} color="#c8f064" />
+              <Zap size={15} color="#c8f064" />
             </div>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: "#d5dfd9", marginBottom: 20 }}>
+            <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#d5dfd9", marginBottom: 22 }}>
               "{steps[activeStep].summary}"
             </p>
             <button
@@ -2087,31 +2100,32 @@ export function LandingPage({
                 background: "#c8f064",
                 color: "#18221f",
                 border: "none",
-                borderRadius: 8,
-                padding: "10px 16px",
-                fontSize: 13.5,
+                borderRadius: 10,
+                padding: "12px 18px",
+                fontSize: 14,
                 fontWeight: 700,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 8
+                gap: 8,
+                transition: "background 0.15s ease"
               }}
             >
-              <span>Mulai Belajar Sekarang</span>
-              <ChevronRight size={14} />
+              <span>Coba Mulai Belajar</span>
+              <ChevronRight size={15} />
             </button>
           </div>
         </div>
       </section>
 
       {/* Call to Action Banner */}
-      <div className="landing-cta-banner">
-        <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 14, color: "#ffffff" }}>
-          Siap Paham Materi Lebih Cepat dan Tuntas?
+      <div className="landing-cta-banner reveal-scroll">
+        <h2 style={{ fontSize: "clamp(1.9rem, 4.2vw, 3rem)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 16, color: "#ffffff" }}>
+          Siap Paham Materi Lebih Cepat dan Tenang?
         </h2>
-        <p style={{ fontSize: 16, color: "#b5c2bc", maxWidth: 640, margin: "0 auto 32px", lineHeight: 1.6 }}>
-          Mulai olah materi belajarmu sekarang. 100% bebas biaya, tanpa iklan mengganggu, dan catatan belajarmu tersimpan aman di perangkatmu.
+        <p style={{ fontSize: 16.5, color: "#b5c2bc", maxWidth: 660, margin: "0 auto 34px", lineHeight: 1.65 }}>
+          Buka materi pertamamu sekarang. 100% bebas biaya, tanpa iklan mengganggu, dan catatan belajarmu tersimpan aman di perangkatmu.
         </p>
         <button
           onClick={onLaunchApp}
@@ -2119,18 +2133,19 @@ export function LandingPage({
             background: "#c8f064",
             color: "#18221f",
             border: "none",
-            borderRadius: 10,
-            padding: "16px 36px",
+            borderRadius: 12,
+            padding: "16px 38px",
             fontSize: 16,
             fontWeight: 800,
             cursor: "pointer",
             display: "inline-flex",
             alignItems: "center",
             gap: 10,
-            boxShadow: "0 8px 24px rgba(200, 240, 100, 0.3)"
+            boxShadow: "0 8px 26px rgba(200, 240, 100, 0.35)",
+            transition: "transform 0.2s ease"
           }}
         >
-          <span>Mulai Belajar Sekarang (Gratis)</span>
+          <span>Mulai Belajar Sekarang — Gratis</span>
           <ArrowRight size={18} />
         </button>
       </div>
@@ -2144,22 +2159,22 @@ export function LandingPage({
                 <div className="landing-brand-box">t</div>
                 <span className="landing-brand-text">tanka.</span>
               </div>
-              <p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#5f6b66" }}>
-                Tanka — Platform Belajar Mandiri Cerdas untuk Pelajar SMA, Pejuang UTBK & Mahasiswa.
+              <p style={{ fontSize: 14, lineHeight: 1.65, color: "#55635e" }}>
+                Tanka — Teman Belajar Mandiri Cerdas untuk Siswa SMA, Pejuang Ujian & Mahasiswa.
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: 48, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 54, flexWrap: "wrap" }}>
               <div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#18221f", marginBottom: 12, letterSpacing: "0.06em" }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, fontWeight: 700, color: "#18221f", marginBottom: 14, letterSpacing: "0.06em" }}>
                   KONTRIBUTOR & KODE
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <a
                     href="https://github.com/kaarlyz/Tanka"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontSize: 13, color: "#5f6b66", textDecoration: "none" }}
+                    style={{ fontSize: 13.5, color: "#55635e", textDecoration: "none" }}
                   >
                     GitHub Repository
                   </a>
@@ -2167,7 +2182,7 @@ export function LandingPage({
                     href="https://github.com/kaarlyz/Tanka/blob/main/LICENSE"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontSize: 13, color: "#5f6b66", textDecoration: "none" }}
+                    style={{ fontSize: 13.5, color: "#55635e", textDecoration: "none" }}
                   >
                     MIT License
                   </a>
@@ -2175,15 +2190,15 @@ export function LandingPage({
               </div>
 
               <div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#18221f", marginBottom: 12, letterSpacing: "0.06em" }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, fontWeight: 700, color: "#18221f", marginBottom: 14, letterSpacing: "0.06em" }}>
                   PRIVASI & KEAMANAN
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <span style={{ fontSize: 13, color: "#5f6b66" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <span style={{ fontSize: 13.5, color: "#55635e" }}>
                     Data Privat di Perangkat
                   </span>
-                  <span style={{ fontSize: 13, color: "#5f6b66" }}>
-                    Kuis Akurat & Bebas Halusinasi
+                  <span style={{ fontSize: 13.5, color: "#55635e" }}>
+                    Kuis Logika Tanpa Halusinasi
                   </span>
                 </div>
               </div>
@@ -2191,9 +2206,9 @@ export function LandingPage({
           </div>
 
           <div className="footer-bottom">
-            <span>© 2026 Tanka by kaarlyz. All rights reserved.</span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12 }}>
-              Belajar Mandiri Cerdas • Bebas Iklan • 100% Privat
+            <span>© 2026 Tanka by kaarlyz. Dibuat dengan integritas tinggi.</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12.5 }}>
+              Belajar Mandiri • Bebas Iklan • 100% Privat
             </span>
           </div>
         </div>

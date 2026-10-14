@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { DocumentItem } from "../types";
 
 export interface UseDocumentsProps {
@@ -9,6 +9,8 @@ export interface UseDocumentsProps {
 
 export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: UseDocumentsProps) {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const documentsRef = useRef<DocumentItem[]>([]);
+  documentsRef.current = documents;
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [activeDocTitle, setActiveDocTitle] = useState("");
   const [activeDocContent, setActiveDocContent] = useState("");
@@ -52,14 +54,33 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     }
   }, [selectedModel]);
 
-  const loadDocument = useCallback(async (id: string, callback?: (doc: any) => void) => {
+  const loadDocument = useCallback(async (idOrDoc: string | any, callback?: (doc: any) => void) => {
+    const targetId = typeof idOrDoc === "string" ? idOrDoc : idOrDoc?.id;
+    if (!targetId) return;
+
+    // 1. Optimistic synchronous hydrate from cache/object to eliminate lag/flicker
+    const local = (typeof idOrDoc === "object" && idOrDoc?.content)
+      ? idOrDoc
+      : documentsRef.current.find((d) => d.id === targetId);
+
+    if (local) {
+      setActiveDocId(local.id);
+      setActiveDocTitle(local.title || "");
+      setActiveDocContent(local.content || "");
+      setActiveDocSummary(local.summary || "");
+      if (callback) callback(local);
+      if (onDocumentLoaded) onDocumentLoaded(local);
+    } else {
+      setActiveDocId(targetId);
+    }
+
     try {
-      const res = await fetch(`/api/documents/${id}`);
+      const res = await fetch(`/api/documents/${targetId}`);
       const data = await res.json();
       if (data.document) {
         setActiveDocId(data.document.id);
-        setActiveDocTitle(data.document.title);
-        setActiveDocContent(data.document.content);
+        setActiveDocTitle(data.document.title || "");
+        setActiveDocContent(data.document.content || "");
         setActiveDocSummary(data.document.summary || "");
         if (callback) callback(data.document);
         if (onDocumentLoaded) onDocumentLoaded(data.document);
@@ -77,7 +98,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
               return;
             }
             try {
-              const pollRes = await fetch(`/api/documents/${id}`);
+              const pollRes = await fetch(`/api/documents/${targetId}`);
               const pollData = await pollRes.json();
               if (pollData.document) {
                 const status = pollData.document.status;
@@ -99,7 +120,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     } catch (err) {
       console.error("Gagal memuat dokumen:", err);
     }
-  }, [onDocumentLoaded]);
+  }, [onDocumentLoaded, showNotice]);
 
   const fetchDocuments = useCallback(async () => {
     try {

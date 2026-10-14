@@ -150,6 +150,11 @@ export const MaterialTab = React.memo(function MaterialTab({
   const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full">("chapters");
   const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
+
+  // Reset chapter index to 0 whenever a new document is opened
+  React.useEffect(() => {
+    setCurrentChapterIdx(0);
+  }, [activeDocId]);
   const [isRestructuring, setIsRestructuring] = React.useState(false);
   const [restructureNotice, setRestructureNotice] = React.useState<string | null>(null);
   const [isTailorOpen, setIsTailorOpen] = React.useState(false);

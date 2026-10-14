@@ -11,7 +11,7 @@ export interface HomeHubTabProps {
   activeDocId: string | null;
   activeDocTitle: string;
   activeDocContent: string;
-  loadDocument: (id: string) => void;
+  loadDocument: (docOrId: any) => void;
   handleDeleteDocument: (id: string, e?: React.MouseEvent) => void;
   handleDeleteAllDocuments?: () => void;
   homeSearchQuery: string;
@@ -162,16 +162,11 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                     </div>
                   </div>
 
-                  {/* Clean Unified Search & Topic Generator Input */}
+                  {/* Clean Dedicated Search Input */}
                   <form
                     className="home-unified-search-form"
                     onSubmit={(e) => {
                       e.preventDefault();
-                      if (homeSearchQuery.trim()) {
-                        if (setTopicInput) setTopicInput(homeSearchQuery.trim());
-                        setIsTopicModalOpen(true);
-                        if (handleStartTopicClarify) handleStartTopicClarify(homeSearchQuery.trim());
-                      }
                     }}
                     style={{
                       display: "flex",
@@ -179,7 +174,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                       backgroundColor: "#f4f6f1",
                       borderRadius: 8,
                       border: "1px solid #dce1da",
-                      padding: "4px 6px 4px 14px",
+                      padding: "4px 8px 4px 14px",
                       gap: 10
                     }}
                   >
@@ -189,7 +184,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                       className="clean-input"
                       value={homeSearchQuery}
                       onChange={(e) => setHomeSearchQuery(e.target.value)}
-                      placeholder="Cari materi tersimpan atau ketik topik baru untuk dibuat AI..."
+                      placeholder="Cari materi atau topik tersimpan..."
                       style={{
                         flex: 1,
                         minWidth: 0,
@@ -203,43 +198,28 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                       }}
                     />
                     {homeSearchQuery.trim() ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        <button
-                          type="button"
-                          onClick={() => setHomeSearchQuery("")}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#8a9691",
-                            cursor: "pointer",
-                            padding: 4,
-                            display: "flex"
-                          }}
-                          title="Hapus pencarian"
-                        >
-                          <X size={14} />
-                        </button>
-                        <button
-                          type="submit"
-                          style={{
-                            backgroundColor: "#18221f",
-                            color: "#c8f064",
-                            border: "none",
-                            borderRadius: 6,
-                            padding: "6px 12px",
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 5
-                          }}
-                          title="Generate topik baru dengan AI"
-                        >
-                          <span>Buat Topik AI</span>
-                          <ArrowRight size={13} />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setHomeSearchQuery("")}
+                        style={{
+                          background: "#e5eae0",
+                          border: "none",
+                          color: "#47554e",
+                          borderRadius: 6,
+                          padding: "4px 8px",
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          flexShrink: 0
+                        }}
+                        title="Hapus filter pencarian"
+                      >
+                        <X size={13} />
+                        <span>Hapus</span>
+                      </button>
                     ) : null}
                   </form>
 
@@ -447,7 +427,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }} className="home-last-session-actions">
                         <button
                           onClick={() => {
-                            loadDocument(targetDoc.id);
+                            loadDocument(targetDoc);
                             setActiveTab("material");
                           }}
                           className="last-session-main-btn"
@@ -474,7 +454,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
 
                         <button
                           onClick={() => {
-                            loadDocument(targetDoc.id);
+                            loadDocument(targetDoc);
                             setActiveTab("quiz");
                           }}
                           style={{
@@ -491,7 +471,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            gap: 5
+                            gap: 4
                           }}
                         >
                           <Target size={13} color="#72a728" />
@@ -500,7 +480,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
 
                         <button
                           onClick={() => {
-                            loadDocument(targetDoc.id);
+                            loadDocument(targetDoc);
                             setActiveTab("flashcards");
                           }}
                           style={{
@@ -676,7 +656,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
 
                                 <h4
                                   onClick={() => {
-                                    loadDocument(doc.id);
+                                    loadDocument(doc);
                                     setActiveTab("material");
                                   }}
                                   style={{
@@ -707,7 +687,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                               >
                                 <button
                                   onClick={() => {
-                                    loadDocument(doc.id);
+                                    loadDocument(doc);
                                     setActiveTab("material");
                                   }}
                                   style={{
@@ -732,7 +712,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
 
                                 <button
                                   onClick={() => {
-                                    loadDocument(doc.id);
+                                    loadDocument(doc);
                                     setActiveTab("quiz");
                                   }}
                                   title="Latihan Soal"
@@ -756,7 +736,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
 
                                 <button
                                   onClick={() => {
-                                    loadDocument(doc.id);
+                                    loadDocument(doc);
                                     setActiveTab("flashcards");
                                   }}
                                   title="Flashcards"

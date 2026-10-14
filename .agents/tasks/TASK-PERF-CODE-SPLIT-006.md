@@ -1,6 +1,6 @@
 # TASK: TASK-PERF-CODE-SPLIT-006
 ## STATUS
-REVIEW_REQUIRED
+ACCEPTED & VERIFIED
 
 ## METADATA
 - Project: Tanka (/home/vallencia/Projects/tanka)

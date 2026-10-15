@@ -3,6 +3,7 @@ import "./landing.css";
 import { UserAccount } from "../../types";
 import { LandingNavbar } from "./LandingNavbar";
 import { HeroSection } from "./HeroSection";
+import { HeroWorkspacePreview } from "./HeroWorkspacePreview";
 import { MarqueeTicker } from "./MarqueeTicker";
 import { StudioCockpit } from "./StudioCockpit";
 import { ComparisonLedger } from "./ComparisonLedger";
@@ -67,6 +68,7 @@ export function LandingPage({
         currentUser={currentUser}
       />
       <HeroSection onActionLaunch={handleActionLaunch} />
+      <HeroWorkspacePreview onActionLaunch={handleActionLaunch} />
       <MarqueeTicker />
       <StudioCockpit onActionLaunch={handleActionLaunch} />
       <ComparisonLedger />

@@ -1,6 +1,6 @@
 # TASK: TASK-LANDING-MODULAR-SPLIT-035
 ## STATUS
-READY
+VERIFIED
 
 ## METADATA
 - Project: Tanka (/home/vallencia/Projects/tanka)
@@ -233,10 +233,10 @@ maraka -z "Kerjakan refaktor modularisasi LandingPage Tanka sesuai TASK-LANDING-
 ---
 
 ## 5. ACCEPTANCE CRITERIA
-- [ ] 11 file sub-komponen modular dan 1 file CSS tercipta rapi di `src/components/landing/`.
-- [ ] `LandingPage.tsx` ramping di bawah 150 baris kode.
-- [ ] Pembakaran token input untuk pembacaan komponen landing berkurang dari ~30.000 menjadi <2.000 token.
-- [ ] `npm run build` sukses tanpa error TypeScript / bundling.
-- [ ] Seluruh unit test suite lulus 83/83 passing (100%).
-- [ ] Atribusi Eka Restu Syahputra di footer terjaga dan nol tautan GitHub publik.
-- [ ] Visual parity terverifikasi identik pada desktop (1920x1080) dan mobile (390x844).
+- [x] 11 file sub-komponen modular dan 1 file CSS tercipta rapi di `src/components/landing/`.
+- [x] `LandingPage.tsx` ramping di bawah 150 baris kode (83 baris).
+- [x] Pembakaran token input untuk pembacaan komponen landing berkurang dari ~30.000 menjadi <2.000 token.
+- [x] `npm run build` sukses tanpa error TypeScript / bundling (<400ms).
+- [x] Seluruh unit test suite lulus 83/83 passing (100%).
+- [x] Atribusi Eka Restu Syahputra di footer terjaga dan nol tautan GitHub publik.
+- [x] Visual parity terverifikasi identik pada desktop (1920x1080) dan mobile (390x844).

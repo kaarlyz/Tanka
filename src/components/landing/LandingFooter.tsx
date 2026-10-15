@@ -124,7 +124,7 @@ export function LandingFooter({ onActionLaunch }: LandingFooterProps) {
         </div>
 
         <div className="footer-bottom">
-          <span>© 2026 Tanka. Seluruh hak cipta dilindungi.</span>
+          <span>© 2026 Tanka. Designed & Architected by Eka Restu Syahputra. Seluruh hak cipta dilindungi.</span>
           <span
             style={{
               fontFamily: "'DM Mono', monospace",

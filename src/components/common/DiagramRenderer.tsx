@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Sparkles, Globe, Compass, ArrowRight, Check, CheckCircle2, BookOpen, Layers } from "lucide-react";
+import { Sparkles, Globe, Compass, ArrowRight, Check, CheckCircle2, BookOpen, Layers, Network } from "lucide-react";
 import { MathView } from "./MathView";
 
 export function extractTextFromNode(node: any): string {
@@ -21,7 +21,7 @@ export function isAsciiDiagramText(text: string): boolean {
   if (upper.includes("CULTURAL LAG") || (upper.includes("BUDAYA MATERIAL") && upper.includes("BUDAYA IMATERIAL"))) return true;
   if (upper.includes("ROGERS") || (upper.includes("INNOVATOR") && upper.includes("EARLY ADOPTER") && upper.includes("LAGGARD"))) return true;
   if ((upper.includes("MEMANCAR") && upper.includes("MENJALAR") && upper.includes("MEMUSAT")) || (upper.includes("OGBURN") && (upper.includes("POLA") || upper.includes("SEBARAN")))) return true;
-  if (/[┌└├│─┬┴┼]|\+[-=]{2,}|\/\\|\\\/|\[Lahir/.test(text)) return true;
+  if (/[┌└├│─┬┴┼┐┘┤┴┬│─]|\+[-=]{2,}|\/\\|\\\/|\[Lahir/.test(text)) return true;
   return false;
 }
 
@@ -31,104 +31,6 @@ export { sanitizeMathMarkdown, normalizeDiagramsInMarkdown };
 function isConnectorLine(line: string): boolean {
   const clean = line.replace(/[┌└├│─┬┴┼┐┘┤┴┬│─+=/\\^vV▼▲◄►<>➔→|:.\-]/g, " ").trim();
   return clean.length <= 1;
-}
-
-function parseAsciiTree(rawText: string) {
-  const lines = rawText.split("\n");
-  const clean = lines.filter(l => l.trim().length > 0 && !isConnectorLine(l));
-  if (clean.length < 2) return null;
-
-  if (clean.some(l => /^\s*[┌└├│─]/.test(l)) && !clean.some(l => /\S\s{6,}\S/.test(l))) {
-    return null; // biarkan fallback ke clean sequential nodes yang rapi
-  }
-
-  const pillarLine = clean.find((l, idx) => idx > 0 && /\s{5,}/.test(l));
-  if (!pillarLine) return null;
-
-  const rootTitle = clean[0].trim();
-  const match = pillarLine.match(/\s{5,}/);
-  if (!match || match.index === undefined) return null;
-  const splitIdx = match.index + Math.floor(match[0].length / 2);
-
-  const pillar1Header = pillarLine.slice(0, splitIdx).trim();
-  const pillar2Header = pillarLine.slice(splitIdx).trim();
-
-  const pLineIdx = clean.indexOf(pillarLine);
-  const detailLines = clean.slice(pLineIdx + 1);
-
-  // Preserve exact character column offsets across lines
-  const leftLines = detailLines.map(l => l.slice(0, splitIdx));
-  const rightLines = detailLines.map(l => l.slice(splitIdx));
-
-  function parseSubGroups(pLines: string[]) {
-    if (!pLines || pLines.length === 0) return [];
-    const nonEmpties = pLines.filter(l => l.trim().length > 0);
-    if (nonEmpties.length === 0) return [];
-    const minIndent = Math.min(...nonEmpties.map(l => (l.match(/^\s*/)?.[0].length || 0)));
-    const unindented = pLines.map(l => l.slice(minIndent));
-
-    let bestSplit = -1;
-    let maxSpaces = -1;
-    for (let c = 12; c <= 24; c++) {
-      const spaceCount = unindented.filter(l => l.length <= c || l[c] === " ").length;
-      if (spaceCount === unindented.length) {
-        bestSplit = c;
-        break;
-      }
-      if (spaceCount > maxSpaces) {
-        maxSpaces = spaceCount;
-        bestSplit = c;
-      }
-    }
-
-    if (bestSplit <= 0 || maxSpaces < unindented.length * 0.8) {
-      return [{
-        title: unindented[0].replace(/:$/, "").trim(),
-        items: unindented.slice(1).map(l => l.replace(/^-\s*/, "").trim()).filter(Boolean)
-      }];
-    }
-
-    const subLeft = unindented.map(l => l.slice(0, bestSplit).trim()).filter(Boolean);
-    const subRight = unindented.map(l => l.slice(bestSplit).trim()).filter(Boolean);
-
-    function extractGroup(raw: string[]) {
-      if (raw.length === 0) return { title: "", items: [] };
-      let title = raw[0].replace(/:$/, "").trim();
-      let startIndex = 1;
-      if (raw.length > 1 && raw[1].startsWith("(") && raw[1].endsWith("):")) {
-        title += " " + raw[1].replace(/:$/, "").trim();
-        startIndex = 2;
-      }
-      const items: string[] = [];
-      for (let i = startIndex; i < raw.length; i++) {
-        let item = raw[i].trim();
-        if (item.startsWith("-")) {
-          const cleanItem = item.replace(/^-\s*/, "").replace(/[\s\-–—]+$/, "").trim();
-          if (cleanItem) items.push(cleanItem);
-        } else if (items.length > 0) {
-          const cleanPiece = item.replace(/[\s\-–—]+$/, "").trim();
-          if (cleanPiece) items[items.length - 1] += " " + cleanPiece;
-        } else {
-          const cleanItem = item.replace(/[\s\-–—]+$/, "").trim();
-          if (cleanItem) items.push(cleanItem);
-        }
-      }
-      return {
-        title,
-        items: items.map(it => it.replace(/[\s\-–—]+$/, "").replace(/\/\s+/, "/").trim())
-      };
-    }
-
-    return [extractGroup(subLeft), extractGroup(subRight)].filter(g => g.title || g.items.length > 0);
-  }
-
-  return {
-    rootTitle,
-    pillars: [
-      { title: pillar1Header, groups: parseSubGroups(leftLines) },
-      { title: pillar2Header, groups: parseSubGroups(rightLines) }
-    ]
-  };
 }
 
 export function sanitizeKaTeXText(text: string): string {
@@ -619,88 +521,66 @@ export function renderVisualDiagramOrPre(children: any) {
     }
   }
 
-  // Pattern 7: Hierarchical Concept Tree or Clean Sequential Flow
-  const hasBoxChars = /[┌└├│─┬┴┼┐┘┤┴┬│─]|\+[-=]{2,}|-->|==>|->|◄|►|▼|▲|⇄|⇌|↔/.test(text);
+  // Pattern 7: 2D Spatial Concept Tree & Architecture Canvas
+  const hasBoxChars = /[┌└├│─┬┴┼┐┘┤┴┬│─]|\+[-=]{2,}/.test(text);
   if (hasBoxChars) {
-    const parsedTree = parseAsciiTree(text);
-    if (parsedTree && parsedTree.pillars.length > 0) {
-      return (
-        <div className="visual-diagram-card" style={{ margin: "16px 0", padding: "16px 18px", backgroundColor: "#fbfcf9", border: "1px solid #dce2d6", borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.02)", scrollMarginTop: 65 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, borderBottom: "1px solid #e5ebe1", paddingBottom: 8, flexWrap: "wrap", gap: 6 }}>
-            <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "#465f33", fontFamily: "'DM Mono', monospace" }}>
-              Bagan Alur & Peta Hubungan Konsep
-            </div>
-            {parsedTree.rootTitle && (
-              <div style={{ fontSize: 12.5, fontWeight: 800, color: "#18221f" }}>
-                <MathView text={parsedTree.rootTitle} />
-              </div>
-            )}
+    return (
+      <div
+        className="visual-diagram-card visual-ascii-canvas"
+        style={{
+          margin: "18px 0",
+          backgroundColor: "#f9faf7",
+          border: "1px solid #dce2da",
+          borderRadius: 8,
+          overflow: "hidden",
+          boxShadow: "0 1px 4px rgba(24, 34, 31, 0.03)"
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "8px 14px",
+            backgroundColor: "#f0f4ee",
+            borderBottom: "1px solid #dce2da",
+            fontSize: 11,
+            fontWeight: 800,
+            color: "#3d541b",
+            fontFamily: "'DM Mono', monospace",
+            letterSpacing: "0.05em"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Network size={13} color="#4b6623" />
+            <span>BAGAN ALUR & PETA STRUKTUR KONSEP</span>
           </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
-            {parsedTree.pillars.map((pillar, pIdx) => (
-              <div
-                key={pIdx}
-                style={{
-                  backgroundColor: "#ffffff",
-                  border: "1px solid #dce4d7",
-                  borderLeft: pIdx === 0 ? "3.5px solid #4b6623" : "3.5px solid #2b593f",
-                  borderRadius: 6,
-                  padding: "14px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12
-                }}
-              >
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#17201d", borderBottom: "1px solid #edf2ea", paddingBottom: 6 }}>
-                  <MathView text={pillar.title} />
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: pillar.groups.length > 1 ? "repeat(auto-fit, minmax(115px, 1fr))" : "1fr", gap: 10 }}>
-                  {pillar.groups.map((grp, gIdx) => (
-                    <div
-                      key={gIdx}
-                      style={{
-                        backgroundColor: "#f9faf7",
-                        border: "1px solid #e3e8df",
-                        borderRadius: 4,
-                        padding: "10px 12px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6
-                      }}
-                    >
-                      {grp.title && (
-                        <div style={{ fontSize: 11.5, fontWeight: 700, color: "#2d3b34" }}>
-                          <MathView text={grp.title} />
-                        </div>
-                      )}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        {grp.items.map((item, iIdx) => {
-                          const cleanItem = item.replace(/^[┌└├│─┬┴┼\s\-_=]+/g, "").trim();
-                          return (
-                            <div key={iIdx} style={{ fontSize: 11.5, color: "#4b5852", display: "flex", alignItems: "flex-start", gap: 6 }}>
-                              <span style={{ color: "#65a30d", fontWeight: 800, fontSize: 11 }}>•</span>
-                              <span style={{ flex: 1, lineHeight: 1.45 }}>
-                                <span style={{ whiteSpace: cleanItem.includes("$") ? "nowrap" : "normal", display: "inline-block" }}>
-                                  <MathView text={cleanItem} />
-                                </span>
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <span style={{ fontSize: 10, color: "#7a8a82", fontWeight: 600 }}>Geser horizontal di HP ↔</span>
         </div>
-      );
-    }
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", padding: "14px 16px" }}>
+          <pre
+            style={{
+              margin: 0,
+              padding: 0,
+              fontFamily: "'DM Mono', 'Fira Code', monospace",
+              fontSize: 12.5,
+              lineHeight: 1.55,
+              color: "#18221f",
+              backgroundColor: "transparent",
+              border: "none",
+              whiteSpace: "pre"
+            }}
+          >
+            {sanitizeKaTeXText(rawText)}
+          </pre>
+        </div>
+      </div>
+    );
+  }
 
-    // Fallback: Clean Sequential Flow Steps (Filtered of connector lines)
+  // Pattern 8: Flowchart Berpanah (Sequential Flow Steps)
+  const hasArrows = /-->|==>|->|◄|►|▼|▲|⇄|⇌|↔/.test(text);
+  if (hasArrows) {
     const rawLines = text.split("\n");
     const cleanNodes = rawLines
       .filter(l => l.trim().length > 0 && !isConnectorLine(l))

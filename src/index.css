@@ -2156,8 +2156,50 @@
       }
 
       .table-scroll-wrapper {
-        overflow-x: auto;
-        max-width: 100%;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100% !important;
+        margin: 18px 0 !important;
+        border-radius: 8px !important;
+      }
+
+      .table-scroll-wrapper table,
+      .book-reader table {
+        min-width: 500px !important;
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border: 1px solid #dbe2d8 !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+      }
+
+      .table-scroll-wrapper th,
+      .book-reader th {
+        background: #f3f7f0 !important;
+        color: #1a2721 !important;
+        font-weight: 700 !important;
+        padding: 10px 14px !important;
+        border-bottom: 1px solid #dbe2d8 !important;
+        text-align: left !important;
+        white-space: nowrap !important; /* Mencegah huruf beruntun ke bawah */
+        min-width: 100px !important;
+      }
+
+      .table-scroll-wrapper td,
+      .book-reader td {
+        padding: 10px 14px !important;
+        border-bottom: 1px solid #edf1ea !important;
+        color: #283731 !important;
+        line-height: 1.55 !important;
+        word-break: normal !important; /* Mencegah huruf beruntun ke bawah */
+        overflow-wrap: break-word !important;
+        min-width: 90px !important;
+      }
+
+      .table-scroll-wrapper tr:last-child td,
+      .book-reader tr:last-child td {
+        border-bottom: none !important;
       }
 
       .print-only {
@@ -2399,8 +2441,11 @@
           margin: 12pt 0 !important;
         }
 
+        .table-scroll-wrapper table,
+        .book-reader table,
         .markdown-body table,
         .nara-md-response table {
+          min-width: 0 !important;
           width: 100% !important;
           border-collapse: collapse !important;
           break-inside: avoid !important;
@@ -2409,6 +2454,8 @@
           font-size: 9pt !important;
         }
 
+        .table-scroll-wrapper th,
+        .book-reader th,
         .markdown-body th, .nara-md-response th {
           background: #f0f4ee !important;
           color: #18221f !important;
@@ -2416,12 +2463,16 @@
           border: 1px solid #c5cec3 !important;
           padding: 6pt 8pt !important;
           text-align: left !important;
+          white-space: normal !important;
         }
 
+        .table-scroll-wrapper td,
+        .book-reader td,
         .markdown-body td, .nara-md-response td {
           border: 1px solid #d8dfd6 !important;
           padding: 5pt 8pt !important;
           color: #2c3933 !important;
+          white-space: normal !important;
         }
 
         .markdown-body tr:nth-child(even), .nara-md-response tr:nth-child(even) {

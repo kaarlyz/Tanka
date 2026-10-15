@@ -487,24 +487,24 @@ export const SummaryTab = React.memo(function SummaryTab({
                           </code>
                         ),
                         table: ({ children }) => (
-                          <div style={{ overflowX: "auto", margin: "14px 0" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, border: "1px solid #dde1da", borderRadius: 8, overflow: "hidden" }}>
+                          <div className="table-scroll-wrapper">
+                            <table>
                               {children}
                             </table>
                           </div>
                         ),
                         thead: ({ children }) => (
-                          <thead style={{ backgroundColor: "#f8f9f5", borderBottom: "1px solid #dde1da" }}>
+                          <thead>
                             {children}
                           </thead>
                         ),
                         th: ({ children }) => (
-                          <th style={{ padding: "8px 12px", textAlign: "left", color: "#22370c", fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                          <th>
                             {sanitizeChildrenText(children)}
                           </th>
                         ),
                         td: ({ children }) => (
-                          <td style={{ padding: "8px 12px", borderBottom: "1px solid #eef1eb", color: "#17201d" }}>
+                          <td>
                             {children}
                           </td>
                         ),

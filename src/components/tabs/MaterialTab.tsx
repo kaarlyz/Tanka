@@ -451,19 +451,19 @@ export const MaterialTab = React.memo(function MaterialTab({
       </code>
     ),
     table: ({ children }: any) => (
-      <div className="table-scroll-wrapper" style={{ margin: "14px 0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, border: "1px solid #dde1da", borderRadius: 8 }}>
+      <div className="table-scroll-wrapper">
+        <table>
           {children}
         </table>
       </div>
     ),
     th: ({ children }: any) => (
-      <th style={{ padding: "8px 12px", textAlign: "left", color: "#18221f", fontWeight: 700, fontSize: 12, backgroundColor: "#f0f4ee", border: "1px solid #c5cec3" }}>
+      <th>
         {sanitizeChildrenText(children)}
       </th>
     ),
     td: ({ children }: any) => (
-      <td style={{ padding: "7px 12px", border: "1px solid #dde1da", color: "#2c3933" }}>
+      <td>
         {children}
       </td>
     )

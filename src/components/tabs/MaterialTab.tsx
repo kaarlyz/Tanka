@@ -445,8 +445,8 @@ export const MaterialTab = React.memo(function MaterialTab({
       </code>
     ),
     table: ({ children }: any) => (
-      <div style={{ overflowX: "auto", margin: "14px 0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, border: "1px solid #dde1da", borderRadius: 8, overflow: "hidden" }}>
+      <div className="table-scroll-wrapper" style={{ margin: "14px 0" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, border: "1px solid #dde1da", borderRadius: 8 }}>
           {children}
         </table>
       </div>

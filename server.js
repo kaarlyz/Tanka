@@ -43,6 +43,22 @@ function sendJSON(res, data, statusCode = 200) {
   return true;
 }
 
+function getCompressionStream(req, headers, isCompressible) {
+  if (!isCompressible) return null;
+  const acceptEncoding = (req.headers && req.headers["accept-encoding"]) || "";
+  if (acceptEncoding.includes("br") && typeof zlib.createBrotliCompress === "function") {
+    headers["Content-Encoding"] = "br";
+    headers["Vary"] = "Accept-Encoding";
+    return zlib.createBrotliCompress();
+  }
+  if (acceptEncoding.includes("gzip")) {
+    headers["Content-Encoding"] = "gzip";
+    headers["Vary"] = "Accept-Encoding";
+    return zlib.createGzip();
+  }
+  return null;
+}
+
 // Helper to extract userId or client session id from header/body/query
 function getUserId(req, body = {}) {
   const fromHeader = req.headers["x-user-id"] || req.headers["x-session-id"];
@@ -178,18 +194,15 @@ const server = http.createServer(async (req, res) => {
       headers["Accept-Ranges"] = "bytes";
 
       const isCompressible = [".js", ".css", ".html", ".json", ".svg"].includes(ext);
-      const acceptEncoding = (req.headers && req.headers["accept-encoding"]) || "";
-      const useGzip = isCompressible && acceptEncoding.includes("gzip");
+      const compression = getCompressionStream(req, headers, isCompressible);
 
-      if (useGzip) {
-        headers["Content-Encoding"] = "gzip";
-        headers["Vary"] = "Accept-Encoding";
+      if (compression) {
         if (req.method === "HEAD") {
           res.writeHead(200, headers);
           return res.end();
         }
         res.writeHead(200, headers);
-        return fs.createReadStream(filePath).pipe(zlib.createGzip()).pipe(res);
+        return fs.createReadStream(filePath).pipe(compression).pipe(res);
       }
 
       headers["Content-Length"] = fileSize;
@@ -204,7 +217,6 @@ const server = http.createServer(async (req, res) => {
     if (!pathname.startsWith("/api/")) {
       const indexHtml = path.join(distPath, "index.html");
       if (fs.existsSync(indexHtml)) {
-        const acceptEncoding = (req.headers && req.headers["accept-encoding"]) || "";
         const headers = {
           "Content-Type": "text/html",
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
@@ -212,15 +224,14 @@ const server = http.createServer(async (req, res) => {
           "Expires": "0",
           "Access-Control-Allow-Origin": "*",
         };
-        if (acceptEncoding.includes("gzip")) {
-          headers["Content-Encoding"] = "gzip";
-          headers["Vary"] = "Accept-Encoding";
+        const compression = getCompressionStream(req, headers, true);
+        if (compression) {
           if (req.method === "HEAD") {
             res.writeHead(200, headers);
             return res.end();
           }
           res.writeHead(200, headers);
-          return fs.createReadStream(indexHtml).pipe(zlib.createGzip()).pipe(res);
+          return fs.createReadStream(indexHtml).pipe(compression).pipe(res);
         }
         if (req.method === "HEAD") {
           res.writeHead(200, headers);
@@ -250,8 +261,12 @@ server.timeout = 300000;
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
 
-server.listen(PORT, "0.0.0.0", () => {
-  const cfg = validateConfigOnStartup();
-  console.log(`[tanka-server] Running on http://0.0.0.0:${cfg.PORT}`);
-  console.log(`[tanka-server] Connected to 9Router at ${cfg.ROUTER_URL} (key configured: ${cfg.ROUTER_KEY_CONFIGURED})`);
-});
+if (require.main === module) {
+  server.listen(PORT, "0.0.0.0", () => {
+    const cfg = validateConfigOnStartup();
+    console.log(`[tanka-server] Running on http://0.0.0.0:${cfg.PORT}`);
+    console.log(`[tanka-server] Connected to 9Router at ${cfg.ROUTER_URL} (key configured: ${cfg.ROUTER_KEY_CONFIGURED})`);
+  });
+}
+
+module.exports = { server, getCompressionStream };

@@ -34,6 +34,13 @@ export function LandingPage({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!("IntersectionObserver" in window)) {
+      document.querySelectorAll(".reveal-scroll").forEach((el) => {
+        el.classList.add("is-revealed");
+      });
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -44,15 +51,42 @@ export function LandingPage({
       },
       {
         root: containerRef.current,
-        threshold: 0.08,
-        rootMargin: "0px 0px -40px 0px"
+        threshold: 0.01,
+        rootMargin: "120px 0px 40px 0px"
       }
     );
 
     const elements = document.querySelectorAll(".reveal-scroll");
     elements.forEach((el) => observer.observe(el));
 
+    const handleAnchorClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href^="#"]');
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (href && href.startsWith("#") && href.length > 1) {
+        const dest = document.querySelector(href);
+        if (dest) {
+          e.preventDefault();
+          dest.scrollIntoView({ behavior: "smooth" });
+          window.history.pushState(null, "", href);
+        }
+      }
+    };
+
+    const container = containerRef.current;
+    container?.addEventListener("click", handleAnchorClick);
+
+    if (window.location.hash) {
+      setTimeout(() => {
+        const target = document.querySelector(window.location.hash);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+
     return () => {
+      container?.removeEventListener("click", handleAnchorClick);
       elements.forEach((el) => observer.unobserve(el));
       observer.disconnect();
     };

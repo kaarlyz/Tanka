@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect, useLayoutEffect, lazy, Suspense } from "react";
 import { CheckCircle2, MessageSquare } from "lucide-react";
 import { ActiveTab, QuizQuestion } from "./types";
 import { normalizeDiagramsInMarkdown } from "./utils/diagramNormalizer";
@@ -72,6 +72,34 @@ export default function App() {
 
   // 2. Clean URL Routing (Native Path Routing, Zero Hash)
   const { activeTab, setActiveTab } = useAppRoute("landing");
+
+  const [mountedTabs, setMountedTabs] = useState<Record<string, boolean>>(() => ({
+    [activeTab]: true,
+  }));
+
+  useEffect(() => {
+    if (activeTab && activeTab !== "landing") {
+      setMountedTabs((prev) => (prev[activeTab] ? prev : { ...prev, [activeTab]: true }));
+    }
+  }, [activeTab]);
+
+  const isTabMounted = (tab: string) => Boolean(mountedTabs[tab] || activeTab === tab);
+
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
+  const tabScrollMap = useRef<Record<string, number>>({});
+
+  const handleContentScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (activeTab !== "landing") {
+      tabScrollMap.current[activeTab] = e.currentTarget.scrollTop;
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (contentScrollRef.current && activeTab !== "landing") {
+      const savedScroll = tabScrollMap.current[activeTab] || 0;
+      contentScrollRef.current.scrollTop = savedScroll;
+    }
+  }, [activeTab]);
 
   // 2.5 User Account Authentication
   const {
@@ -200,6 +228,8 @@ export default function App() {
     setActiveDocTitle("");
     setActiveDocContent("");
     setActiveDocSummary("");
+    setMountedTabs({ home: true });
+    tabScrollMap.current = {};
     setActiveTab("landing");
   }, [handleLogout, setActiveDocId, setActiveDocTitle, setActiveDocContent, setActiveDocSummary, setActiveTab]);
 
@@ -904,6 +934,9 @@ export default function App() {
                   { id: "mistakes", label: "Bank Salah", count: String((activeDocId ? (activeDocMistakes || []).length : (mistakes || []).length)).padStart(2, "0") },
                 ].map((item) => (
                   <button
+                    id={`tab-${item.id}`}
+                    aria-controls={`tabpanel-${item.id}`}
+                    aria-selected={activeTab === item.id}
                     className={activeTab === item.id ? "active" : ""}
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
@@ -916,224 +949,247 @@ export default function App() {
               </div>
             )}
 
-            <div className="content-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: "16px 20px max(112px, calc(80px + env(safe-area-inset-bottom, 0px))) 20px" }}>
+            <div className="content-scroll" ref={contentScrollRef} onScroll={handleContentScroll} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: "16px 20px max(112px, calc(80px + env(safe-area-inset-bottom, 0px))) 20px" }}>
               <div style={{ maxWidth: activeTab === "material" ? 1440 : 1080, margin: "0 auto", width: "100%" }}>
-                {activeTab === "home" && (
-                <HomeHubTab
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  documents={documents}
-                  activeDocId={activeDocId}
-                  activeDocTitle={activeDocTitle}
-                  activeDocContent={activeDocContent}
-                  loadDocument={loadDocument}
-                  handleDeleteDocument={(id, e) => handleDeleteDocument(id, e)}
-                  handleDeleteAllDocuments={() => handleDeleteAllDocuments(() => {
-                    setFlashcards([]);
-                    setQuizQuestions([]);
-                  })}
-                  homeSearchQuery={homeSearchQuery}
-                  setHomeSearchQuery={setHomeSearchQuery}
-                  homeSubjectFilter={homeSubjectFilter}
-                  setHomeSubjectFilter={setHomeSubjectFilter}
-                  fileInputRef={fileInputRef}
-                  cameraInputRef={cameraInputRef}
-                  currentUser={currentUser}
-                  setIsTopicModalOpen={setIsTopicModalOpen}
-                  setIsYouTubeModalOpen={setIsYouTubeModalOpen}
-                  setIsStagingModalOpen={setIsStagingModalOpen}
-                  handleStageFiles={handleStageFiles}
-                  quizQuestions={quizQuestions}
-                  flashcards={flashcards}
-                  mistakes={mistakes}
-                  handleGenerateQuiz={handleGenerateQuiz}
-                  setTopicInput={setTopicInput}
-                  handleStartTopicClarify={handleStartTopicClarify}
-                />
-              )}
-
-              <Suspense fallback={<TabFallbackSkeleton />}>
-                {activeTab === "material" && (
-                  <MaterialTab
-                    documents={documents}
-                    loadDocument={loadDocument}
-                    activeDocId={activeDocId}
-                    activeDocTitle={activeDocTitle}
-                    setActiveDocTitle={setActiveDocTitle}
-                    activeDocContent={activeDocContent}
-                    setActiveDocContent={setActiveDocContent}
-                    activeDocSummary={activeDocSummary}
-                    formattedContent={formattedContent}
-                    wordCount={wordCount}
-                    flashcards={flashcards}
-                    quizQuestions={quizQuestions}
-                    isDetectingTitle={isDetectingTitle}
-                    handleAutoDetectTitle={handleAutoDetectTitle}
-                    fileInputRef={fileInputRef}
-                    setIsEnrichModalOpen={setIsEnrichModalOpen}
-                    copyToClipboard={copyToClipboard}
-                    copiedId={copiedId}
-                    handleSaveDocument={handleSaveDocument}
-                    setActiveTab={setActiveTab}
-                    materialCreationTab={materialCreationTab}
-                    setMaterialCreationTab={setMaterialCreationTab}
-                    cameraInputRef={cameraInputRef}
-                    handleGenerateSummary={handleGenerateSummary}
-                    isUploading={isUploading}
-                    uploadError={uploadError}
-                    topicInput={topicInput}
-                    setTopicInput={setTopicInput}
-                    setIsTopicModalOpen={setIsTopicModalOpen}
-                    setIsYouTubeModalOpen={setIsYouTubeModalOpen}
-                    handleStartTopicClarify={handleStartTopicClarify}
-                    isEnriching={isEnriching}
-                    showRawText={showRawText}
-                    setShowRawText={setShowRawText}
-                    isDragging={isDragging}
-                    setIsDragging={setIsDragging}
-                    handleDrop={handleDrop}
-                    handleGenerateQuiz={handleGenerateQuiz}
-                    handleGenerateFlashcards={handleGenerateFlashcards}
-                  />
+                {isTabMounted("home") && (
+                  <div key="tab-pane-home" style={{ display: activeTab === "home" ? "block" : "none" }}>
+                    <HomeHubTab
+                      activeTab={activeTab}
+                      setActiveTab={setActiveTab}
+                      documents={documents}
+                      activeDocId={activeDocId}
+                      activeDocTitle={activeDocTitle}
+                      activeDocContent={activeDocContent}
+                      loadDocument={loadDocument}
+                      handleDeleteDocument={(id, e) => handleDeleteDocument(id, e)}
+                      handleDeleteAllDocuments={() => handleDeleteAllDocuments(() => {
+                        setFlashcards([]);
+                        setQuizQuestions([]);
+                      })}
+                      homeSearchQuery={homeSearchQuery}
+                      setHomeSearchQuery={setHomeSearchQuery}
+                      homeSubjectFilter={homeSubjectFilter}
+                      setHomeSubjectFilter={setHomeSubjectFilter}
+                      fileInputRef={fileInputRef}
+                      cameraInputRef={cameraInputRef}
+                      currentUser={currentUser}
+                      setIsTopicModalOpen={setIsTopicModalOpen}
+                      setIsYouTubeModalOpen={setIsYouTubeModalOpen}
+                      setIsStagingModalOpen={setIsStagingModalOpen}
+                      handleStageFiles={handleStageFiles}
+                      quizQuestions={quizQuestions}
+                      flashcards={flashcards}
+                      mistakes={mistakes}
+                      handleGenerateQuiz={handleGenerateQuiz}
+                      setTopicInput={setTopicInput}
+                      handleStartTopicClarify={handleStartTopicClarify}
+                    />
+                  </div>
                 )}
 
-                {activeTab === "quiz" && (
-                  <QuizTab
-                    quizQuestions={quizQuestions}
-                    currentQuestionIndex={currentQuestionIndex}
-                    setCurrentQuestionIndex={setCurrentQuestionIndex}
-                    quizQuestionCount={quizQuestionCount}
-                    setQuizQuestionCount={setQuizQuestionCount}
-                    quizMode={quizMode}
-                    setQuizMode={setQuizMode}
-                    quizType={quizType}
-                    setQuizType={setQuizType}
-                    isDrillingMistakes={isDrillingMistakes}
-                    userAnswers={userAnswers}
-                    selectedOption={selectedOption}
-                    setSelectedOption={setSelectedOption}
-                    isAnswerSubmitted={isAnswerSubmitted}
-                    isQuizCompleted={isQuizCompleted}
-                    score={score}
-                    solutionStep={solutionStep}
-                    setSolutionStep={setSolutionStep}
-                    examTimeLeft={examTimeLeft}
-                    setExamTimeLeft={setExamTimeLeft}
-                    examDurationSeconds={examDurationSeconds}
-                    setExamDurationSeconds={setExamDurationSeconds}
-                    isExamTimerRunning={isExamTimerRunning}
-                    setIsExamTimerRunning={setIsExamTimerRunning}
-                    examFlagged={examFlagged}
-                    toggleFlagQuestion={toggleFlagQuestion}
-                    examSubmitted={examSubmitted}
-                    setExamSubmitted={setExamSubmitted}
-                    isGeneratingQuiz={isGeneratingQuiz}
-                    handleGenerateQuiz={handleGenerateQuiz}
-                    handleSelectQuizOption={handleSelectQuizOption}
-                    handlePrevQuizQuestion={handlePrevQuizQuestion}
-                    handleNextQuizQuestion={handleNextQuizQuestion}
-                    handleExamSubmit={handleExamSubmit}
-                    resetQuizState={resetQuizState}
-                    activeDocId={activeDocId}
-                    activeDocTitle={activeDocTitle}
-                    isQuizChatOpen={isQuizChatOpen}
-                    setIsQuizChatOpen={setIsQuizChatOpen}
-                    quizChatMessages={quizChatMessages}
-                    quizChatInput={quizChatInput}
-                    setQuizChatInput={setQuizChatInput}
-                    isQuizChatSending={isQuizChatSending}
-                    handleSendQuizQuestionChat={handleSendQuizQuestionChat}
-                    setActiveTab={setActiveTab}
-                    setMistakeFilterScope={setMistakeFilterScope}
-                    activeDocMistakes={activeDocMistakes}
-                    mistakes={mistakes}
-                    selectedModel={selectedModel}
-                    setQuizQuestions={setQuizQuestions}
-                    activeRoomSession={activeRoomSession}
-                    onOpenRoomLeaderboard={() => {
-                      setRoomModalInitialView("result");
-                      if (activeRoomSession) setRoomModalRoomId(activeRoomSession.roomId);
-                      setIsRoomModalOpen(true);
-                    }}
-                    showNotice={showNotice}
-                  />
+                {isTabMounted("material") && (
+                  <div key="tab-pane-material" style={{ display: activeTab === "material" ? "block" : "none" }}>
+                    <Suspense fallback={<TabFallbackSkeleton />}>
+                      <MaterialTab
+                        documents={documents}
+                        loadDocument={loadDocument}
+                        activeDocId={activeDocId}
+                        activeDocTitle={activeDocTitle}
+                        setActiveDocTitle={setActiveDocTitle}
+                        activeDocContent={activeDocContent}
+                        setActiveDocContent={setActiveDocContent}
+                        activeDocSummary={activeDocSummary}
+                        formattedContent={formattedContent}
+                        wordCount={wordCount}
+                        flashcards={flashcards}
+                        quizQuestions={quizQuestions}
+                        isDetectingTitle={isDetectingTitle}
+                        handleAutoDetectTitle={handleAutoDetectTitle}
+                        fileInputRef={fileInputRef}
+                        setIsEnrichModalOpen={setIsEnrichModalOpen}
+                        copyToClipboard={copyToClipboard}
+                        copiedId={copiedId}
+                        handleSaveDocument={handleSaveDocument}
+                        setActiveTab={setActiveTab}
+                        materialCreationTab={materialCreationTab}
+                        setMaterialCreationTab={setMaterialCreationTab}
+                        cameraInputRef={cameraInputRef}
+                        handleGenerateSummary={handleGenerateSummary}
+                        isUploading={isUploading}
+                        uploadError={uploadError}
+                        topicInput={topicInput}
+                        setTopicInput={setTopicInput}
+                        setIsTopicModalOpen={setIsTopicModalOpen}
+                        setIsYouTubeModalOpen={setIsYouTubeModalOpen}
+                        handleStartTopicClarify={handleStartTopicClarify}
+                        isEnriching={isEnriching}
+                        showRawText={showRawText}
+                        setShowRawText={setShowRawText}
+                        isDragging={isDragging}
+                        setIsDragging={setIsDragging}
+                        handleDrop={handleDrop}
+                        handleGenerateQuiz={handleGenerateQuiz}
+                        handleGenerateFlashcards={handleGenerateFlashcards}
+                      />
+                    </Suspense>
+                  </div>
                 )}
 
-                {activeTab === "mistakes" && (
-                  <MistakesTab
-                    mistakes={mistakes}
-                    displayedMistakes={displayedMistakes}
-                    activeDocMistakes={activeDocMistakes}
-                    activeDocId={activeDocId}
-                    activeDocTitle={activeDocTitle}
-                    mistakeFilterScope={mistakeFilterScope}
-                    setMistakeFilterScope={setMistakeFilterScope}
-                    resolveMistake={resolveMistake}
-                    deleteMistake={deleteMistake}
-                    handleClearMistakes={handleClearMistakes}
-                    startMistakeDrill={startMistakeDrill}
-                    loadDocument={loadDocument}
-                    setActiveTab={setActiveTab}
-                    setQuizQuestions={setQuizQuestions}
-                    setUserAnswers={setUserAnswers}
-                    setIsAnswerSubmitted={setIsAnswerSubmitted}
-                  />
+                {isTabMounted("quiz") && (
+                  <div key="tab-pane-quiz" style={{ display: activeTab === "quiz" ? "block" : "none" }}>
+                    <Suspense fallback={<TabFallbackSkeleton />}>
+                      <QuizTab
+                        quizQuestions={quizQuestions}
+                        currentQuestionIndex={currentQuestionIndex}
+                        setCurrentQuestionIndex={setCurrentQuestionIndex}
+                        quizQuestionCount={quizQuestionCount}
+                        setQuizQuestionCount={setQuizQuestionCount}
+                        quizMode={quizMode}
+                        setQuizMode={setQuizMode}
+                        quizType={quizType}
+                        setQuizType={setQuizType}
+                        isDrillingMistakes={isDrillingMistakes}
+                        userAnswers={userAnswers}
+                        selectedOption={selectedOption}
+                        setSelectedOption={setSelectedOption}
+                        isAnswerSubmitted={isAnswerSubmitted}
+                        isQuizCompleted={isQuizCompleted}
+                        score={score}
+                        solutionStep={solutionStep}
+                        setSolutionStep={setSolutionStep}
+                        examTimeLeft={examTimeLeft}
+                        setExamTimeLeft={setExamTimeLeft}
+                        examDurationSeconds={examDurationSeconds}
+                        setExamDurationSeconds={setExamDurationSeconds}
+                        isExamTimerRunning={isExamTimerRunning}
+                        setIsExamTimerRunning={setIsExamTimerRunning}
+                        examFlagged={examFlagged}
+                        toggleFlagQuestion={toggleFlagQuestion}
+                        examSubmitted={examSubmitted}
+                        setExamSubmitted={setExamSubmitted}
+                        isGeneratingQuiz={isGeneratingQuiz}
+                        handleGenerateQuiz={handleGenerateQuiz}
+                        handleSelectQuizOption={handleSelectQuizOption}
+                        handlePrevQuizQuestion={handlePrevQuizQuestion}
+                        handleNextQuizQuestion={handleNextQuizQuestion}
+                        handleExamSubmit={handleExamSubmit}
+                        resetQuizState={resetQuizState}
+                        activeDocId={activeDocId}
+                        activeDocTitle={activeDocTitle}
+                        isQuizChatOpen={isQuizChatOpen}
+                        setIsQuizChatOpen={setIsQuizChatOpen}
+                        quizChatMessages={quizChatMessages}
+                        quizChatInput={quizChatInput}
+                        setQuizChatInput={setQuizChatInput}
+                        isQuizChatSending={isQuizChatSending}
+                        handleSendQuizQuestionChat={handleSendQuizQuestionChat}
+                        setActiveTab={setActiveTab}
+                        setMistakeFilterScope={setMistakeFilterScope}
+                        activeDocMistakes={activeDocMistakes}
+                        mistakes={mistakes}
+                        selectedModel={selectedModel}
+                        setQuizQuestions={setQuizQuestions}
+                        activeRoomSession={activeRoomSession}
+                        onOpenRoomLeaderboard={() => {
+                          setRoomModalInitialView("result");
+                          if (activeRoomSession) setRoomModalRoomId(activeRoomSession.roomId);
+                          setIsRoomModalOpen(true);
+                        }}
+                        showNotice={showNotice}
+                      />
+                    </Suspense>
+                  </div>
                 )}
 
-                {activeTab === "feynman" && (
-                  <FeynmanTab
-                    feynmanTopic={feynmanTopic}
-                    setFeynmanTopic={setFeynmanTopic}
-                    feynmanExplanation={feynmanExplanation}
-                    setFeynmanExplanation={setFeynmanExplanation}
-                    isEvaluatingFeynman={isEvaluatingFeynman}
-                    feynmanResult={feynmanResult}
-                    handleEvaluateFeynman={handleEvaluateFeynman}
-                    isRecordingFeynman={isRecordingFeynman}
-                    isTranscribing={isTranscribing}
-                    feynmanRecordingSeconds={feynmanRecordingSeconds}
-                    handleToggleFeynmanRecording={handleToggleFeynmanRecording}
-                  />
+                {isTabMounted("mistakes") && (
+                  <div key="tab-pane-mistakes" style={{ display: activeTab === "mistakes" ? "block" : "none" }}>
+                    <Suspense fallback={<TabFallbackSkeleton />}>
+                      <MistakesTab
+                        mistakes={mistakes}
+                        displayedMistakes={displayedMistakes}
+                        activeDocMistakes={activeDocMistakes}
+                        activeDocId={activeDocId}
+                        activeDocTitle={activeDocTitle}
+                        mistakeFilterScope={mistakeFilterScope}
+                        setMistakeFilterScope={setMistakeFilterScope}
+                        resolveMistake={resolveMistake}
+                        deleteMistake={deleteMistake}
+                        handleClearMistakes={handleClearMistakes}
+                        startMistakeDrill={startMistakeDrill}
+                        loadDocument={loadDocument}
+                        setActiveTab={setActiveTab}
+                        setQuizQuestions={setQuizQuestions}
+                        setUserAnswers={setUserAnswers}
+                        setIsAnswerSubmitted={setIsAnswerSubmitted}
+                      />
+                    </Suspense>
+                  </div>
                 )}
 
-                {activeTab === "flashcards" && (
-                  <FlashcardsTab
-                    flashcards={flashcards}
-                    currentCardIndex={currentCardIndex}
-                    setCurrentCardIndex={setCurrentCardIndex}
-                    isFlipped={isFlipped}
-                    setIsFlipped={setIsFlipped}
-                    handleGenerateFlashcards={handleGenerateFlashcards}
-                    handleReviewCard={handleReviewCard}
-                    isGeneratingCards={isGeneratingCards}
-                  />
+                {isTabMounted("feynman") && (
+                  <div key="tab-pane-feynman" style={{ display: activeTab === "feynman" ? "block" : "none" }}>
+                    <Suspense fallback={<TabFallbackSkeleton />}>
+                      <FeynmanTab
+                        feynmanTopic={feynmanTopic}
+                        setFeynmanTopic={setFeynmanTopic}
+                        feynmanExplanation={feynmanExplanation}
+                        setFeynmanExplanation={setFeynmanExplanation}
+                        isEvaluatingFeynman={isEvaluatingFeynman}
+                        feynmanResult={feynmanResult}
+                        handleEvaluateFeynman={handleEvaluateFeynman}
+                        isRecordingFeynman={isRecordingFeynman}
+                        isTranscribing={isTranscribing}
+                        feynmanRecordingSeconds={feynmanRecordingSeconds}
+                        handleToggleFeynmanRecording={handleToggleFeynmanRecording}
+                      />
+                    </Suspense>
+                  </div>
                 )}
 
-                {activeTab === "summary" && (
-                  <SummaryTab
-                    activeDoc={activeDoc}
-                    activeDocTitle={activeDocTitle}
-                    activeDocSummary={activeDocSummary}
-                    formattedSummary={formattedSummary}
-                    summaryStyle={summaryStyle}
-                    setSummaryStyle={setSummaryStyle}
-                    isGeneratingSummary={isGeneratingSummary}
-                    handleGenerateSummary={handleGenerateSummary}
-                    isSpeaking={isSpeaking}
-                    toggleSpeech={toggleSpeech}
-                    downloadAsMarkdown={downloadAsMarkdown}
-                    copyToClipboard={copyToClipboard}
-                    copiedId={copiedId}
-                    quizQuestions={quizQuestions}
-                    flashcards={flashcards}
-                    activeDocId={activeDocId}
-                    selectedModel={selectedModel}
-                    setActiveDocSummary={setActiveDocSummary}
-                    showNotice={showNotice}
-                  />
+                {isTabMounted("flashcards") && (
+                  <div key="tab-pane-flashcards" style={{ display: activeTab === "flashcards" ? "block" : "none" }}>
+                    <Suspense fallback={<TabFallbackSkeleton />}>
+                      <FlashcardsTab
+                        flashcards={flashcards}
+                        currentCardIndex={currentCardIndex}
+                        setCurrentCardIndex={setCurrentCardIndex}
+                        isFlipped={isFlipped}
+                        setIsFlipped={setIsFlipped}
+                        handleGenerateFlashcards={handleGenerateFlashcards}
+                        handleReviewCard={handleReviewCard}
+                        isGeneratingCards={isGeneratingCards}
+                      />
+                    </Suspense>
+                  </div>
                 )}
-              </Suspense>
 
+                {isTabMounted("summary") && (
+                  <div key="tab-pane-summary" style={{ display: activeTab === "summary" ? "block" : "none" }}>
+                    <Suspense fallback={<TabFallbackSkeleton />}>
+                      <SummaryTab
+                        activeDoc={activeDoc}
+                        activeDocTitle={activeDocTitle}
+                        activeDocSummary={activeDocSummary}
+                        formattedSummary={formattedSummary}
+                        summaryStyle={summaryStyle}
+                        setSummaryStyle={setSummaryStyle}
+                        isGeneratingSummary={isGeneratingSummary}
+                        handleGenerateSummary={handleGenerateSummary}
+                        isSpeaking={isSpeaking}
+                        toggleSpeech={toggleSpeech}
+                        downloadAsMarkdown={downloadAsMarkdown}
+                        copyToClipboard={copyToClipboard}
+                        copiedId={copiedId}
+                        quizQuestions={quizQuestions}
+                        flashcards={flashcards}
+                        activeDocId={activeDocId}
+                        selectedModel={selectedModel}
+                        setActiveDocSummary={setActiveDocSummary}
+                        showNotice={showNotice}
+                      />
+                    </Suspense>
+                  </div>
+                )}
               </div>
             </div>
           </section>

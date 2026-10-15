@@ -21,7 +21,7 @@ export function isAsciiDiagramText(text: string): boolean {
   if (upper.includes("CULTURAL LAG") || (upper.includes("BUDAYA MATERIAL") && upper.includes("BUDAYA IMATERIAL"))) return true;
   if (upper.includes("ROGERS") || (upper.includes("INNOVATOR") && upper.includes("EARLY ADOPTER") && upper.includes("LAGGARD"))) return true;
   if ((upper.includes("MEMANCAR") && upper.includes("MENJALAR") && upper.includes("MEMUSAT")) || (upper.includes("OGBURN") && (upper.includes("POLA") || upper.includes("SEBARAN")))) return true;
-  if (/[┌└├│─┬┴┼┐┘┤┴┬│─]|\+[-=]{2,}|\/\\|\\\/|\[Lahir/.test(text)) return true;
+  if (/[┌└├│─┬┴┼┐┘┤┴┬│─╔╚╠║═╦╩╬╗╝╣]|\+[-=]{2,}|\/\\|\\\/|\[Lahir/.test(text)) return true;
   return false;
 }
 
@@ -29,7 +29,7 @@ import { sanitizeMathMarkdown, normalizeDiagramsInMarkdown } from "../../utils/d
 export { sanitizeMathMarkdown, normalizeDiagramsInMarkdown };
 
 function isConnectorLine(line: string): boolean {
-  const clean = line.replace(/[┌└├│─┬┴┼┐┘┤┴┬│─+=/\\^vV▼▲◄►<>➔→|:.\-]/g, " ").trim();
+  const clean = line.replace(/[┌└├│─┬┴┼┐┘┤┴┬│─╔╚╠║═╦╩╬╗╝╣+=/\\^vV▼▲◄►<>➔→|:.\-]/g, " ").trim();
   return clean.length <= 1;
 }
 
@@ -62,6 +62,140 @@ export function sanitizeChildrenText(child: any): any {
     });
   }
   return child;
+}
+
+export interface ConceptNode {
+  depth: number;
+  label: string;
+}
+
+export interface ConceptBranch {
+  title: string;
+  items: string[];
+}
+
+export interface ConceptTreeStructure {
+  root: string;
+  branches: ConceptBranch[];
+  isLinear: boolean;
+  linearNodes: ConceptNode[];
+}
+
+export function parseConceptTreeFromAscii(rawText: string): ConceptTreeStructure {
+  const lines = rawText.split("\n").filter((l) => l.trim().length > 0);
+  if (lines.length === 0) {
+    return { root: "Peta Struktur Konsep", branches: [], isLinear: true, linearNodes: [] };
+  }
+
+  // 1. Ekstrak Root Title (baris pertama atau anchor di kiri)
+  const isOnlyConnectors = (l: string) => !/[a-zA-Z0-9\(\)\{\}\[\]\$\\\u00C0-\u024F\u1E00-\u1EFF\u2100-\u214F]/.test(l);
+  const cleanBoxChars = (s: string) => s.replace(/[┌└├│─┬┴┼┐┘┤┴┬│─╔╚╠║═╦╩╬╗╝╣•]+|\+[-=]+|[-=]+\+/g, " ").trim();
+
+  const explicitRootLine = lines.find((l) => /^[A-Za-z0-9\s]{3,}\s*[─=]+[┤├]/.test(l));
+  let root = "Peta Hierarki Konsep";
+  let rootLineIdx = -1;
+
+  if (explicitRootLine) {
+    root = cleanBoxChars(explicitRootLine) || root;
+    rootLineIdx = lines.indexOf(explicitRootLine);
+  } else {
+    const firstTextLineIdx = lines.findIndex((l) => /[a-zA-Z0-9\(\)\{\}\[\]\$\\\u00C0-\u024F\u1E00-\u1EFF\u2100-\u214F]/.test(l));
+    if (firstTextLineIdx !== -1) {
+      root = cleanBoxChars(lines[firstTextLineIdx]) || root;
+      rootLineIdx = firstTextLineIdx;
+    }
+  }
+
+  const contentLines = lines.filter((l, idx) => idx !== rootLineIdx && !isOnlyConnectors(l));
+
+  // 2. Deteksi apakah ini diagram 2-pilar / 2-cabang (seperti SISTEM BILANGAN RIIL)
+  const twoColLine = contentLines.find((l) => {
+    const match = l.match(/\s{5,}/);
+    if (!match || match.index === undefined) return false;
+    const left = cleanBoxChars(l.slice(0, match.index));
+    const right = cleanBoxChars(l.slice(match.index + match[0].length));
+    return left.length >= 2 && right.length >= 2;
+  });
+
+  if (twoColLine) {
+    const match = twoColLine.match(/\s{5,}/);
+    // splitIdx is where the second column starts
+    const splitIdx = match && match.index !== undefined ? match.index + match[0].length : Math.floor(twoColLine.length / 2);
+
+    const b1Header = cleanBoxChars(twoColLine.slice(0, splitIdx));
+    const b2Header = cleanBoxChars(twoColLine.slice(splitIdx));
+
+    const detailLines = contentLines.slice(contentLines.indexOf(twoColLine) + 1);
+    const b1Items: string[] = [];
+    const b2Items: string[] = [];
+
+    detailLines.forEach((l) => {
+      // If line is shorter than splitIdx, it only has leftPart
+      if (l.length <= splitIdx) {
+        const left = cleanBoxChars(l);
+        if (left) b1Items.push(left);
+        return;
+      }
+
+      // Check if splitIdx cuts directly through a word (e.g. "Tera" and "tur")
+      const cutsWord = /\w/.test(l[splitIdx - 1] || "") && /\w/.test(l[splitIdx] || "");
+      // Check if there is genuine whitespace separating the columns near splitIdx
+      const hasGap = /\s{3,}/.test(l.slice(Math.max(0, splitIdx - 10), splitIdx + 10));
+
+      if (cutsWord || !hasGap) {
+        // The line is a single entity in column 1
+        const left = cleanBoxChars(l);
+        if (left) b1Items.push(left);
+      } else {
+        const leftPart = cleanBoxChars(l.slice(0, splitIdx));
+        const rightPart = cleanBoxChars(l.slice(splitIdx));
+        if (leftPart) b1Items.push(leftPart);
+        if (rightPart) b2Items.push(rightPart);
+      }
+    });
+
+    return {
+      root,
+      isLinear: false,
+      branches: [
+        { title: b1Header, items: b1Items },
+        { title: b2Header, items: b2Items }
+      ].filter((b) => b.title.length > 0 || b.items.length > 0),
+      linearNodes: []
+    };
+  }
+
+  // 3. Fallback: Linear / Tiered Hierarchical Tree
+  const linearNodes: ConceptNode[] = [];
+  const minIndent = contentLines.length > 0
+    ? Math.min(...contentLines.map((l) => (l.match(/^\s*/)?.[0] || "").length))
+    : 0;
+
+  contentLines.forEach((raw) => {
+    const leadingSpaces = (raw.match(/^\s*/)?.[0] || "").length;
+    const branchDepth = (raw.slice(0, 30).match(/[│|]/g) || []).length;
+
+    const subBranchMatch = raw.match(/^(.*?)[─=]+[┬┴┼][─=]+(.*)$/);
+    if (subBranchMatch) {
+      const parentLabel = cleanBoxChars(subBranchMatch[1]);
+      const childLabel = cleanBoxChars(subBranchMatch[2]);
+      const relativeIndent = Math.max(0, leadingSpaces - minIndent);
+      const baseDepth = Math.min(3, Math.max(0, Math.round(relativeIndent / 8) + branchDepth));
+      if (parentLabel) linearNodes.push({ depth: baseDepth, label: parentLabel });
+      if (childLabel) linearNodes.push({ depth: baseDepth + 1, label: childLabel });
+      return;
+    }
+
+    const cleanLabel = cleanBoxChars(raw);
+
+    if (cleanLabel.length > 0) {
+      const relativeIndent = Math.max(0, leadingSpaces - minIndent);
+      const depth = Math.min(4, Math.max(0, Math.round(relativeIndent / 8) + branchDepth));
+      linearNodes.push({ depth, label: cleanLabel });
+    }
+  });
+
+  return { root, isLinear: true, branches: [], linearNodes };
 }
 
 // Interactive Visual Diagram & Flow Renderer for Academic Summaries
@@ -497,7 +631,7 @@ export function renderVisualDiagramOrPre(children: any) {
   }
 
   // Pattern 6: Universal Dual Comparison (e.g. A vs B or 2-sided concepts)
-  const isComparison = (upper.includes(" VS ") || upper.includes(" VERSUS ") || (upper.includes("1.") && upper.includes("2.") && upper.includes("SUMBU"))) && !/[┌└├│]/.test(text);
+  const isComparison = (upper.includes(" VS ") || upper.includes(" VERSUS ") || (upper.includes("1.") && upper.includes("2.") && upper.includes("SUMBU"))) && !/[┌└├│─┬┴┼┐┘┤┴┬│─╔╚╠║═╦╩╬╗╝╣]|\+[-=]{2,}/.test(text);
   if (isComparison) {
     const parts = text.split(/\s*(?:vs|versus)\s*/i).map(s => s.trim()).filter(Boolean);
     if (parts.length === 2) {
@@ -521,59 +655,155 @@ export function renderVisualDiagramOrPre(children: any) {
     }
   }
 
-  // Pattern 7: 2D Spatial Concept Tree & Architecture Canvas
-  const hasBoxChars = /[┌└├│─┬┴┼┐┘┤┴┬│─]|\+[-=]{2,}/.test(text);
+  // Pattern 7: Clean Editorial DOM Concept Tree (Anti-Neon, Zero-ASCII-Artifacts)
+  const hasBoxChars = /[┌└├│─┬┴┼┐┘┤┴┬│─╔╚╠║═╦╩╬╗╝╣]|\+[-=]{2,}/.test(text);
   if (hasBoxChars) {
+    const tree = parseConceptTreeFromAscii(rawText);
+
     return (
       <div
-        className="visual-diagram-card visual-ascii-canvas"
+        className="visual-diagram-card concept-tree-container"
         style={{
           margin: "18px 0",
-          backgroundColor: "#f9faf7",
-          border: "1px solid #dce2da",
+          backgroundColor: "#ffffff",
+          border: "1px solid #dce2d8",
           borderRadius: 8,
-          overflow: "hidden",
-          boxShadow: "0 1px 4px rgba(24, 34, 31, 0.03)"
+          padding: "16px 18px",
+          boxShadow: "0 1px 3px rgba(24, 34, 31, 0.02)"
         }}
       >
+        {/* Header Kicker */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "8px 14px",
-            backgroundColor: "#f0f4ee",
-            borderBottom: "1px solid #dce2da",
-            fontSize: 11,
-            fontWeight: 800,
-            color: "#3d541b",
-            fontFamily: "'DM Mono', monospace",
-            letterSpacing: "0.05em"
+            borderBottom: "1px solid #edf1eb",
+            paddingBottom: 8,
+            marginBottom: 12
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Network size={13} color="#4b6623" />
-            <span>BAGAN ALUR & PETA STRUKTUR KONSEP</span>
-          </div>
-          <span style={{ fontSize: 10, color: "#7a8a82", fontWeight: 600 }}>Geser horizontal di HP ↔</span>
-        </div>
-        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", padding: "14px 16px" }}>
-          <pre
+          <div
             style={{
-              margin: 0,
-              padding: 0,
-              fontFamily: "'DM Mono', 'Fira Code', monospace",
-              fontSize: 12.5,
-              lineHeight: 1.55,
-              color: "#18221f",
-              backgroundColor: "transparent",
-              border: "none",
-              whiteSpace: "pre"
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 10.5,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "#465f33",
+              fontFamily: "'DM Mono', monospace"
             }}
           >
-            {sanitizeKaTeXText(rawText)}
-          </pre>
+            <Network size={12} color="#4b6623" />
+            <span>BAGAN HIERARKI KONSEP</span>
+          </div>
+          <span style={{ fontSize: 10.5, color: "#7a8a82", fontWeight: 600 }}>Struktur Bertingkat</span>
         </div>
+
+        {/* Root Banner */}
+        <div
+          style={{
+            backgroundColor: "#f4f7ee",
+            border: "1px solid #dce4d2",
+            borderRadius: 6,
+            padding: "9px 14px",
+            fontSize: 13,
+            fontWeight: 800,
+            color: "#18221f",
+            marginBottom: 12
+          }}
+        >
+          <MathView text={tree.root} />
+        </div>
+
+        {/* 2-Pillar Branches or Linear Hierarchical Tree */}
+        {!tree.isLinear && tree.branches.length > 0 ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: 12
+            }}
+          >
+            {tree.branches.map((branch, bIdx) => (
+              <div
+                key={bIdx}
+                style={{
+                  backgroundColor: "#fafbf9",
+                  border: "1px solid #e1e8dd",
+                  borderLeft: bIdx === 0 ? "3.5px solid #4b6623" : "3.5px solid #2b593f",
+                  borderRadius: 6,
+                  padding: "12px 14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    color: "#17201d",
+                    borderBottom: "1px solid #edf1ea",
+                    paddingBottom: 5
+                  }}
+                >
+                  <MathView text={branch.title} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  {branch.items.map((item, iIdx) => (
+                    <div
+                      key={iIdx}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 6,
+                        fontSize: 12,
+                        color: "#374740",
+                        lineHeight: 1.5
+                      }}
+                    >
+                      <span style={{ color: "#65a30d", fontWeight: 800, fontSize: 11, flexShrink: 0, marginTop: 1 }}>•</span>
+                      <span style={{ flex: 1 }}>
+                        <MathView text={item} />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Linear Tiered Tree */
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {tree.linearNodes.map((node, nIdx) => (
+              <div
+                key={nIdx}
+                style={{
+                  marginLeft: `${Math.min(node.depth * 16, 64)}px`,
+                  padding: "7px 12px",
+                  backgroundColor: node.depth === 0 ? "#f8faf5" : "#ffffff",
+                  border: "1px solid #e2e8e0",
+                  borderLeft: node.depth > 0 ? "2.5px solid #779f2f" : "1px solid #e2e8e0",
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: node.depth === 0 ? 700 : 500,
+                  color: "#283731",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6
+                }}
+              >
+                {node.depth > 0 && <span style={{ color: "#779f2f", fontSize: 10, flexShrink: 0 }}>↳</span>}
+                <span style={{ flex: 1 }}>
+                  <MathView text={node.label} />
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }

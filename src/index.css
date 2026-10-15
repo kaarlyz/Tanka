@@ -2202,6 +2202,11 @@
         border-bottom: none !important;
       }
 
+      .concept-tree-container {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
       .print-only {
         display: none !important;
       }
@@ -2434,6 +2439,14 @@
         }
 
         /* Prevent table and diagram clipping & orphan pages */
+        .concept-tree-container {
+          border: 1px solid #dce2d8 !important;
+          background: #ffffff !important;
+          box-shadow: none !important;
+          padding: 10pt 12pt !important;
+          margin: 12pt 0 !important;
+        }
+
         .table-scroll-wrapper {
           overflow: visible !important;
           break-inside: avoid !important;

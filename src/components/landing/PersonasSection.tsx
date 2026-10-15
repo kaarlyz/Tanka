@@ -1,93 +1,86 @@
 import React from "react";
-import { GraduationCap, FileText, Compass, Check } from "lucide-react";
+import { Star } from "lucide-react";
 
 export function PersonasSection() {
-  const SCENARIOS = [
-    {
-      icon: GraduationCap,
-      tag: "SKENARIO 01 // PERSIAPAN INTENSIF",
-      title: "Siswa SNBT & Ujian Sekolah",
-      quote:
-        "Silabus ujian tebal dipecah jadi modul terstruktur 3-5 menit. Kuis logika dan Bank Salah otomatis mengisolasi konsep yang belum dikuasai tanpa membuang waktu mengulang soal yang sudah dipahami.",
-      metrics: [
-        "94% Retensi Konsep Dasar",
-        "Bank Salah Otomatis Terisolasi"
-      ],
-      author: "Dafa",
-      role: "Siswa Kelas XII // Target PTN 2026"
-    },
-    {
-      icon: FileText,
-      tag: "SKENARIO 02 // RISET & AKADEMIK",
-      title: "Mahasiswa & Penelaah Jurnal",
-      quote:
-        "Paper jurnal 40+ halaman dan kuliah panjang langsung diekstraksi menjadi pokok bahasan terarah. Penurunan rumus matematika KaTeX presisi memudahkan verifikasi sebelum evaluasi mingguan.",
-      metrics: [
-        "Ekstraksi Dokumen & YouTube",
-        "Penurunan Rumus KaTeX Presisi"
-      ],
-      author: "Nadia",
-      role: "Mahasiswi Biologi // Riset Literatur"
-    },
-    {
-      icon: Compass,
-      tag: "SKENARIO 03 // BELAJAR MANDIRI",
-      title: "Pejuang Belajar Mandiri & Gap Year",
-      quote:
-        "Belajar konsisten dengan ritme mandiri tanpa distraksi iklan atau biaya langganan berulang. Seluruh modul dan catatan progres tersimpan privat di perangkat lokal untuk akses offline penuh.",
-      metrics: [
-        "Akses Penuh Tanpa Iklan",
-        "Data Privat di Perangkat Anda"
-      ],
-      author: "Rian",
-      role: "Gap Year // Belajar Mandiri Terjadwal"
-    }
-  ];
-
   return (
     <section id="testimoni" className="landing-section">
       <div className="section-header-center reveal-scroll">
-        <span className="section-kicker">SKENARIO PENGGUNAAN</span>
-        <h2 className="section-title">Dirancang untuk Kasus Belajar Nyata</h2>
+        <span className="section-kicker">CERITA TEMAN BELAJAR</span>
+        <h2 className="section-title">Teman Belajar Pejuang Ujian & Mahasiswa</h2>
         <p className="section-desc">
-          Bukan klaim artifisial. Tanka membuktikan keunggulan arsitekturnya di tiga pola belajar harian paling menuntut.
+          Bukan sekadar klaim. Inilah pengalaman nyata teman-teman yang belajar lebih tenang bersama Tanka.
         </p>
       </div>
 
       <div className="persona-grid">
-        {SCENARIOS.map((item, idx) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={idx}
-              className={`persona-card reveal-scroll ${idx > 0 ? `delay-${idx}` : ""}`}
-            >
-              <div className="persona-card-top">
-                <div className="persona-scenario-header">
-                  <span className="persona-scenario-icon">
-                    <Icon size={16} />
-                  </span>
-                  <span className="persona-scenario-tag font-mono">{item.tag}</span>
-                </div>
-                <h3 className="persona-scenario-title">{item.title}</h3>
-                <p className="persona-scenario-quote">"{item.quote}"</p>
-                <div className="persona-scenario-metrics">
-                  {item.metrics.map((m, mIdx) => (
-                    <div key={mIdx} className="persona-metric-pill">
-                      <Check size={12} className="persona-metric-check" />
-                      <span>{m}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="persona-card-footer">
-                <div className="persona-author-name">{item.author}</div>
-                <div className="persona-author-role">{item.role}</div>
-              </div>
+        {/* Persona 1: Dafa */}
+        <div className="persona-card reveal-scroll">
+          <div>
+            <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={15} color="#eab308" fill="#eab308" />
+              ))}
             </div>
-          );
-        })}
+            <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
+              "Paling kebantu sama Bank Salah dan kuis 1 kartu 1 fakta. Gak ada soal jebakan ngaco, rumus matematika langsung diterjemahin step by step."
+            </p>
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: "#18221f" }}>Dafa</div>
+            <div style={{ fontSize: 12.5, color: "#60706a" }}>Siswa Kelas XII / Pejuang SNBT</div>
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "4px 9px", borderRadius: 6, color: "#283832", fontWeight: 600 }}>
+                ✓ Pejuang Ujian 2026
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Persona 2: Nadia */}
+        <div className="persona-card reveal-scroll delay-1">
+          <div>
+            <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={15} color="#eab308" fill="#eab308" />
+              ))}
+            </div>
+            <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
+              "Kuliah sering dikasih jurnal 40 halaman. Dimasukin ke Tanka langsung jadi bab-bab kecil yang gampang dicerna sebelum kuis mingguan."
+            </p>
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: "#18221f" }}>Nadia</div>
+            <div style={{ fontSize: 12.5, color: "#60706a" }}>Mahasiswi Biologi</div>
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "4px 9px", borderRadius: 6, color: "#283832", fontWeight: 600 }}>
+                ✓ Rangkum Jurnal Cepat
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Persona 3: Rian */}
+        <div className="persona-card reveal-scroll delay-2">
+          <div>
+            <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={15} color="#eab308" fill="#eab308" />
+              ))}
+            </div>
+            <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#18221f", fontStyle: "italic", marginBottom: 20 }}>
+              "Bisa belajar offline di cafe atau perpus tanpa takut kuota jebol. Tampilannya bersih banget dan gak ada iklan bikin pusing."
+            </p>
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: "#18221f" }}>Rian</div>
+            <div style={{ fontSize: 12.5, color: "#60706a" }}>Gap Year Pejuang Kampus</div>
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#f2f5ef", padding: "4px 9px", borderRadius: 6, color: "#283832", fontWeight: 600 }}>
+                ✓ 100% Offline di Kafe
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

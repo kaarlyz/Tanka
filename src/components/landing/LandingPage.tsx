@@ -94,6 +94,8 @@ export function LandingPage({
 
   return (
     <div className="tanka-landing-container" ref={containerRef}>
+      <div className="landing-ambient-orb-1" />
+      <div className="landing-ambient-orb-2" />
       <LandingNavbar
         onActionLaunch={handleActionLaunch}
         onOpenAuth={onOpenAuth}

@@ -73,27 +73,37 @@ export function StepperSection({ onActionLaunch }: StepperSectionProps) {
 
       {/* Stepper Active Detail Card */}
       <div className="stepper-card reveal-scroll delay-1">
-        <div className="stepper-card-info">
-          <div className="stepper-step-header">
-            <span className="stepper-step-badge font-mono">
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <span
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#18221f",
+                background: "#c8f064",
+                padding: "4px 10px",
+                borderRadius: 6
+              }}
+            >
               LANGKAH {steps[activeStep].num}
             </span>
-            <span className="stepper-step-tag font-mono">
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#60706a" }}>
               {steps[activeStep].tag}
             </span>
           </div>
 
-          <h3 className="stepper-card-title">
+          <h3 style={{ fontSize: 24, fontWeight: 800, color: "#18221f", marginBottom: 14 }}>
             {steps[activeStep].title}
           </h3>
 
-          <p className="stepper-card-desc">
+          <p style={{ fontSize: 15, lineHeight: 1.68, color: "#55635e", marginBottom: 24 }}>
             {steps[activeStep].detail}
           </p>
 
-          <div className="stepper-chips-list">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {steps[activeStep].chips.map((c, i) => (
-              <div key={i} className="stepper-chip-item">
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#18221f", fontWeight: 600 }}>
                 <CheckCircle2 size={16} color="#4b6623" />
                 <span>{c}</span>
               </div>
@@ -101,19 +111,44 @@ export function StepperSection({ onActionLaunch }: StepperSectionProps) {
           </div>
         </div>
 
-        <div className="stepper-method-box">
-          <div className="stepper-method-header">
-            <span className="stepper-method-tag font-mono">
+        <div
+          style={{
+            background: "#18221f",
+            color: "#eff5ec",
+            borderRadius: 16,
+            padding: 30,
+            border: "1px solid #283832",
+            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: "#c8f064", letterSpacing: "0.06em", fontWeight: 700 }}>
               METODE TERARAH
             </span>
             <Zap size={15} color="#c8f064" />
           </div>
-          <p className="stepper-method-quote">
+          <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#d5dfd9", marginBottom: 22 }}>
             "{steps[activeStep].summary}"
           </p>
           <button
             className="stepper-cta-btn"
             onClick={onActionLaunch}
+            style={{
+              width: "100%",
+              background: "#c8f064",
+              color: "#18221f",
+              border: "none",
+              borderRadius: 10,
+              padding: "12px 18px",
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              transition: "background 0.15s ease"
+            }}
           >
             <span>Coba Mulai Belajar</span>
             <ChevronRight size={15} />

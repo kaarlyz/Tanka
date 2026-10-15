@@ -9,54 +9,114 @@ export function LandingFooter({ onActionLaunch }: LandingFooterProps) {
     <footer className="landing-footer">
       <div className="landing-footer-inner">
         <div className="footer-top">
-          <div className="footer-col-main">
+          <div>
             <div
-              className="landing-brand footer-brand-wrap"
+              className="landing-brand"
               onClick={onActionLaunch}
+              style={{ marginBottom: 14 }}
             >
               <div className="landing-brand-box">t</div>
               <span className="landing-brand-text">tanka.</span>
             </div>
-            <p className="footer-brand-desc">
+            <p
+              style={{
+                fontSize: 14.5,
+                lineHeight: 1.68,
+                color: "#55635e",
+                maxWidth: 380
+              }}
+            >
               Platform Belajar Mandiri Adaptif dengan Pendamping AI Nara untuk Siswa SMA & Mahasiswa.
             </p>
           </div>
 
-          <div className="footer-col-nav">
-            <div className="footer-col-title font-mono">
+          <div>
+            <div
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 11.5,
+                fontWeight: 800,
+                color: "#18221f",
+                marginBottom: 14,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase"
+              }}
+            >
               NAVIGASI FITUR
             </div>
-            <div className="footer-links-list">
-              <a href="#keunggulan" className="footer-link">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <a
+                href="#keunggulan"
+                style={{
+                  fontSize: 13.5,
+                  color: "#55635e",
+                  textDecoration: "none",
+                  transition: "color 0.15s ease"
+                }}
+              >
                 Tutor Nara AI 24 Jam
               </a>
-              <a href="#keunggulan" className="footer-link">
+              <a
+                href="#keunggulan"
+                style={{
+                  fontSize: 13.5,
+                  color: "#55635e",
+                  textDecoration: "none",
+                  transition: "color 0.15s ease"
+                }}
+              >
                 Rangkum Video & Dokumen
               </a>
-              <a href="#keunggulan" className="footer-link">
+              <a
+                href="#keunggulan"
+                style={{
+                  fontSize: 13.5,
+                  color: "#55635e",
+                  textDecoration: "none",
+                  transition: "color 0.15s ease"
+                }}
+              >
                 Kuis Logika & Bank Salah
               </a>
-              <a href="#keunggulan" className="footer-link">
+              <a
+                href="#keunggulan"
+                style={{
+                  fontSize: 13.5,
+                  color: "#55635e",
+                  textDecoration: "none",
+                  transition: "color 0.15s ease"
+                }}
+              >
                 Peta Saraf Materi
               </a>
             </div>
           </div>
 
-          <div className="footer-col-principles">
-            <div className="footer-col-title font-mono">
+          <div>
+            <div
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 11.5,
+                fontWeight: 800,
+                color: "#18221f",
+                marginBottom: 14,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase"
+              }}
+            >
               PRINSIP & PRIVASI
             </div>
-            <div className="footer-text-list">
-              <span className="footer-text-item">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <span style={{ fontSize: 13.5, color: "#55635e" }}>
                 100% Data Privat di Perangkat
               </span>
-              <span className="footer-text-item">
+              <span style={{ fontSize: 13.5, color: "#55635e" }}>
                 Fokus Penuh pada Materi
               </span>
-              <span className="footer-text-item">
+              <span style={{ fontSize: 13.5, color: "#55635e" }}>
                 Pendamping AI Nara 24 Jam
               </span>
-              <span className="footer-text-item">
+              <span style={{ fontSize: 13.5, color: "#55635e" }}>
                 Arsitektur Berintegritas Tinggi
               </span>
             </div>
@@ -65,7 +125,14 @@ export function LandingFooter({ onActionLaunch }: LandingFooterProps) {
 
         <div className="footer-bottom">
           <span>© 2026 Tanka. Designed & Architected by Eka Restu Syahputra. Seluruh hak cipta dilindungi.</span>
-          <span className="footer-badge font-mono">
+          <span
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 12.5,
+              color: "#4b6623",
+              fontWeight: 700
+            }}
+          >
             Platform Belajar Mandiri Adaptif
           </span>
         </div>

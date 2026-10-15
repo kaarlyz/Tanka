@@ -349,6 +349,12 @@ export const MaterialTab = React.memo(function MaterialTab({
     return raw.replace(/^#\s+[^\n]+(?:\n|$)/m, "");
   }, [formattedContent, activeDocContent]);
 
+  const handlePrint = () => {
+    const cleanTitle = (activeDocTitle || "Modul Belajar").replace(/[\\/:*?"<>|]/g, " ").trim();
+    document.title = `${cleanTitle} · Tanka`;
+    window.print();
+  };
+
   const markdownComponents = React.useMemo(() => ({
     h1: ({ children }: any) => (
       <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111a17", letterSpacing: "-0.025em", marginTop: 32, marginBottom: 14, borderBottom: "1px solid #eef1eb", paddingBottom: 8 }}>
@@ -903,7 +909,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                           </button>
 
                           <button
-                            onClick={() => window.print()}
+                            onClick={handlePrint}
                             style={{
                               display: "flex",
                               alignItems: "center",

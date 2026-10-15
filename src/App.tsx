@@ -584,6 +584,18 @@ export default function App() {
     }
   }, [isAlarmActive]);
 
+  // Sinkronisasi document.title untuk tab browser dan default filename PDF export
+  useEffect(() => {
+    if (activeDocTitle && activeTab !== "landing") {
+      const sanitized = activeDocTitle.replace(/[\\/:*?"<>|]/g, " ").trim();
+      document.title = `${sanitized} · Tanka`;
+    } else if (activeTab === "landing") {
+      document.title = "Tanka - AI Autonomous Study Platform";
+    } else {
+      document.title = "Tanka";
+    }
+  }, [activeDocTitle, activeTab]);
+
   // 17. Domain Hook: Speech Audio & Clipboard
   const { isSpeaking, toggleSpeech } = useAudioSpeech(showNotice);
   const { copiedId, copyToClipboard, downloadAsMarkdown } = useClipboardAndDownload(showNotice);

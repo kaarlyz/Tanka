@@ -145,6 +145,12 @@ export const SummaryTab = React.memo(function SummaryTab({
   const isTeaserOnly = Boolean(activeDocSummary && activeDocSummary.trim().length < 500);
   const hasFullSummary = Boolean(activeDocSummary && activeDocSummary.trim().length >= 500);
 
+  const handlePrint = () => {
+    const cleanTitle = (activeDocTitle || "Rangkuman Belajar").replace(/[\\/:*?"<>|]/g, " ").trim();
+    document.title = `Rangkuman ${cleanTitle} · Tanka`;
+    window.print();
+  };
+
   return (
               <div className="summary-view tab-pane-animate">
                 <div className="view-heading print-hidden">
@@ -230,7 +236,7 @@ export const SummaryTab = React.memo(function SummaryTab({
                         </button>
 
                         <button
-                          onClick={() => window.print()}
+                          onClick={handlePrint}
                           style={{
                             backgroundColor: "#ffffff",
                             border: "1px solid #dce1da",

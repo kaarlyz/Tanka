@@ -83,13 +83,13 @@ function extractCleanSummary(summary: string, content: string): string {
     }
     cleanThesis = cleanThesis.replace(/^[:\-–—]\s*/, "");
 
-    if (cleanThesis.length > 280) {
-      const periodIdx = cleanThesis.indexOf(".", 180);
-      if (periodIdx !== -1 && periodIdx <= 320) {
+    if (cleanThesis.length > 380) {
+      const periodIdx = cleanThesis.indexOf(".", 250);
+      if (periodIdx !== -1 && periodIdx <= 380) {
         return cleanThesis.slice(0, periodIdx + 1).trim();
       }
-      const spaceIdx = cleanThesis.lastIndexOf(" ", 280);
-      return cleanThesis.slice(0, spaceIdx > 200 ? spaceIdx : 280).trim() + "...";
+      const spaceIdx = cleanThesis.lastIndexOf(" ", 360);
+      return cleanThesis.slice(0, spaceIdx > 250 ? spaceIdx : 360).trim() + "...";
     }
     return cleanThesis;
   }
@@ -126,13 +126,13 @@ function extractCleanSummary(summary: string, content: string): string {
   }
   clean = clean.replace(/^[:\-–—]\s*/, "");
 
-  if (clean.length > 280) {
-    const periodIdx = clean.indexOf(".", 180);
-    if (periodIdx !== -1 && periodIdx <= 320) {
+  if (clean.length > 380) {
+    const periodIdx = clean.indexOf(".", 250);
+    if (periodIdx !== -1 && periodIdx <= 380) {
       return clean.slice(0, periodIdx + 1).trim();
     }
-    const spaceIdx = clean.lastIndexOf(" ", 280);
-    return clean.slice(0, spaceIdx > 200 ? spaceIdx : 280).trim() + "...";
+    const spaceIdx = clean.lastIndexOf(" ", 360);
+    return clean.slice(0, spaceIdx > 250 ? spaceIdx : 360).trim() + "...";
   }
   return clean.trim();
 }

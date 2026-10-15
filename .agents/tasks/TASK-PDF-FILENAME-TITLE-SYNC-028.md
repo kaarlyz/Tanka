@@ -71,3 +71,19 @@ Gunakan pola serupa pada tombol PDF di `SummaryTab.tsx` (baris ~233):
 - [x] `npm run build` sukses.
 - [x] `env TANKA_DB_PATH=:memory: node --test tests/*.test.js` 83/83 pass.
 - [x] DILARANG melakukan `git push` ke remote GitHub.
+
+---
+
+## 4. VERIFICATION EVIDENCE
+- **Dynamic Title Synchronization (`src/App.tsx`)**:
+  - `useEffect` ditambahkan untuk memutakhirkan `document.title` saat `activeDocTitle` atau `activeTab` berubah.
+  - Verifikasi browser: Membuka materi *"Matematika Fundamental: Mengenal Himpunan Bilangan"* mengubah `document.title` menjadi `Matematika Fundamental Mengenal Himpunan Bilangan · Tanka`.
+- **Material Tab PDF Handler (`src/components/tabs/MaterialTab.tsx`)**:
+  - `handlePrint` membersihkan karakter ilegal dan menetapkan `${cleanTitle} · Tanka` sebelum `window.print()`.
+  - Verifikasi browser: Trigger tombol PDF menghasilkan `titleAtPrint: "Matematika Fundamental Mengenal Himpunan Bilangan · Tanka"`.
+- **Summary Tab PDF Handler (`src/components/tabs/SummaryTab.tsx`)**:
+  - `handlePrint` membersihkan karakter ilegal dan menetapkan `Rangkuman ${cleanTitle} · Tanka` sebelum `window.print()`.
+  - Verifikasi browser: Trigger tombol Cetak PDF menghasilkan `titleAtPrint: "Rangkuman Matematika Fundamental Mengenal Himpunan Bilangan · Tanka"`.
+- **Build & Tests**:
+  - `npm run build`: sukses (413ms, tanpa error).
+  - `env TANKA_DB_PATH=:memory: node --test tests/*.test.js`: 83/83 tests PASS.

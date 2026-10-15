@@ -1,5 +1,5 @@
 import React from "react";
-import { BookOpen, Brain, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 
 export interface HeroWorkspacePreviewProps {
   onActionLaunch?: () => void;
@@ -9,27 +9,6 @@ export function HeroWorkspacePreview({ onActionLaunch }: HeroWorkspacePreviewPro
   return (
     <div className="mockup-break-section">
       <div className="hero-mockup-container reveal-scroll delay-2">
-        {/* Floating Badges */}
-        <div className="hero-float-badge float-top-left">
-          <div className="float-badge-icon-box">
-            <BookOpen size={18} color="#4b6623" />
-          </div>
-          <div className="float-badge-text">
-            <strong>Bab Santai 3 Menit</strong>
-            <small>Otomatis dipotong ringkas</small>
-          </div>
-        </div>
-
-        <div className="hero-float-badge float-top-right">
-          <div className="float-badge-icon-box">
-            <Brain size={18} color="#4b6623" />
-          </div>
-          <div className="float-badge-text">
-            <strong>Nara AI Siaga 24 Jam</strong>
-            <small>Tanya rumus tanpa batas</small>
-          </div>
-        </div>
-
         <div className="mockup-window">
           <div className="mockup-chrome">
             <div className="mockup-dots">

@@ -5,22 +5,22 @@ export function MarqueeTicker() {
   const PILLARS = [
     {
       icon: Target,
-      tag: "TKA 2026 READY",
+      tag: "PERSIAPAN TKA 2026",
       desc: "Matematika, Sosiologi, Ekonomi & B. Indo"
     },
     {
       icon: WifiOff,
-      tag: "100% OFFLINE PWA",
+      tag: "BERJALAN OFFLINE",
       desc: "Simpan lokal & belajar tanpa internet"
     },
     {
       icon: Database,
-      tag: "SQLITE PRIVAT",
+      tag: "DATA DI PERANGKAT ANDA",
       desc: "Data tersimpan di perangkatmu, tanpa tracker"
     },
     {
       icon: ShieldCheck,
-      tag: "ZERO DISTRAKSI",
+      tag: "TANPA IKLAN MENGGANGGU",
       desc: "Bebas iklan, tanpa langganan jebakan"
     }
   ];

@@ -25,7 +25,7 @@ export function HeroSection({ onActionLaunch }: HeroSectionProps) {
         <div className="hero-split-left">
           <div className="hero-badge-tag">
             <span className="hero-badge-dot" />
-            <span>TKA & UTBK 2026 // ADAPTIVE STUDY ENGINE</span>
+            <span>PERSIAPAN TKA & UTBK 2026</span>
           </div>
 
           <h1 className="hero-title-left">

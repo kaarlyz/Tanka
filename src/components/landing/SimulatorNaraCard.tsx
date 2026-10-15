@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Bot, Sparkles, BookOpen, Send } from "lucide-react";
+import { MathView } from "../common/MathView";
 
 export interface SimulatorNaraCardProps {
   onActionLaunch: () => void;
@@ -14,21 +15,21 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
     {
       q: "Bagaimana cara mencari irisan himpunan A ∩ B?",
       chip: "Irisan Himpunan A ∩ B",
-      formula: "A ∩ B = { x | x ∈ A ∧ x ∈ B }",
+      formula: "$A \\cap B = \\{ x \\mid x \\in A \\land x \\in B \\}$",
       example: "Contoh: A = {2, 4, 6} dan B = {4, 6, 8} ⟹ Irisan = {4, 6}",
       note: "Anggota yang ada di kedua himpunan sekaligus. Beres dalam 3 detik."
     },
     {
       q: "Jelaskan reaksi fotosintesis secara singkat",
       chip: "Fotosintesis Singkat",
-      formula: "6CO₂ + 6H₂O + Energi Surya ⟶ C₆H₁₂O₆ + 6O₂",
+      formula: "$6\\text{CO}_2 + 6\\text{H}_2\\text{O} \\xrightarrow{\\text{cahaya}} \\text{C}_6\\text{H}_{12}\\text{O}_6 + 6\\text{O}_2$",
       example: "Karbon dioksida + air disintesis daun menjadi glukosa padat energi.",
       note: "Melepas oksigen murni (O₂) ke atmosfer sebagai produk sampingan."
     },
     {
       q: "Kenapa rumus pythagoras a² + b² = c²?",
       chip: "Teorema Pythagoras",
-      formula: "a² + b² = c²  ⟹  c = √(a² + b²)",
+      formula: "$a^2 + b^2 = c^2 \\implies c = \\sqrt{a^2 + b^2}$",
       example: "Luas bujur sangkar sisi miring = total luas kedua sisi tegak.",
       note: "Dasar perhitungan jarak lurus diagonal terpendek dalam ruang Euclid."
     }
@@ -52,7 +53,7 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
         </div>
         <div className="simulator-status-badge">
           <span className="status-dot-pulse" />
-          <span>RESPONS: SUB-0.2ms</span>
+          <span>STATUS: SIAP MENDAMPINGI</span>
         </div>
       </div>
 
@@ -97,9 +98,11 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
           </div>
         ) : (
           <div className="sim-bubble-ai">
-            <div className="sim-formula-box font-mono">
+            <div className="sim-formula-box">
               <span className="formula-accent">↳</span>
-              <code>{heroQuestions[activeHeroQ].formula}</code>
+              <div className="sim-formula-math">
+                <MathView text={heroQuestions[activeHeroQ].formula} />
+              </div>
             </div>
             <p className="sim-body-text">{heroQuestions[activeHeroQ].example}</p>
             <div className="sim-footer-note">

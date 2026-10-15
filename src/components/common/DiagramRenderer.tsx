@@ -810,22 +810,12 @@ export function renderVisualDiagramOrPre(children: any) {
           </div>
 
           {/* Stepper Timeline Nodes */}
-          <div style={{ position: "relative", paddingLeft: 30, display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* Garis Rel Vertikal */}
-            <div
-              style={{
-                position: "absolute",
-                left: 11,
-                top: 14,
-                bottom: 14,
-                width: 2,
-                backgroundColor: "#dce4d6"
-              }}
-            />
-
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {allSteps.map((step, sIdx) => {
               const { label, symbol } = parseConceptLabelAndSymbol(step.label);
               const isRoot = sIdx === 0;
+              const isFirst = sIdx === 0;
+              const isLast = sIdx === allSteps.length - 1;
               const stepNumber = String(sIdx + 1).padStart(2, "0");
               const levelTag = getHierarchyLevelTag(step.depth, allSteps.length, isRoot);
 
@@ -833,87 +823,139 @@ export function renderVisualDiagramOrPre(children: any) {
                 <div
                   key={sIdx}
                   style={{
-                    position: "relative",
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: isRoot ? "10px 14px" : "9px 14px",
-                    backgroundColor: isRoot ? "#f4f7ee" : "#ffffff",
-                    border: isRoot ? "1.5px solid #c8d8be" : "1px solid #dce2d8",
-                    borderLeft: !isRoot ? (step.depth === 1 ? "3.5px solid #4b6623" : "3.5px solid #779f2f") : "1.5px solid #c8d8be",
-                    borderRadius: 8,
-                    flexWrap: "wrap",
-                    gap: 8
+                    alignItems: "stretch",
+                    gap: 14,
+                    position: "relative"
                   }}
                 >
-                  {/* Lingkaran Angka Stepper */}
+                  {/* Track Column (Garis Rel dan Lingkaran Terpusat Sempurna 100%) */}
                   <div
                     style={{
-                      position: "absolute",
-                      left: -30,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      backgroundColor: isRoot ? "#4b6623" : step.depth === 1 ? "#65a30d" : "#779f2f",
-                      color: "#ffffff",
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: 11,
-                      fontWeight: 800,
+                      width: 26,
+                      flexShrink: 0,
                       display: "flex",
+                      flexDirection: "column",
                       alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 0 0 3px #ffffff"
+                      position: "relative"
                     }}
                   >
-                    {stepNumber}
-                  </div>
+                    {/* Garis Rel Vertikal Atas (menyambung dari item sebelumnya) */}
+                    {!isFirst && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: -12,
+                          bottom: "50%",
+                          width: 2,
+                          backgroundColor: "#dce4d6",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          zIndex: 1
+                        }}
+                      />
+                    )}
+                    {/* Garis Rel Vertikal Bawah (menyambung ke item berikutnya) */}
+                    {!isLast && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          bottom: -12,
+                          width: 2,
+                          backgroundColor: "#dce4d6",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          zIndex: 1
+                        }}
+                      />
+                    )}
 
-                  {/* Konten Judul & Tag */}
-                  <div style={{ flex: 1, minWidth: 160 }}>
+                    {/* Lingkaran Angka Stepper: Terpusat di tengah garis */}
                     <div
                       style={{
-                        fontSize: 9.5,
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        color: isRoot ? "#4b6623" : "#61726a",
-                        marginBottom: 2
-                      }}
-                    >
-                      {levelTag}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: isRoot ? 13.5 : 13,
-                        fontWeight: isRoot ? 800 : 700,
-                        color: "#18221f",
-                        lineHeight: 1.35
-                      }}
-                    >
-                      <MathView text={label} />
-                    </div>
-                  </div>
-
-                  {/* Badge Notasi Matematika Formal di Kanan */}
-                  {symbol && (
-                    <span
-                      style={{
+                        position: "relative",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: 24,
+                        height: 24,
+                        borderRadius: "50%",
+                        backgroundColor: isRoot ? "#4b6623" : step.depth === 1 ? "#65a30d" : "#779f2f",
+                        color: "#ffffff",
                         fontFamily: "'DM Mono', monospace",
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        color: isRoot ? "#3d541b" : "#45544e",
-                        backgroundColor: isRoot ? "#ffffff" : "#f6f8f4",
-                        border: isRoot ? "1px solid #c8d8be" : "1px solid #e1e7dc",
-                        padding: "2px 8px",
-                        borderRadius: 6,
-                        whiteSpace: "nowrap"
+                        fontSize: 11,
+                        fontWeight: 800,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 2,
+                        boxShadow: "0 0 0 3px #ffffff"
                       }}
                     >
-                      <MathView text={symbol.startsWith("[") && symbol.endsWith("]") ? symbol : `[${symbol}]`} />
-                    </span>
-                  )}
+                      {stepNumber}
+                    </div>
+                  </div>
+
+                  {/* Card Content (Kolom Kanan) */}
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: isRoot ? "10px 14px" : "9px 14px",
+                      backgroundColor: isRoot ? "#f4f7ee" : "#ffffff",
+                      border: isRoot ? "1.5px solid #c8d8be" : "1px solid #dce2d8",
+                      borderLeft: !isRoot ? (step.depth === 1 ? "3.5px solid #4b6623" : "3.5px solid #779f2f") : "1.5px solid #c8d8be",
+                      borderRadius: 8,
+                      flexWrap: "wrap",
+                      gap: 8
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 160 }}>
+                      <div
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                          color: isRoot ? "#4b6623" : "#61726a",
+                          marginBottom: 2
+                        }}
+                      >
+                        {levelTag}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: isRoot ? 13.5 : 13,
+                          fontWeight: isRoot ? 800 : 700,
+                          color: "#18221f",
+                          lineHeight: 1.35
+                        }}
+                      >
+                        <MathView text={label} />
+                      </div>
+                    </div>
+
+                    {symbol && (
+                      <span
+                        style={{
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          color: isRoot ? "#3d541b" : "#45544e",
+                          backgroundColor: isRoot ? "#ffffff" : "#f6f8f4",
+                          border: isRoot ? "1px solid #c8d8be" : "1px solid #e1e7dc",
+                          padding: "2px 8px",
+                          borderRadius: 6,
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        <MathView text={symbol.startsWith("[") && symbol.endsWith("]") ? symbol : `[${symbol}]`} />
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}

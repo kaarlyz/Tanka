@@ -8,7 +8,7 @@ import { DocumentItem, QuizQuestion, Flashcard } from "../../types";
 import { MathView } from "../common/MathView";
 import { normalizeMathExpression } from "../../utils/mathNormalizer";
 import { AIProcessLoader } from "../common/AIProcessLoader";
-import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText } from "../common/DiagramRenderer";
+import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeChildrenText } from "../common/DiagramRenderer";
 
 const STATIC_REMARK_PLUGINS = [remarkGfm, remarkMath];
 const STATIC_REHYPE_PLUGINS = [rehypeKatex];
@@ -494,7 +494,7 @@ export const SummaryTab = React.memo(function SummaryTab({
                         ),
                         th: ({ children }) => (
                           <th style={{ padding: "8px 12px", textAlign: "left", color: "#22370c", fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                            {children}
+                            {sanitizeChildrenText(children)}
                           </th>
                         ),
                         td: ({ children }) => (

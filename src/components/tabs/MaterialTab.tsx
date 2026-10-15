@@ -31,7 +31,7 @@ import {
 import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, Flashcard, QuizQuestion, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
-import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeMathMarkdown } from "../common/DiagramRenderer";
+import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeMathMarkdown, sanitizeChildrenText } from "../common/DiagramRenderer";
 
 const InteractiveMindMap = React.lazy(() =>
   import("../common/InteractiveMindMap").then((m) => ({ default: m.InteractiveMindMap }))
@@ -344,6 +344,11 @@ export const MaterialTab = React.memo(function MaterialTab({
     }
   }, [currentChapterIdx, chapters.length, mountedChapters]);
 
+  const printContent = React.useMemo(() => {
+    const raw = formattedContent || activeDocContent || "";
+    return raw.replace(/^#\s+[^\n]+(?:\n|$)/m, "");
+  }, [formattedContent, activeDocContent]);
+
   const markdownComponents = React.useMemo(() => ({
     h1: ({ children }: any) => (
       <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111a17", letterSpacing: "-0.025em", marginTop: 32, marginBottom: 14, borderBottom: "1px solid #eef1eb", paddingBottom: 8 }}>
@@ -445,6 +450,16 @@ export const MaterialTab = React.memo(function MaterialTab({
           {children}
         </table>
       </div>
+    ),
+    th: ({ children }: any) => (
+      <th style={{ padding: "8px 12px", textAlign: "left", color: "#18221f", fontWeight: 700, fontSize: 12, backgroundColor: "#f0f4ee", border: "1px solid #c5cec3" }}>
+        {sanitizeChildrenText(children)}
+      </th>
+    ),
+    td: ({ children }: any) => (
+      <td style={{ padding: "7px 12px", border: "1px solid #dde1da", color: "#2c3933" }}>
+        {children}
+      </td>
     )
   }), []);
 
@@ -748,7 +763,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                     )}
 
                     {/* Pelajarin.ai Mode Switcher & Utility Actions Bar */}
-                    <div className="material-mode-switcher" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "8px 10px", backgroundColor: "#f8faf5", border: "1px solid #dde2d8", borderRadius: 8, margin: "10px 0 16px" }}>
+                    <div className="material-mode-switcher print-hidden" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "8px 10px", backgroundColor: "#f8faf5", border: "1px solid #dde2d8", borderRadius: 8, margin: "10px 0 16px" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
                           <button
@@ -1373,7 +1388,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                       <MemoizedMarkdownBody
                         className="markdown-body"
                         style={{ fontSize: 14.5, lineHeight: 1.7, color: "#1f2b26" }}
-                        content={(formattedContent || activeDocContent || "").replace(/^#\s+[^\n]+\n+/, "")}
+                        content={printContent}
                         components={markdownComponents}
                       />
                     </div>

@@ -38,6 +38,10 @@ function parseAsciiTree(rawText: string) {
   const clean = lines.filter(l => l.trim().length > 0 && !isConnectorLine(l));
   if (clean.length < 2) return null;
 
+  if (clean.some(l => /^\s*[┌└├│─]/.test(l)) && !clean.some(l => /\S\s{6,}\S/.test(l))) {
+    return null; // biarkan fallback ke clean sequential nodes yang rapi
+  }
+
   const pillarLine = clean.find((l, idx) => idx > 0 && /\s{5,}/.test(l));
   if (!pillarLine) return null;
 
@@ -127,9 +131,41 @@ function parseAsciiTree(rawText: string) {
   };
 }
 
+export function sanitizeKaTeXText(text: string): string {
+  if (!text) return "";
+  return text.replace(/Notasi\s+KaTeX/gi, "Notasi Simbol").replace(/KaTeX/gi, "Simbol");
+}
+
+export function MarkdownTh({ children, ...props }: any) {
+  const text = extractTextFromNode(children);
+  const clean = sanitizeKaTeXText(text);
+  return (
+    <th {...props}>
+      {typeof children === "string" ? clean : (text !== clean ? clean : children)}
+    </th>
+  );
+}
+
+export function sanitizeChildrenText(child: any): any {
+  if (typeof child === "string") {
+    return sanitizeKaTeXText(child);
+  }
+  if (Array.isArray(child)) {
+    return child.map(sanitizeChildrenText);
+  }
+  if (React.isValidElement(child) && (child.props as any)?.children) {
+    return React.cloneElement(child, {
+      ...(child.props as any),
+      children: sanitizeChildrenText((child.props as any).children)
+    });
+  }
+  return child;
+}
+
 // Interactive Visual Diagram & Flow Renderer for Academic Summaries
 export function renderVisualDiagramOrPre(children: any) {
-  const text = extractTextFromNode(children).trim();
+  const rawText = extractTextFromNode(children).trim();
+  const text = sanitizeKaTeXText(rawText);
   const upper = text.toUpperCase();
 
   // Pattern 1: Peta Sumbu Teori (Siklus vs Linier & Konflik vs Fungsional)
@@ -640,16 +676,19 @@ export function renderVisualDiagramOrPre(children: any) {
                         </div>
                       )}
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        {grp.items.map((item, iIdx) => (
-                          <div key={iIdx} style={{ fontSize: 11.5, color: "#4b5852", display: "flex", alignItems: "flex-start", gap: 6 }}>
-                            <span style={{ color: "#65a30d", fontWeight: 800, fontSize: 11 }}>•</span>
-                            <span style={{ flex: 1, lineHeight: 1.45 }}>
-                              <span style={{ whiteSpace: item.includes("$") ? "nowrap" : "normal", display: "inline-block" }}>
-                                <MathView text={item} />
+                        {grp.items.map((item, iIdx) => {
+                          const cleanItem = item.replace(/^[┌└├│─┬┴┼\s\-_=]+/g, "").trim();
+                          return (
+                            <div key={iIdx} style={{ fontSize: 11.5, color: "#4b5852", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                              <span style={{ color: "#65a30d", fontWeight: 800, fontSize: 11 }}>•</span>
+                              <span style={{ flex: 1, lineHeight: 1.45 }}>
+                                <span style={{ whiteSpace: cleanItem.includes("$") ? "nowrap" : "normal", display: "inline-block" }}>
+                                  <MathView text={cleanItem} />
+                                </span>
                               </span>
-                            </span>
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -729,7 +768,7 @@ export function renderVisualDiagramOrPre(children: any) {
         margin: "14px 0"
       }}
     >
-      {children}
+      {sanitizeChildrenText(children)}
     </pre>
   );
 }

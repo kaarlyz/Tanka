@@ -872,7 +872,7 @@ export default function App() {
           <section className="main-scroll-section" style={{ flex: 1, minWidth: 0, minHeight: 0, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
             {activeTab !== "home" && (
               <div
-                className="mode-tabs"
+                className="mode-tabs print-hidden"
                 role="tablist"
                 aria-label="Mode belajar"
                 style={{

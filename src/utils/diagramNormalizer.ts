@@ -96,6 +96,11 @@ export function sanitizeMathMarkdown(md: string): string {
     return l;
   }).join("\n");
 
+  // Normalize leaked technical jargon in table headers or text
+  result = result.replace(/\|\s*Notasi\s+KaTeX\s*\|/gi, "| Notasi Simbol |");
+  result = result.replace(/\|\s*KaTeX\s*\|/gi, "| Notasi Simbol |");
+  result = result.replace(/\bNotasi\s+KaTeX\b/gi, "Notasi Simbol");
+
   return result;
 }
 

@@ -67,6 +67,76 @@ const MemoizedMarkdownBody = React.memo(function MemoizedMarkdownBody({
   );
 });
 
+function extractCleanSummary(summary: string, content: string): string {
+  // 1. Prioritaskan intisari kurikulum resmi jika tercatat di konten dokumen atau rangkuman
+  const thesisMatch = (content + "\n" + (summary || "")).match(/>\s*📌\s*\*\*Tesis & Esensi Modul:\*\*\s*([^\n]+(?:\n>[^\n]+)*)/i);
+  if (thesisMatch) {
+    let cleanThesis = thesisMatch[1]
+      .replace(/\n>\s*/g, " ")
+      .replace(/[*_#`~>]/g, "")
+      .replace(/[🎯📌]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    while (/^(?:Halo|Senang sekali|Berikut adalah|Kita akan|Siapkan catatanmu)[^.!?]*[.!?]\s*/i.test(cleanThesis)) {
+      cleanThesis = cleanThesis.replace(/^(?:Halo|Senang sekali|Berikut adalah|Kita akan|Siapkan catatanmu)[^.!?]*[.!?]\s*/i, "").trim();
+    }
+    cleanThesis = cleanThesis.replace(/^[:\-–—]\s*/, "");
+
+    if (cleanThesis.length > 280) {
+      const periodIdx = cleanThesis.indexOf(".", 180);
+      if (periodIdx !== -1 && periodIdx <= 320) {
+        return cleanThesis.slice(0, periodIdx + 1).trim();
+      }
+      const spaceIdx = cleanThesis.lastIndexOf(" ", 280);
+      return cleanThesis.slice(0, spaceIdx > 200 ? spaceIdx : 280).trim() + "...";
+    }
+    return cleanThesis;
+  }
+
+  if (!summary || !summary.trim()) return "";
+
+  // 2. Bersihkan sapaan percakapan dan markup Markdown
+  let clean = summary
+    .replace(/^(?:Halo!?[^\n]*|Senang sekali[^\n]*|Berikut adalah[^\n]*|Kita akan[^\n]*|Siapkan catatanmu[^\n]*)\n+/gi, "")
+    .replace(/^#+\s+[^\n]+(?:\n+|$)/gm, "")
+    .replace(/^---\s*(?:\n+|$)/gm, "")
+    .replace(/^>\s*[^\n]*(?:\n+|$)/gm, "")
+    .replace(/\n*```[\s\S]*?```/g, "")
+    .replace(/[*_#`~>]/g, "")
+    .replace(/[🎯📌]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // If clean became empty because all lines were headers/blockquotes, fallback to raw summary stripped of symbols
+  if (!clean && summary) {
+    clean = summary
+      .replace(/\n*```[\s\S]*?```/g, "")
+      .replace(/^#+\s*/gm, "")
+      .replace(/^---\s*/gm, "")
+      .replace(/^>\s*/gm, "")
+      .replace(/[*_#`~>]/g, "")
+      .replace(/[🎯📌]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  while (/^(?:Halo|Senang sekali|Berikut adalah|Kita akan|Siapkan catatanmu)[^.!?]*[.!?]\s*/i.test(clean)) {
+    clean = clean.replace(/^(?:Halo|Senang sekali|Berikut adalah|Kita akan|Siapkan catatanmu)[^.!?]*[.!?]\s*/i, "").trim();
+  }
+  clean = clean.replace(/^[:\-–—]\s*/, "");
+
+  if (clean.length > 280) {
+    const periodIdx = clean.indexOf(".", 180);
+    if (periodIdx !== -1 && periodIdx <= 320) {
+      return clean.slice(0, periodIdx + 1).trim();
+    }
+    const spaceIdx = clean.lastIndexOf(" ", 280);
+    return clean.slice(0, spaceIdx > 200 ? spaceIdx : 280).trim() + "...";
+  }
+  return clean.trim();
+}
+
 export interface MaterialTabProps {
   activeDocId: string | null;
   activeDocTitle: string;
@@ -314,16 +384,25 @@ export const MaterialTab = React.memo(function MaterialTab({
       list.forEach((c, idx) => { c.id = idx + 1; });
     }
 
-    // Bersihkan header judul dokumen "# Judul" dan ringkasan pengantar yang bocor ke dalam badan Bab 1
+    // Bersihkan header judul dokumen "# Judul", referensi YouTube, dan blockquote Tesis duplikat yang mendahului Bab 1
     if (list.length > 0 && list[0].content) {
-      list[0].content = list[0].content
-        .replace(/^#\s+[^\n]+\n+/, "")
-        .replace(/^>\s+[^\n]+(?:\n>[^\n]+)*\n+(?:---\s*\n+)?/, "")
-        .trim();
+      let prevContent = "";
+      while (prevContent !== list[0].content) {
+        prevContent = list[0].content;
+        list[0].content = list[0].content
+          .replace(/^(?:>\s*[^\n]+\n+)*#\s+[^\n]+\n+/, "")
+          .replace(/^(?:>\s*[^\n]+\n+)+/, "")
+          .replace(/^---\s*\n+/, "")
+          .trim();
+      }
     }
 
     return list.length > 0 ? list : [{ id: 1, title: activeDocTitle || "Modul Utama", shortTitle: "Materi Utama", content: text }];
   }, [formattedContent, activeDocContent, activeDocTitle]);
+
+  const cleanSummary = React.useMemo(() => {
+    return extractCleanSummary(activeDocSummary, formattedContent || activeDocContent || "");
+  }, [activeDocSummary, formattedContent, activeDocContent]);
 
   // Background pre-mount current & next chapter saat idle
   // ponytail: pre-mount current & next chapter only; add LRU prune when chapter count > 50
@@ -1192,7 +1271,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                             </h1>
                           </div>
 
-                          {currentChapterIdx === 0 && activeDocSummary && (
+                          {currentChapterIdx === 0 && cleanSummary && (
                             <div style={{ maxWidth: 820, margin: "0 auto 24px auto", padding: "14px 18px", backgroundColor: "#f8faf5", borderLeft: "4px solid #779f2f", borderRadius: "0 10px 10px 0" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                                 <Sparkles size={13} color="#4b6623" />
@@ -1201,7 +1280,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                                 </span>
                               </div>
                               <p style={{ fontSize: 14, lineHeight: 1.7, color: "#24322c", margin: 0 }}>
-                                {activeDocSummary.length > 350 ? activeDocSummary.slice(0, 350) + "..." : activeDocSummary}
+                                <MathView text={cleanSummary} />
                               </p>
                             </div>
                           )}

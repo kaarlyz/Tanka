@@ -1941,3 +1941,289 @@
           }
         }
 
+        /* ─── Argon Redesign Overhaul Enhancements ─── */
+        .hero-badge-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 5px 12px;
+          border-radius: 6px;
+          border: 1px solid rgba(75, 102, 35, 0.45);
+          background: rgba(75, 102, 35, 0.12);
+          color: #364b18;
+          font-family: 'DM Mono', monospace;
+          font-size: 11.5px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          margin-bottom: 14px;
+        }
+
+        .hero-badge-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #4b6623;
+          box-shadow: 0 0 6px rgba(75, 102, 35, 0.6);
+        }
+
+        .hero-direct-input-form {
+          margin-top: 22px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          width: 100%;
+          max-width: 520px;
+        }
+
+        .hero-input-shell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 6px 6px 14px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: #191613;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hero-input-shell:focus-within {
+          border-color: #8da661;
+          box-shadow: 0 0 0 3px rgba(75, 102, 35, 0.25);
+        }
+
+        .hero-direct-input {
+          flex: 1;
+          min-width: 0;
+          background: transparent !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+          -webkit-appearance: none !important;
+          color: #f4f1ea !important;
+          font-size: 13.5px;
+          font-family: inherit;
+        }
+
+        .hero-direct-input:focus {
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+
+        .hero-direct-input::placeholder {
+          color: #a1a1aa !important;
+        }
+
+        .hero-btn-direct {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 18px;
+          border-radius: 8px;
+          border: 1px solid #4b6623;
+          background: #4b6623;
+          color: #ffffff;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.18s ease, transform 0.18s ease;
+          white-space: nowrap;
+          shrink: 0;
+        }
+
+        .hero-btn-direct:hover {
+          background: #5d7e2c;
+          transform: translateY(-1px);
+        }
+
+        .hero-quick-chips {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+          font-size: 11px;
+          max-width: 100%;
+          overflow-x: auto;
+          overscroll-behavior-x: contain;
+        }
+
+        .chips-label {
+          font-family: 'DM Mono', monospace;
+          color: #4b6623;
+          font-size: 11px;
+          font-weight: 600;
+          margin-right: 2px;
+        }
+
+        .hero-quick-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          min-height: 36px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(25, 22, 19, 0.85);
+          color: #d4d4d8;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .hero-quick-chip:hover {
+          background: rgba(75, 102, 35, 0.25);
+          border-color: #8da661;
+          color: #ffffff;
+        }
+
+        /* Simulator Status Badge & Typography */
+        .simulator-status-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-family: 'DM Mono', monospace;
+          font-size: 11px;
+          font-weight: 700;
+          color: #2b4716;
+          letter-spacing: 0.05em;
+        }
+
+        .status-dot-pulse {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #365314;
+          animation: pulse-dot 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .sim-formula-box {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 10px 14px;
+          border-radius: 8px;
+          background: #141a10;
+          border: 1px solid rgba(75, 102, 35, 0.4);
+          color: #f0fdf4;
+          font-size: 13px;
+          font-weight: 500;
+          margin-bottom: 8px;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .formula-accent {
+          color: #86efac;
+          font-weight: bold;
+        }
+
+        .sim-body-text {
+          font-size: 13.5px;
+          color: #18181b !important;
+          font-weight: 600;
+          line-height: 1.6;
+          margin-bottom: 6px;
+        }
+
+        .sim-footer-note {
+          padding-top: 8px;
+          border-top: 1px solid rgba(0, 0, 0, 0.12);
+          font-size: 12px;
+          font-weight: 500;
+          color: #27272a !important;
+          font-style: italic;
+        }
+
+        /* ─── Static Trust Ledger Bar (Replaces Marquee) ─── */
+        .landing-trust-ledger-section {
+          width: 100%;
+          border-top: 1px solid rgba(255, 255, 255, 0.07);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+          background: rgba(20, 17, 15, 0.65);
+          padding: 20px 0;
+          margin: 18px 0;
+        }
+
+        .trust-ledger-container {
+          max-width: 1180px;
+          margin: 0 auto;
+          padding: 0 24px;
+        }
+
+        .trust-ledger-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+        }
+
+        .trust-ledger-card {
+          padding: 12px 14px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(255, 255, 255, 0.015);
+          transition: border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .trust-ledger-card:hover {
+          border-color: rgba(75, 102, 35, 0.3);
+          background: rgba(75, 102, 35, 0.03);
+          transform: translateY(-1px);
+        }
+
+        .trust-card-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 4px;
+        }
+
+        .trust-card-icon {
+          color: #8da661;
+          display: flex;
+          align-items: center;
+        }
+
+        .trust-card-tag {
+          font-size: 11.5px;
+          font-weight: 600;
+          color: #ece8e3;
+          letter-spacing: 0.03em;
+        }
+
+        .trust-card-desc {
+          font-size: 11.5px;
+          color: #798782;
+          line-height: 1.4;
+          margin: 0;
+        }
+
+        @media (max-width: 860px) {
+          .trust-ledger-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+
+          .hero-direct-input-form {
+            max-width: 100% !important;
+          }
+
+          .hero-input-shell {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 8px !important;
+          }
+
+          .hero-btn-direct {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 12px !important;
+          }
+        }
+
+

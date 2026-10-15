@@ -1,45 +1,51 @@
 import React from "react";
+import { ShieldCheck, WifiOff, Database, Target } from "lucide-react";
 
 export function MarqueeTicker() {
+  const PILLARS = [
+    {
+      icon: Target,
+      tag: "TKA 2026 READY",
+      desc: "Matematika, Sosiologi, Ekonomi & B. Indo"
+    },
+    {
+      icon: WifiOff,
+      tag: "100% OFFLINE PWA",
+      desc: "Simpan lokal & belajar tanpa internet"
+    },
+    {
+      icon: Database,
+      tag: "SQLITE PRIVAT",
+      desc: "Data tersimpan di perangkatmu, tanpa tracker"
+    },
+    {
+      icon: ShieldCheck,
+      tag: "ZERO DISTRAKSI",
+      desc: "Bebas iklan, tanpa langganan jebakan"
+    }
+  ];
+
   return (
-    <div className="landing-marquee-wrapper reveal-scroll">
-      <div className="landing-marquee-track">
-        {[...Array(2)].map((_, trackIdx) => (
-          <div className="landing-marquee-content" key={trackIdx}>
-            <span className="marquee-pill">
-              <span className="marquee-dot-pulse" />
-              PENURUNAN RUMUS KONTINU
-            </span>
-            <span className="marquee-separator">•</span>
-            <span className="marquee-pill">
-              <span className="marquee-dot-pulse" />
-              TUTOR NARA SIAGA 24 JAM
-            </span>
-            <span className="marquee-separator">•</span>
-            <span className="marquee-pill">
-              <span className="marquee-dot-pulse" />
-              MODUL PER BAB SIAP SANTAP
-            </span>
-            <span className="marquee-separator">•</span>
-            <span className="marquee-pill">
-              <span className="marquee-dot-pulse" />
-              KUIS DETERMINISTIK ATOMIK
-            </span>
-            <span className="marquee-separator">•</span>
-            <span className="marquee-pill">
-              <span className="marquee-dot-pulse" />
-              FOKUS BELAJAR BEBAS DISTRAKSI
-            </span>
-            <span className="marquee-separator">•</span>
-            <span className="marquee-pill">
-              <span className="marquee-dot-pulse" />
-              PEMAHAMAN BERBASIS BUKTI
-            </span>
-            <span className="marquee-separator">•</span>
-          </div>
-        ))}
+    <section className="landing-trust-ledger-section reveal-scroll">
+      <div className="trust-ledger-container">
+        <div className="trust-ledger-grid">
+          {PILLARS.map((p, idx) => {
+            const Icon = p.icon;
+            return (
+              <div key={idx} className="trust-ledger-card">
+                <div className="trust-card-header">
+                  <span className="trust-card-icon">
+                    <Icon size={15} />
+                  </span>
+                  <span className="trust-card-tag font-mono">{p.tag}</span>
+                </div>
+                <p className="trust-card-desc">{p.desc}</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 

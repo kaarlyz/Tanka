@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Bot, Sparkles, BookOpen, Send } from "lucide-react";
-import { MathView } from "../common/MathView";
 
 export interface SimulatorNaraCardProps {
   onActionLaunch: () => void;
@@ -15,20 +14,23 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
     {
       q: "Bagaimana cara mencari irisan himpunan A ∩ B?",
       chip: "Irisan Himpunan A ∩ B",
-      answer:
-        "Irisan dua himpunan $A \\cap B$ adalah anggota yang ada di **kedua himpunan sekaligus**:\n\n$$A \\cap B = \\{x \\mid x \\in A \\land x \\in B\\}$$\n\n**Contoh simpel:**\nKalau $A = \\{2, 4, 6\\}$ dan $B = \\{4, 6, 8\\}$, angka yang kembar di dua himpunan itu cuma $\\{4, 6\\}$. Gampang kan?"
+      formula: "A ∩ B = { x | x ∈ A ∧ x ∈ B }",
+      example: "Contoh: A = {2, 4, 6} dan B = {4, 6, 8} ⟹ Irisan = {4, 6}",
+      note: "Anggota yang ada di kedua himpunan sekaligus. Beres dalam 3 detik."
     },
     {
-      q: "Jelaskan hukum fotosintesis secara singkat",
+      q: "Jelaskan reaksi fotosintesis secara singkat",
       chip: "Fotosintesis Singkat",
-      answer:
-        "Intinya, tanaman memasak makanannya sendiri memanfaatkan sinar matahari:\n\n$$6CO_2 + 6H_2O \\xrightarrow{\\text{cahaya}} C_6H_{12}O_6 + 6O_2$$\n\nKarbon dioksida dan air diubah jadi **gula (energi tanaman)** plus melepas **oksigen bersih** yang kita hirup setiap hari."
+      formula: "6CO₂ + 6H₂O + Energi Surya ⟶ C₆H₁₂O₆ + 6O₂",
+      example: "Karbon dioksida + air disintesis daun menjadi glukosa padat energi.",
+      note: "Melepas oksigen murni (O₂) ke atmosfer sebagai produk sampingan."
     },
     {
       q: "Kenapa rumus pythagoras a² + b² = c²?",
-      chip: "Rumus Pythagoras Berlaku",
-      answer:
-        "Pada segitiga siku-siku, luas bujur sangkar di sisi miring ($c$) selalu persis sama dengan gabungan luas kedua sisi lainnya:\n\n$$a^2 + b^2 = c^2 \\implies c = \\sqrt{a^2 + b^2}$$\n\nIni bukti kenapa jalan pintas diagonal selalu jadi rute paling efisien saat mengukur jarak lurus."
+      chip: "Teorema Pythagoras",
+      formula: "a² + b² = c²  ⟹  c = √(a² + b²)",
+      example: "Luas bujur sangkar sisi miring = total luas kedua sisi tegak.",
+      note: "Dasar perhitungan jarak lurus diagonal terpendek dalam ruang Euclid."
     }
   ];
 
@@ -38,7 +40,7 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
     setActiveHeroQ(idx);
     setTimeout(() => {
       setIsHeroThinking(false);
-    }, 450);
+    }, 350);
   };
 
   return (
@@ -47,6 +49,10 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
         <div className="simulator-title-left">
           <Bot size={17} color="#4b6623" />
           <span>Coba Tanya Nara Sekarang</span>
+        </div>
+        <div className="simulator-status-badge">
+          <span className="status-dot-pulse" />
+          <span>RESPONS: SUB-0.2ms</span>
         </div>
       </div>
 
@@ -67,6 +73,7 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
             key={idx}
             className={`sim-chip ${activeHeroQ === idx ? "active" : ""}`}
             onClick={() => handleSelectHeroQuestion(idx)}
+            type="button"
           >
             <Sparkles size={12} />
             <span>{item.chip}</span>
@@ -90,7 +97,14 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
           </div>
         ) : (
           <div className="sim-bubble-ai">
-            <MathView text={heroQuestions[activeHeroQ].answer} />
+            <div className="sim-formula-box font-mono">
+              <span className="formula-accent">↳</span>
+              <code>{heroQuestions[activeHeroQ].formula}</code>
+            </div>
+            <p className="sim-body-text">{heroQuestions[activeHeroQ].example}</p>
+            <div className="sim-footer-note">
+              <span>{heroQuestions[activeHeroQ].note}</span>
+            </div>
           </div>
         )}
       </div>
@@ -119,6 +133,7 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
         <button
           className="sim-input-submit-btn sim-btn-send"
           onClick={onActionLaunch}
+          type="button"
         >
           <span>Tanya Nara</span>
           <Send size={13} />

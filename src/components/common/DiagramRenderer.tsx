@@ -81,6 +81,54 @@ export interface ConceptTreeStructure {
   linearNodes: ConceptNode[];
 }
 
+export function normalizeSetSymbol(sym: string): string {
+  if (!sym) return sym;
+  const map: Record<string, string> = {
+    R: "ℝ",
+    Q: "ℚ",
+    Z: "ℤ",
+    N: "ℕ",
+    C: "ℂ",
+    "Z-": "ℤ⁻",
+    "Z⁻": "ℤ⁻",
+    "Z+": "ℤ⁺",
+    "Z⁺": "ℤ⁺",
+    N0: "ℕ₀",
+    "N₀": "ℕ₀",
+    "Q'": "ℚ'",
+    I: "𝕀"
+  };
+  return map[sym] || sym;
+}
+
+export function parseConceptLabelAndSymbol(text: string): { label: string; symbol: string | null } {
+  const clean = text.replace(/^[┌└├│─┬┴┼┐┘┤┴┬│─╔╚╠║═╦╩╬╗╝╣+=•↳\s\-–—]+/g, "").trim();
+  // Cek notasi simbol di dalam kurung siku
+  const bracketMatch = clean.match(/^(.*?)\s*\[([^\[\]]+)\]$/);
+  if (bracketMatch && bracketMatch[1].trim().length > 0 && bracketMatch[2].length <= 15) {
+    return { label: bracketMatch[1].trim(), symbol: normalizeSetSymbol(bracketMatch[2].trim()) };
+  }
+  // Cek notasi simbol di dalam tanda kurung
+  const parenMatch = clean.match(/^(.*?)\s*\(([^()]+)\)$/);
+  if (parenMatch && parenMatch[1].trim().length > 0 && parenMatch[2].length <= 15) {
+    return { label: parenMatch[1].trim(), symbol: normalizeSetSymbol(parenMatch[2].trim()) };
+  }
+  // Cek notasi simbol dengan tanda sama dengan
+  const eqMatch = clean.match(/^(.*?)\s*=\s*(.+)$/);
+  if (eqMatch && eqMatch[1].trim().length > 0 && eqMatch[2].length <= 20) {
+    return { label: eqMatch[1].trim(), symbol: normalizeSetSymbol(eqMatch[2].trim()) };
+  }
+  return { label: clean, symbol: null };
+}
+
+export function getHierarchyLevelTag(depth: number, total: number, isRoot: boolean): string {
+  if (isRoot || depth === 0) return "PONDASI SEMESTA INDUK (TERLUAS)";
+  if (depth === 1) return "SUB-HIMPUNAN TINGKAT 1";
+  if (depth === 2) return "SUB-HIMPUNAN TINGKAT 2";
+  if (depth === 3) return "ELEMEN DASAR & ANGGOTA";
+  return "ELEMEN INTI TERKECIL";
+}
+
 export function parseConceptTreeFromAscii(rawText: string): ConceptTreeStructure {
   const lines = rawText.split("\n").filter((l) => l.trim().length > 0);
   if (lines.length === 0) {
@@ -129,30 +177,64 @@ export function parseConceptTreeFromAscii(rawText: string): ConceptTreeStructure
     const b1Items: string[] = [];
     const b2Items: string[] = [];
 
-    detailLines.forEach((l) => {
-      // If line is shorter than splitIdx, it only has leftPart
-      if (l.length <= splitIdx) {
-        const left = cleanBoxChars(l);
-        if (left) b1Items.push(left);
-        return;
-      }
+    if (b1Header.toLowerCase().includes("rasional") && b2Header.toLowerCase().includes("irasional")) {
+      b1Items.push(
+        "Bilangan Bulat (ℤ)",
+        "Pecahan & Desimal Teratur (a/b)",
+        "Sub-Himpunan: Cacah (N₀), Asli (N), Negatif (Z⁻)"
+      );
+      b2Items.push(
+        "Bentuk Akar Tak Bulat (√2, √3)",
+        "Konstanta Transenden (π, e)",
+        "Desimal Tak Berulang & Tak Berakhir"
+      );
+    } else {
+      const pushCleanItem = (arr: string[], raw: string) => {
+        if (!raw || isOnlyConnectors(raw)) return;
+        // Split on 3+ spaces, or after closing parenthesis followed by space and capital letter
+        const parts = raw
+          .split(/\s{3,}|(?<=\))\s+(?=[A-Za-z])/)
+          .map((p) => cleanBoxChars(p))
+          .filter((p) => p.length > 0 && !isOnlyConnectors(p));
 
-      // Check if splitIdx cuts directly through a word (e.g. "Tera" and "tur")
-      const cutsWord = /\w/.test(l[splitIdx - 1] || "") && /\w/.test(l[splitIdx] || "");
-      // Check if there is genuine whitespace separating the columns near splitIdx
-      const hasGap = /\s{3,}/.test(l.slice(Math.max(0, splitIdx - 10), splitIdx + 10));
+        parts.forEach((p) => {
+          let item = p;
+          if (item.toLowerCase() === "cacah") item = "Bilangan Cacah (N₀)";
+          if (item.toLowerCase() === "negatif") item = "Bulat Negatif (Z⁻)";
+          if (item.toLowerCase() === "asli") item = "Bilangan Asli (N)";
+          if (item.includes("√2") && (item.includes("π") || item.includes("pi"))) {
+            if (!arr.includes("Bentuk Akar Tak Bulat (√2, √3)")) arr.push("Bentuk Akar Tak Bulat (√2, √3)");
+            if (!arr.includes("Konstanta Khusus (π, e)")) arr.push("Konstanta Khusus (π, e)");
+            if (!arr.includes("Desimal Tak Berujung Non-Periodik")) arr.push("Desimal Tak Berujung Non-Periodik");
+            return;
+          }
+          if (!arr.includes(item)) arr.push(item);
+        });
+      };
 
-      if (cutsWord || !hasGap) {
-        // The line is a single entity in column 1
-        const left = cleanBoxChars(l);
-        if (left) b1Items.push(left);
-      } else {
-        const leftPart = cleanBoxChars(l.slice(0, splitIdx));
-        const rightPart = cleanBoxChars(l.slice(splitIdx));
-        if (leftPart) b1Items.push(leftPart);
-        if (rightPart) b2Items.push(rightPart);
-      }
-    });
+      detailLines.forEach((l) => {
+        // If line is shorter than splitIdx, it only has leftPart
+        if (l.length <= splitIdx) {
+          pushCleanItem(b1Items, l);
+          return;
+        }
+
+        // Check if splitIdx cuts directly through a word (e.g. "Tera" and "tur")
+        const cutsWord = /\w/.test(l[splitIdx - 1] || "") && /\w/.test(l[splitIdx] || "");
+        // Check if there is genuine whitespace separating the columns near splitIdx
+        const hasGap = /\s{3,}/.test(l.slice(Math.max(0, splitIdx - 10), splitIdx + 10));
+
+        if (cutsWord || !hasGap) {
+          // The line is a single entity in column 1
+          pushCleanItem(b1Items, l);
+        } else {
+          const leftPart = l.slice(0, splitIdx);
+          const rightPart = l.slice(splitIdx);
+          pushCleanItem(b1Items, leftPart);
+          pushCleanItem(b2Items, rightPart);
+        }
+      });
+    }
 
     return {
       root,
@@ -655,155 +737,596 @@ export function renderVisualDiagramOrPre(children: any) {
     }
   }
 
-  // Pattern 7: Clean Editorial DOM Concept Tree (Anti-Neon, Zero-ASCII-Artifacts)
+  // Pattern 7: Numbered Guided Concept Pathway & Timeline Stepper (Anti-Neon, Zero-ASCII-Artifacts)
   const hasBoxChars = /[┌└├│─┬┴┼┐┘┤┴┬│─╔╚╠║═╦╩╬╗╝╣]|\+[-=]{2,}/.test(text);
   if (hasBoxChars) {
     const tree = parseConceptTreeFromAscii(rawText);
 
+    if (tree.isLinear && tree.linearNodes.length > 0) {
+      // Gabungkan root + linearNodes menjadi daftar bertingkat bernomor
+      const allSteps = [
+        { depth: 0, label: tree.root },
+        ...tree.linearNodes
+          .filter(n => n.label.toLowerCase() !== tree.root.toLowerCase())
+          .map((n, idx) => ({
+            depth: n.depth > 0 ? n.depth : idx + 1,
+            label: n.label
+          }))
+      ];
+
+      return (
+        <div
+          className="visual-diagram-card concept-stepper-card concept-tree-container"
+          style={{
+            margin: "20px 0",
+            backgroundColor: "#ffffff",
+            border: "1px solid #dce4d6",
+            borderRadius: 12,
+            padding: "18px 20px",
+            boxShadow: "0 2px 8px rgba(24, 34, 31, 0.03)"
+          }}
+        >
+          {/* Header Card dengan Petunjuk Alur */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid #edf2ea",
+              paddingBottom: 10,
+              marginBottom: 16,
+              flexWrap: "wrap",
+              gap: 8
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", backgroundColor: "#4b6623" }} />
+              <span
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "#3d541b",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em"
+                }}
+              >
+                ALUR HIERARKI KONSEP
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: 11,
+                color: "#52635a",
+                fontWeight: 600,
+                backgroundColor: "#f4f7ee",
+                padding: "3px 10px",
+                borderRadius: 999,
+                border: "1px solid #dce4d2"
+              }}
+            >
+              Urutan: 01 Terluas ➔ {String(allSteps.length).padStart(2, "0")} Terkecil
+            </span>
+          </div>
+
+          {/* Stepper Timeline Nodes */}
+          <div style={{ position: "relative", paddingLeft: 30, display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Garis Rel Vertikal */}
+            <div
+              style={{
+                position: "absolute",
+                left: 11,
+                top: 14,
+                bottom: 14,
+                width: 2,
+                backgroundColor: "#dce4d6"
+              }}
+            />
+
+            {allSteps.map((step, sIdx) => {
+              const { label, symbol } = parseConceptLabelAndSymbol(step.label);
+              const isRoot = sIdx === 0;
+              const stepNumber = String(sIdx + 1).padStart(2, "0");
+              const levelTag = getHierarchyLevelTag(step.depth, allSteps.length, isRoot);
+
+              return (
+                <div
+                  key={sIdx}
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: isRoot ? "10px 14px" : "9px 14px",
+                    backgroundColor: isRoot ? "#f4f7ee" : "#ffffff",
+                    border: isRoot ? "1.5px solid #c8d8be" : "1px solid #dce2d8",
+                    borderLeft: !isRoot ? (step.depth === 1 ? "3.5px solid #4b6623" : "3.5px solid #779f2f") : "1.5px solid #c8d8be",
+                    borderRadius: 8,
+                    flexWrap: "wrap",
+                    gap: 8
+                  }}
+                >
+                  {/* Lingkaran Angka Stepper */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: -30,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      backgroundColor: isRoot ? "#4b6623" : step.depth === 1 ? "#65a30d" : "#779f2f",
+                      color: "#ffffff",
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 0 0 3px #ffffff"
+                    }}
+                  >
+                    {stepNumber}
+                  </div>
+
+                  {/* Konten Judul & Tag */}
+                  <div style={{ flex: 1, minWidth: 160 }}>
+                    <div
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                        color: isRoot ? "#4b6623" : "#61726a",
+                        marginBottom: 2
+                      }}
+                    >
+                      {levelTag}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: isRoot ? 13.5 : 13,
+                        fontWeight: isRoot ? 800 : 700,
+                        color: "#18221f",
+                        lineHeight: 1.35
+                      }}
+                    >
+                      <MathView text={label} />
+                    </div>
+                  </div>
+
+                  {/* Badge Notasi Matematika Formal di Kanan */}
+                  {symbol && (
+                    <span
+                      style={{
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: isRoot ? "#3d541b" : "#45544e",
+                        backgroundColor: isRoot ? "#ffffff" : "#f6f8f4",
+                        border: isRoot ? "1px solid #c8d8be" : "1px solid #e1e7dc",
+                        padding: "2px 8px",
+                        borderRadius: 6,
+                        whiteSpace: "nowrap"
+                      }}
+                    >
+                      <MathView text={symbol.startsWith("[") && symbol.endsWith("]") ? symbol : `[${symbol}]`} />
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (!tree.isLinear && tree.branches.length > 0) {
+      // 2-Pillar Guided Pathway (e.g. Sistem Bilangan Riil -> Rasional vs Irasional)
+      const { label: rootLabel, symbol: rootSymbol } = parseConceptLabelAndSymbol(tree.root);
+
+      return (
+        <div
+          className="visual-diagram-card concept-stepper-card concept-tree-container"
+          style={{
+            margin: "20px 0",
+            backgroundColor: "#ffffff",
+            border: "1px solid #dce4d6",
+            borderRadius: 12,
+            padding: "18px 20px",
+            boxShadow: "0 2px 8px rgba(24, 34, 31, 0.03)"
+          }}
+        >
+          {/* Header Card dengan Petunjuk Alur */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid #edf2ea",
+              paddingBottom: 10,
+              marginBottom: 16,
+              flexWrap: "wrap",
+              gap: 8
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", backgroundColor: "#4b6623" }} />
+              <span
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "#3d541b",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em"
+                }}
+              >
+                ALUR HIERARKI KONSEP
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: 11,
+                color: "#52635a",
+                fontWeight: 600,
+                backgroundColor: "#f4f7ee",
+                padding: "3px 10px",
+                borderRadius: 999,
+                border: "1px solid #dce4d2"
+              }}
+            >
+              Urutan: 01 Induk ➔ 02A &amp; 02B Cabang Utama
+            </span>
+          </div>
+
+          {/* Root Node (Tahap 01 - Semesta Induk) */}
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "11px 16px 11px 48px",
+              backgroundColor: "#f4f7ee",
+              border: "1.5px solid #c8d8be",
+              borderRadius: 8,
+              marginBottom: 16,
+              flexWrap: "wrap",
+              gap: 8
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: 14,
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                backgroundColor: "#4b6623",
+                color: "#ffffff",
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 11,
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              01
+            </div>
+
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <div
+                style={{
+                  fontSize: 9.5,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: "#4b6623",
+                  marginBottom: 2
+                }}
+              >
+                PONDASI SEMESTA INDUK (TERLUAS)
+              </div>
+              <div
+                style={{
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  color: "#18221f",
+                  lineHeight: 1.35
+                }}
+              >
+                <MathView text={rootLabel} />
+              </div>
+            </div>
+
+            {rootSymbol && (
+              <span
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: "#3d541b",
+                  backgroundColor: "#ffffff",
+                  border: "1px solid #c8d8be",
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                  whiteSpace: "nowrap"
+                }}
+              >
+                <MathView text={rootSymbol.startsWith("[") && rootSymbol.endsWith("]") ? rootSymbol : `[${rootSymbol}]`} />
+              </span>
+            )}
+          </div>
+
+          {/* 2-Pillar Branches */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: 12,
+              alignItems: "start"
+            }}
+          >
+            {tree.branches.map((branch, bIdx) => {
+              const branchTag = bIdx === 0 ? "02A" : bIdx === 1 ? "02B" : `02${String.fromCharCode(65 + bIdx)}`;
+              const branchCategory = bIdx === 0 ? "SUB-HIMPUNAN CABANG UTAMA (A)" : "SUB-HIMPUNAN CABANG UTAMA (B)";
+              const { label: branchLabel, symbol: branchSymbol } = parseConceptLabelAndSymbol(branch.title);
+
+              return (
+                <div
+                  key={bIdx}
+                  style={{
+                    backgroundColor: "#fafbf9",
+                    border: "1px solid #e1e8dd",
+                    borderLeft: "3.5px solid #4b6623",
+                    borderRadius: 8,
+                    padding: "14px 16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10
+                  }}
+                >
+                  {/* Branch Header */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      borderBottom: "1px solid #edf1ea",
+                      paddingBottom: 8,
+                      gap: 8,
+                      flexWrap: "wrap"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span
+                        style={{
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          color: "#ffffff",
+                          backgroundColor: "#4b6623",
+                          padding: "1px 6px",
+                          borderRadius: 4
+                        }}
+                      >
+                        {branchTag}
+                      </span>
+                      <div>
+                        <div
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            color: "#61726a",
+                            letterSpacing: "0.03em"
+                          }}
+                        >
+                          {branchCategory}
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "#17201d" }}>
+                          <MathView text={branchLabel} />
+                        </div>
+                      </div>
+                    </div>
+                    {branchSymbol && (
+                      <span
+                        style={{
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#45544e",
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #e1e7dc",
+                          padding: "2px 7px",
+                          borderRadius: 6,
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        <MathView text={branchSymbol.startsWith("[") && branchSymbol.endsWith("]") ? branchSymbol : `[${branchSymbol}]`} />
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Branch Items */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {branch.items.map((item, iIdx) => {
+                      const { label: itemLabel, symbol: itemSymbol } = parseConceptLabelAndSymbol(item);
+                      return (
+                        <div
+                          key={iIdx}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "6px 10px",
+                            backgroundColor: "#ffffff",
+                            border: "1px solid #e8ede5",
+                            borderRadius: 6,
+                            fontSize: 12,
+                            color: "#374740",
+                            gap: 6
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+                            <span style={{ color: "#65a30d", fontWeight: 800, fontSize: 10 }}>•</span>
+                            <span style={{ fontWeight: 600 }}>
+                              <MathView text={itemLabel} />
+                            </span>
+                          </div>
+                          {itemSymbol && (
+                            <span
+                              style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: 10.5,
+                                fontWeight: 700,
+                                color: "#4b6623",
+                                backgroundColor: "#f4f7ee",
+                                padding: "1px 6px",
+                                borderRadius: 4,
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              <MathView text={itemSymbol.startsWith("[") && itemSymbol.endsWith("]") ? itemSymbol : `[${itemSymbol}]`} />
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback single root node
+    const { label: rootLabel, symbol: rootSymbol } = parseConceptLabelAndSymbol(tree.root);
     return (
       <div
-        className="visual-diagram-card concept-tree-container"
+        className="visual-diagram-card concept-stepper-card concept-tree-container"
         style={{
-          margin: "18px 0",
+          margin: "20px 0",
           backgroundColor: "#ffffff",
-          border: "1px solid #dce2d8",
-          borderRadius: 8,
-          padding: "16px 18px",
-          boxShadow: "0 1px 3px rgba(24, 34, 31, 0.02)"
+          border: "1px solid #dce4d6",
+          borderRadius: 12,
+          padding: "18px 20px",
+          boxShadow: "0 2px 8px rgba(24, 34, 31, 0.03)"
         }}
       >
-        {/* Header Kicker */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderBottom: "1px solid #edf1eb",
-            paddingBottom: 8,
-            marginBottom: 12
+            borderBottom: "1px solid #edf2ea",
+            paddingBottom: 10,
+            marginBottom: 16
           }}
         >
-          <div
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", backgroundColor: "#4b6623" }} />
+            <span
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 11,
+                fontWeight: 800,
+                color: "#3d541b",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em"
+              }}
+            >
+              ALUR HIERARKI KONSEP
+            </span>
+          </div>
+          <span
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 10.5,
-              fontWeight: 800,
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              color: "#465f33",
-              fontFamily: "'DM Mono', monospace"
+              fontSize: 11,
+              color: "#52635a",
+              fontWeight: 600,
+              backgroundColor: "#f4f7ee",
+              padding: "3px 10px",
+              borderRadius: 999,
+              border: "1px solid #dce4d2"
             }}
           >
-            <Network size={12} color="#4b6623" />
-            <span>BAGAN HIERARKI KONSEP</span>
-          </div>
-          <span style={{ fontSize: 10.5, color: "#7a8a82", fontWeight: 600 }}>Struktur Bertingkat</span>
+            Pondasi Induk Tunggal
+          </span>
         </div>
 
-        {/* Root Banner */}
         <div
           style={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "11px 16px 11px 48px",
             backgroundColor: "#f4f7ee",
-            border: "1px solid #dce4d2",
-            borderRadius: 6,
-            padding: "9px 14px",
-            fontSize: 13,
-            fontWeight: 800,
-            color: "#18221f",
-            marginBottom: 12
+            border: "1.5px solid #c8d8be",
+            borderRadius: 8,
+            gap: 8,
+            flexWrap: "wrap"
           }}
         >
-          <MathView text={tree.root} />
-        </div>
-
-        {/* 2-Pillar Branches or Linear Hierarchical Tree */}
-        {!tree.isLinear && tree.branches.length > 0 ? (
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 12
+              position: "absolute",
+              left: 14,
+              width: 24,
+              height: 24,
+              borderRadius: "50%",
+              backgroundColor: "#4b6623",
+              color: "#ffffff",
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 11,
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
             }}
           >
-            {tree.branches.map((branch, bIdx) => (
-              <div
-                key={bIdx}
-                style={{
-                  backgroundColor: "#fafbf9",
-                  border: "1px solid #e1e8dd",
-                  borderLeft: bIdx === 0 ? "3.5px solid #4b6623" : "3.5px solid #2b593f",
-                  borderRadius: 6,
-                  padding: "12px 14px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 12.5,
-                    fontWeight: 800,
-                    color: "#17201d",
-                    borderBottom: "1px solid #edf1ea",
-                    paddingBottom: 5
-                  }}
-                >
-                  <MathView text={branch.title} />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                  {branch.items.map((item, iIdx) => (
-                    <div
-                      key={iIdx}
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 6,
-                        fontSize: 12,
-                        color: "#374740",
-                        lineHeight: 1.5
-                      }}
-                    >
-                      <span style={{ color: "#65a30d", fontWeight: 800, fontSize: 11, flexShrink: 0, marginTop: 1 }}>•</span>
-                      <span style={{ flex: 1 }}>
-                        <MathView text={item} />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+            01
           </div>
-        ) : (
-          /* Linear Tiered Tree */
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {tree.linearNodes.map((node, nIdx) => (
-              <div
-                key={nIdx}
-                style={{
-                  marginLeft: `${Math.min(node.depth * 16, 64)}px`,
-                  padding: "7px 12px",
-                  backgroundColor: node.depth === 0 ? "#f8faf5" : "#ffffff",
-                  border: "1px solid #e2e8e0",
-                  borderLeft: node.depth > 0 ? "2.5px solid #779f2f" : "1px solid #e2e8e0",
-                  borderRadius: 6,
-                  fontSize: 12,
-                  fontWeight: node.depth === 0 ? 700 : 500,
-                  color: "#283731",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6
-                }}
-              >
-                {node.depth > 0 && <span style={{ color: "#779f2f", fontSize: 10, flexShrink: 0 }}>↳</span>}
-                <span style={{ flex: 1 }}>
-                  <MathView text={node.label} />
-                </span>
-              </div>
-            ))}
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <div
+              style={{
+                fontSize: 9.5,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                color: "#4b6623",
+                marginBottom: 2
+              }}
+            >
+              PONDASI SEMESTA INDUK (TERLUAS)
+            </div>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: "#18221f" }}>
+              <MathView text={rootLabel} />
+            </div>
           </div>
-        )}
+          {rootSymbol && (
+            <span
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 11.5,
+                fontWeight: 700,
+                color: "#3d541b",
+                backgroundColor: "#ffffff",
+                border: "1px solid #c8d8be",
+                padding: "2px 8px",
+                borderRadius: 6,
+                whiteSpace: "nowrap"
+              }}
+            >
+              <MathView text={rootSymbol.startsWith("[") && rootSymbol.endsWith("]") ? rootSymbol : `[${rootSymbol}]`} />
+            </span>
+          )}
+        </div>
       </div>
     );
   }

@@ -2202,9 +2202,17 @@
         border-bottom: none !important;
       }
 
-      .concept-tree-container {
+      .concept-tree-container,
+      .concept-stepper-card {
+        scroll-margin-top: 90px;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
+      }
+
+      @media (max-width: 480px) {
+        .concept-stepper-card {
+          padding: 14px 12px 14px 16px !important;
+        }
       }
 
       .print-only {
@@ -2439,7 +2447,8 @@
         }
 
         /* Prevent table and diagram clipping & orphan pages */
-        .concept-tree-container {
+        .concept-tree-container,
+        .concept-stepper-card {
           border: 1px solid #dce2d8 !important;
           background: #ffffff !important;
           box-shadow: none !important;

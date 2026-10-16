@@ -22,9 +22,10 @@ import {
   Flag,
   Bookmark,
   Check,
+  ChevronDown,
   X
 } from "lucide-react";
-import { ActiveTab, QuizQuestion, MistakeItem, ChatMessage } from "../../types";
+import { ActiveTab, QuizQuestion, MistakeItem, ChatMessage, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
 import { AIProcessLoader } from "../common/AIProcessLoader";
 import ReactMarkdown from "react-markdown";
@@ -254,6 +255,8 @@ export interface QuizTabProps {
   activeRoomSession?: { roomId: string; title: string; quizCount: number } | null;
   onOpenRoomLeaderboard?: () => void;
   showNotice?: (msg: string) => void;
+  documents?: DocumentItem[] | any[];
+  loadDocument?: (docOrId: any) => void;
 }
 
 export const QuizTab = React.memo(function QuizTab({
@@ -309,7 +312,9 @@ export const QuizTab = React.memo(function QuizTab({
   setQuizQuestions,
   activeRoomSession,
   onOpenRoomLeaderboard,
-  showNotice
+  showNotice,
+  documents = [],
+  loadDocument
 }: QuizTabProps) {
   const [isTailoring, setIsTailoring] = React.useState(false);
   const [copiedQuizChatId, setCopiedQuizChatId] = React.useState<string | null>(null);
@@ -345,6 +350,63 @@ export const QuizTab = React.memo(function QuizTab({
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      {documents && documents.length > 0 && (
+                        <>
+                          <div
+                            className="quiz-quick-switcher-compact"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              backgroundColor: "#fafbf8",
+                              border: "1px solid #dce1da",
+                              borderRadius: 6,
+                              padding: "0 6px 0 8px",
+                              height: 28,
+                              boxSizing: "border-box"
+                            }}
+                          >
+                            <BookOpen size={13} color="#45544e" style={{ flexShrink: 0 }} />
+                            <select
+                              className="quiz-material-dropdown-select"
+                              value={activeDocId || ""}
+                              onChange={(e) => {
+                                const selectedId = e.target.value;
+                                if (selectedId && loadDocument) {
+                                  const selected = documents.find((d: any) => d.id === selectedId);
+                                  loadDocument(selected || selectedId);
+                                }
+                              }}
+                              title="Ganti Materi Pembelajaran"
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: "#18221f",
+                                fontSize: 12,
+                                fontWeight: 700,
+                                fontFamily: "'Manrope', sans-serif",
+                                maxWidth: 160,
+                                outline: "none",
+                                cursor: "pointer",
+                                paddingRight: 2
+                              }}
+                            >
+                              {!documents.some((d: any) => d.id === activeDocId) && activeDocId && (
+                                <option value={activeDocId}>
+                                  {activeDocTitle || "Materi Saat Ini"}
+                                </option>
+                              )}
+                              {documents.map((doc: any) => (
+                                <option key={doc.id} value={doc.id}>
+                                  {doc.title || "Tanpa Judul"}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown size={11} color="#6f7975" style={{ flexShrink: 0, pointerEvents: "none" }} />
+                          </div>
+                          <div style={{ width: 1, height: 18, backgroundColor: "#dce1da", margin: "0 2px" }} />
+                        </>
+                      )}
                       <span style={{ fontSize: 12, fontWeight: 700, color: "#45544e" }}>Jumlah Soal:</span>
                       {[3, 5, 10, 15, 20].map((num) => (
                         <button
@@ -677,6 +739,126 @@ export const QuizTab = React.memo(function QuizTab({
                     </div>
 
                     <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
+                      {/* Materi Pembelajaran Aktif (Shortcut) */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <label style={{ fontSize: 12, fontWeight: 700, color: "#45544e", display: "flex", alignItems: "center", gap: 6 }}>
+                            <BookOpen size={14} color="#4b6623" />
+                            Materi Pembelajaran Aktif (Shortcut):
+                          </label>
+                          {activeDocTitle && (
+                            <span style={{ fontSize: 11, color: "#717f79", fontWeight: 600 }}>
+                              Terpilih
+                            </span>
+                          )}
+                        </div>
+
+                        {documents && documents.length > 0 ? (
+                          <div
+                            className="quiz-doc-select-container"
+                            style={{
+                              position: "relative",
+                              backgroundColor: "#fafbf8",
+                              border: "1px solid #dce2da",
+                              borderRadius: 8,
+                              padding: "4px 8px",
+                              transition: "border-color 0.15s ease"
+                            }}
+                          >
+                            <select
+                              className="quiz-doc-select"
+                              value={activeDocId || ""}
+                              onChange={(e) => {
+                                const selectedId = e.target.value;
+                                if (selectedId && loadDocument) {
+                                  const selected = documents.find((d: any) => d.id === selectedId);
+                                  loadDocument(selected || selectedId);
+                                }
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "8px 28px 8px 6px",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                fontFamily: "'Manrope', sans-serif",
+                                color: "#17201d",
+                                backgroundColor: "transparent",
+                                border: "none",
+                                outline: "none",
+                                cursor: "pointer",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden"
+                              }}
+                            >
+                              {!activeDocId && (
+                                <option value="" disabled>
+                                  -- Pilih Materi Pembelajaran --
+                                </option>
+                              )}
+                              {!documents.some((d: any) => d.id === activeDocId) && activeDocId && (
+                                <option value={activeDocId}>
+                                  {activeDocTitle || "Materi Saat Ini"}
+                                </option>
+                              )}
+                              {documents.map((doc: any) => (
+                                <option key={doc.id} value={doc.id}>
+                                  {doc.title || "Tanpa Judul"}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown
+                              size={15}
+                              color="#6f7975"
+                              style={{
+                                position: "absolute",
+                                right: 12,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                pointerEvents: "none"
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              backgroundColor: "#f9faf8",
+                              border: "1px dashed #dce2da",
+                              borderRadius: 8,
+                              padding: "14px 16px",
+                              textAlign: "center"
+                            }}
+                          >
+                            <p style={{ fontSize: 12.5, color: "#6f7975", margin: "0 0 10px" }}>
+                              Belum ada modul materi belajar yang tersimpan.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (setActiveTab) setActiveTab("home");
+                              }}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                backgroundColor: "#18221f",
+                                color: "#c8f064",
+                                border: "none",
+                                borderRadius: 6,
+                                padding: "6px 14px",
+                                fontSize: 12,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              <Plus size={13} />
+                              Unggah Dokumen / Buat Materi Baru
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Jumlah Soal */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>

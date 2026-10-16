@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { DocumentItem } from "../types";
 
+export const ACTIVE_DOC_STORAGE_KEY = "tanka_active_doc_id";
+
 export interface UseDocumentsProps {
   showNotice: (msg: string) => void;
   setActiveTab: (tab: any) => void;
@@ -57,6 +59,10 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
   const loadDocument = useCallback(async (idOrDoc: string | any, callback?: (doc: any) => void) => {
     const targetId = typeof idOrDoc === "string" ? idOrDoc : idOrDoc?.id;
     if (!targetId) return;
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(ACTIVE_DOC_STORAGE_KEY, targetId);
+    }
 
     // 1. Optimistic synchronous hydrate from cache/object to eliminate lag/flicker
     const local = (typeof idOrDoc === "object" && idOrDoc?.content)
@@ -136,19 +142,26 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       // Baca query param ?id= jika user membuka tautan langsung ke dokumen tertentu
       const urlParams = new URLSearchParams(window.location.search);
       const urlDocId = urlParams.get("id");
+      const savedDocId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_DOC_STORAGE_KEY) : null;
 
       const res = await fetch("/api/documents");
       const data = await res.json();
       if (data.documents) {
         setDocuments(data.documents);
-        if (urlDocId && data.documents.some((d: any) => d.id === urlDocId)) {
-          loadDocument(urlDocId);
+        const docToLoad = (urlDocId && data.documents.some((d: any) => d.id === urlDocId))
+          ? urlDocId
+          : (savedDocId && data.documents.some((d: any) => d.id === savedDocId))
+            ? savedDocId
+            : null;
+
+        if (docToLoad) {
+          loadDocument(docToLoad);
         }
       }
     } catch (err) {
       console.error("Gagal mengambil daftar dokumen:", err);
     }
-  }, [activeDocId, loadDocument]);
+  }, [loadDocument]);
 
   const handleDeleteDocument = useCallback(async (id: string, e?: React.MouseEvent, resetCallback?: () => void) => {
     if (e && e.stopPropagation) e.stopPropagation();
@@ -157,6 +170,9 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       await fetch(`/api/documents/${id}`, { method: "DELETE" });
       showNotice("Materi dan seluruh catatan terkait berhasil dihapus");
       if (activeDocId === id) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(ACTIVE_DOC_STORAGE_KEY);
+        }
         setActiveDocId(null);
         setActiveDocTitle("");
         setActiveDocContent("");
@@ -180,6 +196,9 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       const data = await res.json();
       if (data.success) {
         showNotice("Seluruh modul berhasil dihapus bersih");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(ACTIVE_DOC_STORAGE_KEY);
+        }
         setActiveDocId(null);
         setActiveDocTitle("");
         setActiveDocContent("");

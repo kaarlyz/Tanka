@@ -3084,3 +3084,33 @@
         margin: 12px 0;
         text-align: center;
       }
+
+      /* Quiz Material Quick Switcher Shortcut (TASK-QUIZ-DOC-PERSIST-SHORTCUT-042) */
+      .quiz-material-dropdown-select,
+      .quiz-doc-select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .quiz-doc-select-container:focus-within,
+      .quiz-quick-switcher-compact:focus-within {
+        border-color: #4b6623 !important;
+        box-shadow: 0 0 0 2px rgba(75, 102, 35, 0.12);
+      }
+
+      .quiz-quick-switcher-compact {
+        max-width: 100%;
+      }
+
+      @media (max-width: 640px) {
+        .quiz-quick-switcher-compact {
+          max-width: 100%;
+        }
+        .quiz-quick-switcher-compact .quiz-material-dropdown-select {
+          max-width: 130px !important;
+        }
+      }

@@ -224,6 +224,9 @@ export default function App() {
 
   const handleLogoutWithReset = useCallback(() => {
     handleLogout();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tanka_active_doc_id");
+    }
     setActiveDocId(null);
     setActiveDocTitle("");
     setActiveDocContent("");
@@ -1097,6 +1100,8 @@ export default function App() {
                           setIsRoomModalOpen(true);
                         }}
                         showNotice={showNotice}
+                        documents={documents}
+                        loadDocument={loadDocument}
                       />
                     </Suspense>
                   </div>

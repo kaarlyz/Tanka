@@ -2,10 +2,15 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 let normalizeMathExpression;
+let healControlCharsToLatex;
+let sanitizeMathMarkdown;
 
 test.before(async () => {
   const mod = await import("../src/utils/mathNormalizer.ts");
   normalizeMathExpression = mod.normalizeMathExpression;
+  healControlCharsToLatex = mod.healControlCharsToLatex;
+  const diagMod = await import("../src/utils/diagramNormalizer.ts");
+  sanitizeMathMarkdown = diagMod.sanitizeMathMarkdown;
 });
 
 test("Math Normalizer: menangani input kosong atau invalid", () => {
@@ -78,4 +83,19 @@ test("Math Normalizer: normalisasi baris baru di dalam inline math $...$", () =>
   // Baris baru di dalam block math $$...$$ harus tetap dipertahankan
   const blockInput = "$$\n\\begin{aligned}\nx &= 1 \\\\\ny &= 2\n\\end{aligned}\n$$";
   assert.equal(normalizeMathExpression(blockInput), blockInput);
+});
+
+test("Math Normalizer: healControlCharsToLatex membersihkan control char \\u000c dan \\u0008", () => {
+  const corrupted = "$27^{\u000crac{2}{3}}$ dan \u0008egin{aligned}";
+  const healed = normalizeMathExpression(corrupted);
+  assert.ok(!healed.includes("\u000c"));
+  assert.ok(!healed.includes("\u0008"));
+  assert.ok(healed.includes("\\frac{2}{3}"));
+  assert.ok(healed.includes("\\begin{aligned}"));
+});
+
+test("Diagram Normalizer: sanitizeMathMarkdown merapikan spasi berlebih pada inline math delimiter", () => {
+  const input = "Hitunglah nilai $ 2^3 $ dan $ \\frac{1}{2} $ dalam kalkulus.";
+  const output = sanitizeMathMarkdown(input);
+  assert.equal(output, "Hitunglah nilai $2^3$ dan $\\frac{1}{2}$ dalam kalkulus.");
 });

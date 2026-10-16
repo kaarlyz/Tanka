@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import katex from "katex";
-import { normalizeMathExpression } from "../../utils/mathNormalizer";
+import { normalizeMathExpression, healControlCharsToLatex } from "../../utils/mathNormalizer";
 
 const mathRenderCache = new Map<string, string>();
 
@@ -14,7 +14,7 @@ export const MathView = React.memo(function MathView({ text, style, className }:
   if (!text) return null;
 
   // Ultra-fast path: If string contains zero math tokens, bypass regexes entirely
-  const hasMathTokens = /[\$\\^√∑_±]|\([^)]+\)\s*\/|\\\(|\\\[|\\begin\{|\b\d+\/\d+\b/.test(text);
+  const hasMathTokens = /[\$\\^√∑_±]|\\[a-zA-Z]+|\([^)]+\)\s*\/|\\\(|\\\[|\\begin\{|\b\d+\/\d+\b/.test(text);
   if (!hasMathTokens) {
     return <span style={style} className={className}>{text}</span>;
   }
@@ -25,10 +25,27 @@ export const MathView = React.memo(function MathView({ text, style, className }:
     }
 
     try {
-      // 0. Pre-normalize delimiters \(, \[, unclosed \begin{...}, table pipes
-      let str = normalizeMathExpression(text);
+      // 1. Heal corrupted control characters and normalize delimiters \[...\], \(...\), \begin{...}
+      let str = healControlCharsToLatex(text);
+      str = normalizeMathExpression(str);
 
-      // Support basic markdown formatting (bold & linebreaks) in inline MathView
+      // 2. Isolated Masking Architecture:
+      // Mask Block Math $$...$$
+      const blockMathList: string[] = [];
+      str = str.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+        blockMathList.push(math);
+        return `@@@TANKA_BLOCK_${blockMathList.length - 1}@@@`;
+      });
+
+      // Mask Inline Math $...$
+      const inlineMathList: string[] = [];
+      str = str.replace(/\$([^\$]+?)\$/g, (_, math) => {
+        inlineMathList.push(math);
+        return `@@@TANKA_INLINE_${inlineMathList.length - 1}@@@`;
+      });
+
+      // 3. TRANSFORMATIONS ONLY ON TEXT OUTSIDE DELIMITED MATH
+      // A. Markdown bold & line breaks
       if (str.includes("**")) {
         str = str.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
       }
@@ -36,62 +53,7 @@ export const MathView = React.memo(function MathView({ text, style, className }:
         str = str.replace(/\n\n/g, "<br/><br/>").replace(/([^>\n])\n([^<\n])/g, "$1<br/>$2");
       }
 
-      // 0a. Pre-normalize fractions with slash: (A)/(B) -> $\frac{A}{B}$
-      if (str.includes("/")) {
-        str = str.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
-        str = str.replace(/\(([^()]+)\)\s*\/\s*([a-zA-Z0-9]+)\b/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
-        str = str.replace(/\b([a-zA-Z0-9]+)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => `$\\frac{${a}}{${b}}$`);
-        str = str.replace(/\b([0-9]{1,3})\/([0-9]{1,3})\b/g, (match, a, b) => {
-          if (match === "10/10") return match;
-          return `$\\frac{${a}}{${b}}$`;
-        });
-      }
-
-      // 0b. Pre-normalize Unicode roots: √(expr) -> $\sqrt{expr}$
-      if (str.includes("√")) {
-        str = str.replace(/√\(([^)]+)\)/g, (_, r) => `$\\sqrt{${r}}$`);
-        str = str.replace(/√([a-zA-Z0-9]+)/g, (_, r) => `$\\sqrt{${r}}$`);
-      }
-
-      // 0c. Pre-normalize Unicode sigma: ∑_{i=1}^{n} -> $\sum_{i=1}^{n}$
-      if (str.includes("∑")) {
-        str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}\s*([a-zA-Z0-9_]+)/g, (_, sub, sup, term) => `$\\sum_{${sub}}^{${sup}} ${term}$`);
-        str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}/g, (_, sub, sup) => `$\\sum_{${sub}}^{${sup}}$`);
-      }
-
-      // 1. Process block math $$...$$
-      if (str.includes("$$")) {
-        str = str.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
-          try {
-            let cleanMath = math
-              .replace(/±/g, "\\pm ")
-              .replace(/≤/g, "\\le ")
-              .replace(/≥/g, "\\ge ")
-              .replace(/≠/g, "\\neq ");
-            return `<div class="katex-block-wrapper" style="margin: 10px 0; overflow-x: auto; text-align: center;">${katex.renderToString(cleanMath.trim(), { displayMode: true, throwOnError: false })}</div>`;
-          } catch {
-            return `$$${math}$$`;
-          }
-        });
-      }
-
-      // 2. Process inline math $...$ (supports multiline content cleanly)
-      if (str.includes("$")) {
-        str = str.replace(/\$([^\$]+?)\$/g, (_, math) => {
-          try {
-            let cleanMath = math
-              .replace(/±/g, "\\pm ")
-              .replace(/≤/g, "\\le ")
-              .replace(/≥/g, "\\ge ")
-              .replace(/≠/g, "\\neq ");
-            return katex.renderToString(cleanMath.trim(), { displayMode: false, throwOnError: false });
-          } catch {
-            return `$${math}$`;
-          }
-        });
-      }
-
-      // 3. Process naked LaTeX commands like \frac{...}{...}, \sqrt{...}, \sum_{...}^{...}
+      // B. Naked LaTeX commands (e.g. \frac{1}{2}, \sqrt{3}, \sum_{i=1}^n)
       if (str.includes("\\")) {
         str = str.replace(/(\\frac\{[^{}]+\}\{[^{}]+\}|\\sqrt\{[^{}]+\}|\\sum_\{[^{}]+\}\^\{[^{}]+\})/g, (math) => {
           try {
@@ -102,7 +64,76 @@ export const MathView = React.memo(function MathView({ text, style, className }:
         });
       }
 
-      // 4. Process simple algebraic powers (e.g. x^2, y^3) without catastrophic backtracking
+      // C. Naked slash fractions: (A)/(B) or 1/2 -> Direct KaTeX render (no dollar collision)
+      if (str.includes("/")) {
+        str = str.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => {
+          try {
+            return katex.renderToString(`\\frac{${a}}{${b}}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return `(${a})/(${b})`;
+          }
+        });
+        str = str.replace(/\(([^()]+)\)\s*\/\s*([a-zA-Z0-9]+)\b/g, (_, a, b) => {
+          try {
+            return katex.renderToString(`\\frac{${a}}{${b}}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return `(${a})/${b}`;
+          }
+        });
+        str = str.replace(/\b([a-zA-Z0-9]+)\s*\/\s*\(([^()]+)\)/g, (_, a, b) => {
+          try {
+            return katex.renderToString(`\\frac{${a}}{${b}}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return `${a}/(${b})`;
+          }
+        });
+        str = str.replace(/\b([0-9]{1,3})\/([0-9]{1,3})\b/g, (match, a, b) => {
+          if (match === "10/10") return match;
+          try {
+            return katex.renderToString(`\\frac{${a}}{${b}}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return match;
+          }
+        });
+      }
+
+      // D. Naked Unicode roots: √(expr)
+      if (str.includes("√")) {
+        str = str.replace(/√\(([^)]+)\)/g, (_, r) => {
+          try {
+            return katex.renderToString(`\\sqrt{${r}}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return `√(${r})`;
+          }
+        });
+        str = str.replace(/√([a-zA-Z0-9]+)/g, (_, r) => {
+          try {
+            return katex.renderToString(`\\sqrt{${r}}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return `√${r}`;
+          }
+        });
+      }
+
+      // E. Naked Unicode sigma
+      if (str.includes("∑")) {
+        str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}\s*([a-zA-Z0-9_]+)/g, (_, sub, sup, term) => {
+          try {
+            return katex.renderToString(`\\sum_{${sub}}^{${sup}} ${term}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return `∑_{${sub}}^{${sup}} ${term}`;
+          }
+        });
+        str = str.replace(/∑_\{([^}]+)\}\^\{([^}]+)\}/g, (_, sub, sup) => {
+          try {
+            return katex.renderToString(`\\sum_{${sub}}^{${sup}}`, { displayMode: false, throwOnError: false });
+          } catch {
+            return `∑_{${sub}}^{${sup}}`;
+          }
+        });
+      }
+
+      // F. Naked algebraic powers (e.g. x^2, y^3)
       if (str.includes("^")) {
         str = str.replace(/\b([a-zA-Z0-9()]+)\^([a-zA-Z0-9()]+)\b/g, (match, base, exp) => {
           try {
@@ -112,7 +143,7 @@ export const MathView = React.memo(function MathView({ text, style, className }:
           }
         });
 
-        // 5. Fallback for carets powers
+        // Fallback for caret powers
         str = str
           .replace(/\^2\b/g, "²")
           .replace(/\^3\b/g, "³")
@@ -127,6 +158,42 @@ export const MathView = React.memo(function MathView({ text, style, className }:
           .replace(/\^x\b/g, "ˣ")
           .replace(/\^\{([^}]+)\}/g, "<sup>$1</sup>");
       }
+
+      // 4. UNMASKING AND RENDERING KATEX
+      // Render Block Math
+      str = str.replace(/@@@TANKA_BLOCK_(\d+)@@@/g, (_, idxStr) => {
+        const idx = Number(idxStr);
+        const rawMath = blockMathList[idx] || "";
+        try {
+          const cleanMath = healControlCharsToLatex(rawMath)
+            .replace(/±/g, "\\pm ")
+            .replace(/≤/g, "\\le ")
+            .replace(/≥/g, "\\ge ")
+            .replace(/≠/g, "\\neq ")
+            .trim();
+          const rendered = katex.renderToString(cleanMath, { displayMode: true, throwOnError: false });
+          return `<div class="katex-block-wrapper" style="margin: 10px 0; overflow-x: auto; text-align: center;">${rendered}</div>`;
+        } catch {
+          return `$$${rawMath}$$`;
+        }
+      });
+
+      // Render Inline Math
+      str = str.replace(/@@@TANKA_INLINE_(\d+)@@@/g, (_, idxStr) => {
+        const idx = Number(idxStr);
+        const rawMath = inlineMathList[idx] || "";
+        try {
+          const cleanMath = healControlCharsToLatex(rawMath)
+            .replace(/±/g, "\\pm ")
+            .replace(/≤/g, "\\le ")
+            .replace(/≥/g, "\\ge ")
+            .replace(/≠/g, "\\neq ")
+            .trim();
+          return katex.renderToString(cleanMath, { displayMode: false, throwOnError: false });
+        } catch {
+          return `$${rawMath}$`;
+        }
+      });
 
       if (mathRenderCache.size > 2000) mathRenderCache.clear();
       mathRenderCache.set(text, str);

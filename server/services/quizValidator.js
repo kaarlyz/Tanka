@@ -1,4 +1,5 @@
 const crypto = require("node:crypto");
+const { healControlCharsToLatex } = require("../utils/jsonParser");
 
 /**
  * Canonical Quiz Normalizer & Validator for Tanka
@@ -22,7 +23,7 @@ const LETTERS = ["A", "B", "C", "D", "E"];
  */
 function sanitizeMathString(t) {
   if (!t || typeof t !== "string") return t;
-  let cleaned = t;
+  let cleaned = healControlCharsToLatex(t);
   const dollarCount = (cleaned.match(/(?<!\\)\$/g) || []).length;
   if (dollarCount % 2 !== 0) {
     cleaned += "$";

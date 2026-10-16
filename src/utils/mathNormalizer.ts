@@ -1,19 +1,30 @@
 /**
  * Self-Healing KaTeX / Math Expression Normalizer for Tanka
  *
- * 1. Converts \( and \) to $
- * 2. Converts \[ and \] to $$\n...\n$$
- * 3. Detects environments \begin{(aligned|cases|matrix|pmatrix|bmatrix)}...\end{...}
+ * 1. Heals corrupted control characters (\u000c -> \f, \u0008 -> \b)
+ * 2. Converts \( and \) to $
+ * 3. Converts \[ and \] to $$\n...\n$$
+ * 4. Detects environments \begin{(aligned|cases|matrix|pmatrix|bmatrix)}...\end{...}
  *    not enclosed in $$, and wraps them in $$\n...\n$$
- * 4. Protects table pipes: inside markdown tables (| ... |), converts | inside $...$ or $$...$$
+ * 5. Protects table pipes: inside markdown tables (| ... |), converts | inside $...$ or $$...$$
  *    to \vert so GFM table columns won't break
- * 5. Normalizes newlines inside inline math $...$
+ * 6. Normalizes newlines inside inline math $...$
  */
+
+export function healControlCharsToLatex(str: string): string {
+  if (!str || typeof str !== "string") return "";
+  return str
+    .replace(/\u000c/g, "\\f")
+    .replace(/\u0008/g, "\\b")
+    .replace(/\t(imes|ext|heta|an|au)\b/g, "\\t$1")
+    .replace(/\r(ight|ho|angle)\b/g, "\\r$1")
+    .replace(/\n(eq|abla|ot|u)\b/g, "\\n$1");
+}
 
 export function normalizeMathExpression(text: string): string {
   if (!text || typeof text !== "string") return "";
 
-  let str = text.replace(/\r\n/g, "\n");
+  let str = healControlCharsToLatex(text).replace(/\r\n/g, "\n");
 
   // 1. Convert display math \[ ... \] to $$\n...\n$$
   str = str.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => {

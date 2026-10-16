@@ -1,7 +1,7 @@
 const crypto = require("node:crypto");
 const { db } = require("../db");
 const { callRouter, detectRealMath } = require("../ai");
-const { safeJsonParse } = require("../utils/jsonParser");
+const { safeJsonParse, healControlCharsToLatex } = require("../utils/jsonParser");
 const { validateAndNormalizeQuiz } = require("./quizValidator");
 
 /**
@@ -198,23 +198,45 @@ ${factsContext}
 """`;
 
     const tokenBudget = Math.min(8192, Math.max(2048, batchCount * 800));
-    const reply = await callRouter([
-      { role: "system", content: "You are an expert exam question generator that strictly outputs valid JSON arrays." },
-      { role: "user", content: prompt }
-    ], model, 0.2, tokenBudget);
+    let lastError = null;
 
-    const parsed = safeJsonParse(reply);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const reply = await callRouter([
+          { role: "system", content: "You are an expert exam question generator that strictly outputs valid JSON arrays." },
+          { role: "user", content: prompt }
+        ], model, 0.2, tokenBudget);
+
+        const parsed = safeJsonParse(reply);
+        let items = parsed;
+        if (parsed && !Array.isArray(parsed) && typeof parsed === "object") {
+          const possibleArray = parsed.questions || parsed.data || parsed.soal || parsed.items || Object.values(parsed).find(Array.isArray);
+          if (Array.isArray(possibleArray)) {
+            items = possibleArray;
+          }
+        }
+        if (Array.isArray(items) && items.length > 0) {
+          return items;
+        }
+        throw new Error("Format JSON soal tidak valid dari model AI");
+      } catch (err) {
+        lastError = err;
+        if (attempt < 2) {
+          console.warn(`[QuizGenerator] Gagal parse batch (offset ${offsetId}, percobaan ${attempt}). Mencoba ulang... Alasan: ${err.message}`);
+        }
+      }
     }
-    throw new Error("Format JSON soal tidak valid dari model AI");
+
+    throw lastError || new Error("Format JSON soal tidak valid dari model AI");
   };
 
+  const maxBatch = quizType === "analytical" || quizType === "hots" ? 3 : 5;
   let questions = [];
-  if (finalCount <= 8) {
+
+  if (finalCount <= maxBatch) {
     questions = await generateQuizBatch(finalCount, 1);
   } else {
-    const batchSize = 7;
+    const batchSize = maxBatch;
     const tasks = [];
     let remaining = finalCount;
     let currentOffset = 1;
@@ -231,8 +253,28 @@ ${factsContext}
     questions = results.flat();
   }
 
+  // Bersihkan karakter kontrol dari output model sebelum validasi
+  const healedQuestions = questions.map(q => {
+    if (!q || typeof q !== "object") return q;
+    return {
+      ...q,
+      question: healControlCharsToLatex(q.question),
+      options: Array.isArray(q.options) ? q.options.map(opt => healControlCharsToLatex(opt)) : q.options,
+      formula: healControlCharsToLatex(q.formula || ""),
+      explanation: healControlCharsToLatex(q.explanation || ""),
+      pitfall: healControlCharsToLatex(q.pitfall || ""),
+      steps: Array.isArray(q.steps)
+        ? q.steps.map(s => ({
+            ...s,
+            title: healControlCharsToLatex(s.title || ""),
+            desc: healControlCharsToLatex(s.desc || "")
+          }))
+        : q.steps
+    };
+  });
+
   // Validasi dan normalisasi kanonis dengan pengacakan opsi dan pembersihan letter-reference
-  return validateAndNormalizeQuiz(questions, { shuffleOptions: true, renumber: true });
+  return validateAndNormalizeQuiz(healedQuestions, { shuffleOptions: true, renumber: true });
 }
 
 module.exports = {

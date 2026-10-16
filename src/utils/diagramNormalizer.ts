@@ -1,4 +1,4 @@
-import { normalizeMathExpression } from "./mathNormalizer";
+import { normalizeMathExpression } from "./mathNormalizer.ts";
 
 export function sanitizeMathMarkdown(md: string): string {
   if (!md) return "";
@@ -95,6 +95,9 @@ export function sanitizeMathMarkdown(md: string): string {
     }
     return l;
   }).join("\n");
+
+  // Trim excessive whitespace inside inline math delimiters for remark-math compatibility (e.g. "$ 2^3 $" -> "$2^3$")
+  result = result.replace(/(?<!\$)\$(?!\$)\s*([^\$\n]+?)\s*(?<!\$)\$(?!\$)/g, "$$$1$$");
 
   // Normalize leaked technical jargon in table headers or text
   result = result.replace(/\|\s*Notasi\s+KaTeX\s*\|/gi, "| Notasi Simbol |");

@@ -195,3 +195,20 @@ test("Quiz Validator: stale 'answer' letter konflik dengan correctIndex dilempar
     /Konflik kunci jawaban/
   );
 });
+
+test("Quiz Validator: automatically heals control characters in question, options, and explanation", () => {
+  const corrupted = {
+    id: 1,
+    question: "Berapakah hasil dari $27^{\u000crac{2}{3}}$?",
+    options: ["$9$", "$3$", "$27$", "$\u0008eta$"],
+    correctIndex: 0,
+    explanation: "Hitung dengan formula \u000crac{2}{3} sehingga didapat 9."
+  };
+  const result = validateAndNormalizeQuizQuestion(corrupted, 1);
+  assert.ok(!result.question.includes("\u000c"));
+  assert.ok(result.question.includes("\\frac{2}{3}"));
+  assert.ok(!result.options[3].includes("\u0008"));
+  assert.ok(result.options[3].includes("\\beta"));
+  assert.ok(!result.explanation.includes("\u000c"));
+  assert.ok(result.explanation.includes("\\frac{2}{3}"));
+});

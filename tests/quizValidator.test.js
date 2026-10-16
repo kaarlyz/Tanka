@@ -212,3 +212,23 @@ test("Quiz Validator: automatically heals control characters in question, option
   assert.ok(!result.explanation.includes("\u000c"));
   assert.ok(result.explanation.includes("\\frac{2}{3}"));
 });
+
+test("Quiz Validator: preserves and validates questions across quiz difficulty types (beginner, conceptual, analytical)", () => {
+  const types = ["beginner", "conceptual", "analytical", "hots"];
+  for (const qType of types) {
+    const raw = [
+      {
+        id: 1,
+        question: `Soal latihan bertingkat ${qType}?`,
+        options: ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
+        correctIndex: 1,
+        explanation: `Penjelasan valid untuk kesulitan ${qType}`
+      }
+    ];
+    const normalized = validateAndNormalizeQuiz(raw, { shuffleOptions: false, renumber: true });
+    assert.equal(normalized.length, 1);
+    assert.equal(normalized[0].question, `Soal latihan bertingkat ${qType}?`);
+    assert.equal(normalized[0].correctIndex, 1);
+  }
+});
+

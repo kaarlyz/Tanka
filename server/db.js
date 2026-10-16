@@ -44,6 +44,7 @@ db.exec(`
     id TEXT PRIMARY KEY,
     doc_id TEXT NOT NULL,
     questions TEXT NOT NULL,
+    quiz_type TEXT DEFAULT 'conceptual',
     created_at INTEGER NOT NULL
   );
 
@@ -244,6 +245,18 @@ function runMigrations(targetDb = db) {
     }
   } catch (err) {
     console.warn("[tanka-db] mistake_notebook migration notice:", err.message);
+  }
+
+  try {
+    if (hasTable(targetDb, "quizzes")) {
+      const quizColumns = targetDb.prepare("PRAGMA table_info(quizzes)").all().map(c => c.name);
+      if (!quizColumns.includes("quiz_type")) {
+        targetDb.prepare("ALTER TABLE quizzes ADD COLUMN quiz_type TEXT DEFAULT 'conceptual'").run();
+        console.log("[tanka-db] Added quiz_type column to quizzes table");
+      }
+    }
+  } catch (err) {
+    console.warn("[tanka-db] quizzes migration notice:", err.message);
   }
 
   try {

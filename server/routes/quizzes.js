@@ -62,9 +62,9 @@ async function handleQuizzesRoutes(req, res, pathname, helpers) {
         finalQuestions = validateAndNormalizeQuiz(finalQuestions, { shuffleOptions: false, renumber: true });
       } catch {}
       const quizId = "quiz_" + Date.now();
-      db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")
-        .run(quizId, docId, JSON.stringify(finalQuestions), Date.now());
-      return sendJSON(res, { success: true, quizId, questions: finalQuestions, appendedCount: questions.length, mode: "append" });
+      db.prepare("INSERT INTO quizzes (id, doc_id, questions, quiz_type, created_at) VALUES (?, ?, ?, ?, ?)")
+        .run(quizId, docId, JSON.stringify(finalQuestions), quizType || "conceptual", Date.now());
+      return sendJSON(res, { ok: true, success: true, quizId, questions: finalQuestions, quizType: quizType || "conceptual", appendedCount: questions.length, mode: "append" });
     } else if (mode === "variant") {
       const newDocId = "doc_var_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
       const shortTag = customInstruction ? ` (${customInstruction.slice(0, 22)})` : " (Paket Soal Baru)";
@@ -76,14 +76,14 @@ async function handleQuizzesRoutes(req, res, pathname, helpers) {
         Date.now()
       );
       const quizId = "quiz_" + Date.now();
-      db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")
-        .run(quizId, newDocId, JSON.stringify(finalQuestions), Date.now());
-      return sendJSON(res, { success: true, quizId, questions: finalQuestions, isVariant: true, newDocId, newDocTitle, mode: "variant" });
+      db.prepare("INSERT INTO quizzes (id, doc_id, questions, quiz_type, created_at) VALUES (?, ?, ?, ?, ?)")
+        .run(quizId, newDocId, JSON.stringify(finalQuestions), quizType || "conceptual", Date.now());
+      return sendJSON(res, { ok: true, success: true, quizId, questions: finalQuestions, quizType: quizType || "conceptual", isVariant: true, newDocId, newDocTitle, mode: "variant" });
     } else {
       const quizId = "quiz_" + Date.now();
-      db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")
-        .run(quizId, docId, JSON.stringify(finalQuestions), Date.now());
-      return sendJSON(res, { success: true, quizId, questions: finalQuestions, mode: "replace" });
+      db.prepare("INSERT INTO quizzes (id, doc_id, questions, quiz_type, created_at) VALUES (?, ?, ?, ?, ?)")
+        .run(quizId, docId, JSON.stringify(finalQuestions), quizType || "conceptual", Date.now());
+      return sendJSON(res, { ok: true, success: true, quizId, questions: finalQuestions, quizType: quizType || "conceptual", mode: "replace" });
     }
   }
 
@@ -104,7 +104,13 @@ async function handleQuizzesRoutes(req, res, pathname, helpers) {
         }
       }
     }
-    return sendJSON(res, { quiz: row && parsedQuestions ? { id: row.id, questions: parsedQuestions } : null });
+    return sendJSON(res, {
+      quiz: row && parsedQuestions ? {
+        id: row.id,
+        questions: parsedQuestions,
+        quizType: row.quiz_type || "conceptual"
+      } : null
+    });
   }
 
   // 3. POST /api/ai/quiz-question-chat - chat with AI tutor about a question
@@ -199,8 +205,8 @@ Jangan sertakan teks apapun selain JSON murni.`;
       newQuiz = validateAndNormalizeQuiz(newQuiz, { shuffleOptions: false, renumber: true });
 
       const quizId = "quiz_" + Date.now();
-      db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)")
-        .run(quizId, docId, JSON.stringify(newQuiz), Date.now());
+      db.prepare("INSERT INTO quizzes (id, doc_id, questions, quiz_type, created_at) VALUES (?, ?, ?, ?, ?)")
+        .run(quizId, docId, JSON.stringify(newQuiz), "conceptual", Date.now());
 
       return sendJSON(res, { success: true, quizzes: newQuiz });
     } catch (err) {

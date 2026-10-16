@@ -334,6 +334,7 @@ export default function App() {
     activeDocId,
     selectedModel,
     quizType,
+    setQuizType,
     showNotice,
     recordMistake,
     activeDocContent,

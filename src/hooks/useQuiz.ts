@@ -5,13 +5,14 @@ export interface UseQuizProps {
   activeDocId: string | null;
   selectedModel: string;
   quizType: "beginner" | "conceptual" | "analytical" | "standard" | "hots" | "calculation" | "story" | any;
+  setQuizType?: (type: string) => void;
   showNotice: (msg: string) => void;
   recordMistake: (question: QuizQuestion, userAnswerIdx: number) => void;
   activeDocContent?: string;
   onExamComplete?: (result: { finalScore: number; correctCount: number; totalQuestions: number }) => void;
 }
 
-export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, recordMistake, activeDocContent, onExamComplete }: UseQuizProps) {
+export function useQuiz({ activeDocId, selectedModel, quizType, setQuizType, showNotice, recordMistake, activeDocContent, onExamComplete }: UseQuizProps) {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -57,6 +58,13 @@ export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, reco
       .then((data) => {
         if (!isCancelled && data && data.quiz && Array.isArray(data.quiz.questions) && data.quiz.questions.length > 0) {
           setQuizQuestions(data.quiz.questions);
+          if (data.quiz.quizType && setQuizType) {
+            const mappedType =
+              data.quiz.quizType === "hots" ? "analytical" :
+              data.quiz.quizType === "standard" ? "conceptual" :
+              data.quiz.quizType;
+            setQuizType(mappedType);
+          }
           resetQuizState();
         } else if (!isCancelled) {
           setQuizQuestions([]);
@@ -67,7 +75,7 @@ export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, reco
     return () => {
       isCancelled = true;
     };
-  }, [activeDocId, resetQuizState]);
+  }, [activeDocId, resetQuizState, setQuizType]);
 
   const [isQuizChatOpen, setIsQuizChatOpen] = useState(false);
 
@@ -97,6 +105,13 @@ export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, reco
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success && Array.isArray(data.questions) && data.questions.length > 0) {
         setQuizQuestions(data.questions);
+        if (data.quizType && setQuizType) {
+          const mappedType =
+            data.quizType === "hots" ? "analytical" :
+            data.quizType === "standard" ? "conceptual" :
+            data.quizType;
+          setQuizType(mappedType);
+        }
         resetQuizState();
         showNotice(`Paket latihan ${data.questions.length} soal berhasil dibuat`);
       } else {
@@ -108,7 +123,7 @@ export function useQuiz({ activeDocId, selectedModel, quizType, showNotice, reco
     } finally {
       setIsGeneratingQuiz(false);
     }
-  }, [activeDocId, selectedModel, quizQuestionCount, quizType, isQuizCompleted, score, showNotice, resetQuizState]);
+  }, [activeDocId, selectedModel, quizQuestionCount, quizType, isQuizCompleted, score, showNotice, resetQuizState, setQuizType]);
 
   const handleSelectQuizOption = useCallback((optionIdx: number) => {
     if (quizMode === "study") {

@@ -99,6 +99,15 @@ test("Integration: Quiz Lifecycle (Persist -> Get Saved Normalized -> Chat Tutor
   assert.equal(res.data.quiz.questions.length, 2);
   assert.equal(res.data.quiz.questions[0].correctIndex, 2); // 'C' -> index 2
   assert.equal(res.data.quiz.questions[1].correctIndex, 1);
+  assert.equal(res.data.quiz.quizType, "conceptual");
+
+  // Simpan quiz dengan quiz_type eksplisit 'hots'
+  db.prepare("INSERT INTO quizzes (id, doc_id, questions, quiz_type, created_at) VALUES (?, ?, ?, ?, ?)")
+    .run(`q_hots_${docId}`, docId, JSON.stringify(rawQuestions), "hots", Date.now() + 10);
+  const getMockHots = createMockHelpers();
+  await handleQuizzesRoutes({ method: "GET" }, getMockHots.res, `/api/documents/${docId}/quizzes`, getMockHots.helpers);
+  const resHots = getMockHots.getResult();
+  assert.equal(resHots.data.quiz.quizType, "hots");
 
   // Cleanup
   db.prepare("DELETE FROM quizzes WHERE doc_id = ?").run(docId);

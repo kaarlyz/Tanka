@@ -93,6 +93,28 @@ test("DB Migration: migrasi menambahkan kolom baru pada document_concepts dengan
   assert.equal(row.updated_at, 0);
 });
 
+test("DB Migration: migrasi menambahkan quiz_type pada quizzes dengan aman", () => {
+  const db = createLegacyDatabase();
+  db.exec(`
+    CREATE TABLE quizzes (
+      id TEXT PRIMARY KEY,
+      doc_id TEXT NOT NULL,
+      questions TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    INSERT INTO quizzes (id, doc_id, questions, created_at)
+    VALUES ('q_legacy', 'doc_1', '[]', 1000);
+  `);
+
+  runMigrations(db);
+
+  const columns = db.prepare("PRAGMA table_info(quizzes)").all().map(c => c.name);
+  assert.ok(columns.includes("quiz_type"));
+
+  const row = db.prepare("SELECT * FROM quizzes WHERE id = 'q_legacy'").get();
+  assert.equal(row.quiz_type, "conceptual");
+});
+
 test("DB Migration: tabel chapter_plans dan concept_edges terbuat dengan indeks dan constraint", () => {
   const db = createLegacyDatabase();
   runMigrations(db);

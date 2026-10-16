@@ -359,8 +359,8 @@ export const QuizTab = React.memo(function QuizTab({
                               alignItems: "center",
                               gap: 4,
                               backgroundColor: "#fafbf8",
-                              border: "1px solid #dce1da",
-                              borderRadius: 6,
+                              border: "1.5px solid #dce4d6",
+                              borderRadius: 8,
                               padding: "0 6px 0 8px",
                               height: 28,
                               boxSizing: "border-box"
@@ -368,7 +368,7 @@ export const QuizTab = React.memo(function QuizTab({
                           >
                             <BookOpen size={13} color="#45544e" style={{ flexShrink: 0 }} />
                             <select
-                              className="quiz-material-dropdown-select"
+                              className="quiz-material-dropdown-select clean-input no-border"
                               value={activeDocId || ""}
                               onChange={(e) => {
                                 const selectedId = e.target.value;
@@ -381,6 +381,7 @@ export const QuizTab = React.memo(function QuizTab({
                               style={{
                                 background: "transparent",
                                 border: "none",
+                                boxShadow: "none",
                                 color: "#18221f",
                                 fontSize: 12,
                                 fontWeight: 700,
@@ -759,14 +760,14 @@ export const QuizTab = React.memo(function QuizTab({
                             style={{
                               position: "relative",
                               backgroundColor: "#fafbf8",
-                              border: "1px solid #dce2da",
-                              borderRadius: 8,
-                              padding: "4px 8px",
-                              transition: "border-color 0.15s ease"
+                              border: "1.5px solid #dce4d6",
+                              borderRadius: 10,
+                              padding: "2px 10px",
+                              transition: "border-color 0.15s ease, box-shadow 0.15s ease"
                             }}
                           >
                             <select
-                              className="quiz-doc-select"
+                              className="quiz-doc-select clean-input no-border"
                               value={activeDocId || ""}
                               onChange={(e) => {
                                 const selectedId = e.target.value;
@@ -784,6 +785,7 @@ export const QuizTab = React.memo(function QuizTab({
                                 color: "#17201d",
                                 backgroundColor: "transparent",
                                 border: "none",
+                                boxShadow: "none",
                                 outline: "none",
                                 cursor: "pointer",
                                 textOverflow: "ellipsis",

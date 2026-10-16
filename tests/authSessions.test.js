@@ -248,49 +248,39 @@ test("Auth Google: POST /api/auth/google membuat akun baru dan menghasilkan sess
   assert.equal(sessMock.getResult().data.user.id, gRes.data.user.id);
 });
 
-test("Auth Google OAuth 2.0: Flow GET /login, /mock-consent, dan /callback menghasilkan sesi sah", async () => {
-  // 1. GET /api/auth/google/login tanpa env var -> redirect 302 ke mock consent
-  const loginMock = createMockHelpers();
-  loginMock.req.method = "GET";
-  await handleAuthRoutes(loginMock.req, loginMock.res, "/api/auth/google/login", loginMock.helpers);
-  const loginRes = loginMock.getResult();
-  assert.equal(loginRes.status, 302);
-  assert.equal(loginRes.headers.Location, "/api/auth/google/mock-consent");
-
-  // 2. GET /api/auth/google/mock-consent -> status 200 dan konten HTML simulasi
-  const consentMock = createMockHelpers();
-  consentMock.req.method = "GET";
-  await handleAuthRoutes(consentMock.req, consentMock.res, "/api/auth/google/mock-consent", consentMock.helpers);
-  const consentRes = consentMock.getResult();
-  assert.equal(consentRes.status, 200);
-  assert.ok(typeof consentRes.data === "string" && consentRes.data.includes("Simulasi Akun Google OAuth 2.0"));
-
-  // 3. GET /api/auth/google/callback dengan mock OAuth query -> buat user baru & token sesi
-  const mockEmail = `oauth_student_${Date.now()}@gmail.com`;
-  const mockName = "OAuth Student";
-  const mockGid = `gid_oauth_${Date.now()}`;
-  const callbackMock = createMockHelpers();
-  callbackMock.req.method = "GET";
-  callbackMock.req.url = `/api/auth/google/callback?code=mock_code&email=${encodeURIComponent(mockEmail)}&name=${encodeURIComponent(mockName)}&googleId=${mockGid}`;
-
-  await handleAuthRoutes(callbackMock.req, callbackMock.res, "/api/auth/google/callback", callbackMock.helpers);
-  const cbRes = callbackMock.getResult();
-
-  assert.equal(cbRes.status, 200);
-  assert.ok(typeof cbRes.data === "string");
-  assert.ok(cbRes.data.includes("TANKA_GOOGLE_AUTH_SUCCESS"), "Callback harus mengirim pesan postMessage TANKA_GOOGLE_AUTH_SUCCESS");
-
-  // Verify user is in database
-  const userInDb = db.prepare("SELECT * FROM users WHERE google_id = ?").get(mockGid);
-  assert.ok(userInDb, "User Google harus tersimpan di basis data SQLite");
-  assert.equal(userInDb.auth_provider, "google");
-  assert.equal(userInDb.is_verified, 1);
-  assert.equal(userInDb.name, mockName);
-
-  // 4. Test login dengan GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET terkonfigurasi
+test("Auth Google OAuth 2.0: Flow GET /login langsung ke Google atau kirim postMessage error konfigurasi", async () => {
   const origClientId = process.env.GOOGLE_CLIENT_ID;
   const origClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  delete process.env.GOOGLE_CLIENT_ID;
+  delete process.env.GOOGLE_CLIENT_SECRET;
+
   try {
+    // 1. GET /api/auth/google/login tanpa GOOGLE_CLIENT_ID -> status 200 dengan postMessage TANKA_GOOGLE_AUTH_ERROR
+    const loginMock = createMockHelpers();
+    loginMock.req.method = "GET";
+    await handleAuthRoutes(loginMock.req, loginMock.res, "/api/auth/google/login", loginMock.helpers);
+    const loginRes = loginMock.getResult();
+    assert.equal(loginRes.status, 200);
+    assert.notEqual(loginRes.headers.Location, "/api/auth/google/mock-consent");
+    assert.ok(typeof loginRes.data === "string");
+    assert.ok(loginRes.data.includes("TANKA_GOOGLE_AUTH_ERROR"), "Harus mengirim postMessage TANKA_GOOGLE_AUTH_ERROR");
+    assert.ok(loginRes.data.includes("GOOGLE_CLIENT_ID belum dikonfigurasi di server"));
+
+    // Tes respons JSON jika client meminta format JSON
+    const jsonMock = createMockHelpers({}, { accept: "application/json" });
+    jsonMock.req.method = "GET";
+    await handleAuthRoutes(jsonMock.req, jsonMock.res, "/api/auth/google/login", jsonMock.helpers);
+    const jsonRes = jsonMock.getResult();
+    assert.equal(jsonRes.status, 400);
+    assert.ok(jsonRes.data.error.includes("GOOGLE_CLIENT_ID"));
+
+    // 2. GET /api/auth/google/mock-consent harus sudah terhapus total
+    const consentMock = createMockHelpers();
+    consentMock.req.method = "GET";
+    const handled = await handleAuthRoutes(consentMock.req, consentMock.res, "/api/auth/google/mock-consent", consentMock.helpers);
+    assert.equal(handled, false, "Rute mock-consent harus dihapus total");
+
+    // 3. GET /api/auth/google/login dengan GOOGLE_CLIENT_ID -> redirect 302 langsung ke accounts.google.com
     process.env.GOOGLE_CLIENT_ID = "test-client-id-123.apps.googleusercontent.com";
     process.env.GOOGLE_CLIENT_SECRET = "test-secret-456";
 
@@ -302,6 +292,29 @@ test("Auth Google OAuth 2.0: Flow GET /login, /mock-consent, dan /callback mengh
     assert.equal(realLoginRes.status, 302);
     assert.ok(realLoginRes.headers.Location.startsWith("https://accounts.google.com/o/oauth2/v2/auth"));
     assert.ok(realLoginRes.headers.Location.includes("client_id=test-client-id-123.apps.googleusercontent.com"));
+    assert.ok(realLoginRes.headers.Location.includes("prompt=select_account"));
+
+    // 4. GET /api/auth/google/callback dengan parameter autentikasi -> buat user baru & token sesi
+    const mockEmail = `oauth_student_${Date.now()}@gmail.com`;
+    const mockName = "OAuth Student";
+    const mockGid = `gid_oauth_${Date.now()}`;
+    const callbackMock = createMockHelpers();
+    callbackMock.req.method = "GET";
+    callbackMock.req.url = `/api/auth/google/callback?code=mock_code&email=${encodeURIComponent(mockEmail)}&name=${encodeURIComponent(mockName)}&googleId=${mockGid}`;
+
+    await handleAuthRoutes(callbackMock.req, callbackMock.res, "/api/auth/google/callback", callbackMock.helpers);
+    const cbRes = callbackMock.getResult();
+
+    assert.equal(cbRes.status, 200);
+    assert.ok(typeof cbRes.data === "string");
+    assert.ok(cbRes.data.includes("TANKA_GOOGLE_AUTH_SUCCESS"), "Callback harus mengirim pesan postMessage TANKA_GOOGLE_AUTH_SUCCESS");
+
+    // Verify user is in database
+    const userInDb = db.prepare("SELECT * FROM users WHERE google_id = ?").get(mockGid);
+    assert.ok(userInDb, "User Google harus tersimpan di basis data SQLite");
+    assert.equal(userInDb.auth_provider, "google");
+    assert.equal(userInDb.is_verified, 1);
+    assert.equal(userInDb.name, mockName);
   } finally {
     if (origClientId) process.env.GOOGLE_CLIENT_ID = origClientId;
     else delete process.env.GOOGLE_CLIENT_ID;

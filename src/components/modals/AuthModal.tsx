@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { X, UserPlus, LogIn, User, Lock, AlertCircle, Smile, Eye, EyeOff, Phone, KeyRound, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, UserPlus, LogIn, User, Lock, AlertCircle, Smile, Eye, EyeOff, Phone, KeyRound, ShieldCheck, ArrowLeft, RefreshCw } from "lucide-react";
 
 export interface AuthModalProps {
   isOpen: boolean;
@@ -17,9 +17,10 @@ export interface AuthModalProps {
   setError: (val: string) => void;
   onLogin: () => void;
   onRegister: () => void;
-  onSendWhatsAppOtp?: (phone: string) => Promise<{ success: boolean; message?: string; debugCode?: string; error?: string }>;
+  onSendWhatsAppOtp?: (phone: string) => Promise<{ success: boolean; message?: string; debugCode?: string; isNewUser?: boolean; error?: string }>;
   onLoginWithWhatsApp?: (phone: string, password: string, code: string, name?: string) => Promise<boolean>;
-  onLoginWithGoogle?: (payload: { email: string; name?: string; googleId?: string; avatarUrl?: string }) => Promise<boolean>;
+  onLoginWithGoogle?: (payload?: any) => Promise<boolean | void> | void;
+  onTriggerGoogleOAuth?: () => void;
 }
 
 export function AuthModal({
@@ -40,20 +41,32 @@ export function AuthModal({
   onRegister,
   onSendWhatsAppOtp,
   onLoginWithWhatsApp,
-  onLoginWithGoogle
+  onLoginWithGoogle,
+  onTriggerGoogleOAuth
 }: AuthModalProps) {
   const [authMethod, setAuthMethod] = useState<"whatsapp" | "username">("whatsapp");
   const [showPassword, setShowPassword] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showWaPassword, setShowWaPassword] = useState(false);
 
-  // WhatsApp Tab state
+  // Progressive WhatsApp Auth State
+  const [waStep, setWaStep] = useState<"phone" | "otp">("phone");
   const [waPhone, setWaPhone] = useState("");
   const [waPassword, setWaPassword] = useState("");
   const [waCode, setWaCode] = useState("");
   const [waName, setWaName] = useState("");
-  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpNotice, setOtpNotice] = useState("");
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  // 60-second OTP countdown timer
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCountdown]);
 
   if (!isOpen) return null;
 
@@ -69,9 +82,11 @@ export function AuthModal({
       if (onSendWhatsAppOtp) {
         const res = await onSendWhatsAppOtp(waPhone.trim());
         if (res.success) {
-          setIsOtpSent(true);
-          const debugHint = res.debugCode ? ` (Kode: ${res.debugCode})` : "";
-          setOtpNotice((res.message || "Kode OTP terkirim ke WhatsApp Anda") + debugHint);
+          setWaStep("otp");
+          setIsNewUser(Boolean(res.isNewUser));
+          setResendCountdown(60);
+          const debugHint = res.debugCode ? ` (Kode Uji: ${res.debugCode})` : "";
+          setOtpNotice((res.message || "Kode OTP berhasil dikirim ke WhatsApp Anda") + debugHint);
         } else {
           setError(res.error || "Gagal mengirim kode OTP");
         }
@@ -90,7 +105,7 @@ export function AuthModal({
       return;
     }
     if (!waCode.trim()) {
-      setError("Kode verifikasi OTP wajib diisi");
+      setError("Kode verifikasi OTP 6-digit wajib diisi");
       return;
     }
     if (!waPassword.trim()) {
@@ -103,24 +118,22 @@ export function AuthModal({
     }
   };
 
-  const handleGoogleClick = async () => {
-    if (!onLoginWithGoogle) return;
+  const handleGoogleClick = () => {
     setError("");
-    try {
-      const email = window.prompt("Masukkan Email Google Anda (contoh: user@gmail.com):");
-      if (!email || !email.includes("@")) {
-        if (email !== null) setError("Format email Google tidak valid");
-        return;
-      }
-      const displayName = email.split("@")[0];
-      const googleId = "gid_" + Math.random().toString(36).slice(2, 10);
-      await onLoginWithGoogle({
-        email: email.trim(),
-        name: displayName,
-        googleId
-      });
-    } catch {
-      setError("Gagal memproses autentikasi Google");
+    if (onTriggerGoogleOAuth) {
+      onTriggerGoogleOAuth();
+    } else if (onLoginWithGoogle) {
+      onLoginWithGoogle();
+    } else {
+      const width = 500;
+      const height = 620;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      window.open(
+        "/api/auth/google/login",
+        "GoogleLogin",
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
     }
   };
 
@@ -179,7 +192,7 @@ export function AuthModal({
           <X size={18} />
         </button>
 
-        {/* Modal Header */}
+        {/* Dynamic Modal Header */}
         <div
           className="clean-header"
           style={{
@@ -221,12 +234,12 @@ export function AuthModal({
               {authMethod === "whatsapp"
                 ? "Masuk dengan WhatsApp"
                 : mode === "login"
-                ? "Masuk ke Akun"
-                : "Buat Akun Baru"}
+                ? "Masuk dengan Akun"
+                : "Daftar Akun Baru"}
             </h2>
             <p style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 0", lineHeight: 1.4 }}>
               {authMethod === "whatsapp"
-                ? "Akses aman lewat nomor HP & kode OTP WhatsApp"
+                ? "Verifikasi cepat via kode 6-digit WhatsApp"
                 : mode === "login"
                 ? "Akses materi dan riwayat belajar Anda"
                 : "Mulai simpan progres dan materi belajar mandiri"}
@@ -234,7 +247,7 @@ export function AuthModal({
           </div>
         </div>
 
-        {/* Segmented Method Selector: WhatsApp vs Username */}
+        {/* Method Selector: WhatsApp vs Username */}
         <div
           style={{
             display: "flex",
@@ -344,35 +357,171 @@ export function AuthModal({
         )}
 
         {authMethod === "whatsapp" ? (
-          /* ================= WhatsApp Form ================= */
-          <form onSubmit={handleWhatsAppSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 5 }}>
-                Nomor WhatsApp
-              </label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <div
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    border: focusedField === "waPhone" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
-                    boxShadow: focusedField === "waPhone" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
-                    borderRadius: 10,
-                    padding: "0 10px",
-                    backgroundColor: "#ffffff",
-                    transition: "all 0.15s ease"
-                  }}
-                >
-                  <Phone size={16} color={focusedField === "waPhone" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
+          /* ================= Progressive 2-Step WhatsApp Flow ================= */
+          waStep === "phone" ? (
+            /* --- Step 1: Input WhatsApp Number --- */
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 6 }}>
+                  Nomor WhatsApp
+                </label>
+                <div className="auth-field-box">
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#4b6623", marginRight: 6, display: "flex", alignItems: "center", gap: 4 }}>
+                    <span>🇮🇩</span> +62
+                  </span>
                   <input
                     type="tel"
                     required
-                    placeholder="Contoh: 08123456789"
+                    className="auth-input clean-input"
+                    placeholder="8123456789 atau 0812..."
                     value={waPhone}
                     onChange={(e) => setWaPhone(e.target.value)}
-                    onFocus={() => setFocusedField("waPhone")}
-                    onBlur={() => setFocusedField(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSendOtp();
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "10px 4px",
+                      border: "none",
+                      outline: "none",
+                      fontSize: 13.5,
+                      color: "#18211e",
+                      backgroundColor: "transparent"
+                    }}
+                  />
+                </div>
+                <p style={{ fontSize: 11.5, color: "#6b7280", margin: "6px 0 0" }}>
+                  Kami akan mengirim 6-digit kode verifikasi ke nomor WhatsApp ini.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                disabled={isSendingOtp || !waPhone.trim()}
+                style={{
+                  width: "100%",
+                  backgroundColor: "#18211e",
+                  color: "#c8f064",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "12px",
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  cursor: (isSendingOtp || !waPhone.trim()) ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  opacity: (isSendingOtp || !waPhone.trim()) ? 0.6 : 1,
+                  transition: "all 0.15s ease",
+                  boxShadow: "0 2px 8px rgba(24, 33, 30, 0.12)"
+                }}
+              >
+                <KeyRound size={16} />
+                <span>{isSendingOtp ? "Mengirim Kode..." : "Kirim Kode OTP"}</span>
+              </button>
+            </div>
+          ) : (
+            /* --- Step 2: Verification Code, Password, & Safe Entry --- */
+            <form onSubmit={handleWhatsAppSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Phone Summary & Change Number Link */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  backgroundColor: "#f7f9f4",
+                  border: "1px solid #dce4d6",
+                  borderRadius: 10,
+                  padding: "8px 12px"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Phone size={14} color="#4b6623" />
+                  <span style={{ fontSize: 12.5, color: "#2d3748" }}>
+                    Terkirim ke: <strong>{waPhone}</strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWaStep("phone");
+                    setError("");
+                    setOtpNotice("");
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#4b6623",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3,
+                    padding: 0
+                  }}
+                >
+                  <ArrowLeft size={12} />
+                  <span>Ubah Nomor</span>
+                </button>
+              </div>
+
+              {/* OTP 6-Digit Field */}
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
+                    Kode Verifikasi OTP
+                  </label>
+                  <span style={{ fontSize: 11, color: "#6b7280" }}>6 digit angka</span>
+                </div>
+                <div className="auth-field-box">
+                  <KeyRound size={16} color="#4b6623" style={{ flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    className="auth-input clean-input"
+                    placeholder="••••••"
+                    value={waCode}
+                    onChange={(e) => setWaCode(e.target.value.replace(/\D/g, ""))}
+                    style={{
+                      flex: 1,
+                      padding: "9px 8px",
+                      border: "none",
+                      outline: "none",
+                      fontSize: 15,
+                      letterSpacing: "0.2em",
+                      fontFamily: "ui-monospace, monospace",
+                      fontWeight: 700,
+                      color: "#18211e",
+                      backgroundColor: "transparent"
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
+                    Sandi Akun
+                  </label>
+                  <span style={{ fontSize: 11, color: "#6b7280" }}>Minimal 8 karakter</span>
+                </div>
+                <div className="auth-field-box">
+                  <Lock size={16} color="#4b6623" style={{ flexShrink: 0 }} />
+                  <input
+                    type={showWaPassword ? "text" : "password"}
+                    required
+                    className="auth-input clean-input"
+                    placeholder="Sandi keamanan akun Anda"
+                    value={waPassword}
+                    onChange={(e) => setWaPassword(e.target.value)}
                     style={{
                       flex: 1,
                       padding: "9px 8px",
@@ -383,200 +532,115 @@ export function AuthModal({
                       backgroundColor: "transparent"
                     }}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowWaPassword(p => !p)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: "4px",
+                      cursor: "pointer",
+                      color: "#9ca3af",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}
+                    title={showWaPassword ? "Sembunyikan password" : "Lihat password"}
+                  >
+                    {showWaPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
+              </div>
+
+              {/* Display Name Field (shown for new users) */}
+              {isNewUser && (
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 5 }}>
+                    Nama Sapaan (Pendaftaran Baru)
+                  </label>
+                  <div className="auth-field-box">
+                    <Smile size={16} color="#4b6623" style={{ flexShrink: 0 }} />
+                    <input
+                      type="text"
+                      className="auth-input clean-input"
+                      placeholder="Nama panggilan (contoh: Eka)"
+                      value={waName}
+                      onChange={(e) => setWaName(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: "9px 8px",
+                        border: "none",
+                        outline: "none",
+                        fontSize: 13,
+                        color: "#18211e",
+                        backgroundColor: "transparent"
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Resend Code Section with 60s countdown */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
+                <span style={{ fontSize: 11.5, color: "#6b7280" }}>Belum terima kode?</span>
                 <button
                   type="button"
                   onClick={handleSendOtp}
-                  disabled={isSendingOtp || !waPhone.trim()}
-                  style={{
-                    backgroundColor: isOtpSent ? "#eef8db" : "#f3f4f6",
-                    border: isOtpSent ? "1px solid #c2e28f" : "1px solid #d1d5db",
-                    color: isOtpSent ? "#273f15" : "#374151",
-                    borderRadius: 10,
-                    padding: "0 12px",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: (isSendingOtp || !waPhone.trim()) ? "not-allowed" : "pointer",
-                    whiteSpace: "nowrap",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    transition: "all 0.15s ease"
-                  }}
-                >
-                  <KeyRound size={13} />
-                  <span>{isSendingOtp ? "Mengirim..." : isOtpSent ? "Kirim Ulang" : "Kirim OTP"}</span>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
-                  Kode Verifikasi OTP
-                </label>
-                <span style={{ fontSize: 11, color: "#6b7280" }}>6 digit angka</span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  border: focusedField === "waCode" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
-                  boxShadow: focusedField === "waCode" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
-                  borderRadius: 10,
-                  padding: "0 10px",
-                  backgroundColor: "#ffffff",
-                  transition: "all 0.15s ease"
-                }}
-              >
-                <KeyRound size={16} color={focusedField === "waCode" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  placeholder="Masukkan 6 digit kode OTP"
-                  value={waCode}
-                  onChange={(e) => setWaCode(e.target.value.replace(/\D/g, ""))}
-                  onFocus={() => setFocusedField("waCode")}
-                  onBlur={() => setFocusedField(null)}
-                  style={{
-                    flex: 1,
-                    padding: "9px 8px",
-                    border: "none",
-                    outline: "none",
-                    fontSize: 14,
-                    letterSpacing: "0.15em",
-                    fontFamily: "monospace",
-                    fontWeight: 700,
-                    color: "#18211e",
-                    backgroundColor: "transparent"
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
-                  Sandi Akun
-                </label>
-                <span style={{ fontSize: 11, color: "#6b7280" }}>Minimal 8 karakter</span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  border: focusedField === "waPassword" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
-                  boxShadow: focusedField === "waPassword" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
-                  borderRadius: 10,
-                  padding: "0 10px",
-                  backgroundColor: "#ffffff",
-                  transition: "all 0.15s ease"
-                }}
-              >
-                <Lock size={16} color={focusedField === "waPassword" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  placeholder="Sandi untuk keamanan akun Anda"
-                  value={waPassword}
-                  onChange={(e) => setWaPassword(e.target.value)}
-                  onFocus={() => setFocusedField("waPassword")}
-                  onBlur={() => setFocusedField(null)}
-                  style={{
-                    flex: 1,
-                    padding: "9px 8px",
-                    border: "none",
-                    outline: "none",
-                    fontSize: 13,
-                    color: "#18211e",
-                    backgroundColor: "transparent"
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(p => !p)}
+                  disabled={isSendingOtp || resendCountdown > 0}
                   style={{
                     background: "none",
                     border: "none",
-                    padding: "4px",
-                    cursor: "pointer",
-                    color: "#9ca3af",
+                    color: resendCountdown > 0 ? "#9ca3af" : "#4b6623",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: (isSendingOtp || resendCountdown > 0) ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center"
+                    gap: 4,
+                    padding: "2px 0"
                   }}
-                  title={showPassword ? "Sembunyikan password" : "Lihat password"}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  <RefreshCw size={12} className={isSendingOtp ? "spin-pulse" : ""} />
+                  <span>
+                    {isSendingOtp
+                      ? "Mengirim..."
+                      : resendCountdown > 0
+                      ? `Kirim Ulang (${resendCountdown}s)`
+                      : "Kirim Ulang Kode"}
+                  </span>
                 </button>
               </div>
-            </div>
 
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 5 }}>
-                Nama Sapaan (Opsional)
-              </label>
-              <div
+              {/* Main Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
                 style={{
+                  marginTop: 6,
+                  backgroundColor: "#18211e",
+                  color: "#c8f064",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "11px",
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  cursor: isLoading ? "not-allowed" : "pointer",
                   display: "flex",
                   alignItems: "center",
-                  border: focusedField === "waName" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
-                  boxShadow: focusedField === "waName" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
-                  borderRadius: 10,
-                  padding: "0 10px",
-                  backgroundColor: "#ffffff",
-                  transition: "all 0.15s ease"
+                  justifyContent: "center",
+                  gap: 8,
+                  opacity: isLoading ? 0.7 : 1,
+                  transition: "all 0.15s ease",
+                  boxShadow: "0 2px 8px rgba(24, 33, 30, 0.12)"
                 }}
               >
-                <Smile size={16} color={focusedField === "waName" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
-                <input
-                  type="text"
-                  placeholder="Nama sapaan (contoh: Eka)"
-                  value={waName}
-                  onChange={(e) => setWaName(e.target.value)}
-                  onFocus={() => setFocusedField("waName")}
-                  onBlur={() => setFocusedField(null)}
-                  style={{
-                    flex: 1,
-                    padding: "9px 8px",
-                    border: "none",
-                    outline: "none",
-                    fontSize: 13,
-                    color: "#18211e",
-                    backgroundColor: "transparent"
-                  }}
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                marginTop: 6,
-                backgroundColor: "#18211e",
-                color: "#c8f064",
-                border: "none",
-                borderRadius: 10,
-                padding: "11px",
-                fontSize: 13.5,
-                fontWeight: 800,
-                cursor: isLoading ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                opacity: isLoading ? 0.7 : 1,
-                transition: "all 0.15s ease"
-              }}
-            >
-              <ShieldCheck size={16} />
-              <span>{isLoading ? "Memproses Verifikasi..." : "Verifikasi & Masuk"}</span>
-            </button>
-          </form>
+                <ShieldCheck size={16} />
+                <span>{isLoading ? "Memproses Verifikasi..." : "Verifikasi & Masuk"}</span>
+              </button>
+            </form>
+          )
         ) : (
-          /* ================= Username Form ================= */
+          /* ================= Classic Username Form ================= */
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -590,27 +654,14 @@ export function AuthModal({
                 <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", display: "block", marginBottom: 5 }}>
                   Nama Panggilan
                 </label>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    border: focusedField === "name" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
-                    boxShadow: focusedField === "name" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
-                    borderRadius: 10,
-                    padding: "0 10px",
-                    backgroundColor: "#ffffff",
-                    transition: "border-color 0.15s ease, box-shadow 0.15s ease"
-                  }}
-                >
-                  <Smile size={16} color={focusedField === "name" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
+                <div className="auth-field-box">
+                  <Smile size={16} color="#4b6623" style={{ flexShrink: 0 }} />
                   <input
                     type="text"
-                    className="clean-input"
+                    className="auth-input clean-input"
                     placeholder="Nama sapaan (contoh: Eka)"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    onFocus={() => setFocusedField("name")}
-                    onBlur={() => setFocusedField(null)}
                     style={{
                       flex: 1,
                       padding: "9px 8px",
@@ -634,29 +685,16 @@ export function AuthModal({
                   <span style={{ fontSize: 11, color: "#6b7280" }}>ID masuk tanpa spasi</span>
                 )}
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  border: focusedField === "username" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
-                  boxShadow: focusedField === "username" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
-                  borderRadius: 10,
-                  padding: "0 10px",
-                  backgroundColor: "#ffffff",
-                  transition: "border-color 0.15s ease, box-shadow 0.15s ease"
-                }}
-              >
-                <User size={16} color={focusedField === "username" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
+              <div className="auth-field-box">
+                <User size={16} color="#4b6623" style={{ flexShrink: 0 }} />
                 <input
                   type="text"
                   required
-                  className="clean-input"
+                  className="auth-input clean-input"
                   autoComplete="username"
                   placeholder={mode === "login" ? "Masukkan username" : "Username akun Anda"}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  onFocus={() => setFocusedField("username")}
-                  onBlur={() => setFocusedField(null)}
                   style={{
                     flex: 1,
                     padding: "9px 8px",
@@ -679,29 +717,16 @@ export function AuthModal({
                   <span style={{ fontSize: 11, color: "#6b7280" }}>Minimal 8 karakter</span>
                 )}
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  border: focusedField === "password" ? "1.5px solid #4b6623" : "1.5px solid #d1d5db",
-                  boxShadow: focusedField === "password" ? "0 0 0 3px rgba(75, 102, 35, 0.12)" : "none",
-                  borderRadius: 10,
-                  padding: "0 10px",
-                  backgroundColor: "#ffffff",
-                  transition: "border-color 0.15s ease, box-shadow 0.15s ease"
-                }}
-              >
-                <Lock size={16} color={focusedField === "password" ? "#4b6623" : "#9ca3af"} style={{ flexShrink: 0 }} />
+              <div className="auth-field-box">
+                <Lock size={16} color="#4b6623" style={{ flexShrink: 0 }} />
                 <input
                   type={showPassword ? "text" : "password"}
                   required
-                  className="clean-input"
+                  className="auth-input clean-input"
                   autoComplete={mode === "login" ? "current-password" : "new-password"}
                   placeholder={mode === "login" ? "Masukkan password" : "Minimal 8 karakter"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setFocusedField("password")}
-                  onBlur={() => setFocusedField(null)}
                   style={{
                     flex: 1,
                     padding: "9px 8px",
@@ -750,7 +775,8 @@ export function AuthModal({
                 justifyContent: "center",
                 gap: 8,
                 opacity: isLoading ? 0.7 : 1,
-                transition: "all 0.15s ease"
+                transition: "all 0.15s ease",
+                boxShadow: "0 2px 8px rgba(24, 33, 30, 0.12)"
               }}
             >
               {isLoading ? (
@@ -819,7 +845,7 @@ export function AuthModal({
           </form>
         )}
 
-        {/* Quick Google Login Divider & Button */}
+        {/* Google OAuth 2.0 Flow Button */}
         <div style={{ marginTop: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 12px" }}>
             <div style={{ flex: 1, height: 1, backgroundColor: "#e5e7eb" }} />
@@ -831,23 +857,7 @@ export function AuthModal({
             type="button"
             onClick={handleGoogleClick}
             disabled={isLoading}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              backgroundColor: "#ffffff",
-              border: "1.5px solid #d1d5db",
-              borderRadius: 10,
-              padding: "10px",
-              fontSize: 13,
-              fontWeight: 700,
-              color: "#1f2937",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-              transition: "all 0.15s ease"
-            }}
+            className="google-oauth-btn"
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

@@ -76,6 +76,23 @@ export function useAuth(showNotice: (msg: string) => void) {
       });
   }, []);
 
+  // Google OAuth message listener
+  useEffect(() => {
+    const handleAuthMessage = (event: MessageEvent) => {
+      if (event.data?.type === "TANKA_GOOGLE_AUTH_SUCCESS" && event.data.token && event.data.user) {
+        setCurrentUser(event.data.user);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.user));
+        localStorage.setItem(SESSION_TOKEN_KEY, event.data.token);
+        setIsAuthModalOpen(false);
+        showNotice(`Selamat datang, ${event.data.user.name || "Pengguna"}!`);
+      } else if (event.data?.type === "TANKA_GOOGLE_AUTH_ERROR" && event.data.error) {
+        setAuthError(event.data.error);
+      }
+    };
+    window.addEventListener("message", handleAuthMessage);
+    return () => window.removeEventListener("message", handleAuthMessage);
+  }, [showNotice]);
+
   const handleRegister = useCallback(async () => {
     if (!authUsername.trim() || !authPassword.trim()) {
       setAuthError("Username dan password wajib diisi");
@@ -266,6 +283,7 @@ export function useAuth(showNotice: (msg: string) => void) {
           success: true,
           message: data.message || "Kode OTP berhasil dikirim",
           phone: data.phone,
+          isNewUser: Boolean(data.isNewUser),
           debugCode: data.debugCode
         };
       }
@@ -307,7 +325,23 @@ export function useAuth(showNotice: (msg: string) => void) {
     }
   }, [showNotice]);
 
-  const loginWithGoogle = useCallback(async (payload: { email: string; name?: string; googleId?: string; avatarUrl?: string }) => {
+  const triggerGoogleOAuth = useCallback(() => {
+    const width = 500;
+    const height = 620;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    window.open(
+      "/api/auth/google/login",
+      "GoogleLogin",
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+  }, []);
+
+  const loginWithGoogle = useCallback(async (payload?: { email: string; name?: string; googleId?: string; avatarUrl?: string }) => {
+    if (!payload) {
+      triggerGoogleOAuth();
+      return true;
+    }
     setIsAuthLoading(true);
     setAuthError("");
     try {
@@ -334,7 +368,7 @@ export function useAuth(showNotice: (msg: string) => void) {
     } finally {
       setIsAuthLoading(false);
     }
-  }, [showNotice]);
+  }, [showNotice, triggerGoogleOAuth]);
 
   return {
     currentUser,
@@ -364,6 +398,7 @@ export function useAuth(showNotice: (msg: string) => void) {
     refreshProfile,
     sendWhatsAppOtp,
     loginWithWhatsApp,
-    loginWithGoogle
+    loginWithGoogle,
+    triggerGoogleOAuth
   };
 }

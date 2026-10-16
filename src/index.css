@@ -2651,20 +2651,76 @@
       }
 
       /* 3. Inputs & Textboxes: Inset precision stroke with active focus */
-      input:not([type="checkbox"]):not([type="radio"]):not(.clean-input),
-      textarea:not(.clean-input),
-      select:not(.clean-input) {
+      input:not([type="checkbox"]):not([type="radio"]):not(.clean-input):not(.auth-input):not(.no-border),
+      textarea:not(.clean-input):not(.auth-input):not(.no-border),
+      select:not(.clean-input):not(.auth-input):not(.no-border) {
         border: 1px solid #ccd6c8 !important;
         box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
         transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
       }
 
-      input:not([type="checkbox"]):not([type="radio"]):not(.clean-input):focus,
-      textarea:not(.clean-input):focus,
-      select:not(.clean-input):focus {
+      input:not([type="checkbox"]):not([type="radio"]):not(.clean-input):not(.auth-input):not(.no-border):focus,
+      textarea:not(.clean-input):not(.auth-input):not(.no-border):focus,
+      select:not(.clean-input):not(.auth-input):not(.no-border):focus {
         border-color: #4b6623 !important;
         box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02), 0 0 0 2px rgba(75, 102, 35, 0.15) !important;
         outline: none !important;
+      }
+
+      /* Auth Modal input container & native reset */
+      .auth-field-box {
+        display: flex;
+        align-items: center;
+        border: 1.5px solid #dce4d6 !important;
+        border-radius: 10px;
+        background-color: #ffffff;
+        padding: 0 10px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .auth-field-box:focus-within {
+        border-color: #4b6623 !important;
+        box-shadow: 0 0 0 3px rgba(75, 102, 35, 0.12) !important;
+      }
+      .auth-field-box input,
+      input.auth-input,
+      input.clean-input {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+      }
+      .auth-field-box input:focus,
+      input.auth-input:focus,
+      input.clean-input:focus {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+      .google-oauth-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background-color: #ffffff;
+        border: 1.5px solid #dce1da;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #1f2937;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        transition: all 0.15s ease;
+      }
+      .google-oauth-btn:hover:not(:disabled) {
+        background-color: #f8faf7;
+        border-color: #cbd5cb;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+      }
+      .google-oauth-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
 
       /* 4. Interactive Option Buttons & Choices: Left-accent indicator */

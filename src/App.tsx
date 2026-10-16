@@ -129,7 +129,8 @@ export default function App() {
     recordActivity,
     sendWhatsAppOtp,
     loginWithWhatsApp,
-    loginWithGoogle
+    loginWithGoogle,
+    triggerGoogleOAuth
   } = useAuth(showNotice);
 
   const handleOpenAuth = useCallback((mode: "login" | "register" = "login") => {
@@ -783,6 +784,7 @@ export default function App() {
           onSendWhatsAppOtp={sendWhatsAppOtp}
           onLoginWithWhatsApp={loginWithWhatsApp}
           onLoginWithGoogle={loginWithGoogle}
+          onTriggerGoogleOAuth={triggerGoogleOAuth}
         />
 
         {/* User Profile, Weekly Target, & Leaderboard Modal */}

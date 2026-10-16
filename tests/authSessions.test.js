@@ -6,10 +6,14 @@ const { handleAuthRoutes, createSessionToken, normalizePhone } = require("../ser
 function createMockHelpers(body = {}, headers = {}, query = {}) {
   let responseStatus = 200;
   let responseData = null;
+  let responseHeaders = {};
 
   const res = {
     headersSent: false,
-    writeHead: (status) => { responseStatus = status; },
+    writeHead: (status, hdrs = {}) => {
+      responseStatus = status;
+      responseHeaders = { ...responseHeaders, ...hdrs };
+    },
     end: (content) => {
       try { responseData = JSON.parse(content); } catch { responseData = content; }
     }
@@ -34,7 +38,7 @@ function createMockHelpers(body = {}, headers = {}, query = {}) {
     req,
     res,
     helpers,
-    getResult: () => ({ status: responseStatus, data: responseData })
+    getResult: () => ({ status: responseStatus, data: responseData, headers: responseHeaders })
   };
 }
 
@@ -169,6 +173,7 @@ test("Auth WhatsApp: flow send-otp dan verify pendaftaran & login berhasil", asy
   assert.equal(sendRes.status, 200);
   assert.ok(sendRes.data.success);
   assert.ok(sendRes.data.debugCode);
+  assert.equal(sendRes.data.isNewUser, true, "Panggilan pertama untuk nomor baru harus mengembalikan isNewUser = true");
   const otpCode = sendRes.data.debugCode;
 
   // 2. Verify with wrong code -> 400
@@ -195,7 +200,9 @@ test("Auth WhatsApp: flow send-otp dan verify pendaftaran & login berhasil", asy
   const sendAgainMock = createMockHelpers({ phone });
   sendAgainMock.req.method = "POST";
   await handleAuthRoutes(sendAgainMock.req, sendAgainMock.res, "/api/auth/whatsapp/send-otp", sendAgainMock.helpers);
-  const newOtp = sendAgainMock.getResult().data.debugCode;
+  const sendAgainRes = sendAgainMock.getResult();
+  assert.equal(sendAgainRes.data.isNewUser, false, "Nomor yang sudah terdaftar harus mengembalikan isNewUser = false");
+  const newOtp = sendAgainRes.data.debugCode;
 
   // 5. Verify existing user with wrong password -> 401
   const wrongPassMock = createMockHelpers({ phone, code: newOtp, password: "wrongPassword" });
@@ -234,9 +241,71 @@ test("Auth Google: POST /api/auth/google membuat akun baru dan menghasilkan sess
   assert.equal(gRes.data.user.is_verified, true);
 
   // Session token must be valid via GET /api/auth/session
-  const sessMock = createMockHelpers({}, { authorization: `Bearer ${gRes.data.token}` });
+  const sessMock = createMockHelpers({}, { authorization: "Bearer " + gRes.data.token });
   sessMock.req.method = "GET";
   await handleAuthRoutes(sessMock.req, sessMock.res, "/api/auth/session", sessMock.helpers);
   assert.equal(sessMock.getResult().status, 200);
   assert.equal(sessMock.getResult().data.user.id, gRes.data.user.id);
+});
+
+test("Auth Google OAuth 2.0: Flow GET /login, /mock-consent, dan /callback menghasilkan sesi sah", async () => {
+  // 1. GET /api/auth/google/login tanpa env var -> redirect 302 ke mock consent
+  const loginMock = createMockHelpers();
+  loginMock.req.method = "GET";
+  await handleAuthRoutes(loginMock.req, loginMock.res, "/api/auth/google/login", loginMock.helpers);
+  const loginRes = loginMock.getResult();
+  assert.equal(loginRes.status, 302);
+  assert.equal(loginRes.headers.Location, "/api/auth/google/mock-consent");
+
+  // 2. GET /api/auth/google/mock-consent -> status 200 dan konten HTML simulasi
+  const consentMock = createMockHelpers();
+  consentMock.req.method = "GET";
+  await handleAuthRoutes(consentMock.req, consentMock.res, "/api/auth/google/mock-consent", consentMock.helpers);
+  const consentRes = consentMock.getResult();
+  assert.equal(consentRes.status, 200);
+  assert.ok(typeof consentRes.data === "string" && consentRes.data.includes("Simulasi Akun Google OAuth 2.0"));
+
+  // 3. GET /api/auth/google/callback dengan mock OAuth query -> buat user baru & token sesi
+  const mockEmail = `oauth_student_${Date.now()}@gmail.com`;
+  const mockName = "OAuth Student";
+  const mockGid = `gid_oauth_${Date.now()}`;
+  const callbackMock = createMockHelpers();
+  callbackMock.req.method = "GET";
+  callbackMock.req.url = `/api/auth/google/callback?code=mock_code&email=${encodeURIComponent(mockEmail)}&name=${encodeURIComponent(mockName)}&googleId=${mockGid}`;
+
+  await handleAuthRoutes(callbackMock.req, callbackMock.res, "/api/auth/google/callback", callbackMock.helpers);
+  const cbRes = callbackMock.getResult();
+
+  assert.equal(cbRes.status, 200);
+  assert.ok(typeof cbRes.data === "string");
+  assert.ok(cbRes.data.includes("TANKA_GOOGLE_AUTH_SUCCESS"), "Callback harus mengirim pesan postMessage TANKA_GOOGLE_AUTH_SUCCESS");
+
+  // Verify user is in database
+  const userInDb = db.prepare("SELECT * FROM users WHERE google_id = ?").get(mockGid);
+  assert.ok(userInDb, "User Google harus tersimpan di basis data SQLite");
+  assert.equal(userInDb.auth_provider, "google");
+  assert.equal(userInDb.is_verified, 1);
+  assert.equal(userInDb.name, mockName);
+
+  // 4. Test login dengan GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET terkonfigurasi
+  const origClientId = process.env.GOOGLE_CLIENT_ID;
+  const origClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  try {
+    process.env.GOOGLE_CLIENT_ID = "test-client-id-123.apps.googleusercontent.com";
+    process.env.GOOGLE_CLIENT_SECRET = "test-secret-456";
+
+    const realLoginMock = createMockHelpers();
+    realLoginMock.req.method = "GET";
+    await handleAuthRoutes(realLoginMock.req, realLoginMock.res, "/api/auth/google/login", realLoginMock.helpers);
+    const realLoginRes = realLoginMock.getResult();
+
+    assert.equal(realLoginRes.status, 302);
+    assert.ok(realLoginRes.headers.Location.startsWith("https://accounts.google.com/o/oauth2/v2/auth"));
+    assert.ok(realLoginRes.headers.Location.includes("client_id=test-client-id-123.apps.googleusercontent.com"));
+  } finally {
+    if (origClientId) process.env.GOOGLE_CLIENT_ID = origClientId;
+    else delete process.env.GOOGLE_CLIENT_ID;
+    if (origClientSecret) process.env.GOOGLE_CLIENT_SECRET = origClientSecret;
+    else delete process.env.GOOGLE_CLIENT_SECRET;
+  }
 });

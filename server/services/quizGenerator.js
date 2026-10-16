@@ -28,32 +28,56 @@ async function generateQuestionsCore({
   let typeGuidance = "";
   if (isMathDomain) {
     if (quizType === "beginner") {
-      typeGuidance = `TIPE KUIS: EKSAK / KUANTITATIF - PEMULA & FONDASI BERTAHAP
-- PRINSIP: Mulai dari angka kecil konkret dan pembacaan notasi dasar, bukan rumus abstrak yang menakutkan pemula.
-- URUTAN TANGGA KESULITAN:
-  * Soal 1 (Pemanasan Fondasi): Identifikasi variabel/elemen, membaca grafik/tabel, atau pemahaman dimensi/ordo.
-  * Soal 2–3 (Operasi Tunggal Sederhana): Satu langkah pengerjaan dasar (substitusi langsung nilai angka kecil).
-  * Soal 4–5 (Operasi Terarah Bertahap): Operasi 2 tahap pengerjaan (penyederhanaan, eliminasi bertahap, atau penerapan rumus inti).
-- OPSI JAWABAN (A, B, C, D, E): WAJIB berupa angka bulat, nilai pecahan sederhana, atau notasi variabel yang ringkas.`;
+      typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - LEVEL PEMULA (MURNI FONDASI ANGKA & SIMBOLIK)
+- PRINSIP UTAMA: MURNI OPERASI MATEMATIKA TELANJANG (NAKED MATH).
+- LARANGAN KERAS (HARAM MUTLAK):
+  * DILARANG KERAS menyertakan stimulus cerita, studi kasus narasi panjang, atau konteks terapan (contoh HARAM: biologi, ragi, kultur bakteri, fisika terapan, nano material, perdagangan, lab).
+  * Pertanyaan HARUS langsung to-the-point berupa simbol dan angka matematika (contoh BENAR: "Sederhanakan bentuk...", "Tentukan nilai x dari persamaan...").
+- TANGGA KESULITAN BUTIR SOAL:
+  * Soal 1–2 (Pemanasan Notasi & Identifikasi): Ubah basis angka (misal: ubah 8 ke basis 2), sifat dasar eksponen/akar (misal: $2^3 \\times 2^2$, nilai $a^0$), atau identifikasi komponen dasar.
+  * Soal 3–4 (Operasi Aljabar 1–2 Langkah Telanjang): Persamaan dasar tanpa cerita (misal: $2^{6/k} = 4$, tentukan $k$; $3^{x+1} = 27$, tentukan $x$).
+  * Soal 5 (Penyederhanaan Operasi Langsung): Penyederhanaan pecahan basis prima langsung atau akar sederhana tanpa variabel rumit.
+- OPSI JAWABAN (A, B, C, D, E): WAJIB berupa angka bulat sederhana atau pecahan paling ringkas. Dilarang opsi narasi panjang.`;
     } else if (quizType === "conceptual") {
-      typeGuidance = `TIPE KUIS: EKSAK / KUANTITATIF - STANDAR UJIAN SEKOLAH
-- Uji sifat-sifat matematis, pemecahan persamaan standar, hubungan antar-variabel, dan penerapan aturan baku materi.
-- Soal to-the-point dengan angka bulat rapi. Pembahasan menjabarkan langkah hitung tuntas.`;
+      typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - LEVEL STANDAR (UJIAN SEKOLAH / TKA)
+- Uji keterampilan kurikulum standar: operasi campuran pecahan eksponen, penyederhanaan bentuk akar kuadrat sempurna, dan persamaan eksponen/aljabar baku.
+- Soal to-the-point, fokus pada ketepatan manipulasi aljabar baku tanpa narasi bertele-tele.
+- Opsi jawaban berupa ekspresi aljabar atau angka rapi. Pembahasan membedah langkah sistematis tuntas.`;
     } else {
-      typeGuidance = `TIPE KUIS: EKSAK / KUANTITATIF - HOTS & SELEKSI TINGGI
-- Penalaran tingkat tinggi: penggabungan multi-aturan, pemecahan parameter variabel tak diketahui, atau pembuktian sifat non-rutin.`;
+      typeGuidance = `TIPE KUIS: MATEMATIKA / EKSAK - LEVEL HOTS (ANALITIK & PENALARAN TINGKAT TINGGI)
+- Penalaran tingkat tinggi: penggabungan multi-aturan sifat matematis, pemecahan parameter variabel ganda, pembuktian non-rutin.
+- DI SINI (DAN HANYA DI LEVEL INI) diizinkan menggunakan skenario pemodelan kontekstual terapan nyata atau stimulus masalah kuantitatif kompleks.`;
     }
   } else {
     if (quizType === "beginner") {
-      typeGuidance = `TIPE KUIS: KONSEPTUAL / ILMU SOSIAL / TEORI - PEMULA & ULANGAN HARIAN
-- Soal diambil langsung dari materi sumber (definisi dasar istilah pokok, klasifikasi fungsi, latar belakang).
-- OPSI JAWABAN (A, B, C, D, E): WAJIB SINGKAT, PADAT, DAN LANGSUNG KE INTI.`;
+      typeGuidance = `TIPE KUIS: TEORI / NON-MATEMATIKA - LEVEL PEMULA (FONDASI KONSEP & FAKTA)
+- Uji penguasaan fondasi: definisi terminologi pokok, klasifikasi fungsi, dan tokoh/peristiwa kunci yang tertulis langsung pada materi sumber.
+- Pertanyaan langsung dan jelas.
+- OPSI JAWABAN (A, B, C, D, E): WAJIB SANGAT SINGKAT (1–4 kata), padat, dan langsung ke inti.`;
     } else if (quizType === "conceptual") {
-      typeGuidance = `TIPE KUIS: KONSEPTUAL / ILMU SOSIAL / TEORI - STANDAR UJIAN SEMESTER
-- Uji penguasaan konsep menyeluruh: hubungan sebab-akibat, perbandingan antar-kategori, dan analisis pembeda istilah.`;
+      typeGuidance = `TIPE KUIS: TEORI / NON-MATEMATIKA - LEVEL STANDAR (KONSEPTUAL & PEMAHAMAN)
+- Uji pemahaman relasional: hubungan sebab-akibat, perbandingan antar-kategori/paradigma, dan analisis faktor pembeda antar-konsep materi.
+- Opsi jawaban setara dan menguji penalaran logis materi.`;
     } else {
-      typeGuidance = `TIPE KUIS: KONSEPTUAL / ILMU SOSIAL / TEORI - ANALISIS MENDALAM (HOTS)
-- Analisis kritis antar-teori, evaluasi studi kasus kontekstual, dan keterkaitan multi-variabel fenomena materi.`;
+      typeGuidance = `TIPE KUIS: TEORI / NON-MATEMATIKA - LEVEL HOTS (ANALISIS KRITIS & EVALUASI WACANA)
+- Uji evaluasi tingkat tinggi: analisis fenomena kasus sosial/wacana nyata, evaluasi dilema teori, kritik asumsi, dan keterkaitan multi-variabel.`;
+    }
+  }
+
+  let antiSlopRule = "";
+  if (isMathDomain) {
+    if (quizType === "beginner") {
+      antiSlopRule = `- PENGECUALIAN MATEMATIKA PEMULA: DILARANG KERAS membuat soal cerita, studi kasus narasi, atau konteks biologi/ragi/lab/teknik. Soal WAJIB manipulasi simbolik dan aljabar angka telanjang (naked math).`;
+    } else if (quizType === "conceptual") {
+      antiSlopRule = `- MATEMATIKA STANDAR: Soal to-the-point pada rumus dan manipulasi persamaan baku tanpa narasi berlebihan.`;
+    } else {
+      antiSlopRule = `- MATEMATIKA HOTS: Hadirkan masalah pemodelan nyata kontekstual, keterkaitan multi-konsep, atau penalaran non-rutin.`;
+    }
+  } else {
+    if (quizType === "beginner") {
+      antiSlopRule = `- TEORI PEMULA: Soal menguji terminologi kunci, klasifikasi, dan fakta langsung materi sumber. Opsi jawaban sangat singkat.`;
+    } else {
+      antiSlopRule = `- DILARANG membuat soal template kamus/hafalan kaku. Soal WAJIB menghadirkan kasus nyata, fenomena kontekstual, atau dinamika sebab-akibat.`;
     }
   }
 
@@ -134,9 +158,8 @@ ${weaknessContext}
 ${adaptiveContext}
 
 STANDAR KUALITAS SOAL (STANDAR RESMI UTBK & ANTI AI-SLOP MUTLAK):
-1. ATURAN "ANTI-SLOP & SCENARIO-DEPENDENT" (MUTLAK):
-   - DILARANG membuat soal template kamus/definisi hafalan kaku (contoh HARAM: "Apakah definisi dari X?", "Manakah pernyataan yang benar tentang Y?").
-   - Soal WAJIB menghadirkan kasus nyata, data eksperimen/tabel, masalah kuantitatif konkret, atau analisis dinamika sebab-akibat.
+1. ATURAN RELEVANSI & ANTI-SLOP (MUTLAK):
+   ${antiSlopRule}
 2. SEMANTIC SYMMETRY & ANTI-LEAK PADA OPSI A-E:
    - DILARANG membuat opsi jawaban benar menjadi opsi yang paling panjang atau paling rinci.
    - Kelima opsi (A, B, C, D, E) WAJIB memiliki jumlah kata dan panjang karakter yang setara (variasi panjang maksimal 15%).

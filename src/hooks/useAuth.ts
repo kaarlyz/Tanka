@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { UserAccount } from "../types";
 
 const STORAGE_KEY = "tanka_user_account";
+const SESSION_TOKEN_KEY = "tanka_session_token";
 
 export function useAuth(showNotice: (msg: string) => void) {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
@@ -48,6 +49,33 @@ export function useAuth(showNotice: (msg: string) => void) {
     }
   }, [currentUser?.id, refreshProfile]);
 
+  // Session validation on initialization / mount
+  useEffect(() => {
+    const token = localStorage.getItem(SESSION_TOKEN_KEY);
+    if (!token) return;
+
+    fetch("/api/auth/session", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setCurrentUser(data.user);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+          if (data.token) localStorage.setItem(SESSION_TOKEN_KEY, data.token);
+        } else {
+          localStorage.removeItem(SESSION_TOKEN_KEY);
+          localStorage.removeItem(STORAGE_KEY);
+          setCurrentUser(null);
+        }
+      })
+      .catch((err) => {
+        console.warn("[useAuth] Failed to validate session token:", err);
+      });
+  }, []);
+
   const handleRegister = useCallback(async () => {
     if (!authUsername.trim() || !authPassword.trim()) {
       setAuthError("Username dan password wajib diisi");
@@ -72,6 +100,7 @@ export function useAuth(showNotice: (msg: string) => void) {
       const data = await res.json();
       if (res.ok && data.user) {
         setCurrentUser(data.user);
+        if (data.token) localStorage.setItem(SESSION_TOKEN_KEY, data.token);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
         setIsAuthModalOpen(false);
         setAuthUsername("");
@@ -107,6 +136,7 @@ export function useAuth(showNotice: (msg: string) => void) {
       const data = await res.json();
       if (res.ok && data.user) {
         setCurrentUser(data.user);
+        if (data.token) localStorage.setItem(SESSION_TOKEN_KEY, data.token);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
         setIsAuthModalOpen(false);
         setAuthUsername("");
@@ -122,7 +152,23 @@ export function useAuth(showNotice: (msg: string) => void) {
     }
   }, [authUsername, authPassword, showNotice]);
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    const token = localStorage.getItem(SESSION_TOKEN_KEY);
+    if (token) {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ token })
+        });
+      } catch (err) {
+        console.warn("[useAuth] Failed to call logout endpoint:", err);
+      }
+    }
+    localStorage.removeItem(SESSION_TOKEN_KEY);
     localStorage.removeItem(STORAGE_KEY);
     setCurrentUser(null);
     setIsProfileModalOpen(false);
@@ -146,6 +192,7 @@ export function useAuth(showNotice: (msg: string) => void) {
       const data = await res.json();
       if (res.ok && data.user) {
         setCurrentUser(data.user);
+        if (data.token) localStorage.setItem(SESSION_TOKEN_KEY, data.token);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
         showNotice(`Selamat bergabung, ${data.user.name}!`);
         return data.user;
@@ -206,6 +253,89 @@ export function useAuth(showNotice: (msg: string) => void) {
     }
   }, [currentUser?.id, refreshProfile]);
 
+  const sendWhatsAppOtp = useCallback(async (phone: string) => {
+    try {
+      const res = await fetch("/api/auth/whatsapp/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        return {
+          success: true,
+          message: data.message || "Kode OTP berhasil dikirim",
+          phone: data.phone,
+          debugCode: data.debugCode
+        };
+      }
+      return { success: false, error: data.error || "Gagal mengirim kode verifikasi WhatsApp" };
+    } catch {
+      return { success: false, error: "Koneksi ke server gagal" };
+    }
+  }, []);
+
+  const loginWithWhatsApp = useCallback(async (phone: string, password: string, code: string, name?: string) => {
+    setIsAuthLoading(true);
+    setAuthError("");
+    try {
+      const res = await fetch("/api/auth/whatsapp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password, code, name })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        if (data.token) localStorage.setItem(SESSION_TOKEN_KEY, data.token);
+        setCurrentUser(data.user);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+        setIsAuthModalOpen(false);
+        setAuthUsername("");
+        setAuthPassword("");
+        setAuthName("");
+        showNotice(`Halo ${data.user.name || "Sobat Tanka"}, berhasil masuk dengan WhatsApp.`);
+        return true;
+      } else {
+        setAuthError(data.error || "Verifikasi WhatsApp gagal");
+        return false;
+      }
+    } catch {
+      setAuthError("Koneksi ke server gagal");
+      return false;
+    } finally {
+      setIsAuthLoading(false);
+    }
+  }, [showNotice]);
+
+  const loginWithGoogle = useCallback(async (payload: { email: string; name?: string; googleId?: string; avatarUrl?: string }) => {
+    setIsAuthLoading(true);
+    setAuthError("");
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        if (data.token) localStorage.setItem(SESSION_TOKEN_KEY, data.token);
+        setCurrentUser(data.user);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+        setIsAuthModalOpen(false);
+        showNotice(`Selamat datang, ${data.user.name || "Akun Google"}! Berhasil masuk.`);
+        return true;
+      } else {
+        setAuthError(data.error || "Gagal masuk dengan Google");
+        return false;
+      }
+    } catch {
+      setAuthError("Koneksi ke server gagal");
+      return false;
+    } finally {
+      setIsAuthLoading(false);
+    }
+  }, [showNotice]);
+
   return {
     currentUser,
     isAuthModalOpen,
@@ -231,6 +361,9 @@ export function useAuth(showNotice: (msg: string) => void) {
     updateProfile,
     quickRegisterGuest,
     recordActivity,
-    refreshProfile
+    refreshProfile,
+    sendWhatsAppOtp,
+    loginWithWhatsApp,
+    loginWithGoogle
   };
 }

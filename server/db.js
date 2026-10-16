@@ -76,6 +76,10 @@ db.exec(`
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     name TEXT,
+    phone TEXT UNIQUE,
+    auth_provider TEXT DEFAULT 'local',
+    is_verified INTEGER DEFAULT 0,
+    google_id TEXT UNIQUE,
     bio TEXT DEFAULT '',
     school_class TEXT DEFAULT '',
     avatar_color TEXT DEFAULT '#10b981',
@@ -87,6 +91,23 @@ db.exec(`
     quizzes_completed INTEGER DEFAULT 0,
     quiz_correct_count INTEGER DEFAULT 0,
     xp INTEGER DEFAULT 100,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS user_sessions (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS auth_verifications (
+    id TEXT PRIMARY KEY,
+    phone TEXT NOT NULL,
+    code TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    attempts INTEGER DEFAULT 0,
     created_at INTEGER NOT NULL
   );
 
@@ -179,6 +200,8 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_concept_edges_nodes ON concept_edges(source_id, target_id);
   CREATE INDEX IF NOT EXISTS idx_document_concepts_doc_id ON document_concepts(doc_id);
   CREATE INDEX IF NOT EXISTS idx_document_segments_doc_id ON document_segments(doc_id);
+  CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+  CREATE INDEX IF NOT EXISTS idx_auth_verifications_phone ON auth_verifications(phone);
 `);
 
 console.log("[tanka-db] Database initialized at:", dbPath);
@@ -205,6 +228,7 @@ function cleanOrphanedRecords(targetDb = db) {
     if (hasTable(targetDb, "document_concepts")) targetDb.prepare("DELETE FROM document_concepts WHERE doc_id NOT IN (SELECT id FROM documents)").run();
     if (hasTable(targetDb, "document_segments")) targetDb.prepare("DELETE FROM document_segments WHERE doc_id NOT IN (SELECT id FROM documents)").run();
     if (hasTable(targetDb, "learner_events")) targetDb.prepare("DELETE FROM learner_events WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+    if (hasTable(targetDb, "user_sessions") && hasTable(targetDb, "users")) targetDb.prepare("DELETE FROM user_sessions WHERE user_id NOT IN (SELECT id FROM users)").run();
   } catch (e) {
     console.warn("[tanka-db] Orphan cleanup notice:", e.message);
   }
@@ -297,6 +321,61 @@ function runMigrations(targetDb = db) {
     }
   } catch (err) {
     console.warn("[tanka-db] document_concepts migration notice:", err.message);
+  }
+
+  try {
+    targetDb.exec(`
+      CREATE TABLE IF NOT EXISTS user_sessions (
+        token TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS auth_verifications (
+        id TEXT PRIMARY KEY,
+        phone TEXT NOT NULL,
+        code TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        attempts INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_auth_verifications_phone ON auth_verifications(phone);
+    `);
+  } catch (err) {
+    console.warn("[tanka-db] user_sessions/auth_verifications table ensure notice:", err.message);
+  }
+
+  try {
+    if (hasTable(targetDb, "users")) {
+      const userColumns = targetDb.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+      if (!userColumns.includes("phone")) {
+        targetDb.prepare("ALTER TABLE users ADD COLUMN phone TEXT").run();
+        console.log("[tanka-db] Added phone column to users table");
+      }
+      if (!userColumns.includes("auth_provider")) {
+        targetDb.prepare("ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'local'").run();
+        console.log("[tanka-db] Added auth_provider column to users table");
+      }
+      if (!userColumns.includes("is_verified")) {
+        targetDb.prepare("ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0").run();
+        console.log("[tanka-db] Added is_verified column to users table");
+      }
+      if (!userColumns.includes("google_id")) {
+        targetDb.prepare("ALTER TABLE users ADD COLUMN google_id TEXT").run();
+        console.log("[tanka-db] Added google_id column to users table");
+      }
+
+      targetDb.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone) WHERE phone IS NOT NULL;
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id) WHERE google_id IS NOT NULL;
+      `);
+    }
+  } catch (err) {
+    console.warn("[tanka-db] users migration notice:", err.message);
   }
 
   try {

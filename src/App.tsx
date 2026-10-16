@@ -126,7 +126,10 @@ export default function App() {
     setProfileModalTab,
     updateProfile,
     quickRegisterGuest,
-    recordActivity
+    recordActivity,
+    sendWhatsAppOtp,
+    loginWithWhatsApp,
+    loginWithGoogle
   } = useAuth(showNotice);
 
   const handleOpenAuth = useCallback((mode: "login" | "register" = "login") => {
@@ -777,6 +780,9 @@ export default function App() {
           setError={setAuthError}
           onLogin={handleLogin}
           onRegister={handleRegister}
+          onSendWhatsAppOtp={sendWhatsAppOtp}
+          onLoginWithWhatsApp={loginWithWhatsApp}
+          onLoginWithGoogle={loginWithGoogle}
         />
 
         {/* User Profile, Weekly Target, & Leaderboard Modal */}

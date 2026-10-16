@@ -179,6 +179,18 @@ export interface MaterialTabProps {
   loadDocument?: (id: string) => void;
 }
 
+function renderWithLineBreaks(children: React.ReactNode): React.ReactNode {
+  if (typeof children === "string") {
+    if (!/<br\s*\/?>/i.test(children)) return children;
+    const parts = children.split(/<br\s*\/?>/i);
+    return parts.flatMap((part, i) => (i === 0 ? [part] : [<br key={i} />, part]));
+  }
+  if (Array.isArray(children)) {
+    return React.Children.map(children, (child) => renderWithLineBreaks(child));
+  }
+  return children;
+}
+
 export const MaterialTab = React.memo(function MaterialTab({
   activeDocId,
   activeDocTitle,
@@ -469,11 +481,11 @@ export const MaterialTab = React.memo(function MaterialTab({
               lineHeight: 1.75
             }}
           >
-            {children}
+            {renderWithLineBreaks(children)}
           </div>
         );
       }
-      return <p style={{ marginBottom: 18, color: "#1d2b26", lineHeight: 1.9, fontSize: 16.5 }}>{children}</p>;
+      return <p style={{ marginBottom: 18, color: "#1d2b26", lineHeight: 1.9, fontSize: 16.5 }}>{renderWithLineBreaks(children)}</p>;
     },
     ul: ({ children }: any) => (
       <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
@@ -538,12 +550,12 @@ export const MaterialTab = React.memo(function MaterialTab({
     ),
     th: ({ children }: any) => (
       <th>
-        {sanitizeChildrenText(children)}
+        {renderWithLineBreaks(sanitizeChildrenText(children))}
       </th>
     ),
     td: ({ children }: any) => (
       <td>
-        {children}
+        {renderWithLineBreaks(children)}
       </td>
     )
   }), []);
@@ -1085,8 +1097,8 @@ export const MaterialTab = React.memo(function MaterialTab({
                               display: "flex",
                               alignItems: "center",
                               gap: 6,
-                              background: "#f4f7f2",
-                              border: "1px solid #dce2d8",
+                              background: "#f4f7ee",
+                              border: "none",
                               borderRadius: 6,
                               padding: "6px 14px",
                               fontSize: 12,

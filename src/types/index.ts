@@ -146,6 +146,10 @@ export interface UserAccount {
   id: string;
   username: string;
   name: string;
+  phone?: string | null;
+  auth_provider?: string;
+  is_verified?: boolean;
+  google_id?: string | null;
   bio?: string;
   school_class?: string;
   avatar_color?: string;

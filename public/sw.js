@@ -1,4 +1,4 @@
-const CACHE_NAME = "tanka-pwa-v2";
+const CACHE_NAME = "tanka-pwa-v6";
 const ASSETS_TO_CACHE = [
   "/",
   "/manifest.json",

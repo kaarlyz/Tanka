@@ -339,7 +339,7 @@ export function RoomModal({
           <form onSubmit={handleGuestSubmit} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
             <input
               type="text"
-              placeholder="Ketik nama panggilanmu (contoh: Nadine / Glen)..."
+              placeholder="Ketik nama panggilanmu (contoh: Prabowo)..."
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
               autoFocus

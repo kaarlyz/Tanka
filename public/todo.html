@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Command Center — Eka & Vallencia (16 Okt 2026)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c0f0e;
+      --card-bg: #141a17;
+      --card-border: #222c27;
+      --text-main: #e6ede9;
+      --text-muted: #83928a;
+      --accent: #c8f064;
+      --accent-dim: rgba(200, 240, 100, 0.12);
+      --done-bg: rgba(34, 197, 94, 0.08);
+      --done-border: rgba(34, 197, 94, 0.25);
+      --done-text: #4ade80;
+      --pending-bg: rgba(234, 179, 8, 0.08);
+      --pending-border: rgba(234, 179, 8, 0.25);
+      --pending-text: #facc15;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 32px 20px;
+      line-height: 1.5;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+    }
+
+    header {
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .title-area h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .title-area p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .live-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(200, 240, 100, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 14px 16px;
+      border-radius: 12px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .stat-val {
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 4px;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .section-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin: 24px 0 12px 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .todo-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 14px 16px;
+      border-radius: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .todo-item:hover {
+      border-color: #33423a;
+      transform: translateY(-1px);
+    }
+
+    .status-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .todo-item.done {
+      border-color: var(--done-border);
+      background: var(--done-bg);
+    }
+
+    .todo-item.done .status-icon {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--done-text);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .todo-item.pending {
+      border-color: var(--pending-border);
+      background: var(--pending-bg);
+    }
+
+    .todo-item.pending .status-icon {
+      background: rgba(234, 179, 8, 0.2);
+      color: var(--pending-text);
+      border: 1px solid rgba(234, 179, 8, 0.4);
+    }
+
+    .todo-content {
+      flex: 1;
+    }
+
+    .todo-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .todo-tag {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+
+    .todo-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    footer {
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid var(--card-border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="title-area">
+        <h1>Dashboard To-Do Harian</h1>
+        <p>Jumat, 16 Oktober 2026 — Sesi Fokus Eka & Vallencia</p>
+      </div>
+      <div class="live-badge">
+        <span class="live-dot"></span> 21:05 WIB
+      </div>
+    </header>
+
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Kalori Hari Ini</div>
+        <div class="stat-val">1.940 kkal</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">RAM Available</div>
+        <div class="stat-val">9.4 GB</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Status Sistem</div>
+        <div class="stat-val" style="color: var(--accent);">Litax ON</div>
+      </div>
+    </div>
+
+    <!-- TUNTAS -->
+    <div class="section-title">
+      <span style="color: var(--done-text);">✔</span> Sudah Tuntas Selesai
+    </div>
+    <div class="todo-list">
+      
+      <div class="todo-item done">
+        <div class="status-icon">✓</div>
+        <div class="todo-content">
+          <div class="todo-title">Drill MTK Wajib Eksponen Pecahan <span class="todo-tag">AKADEMIK</span></div>
+          <div class="todo-desc">Tuntas 2 sesi x 20 menit bedah aljabar eksponen pecahan TKA Indikator 2 (sifat 2^(6/k)=4, penguraian basis 8 & 9).</div>
+        </div>
+      </div>
+
+      <div class="todo-item done">
+        <div class="status-icon">✓</div>
+        <div class="todo-content">
+          <div class="todo-title">Download Master Foto Panen Raya <span class="todo-tag">WORKSPACE</span></div>
+          <div class="todo-desc">11 file foto kualitas master asli Canon EOS 800D (6-17 MB) tersimpan rapi di ~/Pictures/Panen-Raya.</div>
+        </div>
+      </div>
+
+      <div class="todo-item done">
+        <div class="status-icon">✓</div>
+        <div class="todo-content">
+          <div class="todo-title">Klaim Domain Resmi Tanka (tanka.my.id) <span class="todo-tag">TANKA</span></div>
+          <div class="todo-desc">Aktif 1 tahun di IDwebhost via promo Rp 0. NameServer Cloudflare sudah dikonfigurasi.</div>
+        </div>
+      </div>
+
+      <div class="todo-item done">
+        <div class="status-icon">✓</div>
+        <div class="todo-content">
+          <div class="todo-title">Perbaikan Sistemik Hardware & OS <span class="todo-tag">LINUX</span></div>
+          <div class="todo-desc">Litax latency hardening aktif, bug lockscreen Wayland di-fix via SUID root PAM, shortcut Win+S Spectacle aktif, dan pembersihan RAM 9.4GB available.</div>
+        </div>
+      </div>
+
+      <div class="todo-item done">
+        <div class="status-icon">✓</div>
+        <div class="todo-content">
+          <div class="todo-title">Hardening Generator Kuis & Auth Tanka <span class="todo-tag">MULTI-AGENT</span></div>
+          <div class="todo-desc">AURA & MARAKA tuntas patch kuis pemula murni angka telanjang (anti-ragi) dan Google/WA authentication.</div>
+        </div>
+      </div>
+
+      <div class="todo-item done">
+        <div class="status-icon">✓</div>
+        <div class="todo-content">
+          <div class="todo-title">Fisik & Reset Lingkungan Kamar <span class="todo-tag">BIOLOGIS</span></div>
+          <div class="todo-desc">Sapu kamar bersih, cuci piring, dekompresi sensorik sore, dan power nap istirahat saraf.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BELUM SELESAI -->
+    <div class="section-title" style="margin-top: 32px;">
+      <span style="color: var(--pending-text);">⏳</span> Belum Selesai / Agenda Malam
+    </div>
+    <div class="todo-list">
+
+      <div class="todo-item pending">
+        <div class="status-icon">!</div>
+        <div class="todo-content">
+          <div class="todo-title">Ketik Tombol Ukuran di Sandbox App.tsx <span class="todo-tag">SOVEREIGN SKILL</span></div>
+          <div class="todo-desc">Ketik manual tombol ukuran baju (S, M, L) di atas tombol Beli Sekarang dan pasang flex gap-2 di VS Code.</div>
+        </div>
+      </div>
+
+      <div class="todo-item pending">
+        <div class="status-icon">!</div>
+        <div class="todo-content">
+          <div class="todo-title">Rancang Arsitektur Fashion Engine 15 Juta <span class="todo-tag">KOMERSIAL 15M</span></div>
+          <div class="todo-desc">Tentukan struktur modul template lookbook dan skema config-driven brand-config.json bareng Vallencia gaya Tanka.</div>
+        </div>
+      </div>
+
+      <div class="todo-item pending">
+        <div class="status-icon">!</div>
+        <div class="todo-content">
+          <div class="todo-title">Sourcing 3-5 Akun Brand Fashion IG <span class="todo-tag">KOMERSIAL 15M</span></div>
+          <div class="todo-desc">Catat akun Instagram brand fashion lokal (5k-40k followers) yang linktree-nya lambat buat bahan pitching 9 Nov.</div>
+        </div>
+      </div>
+
+      <div class="todo-item pending">
+        <div class="status-icon">!</div>
+        <div class="todo-content">
+          <div class="todo-title">Drill Sosiologi 4 Tokoh Sentral <span class="todo-tag">AKADEMIK</span></div>
+          <div class="todo-desc">Kuis kilat keyword matching 4 tokoh (Comte, Durkheim, Weber, Marx) di Tanka / catatan.</div>
+        </div>
+      </div>
+
+      <div class="todo-item pending">
+        <div class="status-icon">!</div>
+        <div class="todo-content">
+          <div class="todo-title">Tutup Layar & Disiplin Tidur Jam 23.30 <span class="todo-tag">BIOLOGIS</span></div>
+          <div class="todo-desc">Matiin laptop jam 22.45 - 23.00, istirahat penuh biar ritme sirkadian tetap segar besok pagi.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <footer>
+      Dibuat dengan rapi oleh Vallencia &bull; Auto-Synced ke Obsidian Vault
+    </footer>
+  </div>
+
+</body>
+</html>

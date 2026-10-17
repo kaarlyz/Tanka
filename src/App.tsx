@@ -962,7 +962,7 @@ export default function App() {
             )}
 
             <div className="content-scroll" ref={contentScrollRef} onScroll={handleContentScroll} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: "16px 20px max(112px, calc(80px + env(safe-area-inset-bottom, 0px))) 20px" }}>
-              <div style={{ maxWidth: activeTab === "material" ? 1440 : 1080, margin: "0 auto", width: "100%" }}>
+              <div style={{ maxWidth: (activeTab === "material" || activeTab === "summary") ? 1440 : 1080, margin: "0 auto", width: "100%" }}>
                 {isTabMounted("home") && (
                   <div key="tab-pane-home" style={{ display: activeTab === "home" ? "block" : "none" }}>
                     <HomeHubTab
@@ -1200,6 +1200,7 @@ export default function App() {
                         selectedModel={selectedModel}
                         setActiveDocSummary={setActiveDocSummary}
                         showNotice={showNotice}
+                        setActiveTab={setActiveTab}
                       />
                     </Suspense>
                   </div>

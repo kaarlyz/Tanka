@@ -20,18 +20,22 @@ const { getPythonBin, executePythonScript, executePythonScriptAsync } = require(
 
 // Intelligent Exam Sheet Processor
 async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance, goal = "", instruction = "") {
-  if (!detectQuestionPatterns(rawText)) {
+  const userSpecifiedExamGoal = ["solve", "clone", "hots", "exam"].includes(goal);
+  const titleHasExamCue = /\b(soal|tka|utbk|ujian|latihan|kisi|try\s*out|kuis|exam|quiz|test|ulangan|bank\s*soal|drill)\b/i.test(title || "");
+  const autoDetected = detectQuestionPatterns(rawText);
+
+  if (!userSpecifiedExamGoal && !titleHasExamCue && !autoDetected) {
     return { isExamSheet: false };
   }
 
-  console.log(`[Exam Detection] Terdeteksi lembar soal / kisi-kisi pada: "${title}". Mengekstrak butir soal & menyusun teori penguasaan...`);
+  console.log(`[Exam Detection] Terdeteksi lembar soal / kisi-kisi pada: "${title}" (Goal: ${goal || 'auto'}). Mengekstrak butir soal & menyusun bedah tuntas...`);
 
   try {
     let goalGuidance = "";
     if (goal === "clone") {
       goalGuidance = "\nPERMINTAAN KHUSUS SISWA: Buat 3-5 variasi soal latihan kloning (tipe dan pola sama dengan angka berbeda) agar siswa bisa berlatih mandiri.\n";
     } else if (goal === "solve") {
-      goalGuidance = "\nPERMINTAAN KHUSUS SISWA: Berikan kunci jawaban dan langkah pengerjaan tuntas setiap nomor tanpa terlewat.\n";
+      goalGuidance = "\nPERMINTAAN KHUSUS SISWA: Bahas tuntas setiap butir soal! Berikan kunci jawaban dan langkah pengerjaan rinci nomor demi nomor tanpa terlewat.\n";
     } else if (goal === "hots") {
       goalGuidance = "\nPERMINTAAN KHUSUS SISWA: Fokuskan pada variasi soal penalaran tingkat tinggi (HOTS) dan pola jebakan ujian.\n";
     } else if (goal === "summary") {
@@ -40,33 +44,40 @@ async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance,
 
     const customClause = instruction ? `\nCATATAN / ARAHAN TAMBAHAN DARI SISWA: "${instruction}"\n` : "";
 
-    const prompt = `Anda adalah asisten kurikulum akademik dan pakar bedah kisi-kisi ujian.
-Teks berikut terdeteksi sebagai lembar soal latihan / kisi-kisi ujian.
-
-JUDUL / TOPIK: "${title}"
+    const prompt = `Anda adalah asisten kurikulum akademik dan tutor ahli bedah soal ujian.
+Teks berikut merupakan dokumen lembar latihan soal / kisi-kisi ujian / bank soal (${title}).
 ${goalGuidance}${customClause}
 TEKS SUMBER SOAL:
 """
-${rawText.slice(0, 16000)}
+${rawText.slice(0, 60000)}
 """
 
 TUGAS UTAMA (WAJIB DUA HAL DALAM FORMAT JSON):
-1. "questions": Ekstrak SEMUA butir pertanyaan pilihan ganda atau latihan yang ada di dokumen. Untuk setiap butir soal:
+1. "questions": Ekstrak SEMUA butir pertanyaan (pilihan ganda, isian, maupun esai) yang ada di dokumen. Untuk setiap butir soal:
    - "id": integer urut (1, 2, 3...)
-   - "question": Teks pertanyaan lengkap (sertakan rumus LaTeX/KaTeX jika ada, misalnya $x^2$, $\\frac{a}{b}$).
-   - "options": Array 4-5 opsi pilihan jawaban ["A. ...", "B. ...", "C. ...", "D. ..."]. Jika di dokumen berupa essay/isian tanpa pilihan, formulasikan 4 pilihan ganda logis yang menguji konsep tersebut.
+   - "question": Teks pertanyaan lengkap (sertakan rumus KaTeX rapi jika ada, misal $x^2$, $\\frac{a}{b}$, $\\sqrt{x}$).
+   - "options": Array 4-5 opsi pilihan jawaban ["A. ...", "B. ...", "C. ...", "D. ..."]. Jika soal berupa esai atau tanpa opsi tertulis, formulasikan 4 pilihan ganda logis yang menguji kemampuan siswa pada soal tersebut.
    - "correctIndex": Indeks integer jawaban yang benar (0=A, 1=B, 2=C, 3=D). Gunakan kunci jawaban dokumen jika tersedia, atau tentukan jawaban paling akurat secara akademis.
    - "explanation": Langkah pembahasan bertahap dan konsep ilmiah di balik jawaban benar.
    - "formula": Rumus atau kaidah kunci.
-   - "pitfall": Jebakan umum yang sering mengecoh siswa pada soal ini.
+   - "pitfall": Jebakan umum yang sering mengecoh siswa pada tipe soal ini.
 
-2. "studyGuide": Susun PANDUAN MATERI BELAJAR & TEORI PENGUASAAN KISI-KISI yang komprehensif berdasarkan soal-soal di atas.
-   PENTING: Jangan hanya mengulang soal! Buatkan materi catatan belajar terstruktur agar siswa memahami teori dan rumus di balik soal-soal tersebut:
-   - # Panduan Belajar & Teori Kisi-Kisi: ${title}
-   - ## 1. Peta Materi & Teori Dasar (Menjelaskan latar belakang topik yang diujikan secara runut)
-   - ## 2. Bedah Konsep & Formula Kunci (Rumus KaTeX dan cara menerapkannya)
-   - ## 3. Pola Analisis Soal & Trik Cepat (Cara berpikir sistematis membedah tipe soal ini)
-   - ## 4. Jebakan Umum & Poin Wajib Ingat (Catatan ringkas untuk menghadapi ujian)
+2. "studyGuide": Susun PANDUAN BELAJAR & BEDAH TUNTAS SOAL yang mendalam dan siap dibaca siswa di tab Materi:
+   Struktur wajib (gunakan format Markdown editorial):
+   # Bedah Tuntas & Panduan Soal: ${title}
+   > Tesis ringkas: Rangkuman topik dan indikator kompetensi yang diuji dalam paket soal ini.
+
+   ## Bab 1: Peta Materi & Teori Fondasi
+   (Jelaskan konsep dasar, istilah kunci, dan latar belakang teori yang melandasi kumpulan soal ini secara runut).
+
+   ## Bab 2: Rumus Kunci & Kaidah Aljabar
+   (Tabel formula KaTeX, identitas, atau hukum sains/sosial penting yang dipakai untuk menyelesaikan soal-soal ini).
+
+   ## Bab 3: Pembahasan Lengkap Tiap Butir Soal
+   (WAJIB MEMBAHAS MASING-MASING SOAL: Tuliskan "### Soal 1", bunyi soal ringkas, kunci jawaban, langkah pengerjaan bertahap dengan KaTeX, dan analisis jebakan mengapa opsi lain keliru).
+
+   ## Bab 4: Trik Cepat, Pola Soal Serupa & Jebakan Ujian
+   (Cara berpikir taktis mengenali pola soal serupa di ujian, trik eliminasi pilihan ganda, dan kesalahan fatal yang wajib dihindari).
 
 KEMBALIKAN HANYA FORMAT JSON VALID:
 {
@@ -81,16 +92,53 @@ KEMBALIKAN HANYA FORMAT JSON VALID:
       "pitfall": "..."
     }
   ],
-  "studyGuide": "# Panduan Belajar..."
+  "studyGuide": "# Bedah Tuntas & Panduan Soal..."
 }`;
 
-    const rawResponse = await callRouter([{ role: "user", content: prompt }], "ag/gemini-3.8-flash-low", 0.2);
+    const rawResponse = await callRouter([{ role: "user", content: prompt }], "ag/gemini-3.8-flash-low", 0.2, 16384);
+    console.log(`[Exam Debug] rawResponse received: ${Boolean(rawResponse)}, length: ${rawResponse ? rawResponse.length : 0}`);
     if (!rawResponse) return { isExamSheet: false };
 
     const parsed = safeJsonParse(rawResponse);
+    console.log(`[Exam Debug] parsed JSON: ${Boolean(parsed)}, keys: ${parsed ? (Array.isArray(parsed) ? `Array(${parsed.length})` : Object.keys(parsed)) : 'none'}`);
     if (!parsed) return { isExamSheet: false };
-    const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
-    const studyGuide = typeof parsed.studyGuide === "string" ? parsed.studyGuide : "";
+
+    let questions = [];
+    let studyGuide = "";
+
+    if (Array.isArray(parsed)) {
+      questions = parsed;
+    } else if (parsed && typeof parsed === "object") {
+      if (Array.isArray(parsed.questions)) questions = parsed.questions;
+      else if (Array.isArray(parsed.soal)) questions = parsed.soal;
+      else if (Array.isArray(parsed.items)) questions = parsed.items;
+      
+      if (typeof parsed.studyGuide === "string") studyGuide = parsed.studyGuide;
+      else if (typeof parsed.panduan === "string") studyGuide = parsed.panduan;
+      else if (typeof parsed.materi === "string") studyGuide = parsed.materi;
+    }
+
+    if (!studyGuide && questions.length > 0) {
+      console.log(`[Exam Detection] Mensintesis studyGuide komprehensif dari ${questions.length} butir soal terurai...`);
+      studyGuide = `# Bedah Tuntas & Pembahasan Soal: ${title}\n\n` +
+        `> 📌 **Tesis & Ringkasan Kisi-Kisi:** Modul ini membedah tuntas ${questions.length} butir soal latihan dan kisi-kisi ujian secara komprehensif, mencakup analisis konsep, penurunan rumus bertahap, dan mitigasi pola jebakan.\n\n---\n\n` +
+        `## Bab 1: Peta Materi & Formula Kunci\n\n` +
+        `Berikut adalah rangkuman formula dan kaidah esensial yang digunakan dalam paket soal ini:\n\n` +
+        (questions.filter(q => q.formula).map((q, idx) => `* **Kaidah Soal ${q.id || idx + 1}:** ${q.formula}`).join("\n") || "* Kuasai definisi dasar dan alur operasi matematika/ilmiah sesuai petunjuk tiap soal.") + "\n\n---\n\n" +
+        `## Bab 2: Pembahasan Rinci Tiap Nomor Soal\n\n` +
+        questions.map((q, idx) => {
+          const optStr = Array.isArray(q.options) ? q.options.map((opt, oIdx) => `  * ${opt} ${oIdx === q.correctIndex ? "**(Kunci Jawaban ✓)**" : ""}`).join("\n") : "";
+          return `### Butir Soal ${q.id || idx + 1}\n\n` +
+            `**Pertanyaan:**\n${q.question}\n\n` +
+            (optStr ? `**Pilihan Jawaban:**\n${optStr}\n\n` : "") +
+            `**Langkah Pembahasan:**\n${q.explanation || "Pembahasan bertahap disesuaikan dengan konsep dasar."}\n\n` +
+            (q.formula ? `**Rumus Acuan:**\n${q.formula}\n\n` : "") +
+            (q.pitfall ? `⚠️ **Peringatan Salah Kaprah (Pitfall):**\n${q.pitfall}\n\n` : "");
+        }).join("\n\n---\n\n") + "\n\n---\n\n" +
+        `## Bab 3: Trik Cepat & Pola Analisis Ujian\n\n` +
+        `Dalam menghadapi variasi soal pada paket ini, perhatikan pola-pola kritis berikut:\n\n` +
+        (questions.filter(q => q.pitfall).map((q, idx) => `* **Jebakan Soal ${q.id || idx + 1}:** ${q.pitfall}`).join("\n") || "* Teliti membaca syarat batas semesta dan batasan bilangan sebelum memilih opsi jawaban.");
+    }
 
     if (questions.length > 0) {
       const quizId = "quiz_exam_" + Date.now();
@@ -416,7 +464,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
               fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
               const pyRes = await executePythonScriptAsync(scriptPath, [tmpFilePath], {
                 maxBuffer: 25 * 1024 * 1024,
-                timeout: 45000
+                timeout: 90000
               });
               text = pyRes.success ? pyRes.stdout : "";
               if (!pyRes.success) {
@@ -481,7 +529,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
 
     const initialStatus = examResult.isExamSheet ? "completed" : "processing";
     const insert = db.prepare("INSERT INTO documents (id, title, content, status, created_at) VALUES (?, ?, ?, ?, ?)");
-    insert.run(id, cleanTitle, mergedText, initialStatus, createdAt);
+    insert.run(id, cleanTitle, finalContent, initialStatus, createdAt);
 
     // Persist document segments into document_segments table (no truncation)
     try {
@@ -957,5 +1005,6 @@ Tugas Anda:
 }
 
 module.exports = {
-  handleDocumentsRoutes
+  handleDocumentsRoutes,
+  processExamQuestionsIfDetected
 };

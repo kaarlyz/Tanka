@@ -28,27 +28,41 @@ def extract_pdf(file_path):
             else:
                 needs_ocr.append(idx)
 
-        # If all or some pages are scanned (sparse/empty text), OCR those specific pages
+        # If all or some pages are scanned (sparse/empty text), OCR those specific pages in parallel
         if needs_ocr:
+            from concurrent.futures import ThreadPoolExecutor
             with tempfile.TemporaryDirectory() as tmpdir:
-                # Cap OCR to max 15 pages to prevent unbounded timeout
-                ocr_targets = needs_ocr[:15]
-                for page_num in ocr_targets:
+                # Support up to 60 scanned pages without premature truncation
+                ocr_targets = needs_ocr[:60]
+
+                def process_ocr_page(page_num):
                     prefix = os.path.join(tmpdir, f"page_{page_num}")
-                    sub_res = subprocess.run(
-                        ["pdftoppm", "-png", "-r", "150", "-f", str(page_num), "-l", str(page_num), file_path, prefix],
-                        capture_output=True
-                    )
-                    pngs = glob.glob(f"{prefix}*.png")
-                    if pngs:
-                        t_res = subprocess.run(
-                            ["tesseract", pngs[0], "stdout", "-l", "ind+eng", "--oem", "1"],
+                    try:
+                        subprocess.run(
+                            ["pdftoppm", "-png", "-r", "150", "-f", str(page_num), "-l", str(page_num), file_path, prefix],
                             capture_output=True,
-                            text=True
+                            timeout=20
                         )
-                        ocr_txt = t_res.stdout.strip()
-                        if ocr_txt:
-                            final_pages.append((page_num, ocr_txt))
+                        pngs = glob.glob(f"{prefix}*.png")
+                        if pngs:
+                            t_res = subprocess.run(
+                                ["tesseract", pngs[0], "stdout", "-l", "ind+eng", "--oem", "1"],
+                                capture_output=True,
+                                text=True,
+                                timeout=20
+                            )
+                            ocr_txt = t_res.stdout.strip()
+                            if ocr_txt:
+                                return (page_num, ocr_txt)
+                    except Exception as ocr_err:
+                        pass
+                    return None
+
+                with ThreadPoolExecutor(max_workers=min(8, os.cpu_count() or 4)) as executor:
+                    results = list(executor.map(process_ocr_page, ocr_targets))
+                    for res in results:
+                        if res:
+                            final_pages.append(res)
 
         # Sort pages back into original sequence
         final_pages.sort(key=lambda x: x[0])

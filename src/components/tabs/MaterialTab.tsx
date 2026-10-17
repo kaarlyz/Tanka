@@ -448,17 +448,17 @@ export const MaterialTab = React.memo(function MaterialTab({
 
   const markdownComponents = React.useMemo(() => ({
     h1: ({ children }: any) => (
-      <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111a17", letterSpacing: "-0.025em", marginTop: 32, marginBottom: 14, borderBottom: "1px solid #eef1eb", paddingBottom: 8 }}>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', -apple-system, sans-serif", fontSize: 26, fontWeight: 800, color: "#111a17", letterSpacing: "-0.025em", marginTop: 32, marginBottom: 14, borderBottom: "1px solid #eef1eb", paddingBottom: 8 }}>
         {children}
       </h1>
     ),
     h2: ({ children }: any) => (
-      <h2 style={{ fontSize: 20, fontWeight: 750, color: "#162420", letterSpacing: "-0.02em", marginTop: 28, marginBottom: 12 }}>
+      <h2 style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', -apple-system, sans-serif", fontSize: 20, fontWeight: 750, color: "#162420", letterSpacing: "-0.02em", marginTop: 28, marginBottom: 12 }}>
         {children}
       </h2>
     ),
     h3: ({ children }: any) => (
-      <h3 style={{ fontSize: 16.5, fontWeight: 700, color: "#25371a", letterSpacing: "-0.01em", marginTop: 24, marginBottom: 10 }}>
+      <h3 style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', -apple-system, sans-serif", fontSize: 16.5, fontWeight: 700, color: "#25371a", letterSpacing: "-0.01em", marginTop: 24, marginBottom: 10 }}>
         {children}
       </h3>
     ),
@@ -471,6 +471,7 @@ export const MaterialTab = React.memo(function MaterialTab({
         return (
           <div
             style={{
+              fontFamily: "'Plus Jakarta Sans', 'Manrope', sans-serif",
               backgroundColor: "#fffbeb",
               border: "1px solid #fde68a",
               borderLeft: "4px solid #f59e0b",
@@ -478,26 +479,27 @@ export const MaterialTab = React.memo(function MaterialTab({
               padding: "14px 18px",
               margin: "18px 0",
               color: "#92400e",
-              lineHeight: 1.75
+              lineHeight: 1.75,
+              fontSize: 15
             }}
           >
             {renderWithLineBreaks(children)}
           </div>
         );
       }
-      return <p style={{ marginBottom: 18, color: "#1d2b26", lineHeight: 1.9, fontSize: 16.5 }}>{renderWithLineBreaks(children)}</p>;
+      return <p style={{ marginBottom: 20, color: "#1a2520", lineHeight: 1.95, fontSize: 17.5 }}>{renderWithLineBreaks(children)}</p>;
     },
     ul: ({ children }: any) => (
-      <ul style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ul>
+      <ul style={{ paddingLeft: 22, marginBottom: 16, lineHeight: 1.85, fontSize: 17 }}>{children}</ul>
     ),
     ol: ({ children }: any) => (
-      <ol style={{ paddingLeft: 18, marginBottom: 12 }}>{children}</ol>
+      <ol style={{ paddingLeft: 22, marginBottom: 16, lineHeight: 1.85, fontSize: 17 }}>{children}</ol>
     ),
     li: ({ children }: any) => (
-      <li style={{ marginBottom: 5, color: "#374540" }}>{children}</li>
+      <li style={{ marginBottom: 8, color: "#2d3a34" }}>{children}</li>
     ),
     strong: ({ children }: any) => (
-      <strong style={{ color: "#17201d", fontWeight: 700 }}>{children}</strong>
+      <strong style={{ color: "#0f1714", fontWeight: 700 }}>{children}</strong>
     ),
     blockquote: ({ children }: any) => {
       const text = extractTextFromNode(children);
@@ -507,27 +509,27 @@ export const MaterialTab = React.memo(function MaterialTab({
 
       if (isPitfall) {
         return (
-          <blockquote style={{ borderLeft: "4px solid #f59e0b", backgroundColor: "#fffbeb", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#92400e", lineHeight: 1.75 }}>
+          <blockquote style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", borderLeft: "4px solid #f59e0b", backgroundColor: "#fffbeb", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#92400e", lineHeight: 1.75, fontSize: 15 }}>
             {children}
           </blockquote>
         );
       }
       if (isDefinisi) {
         return (
-          <blockquote style={{ borderLeft: "4px solid #10b981", backgroundColor: "#ecfdf5", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#065f46", lineHeight: 1.75 }}>
+          <blockquote style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", borderLeft: "4px solid #10b981", backgroundColor: "#ecfdf5", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#065f46", lineHeight: 1.75, fontSize: 15 }}>
             {children}
           </blockquote>
         );
       }
       if (isInsight) {
         return (
-          <blockquote style={{ borderLeft: "4px solid #3b82f6", backgroundColor: "#eff6ff", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#1e40af", lineHeight: 1.75 }}>
+          <blockquote style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", borderLeft: "4px solid #3b82f6", backgroundColor: "#eff6ff", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#1e40af", lineHeight: 1.75, fontSize: 15 }}>
             {children}
           </blockquote>
         );
       }
       return (
-        <blockquote style={{ borderLeft: "3.5px solid #4b6623", backgroundColor: "#f7f9f4", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#21322a", lineHeight: 1.75 }}>
+        <blockquote style={{ borderLeft: "3.5px solid #4b6623", backgroundColor: "#f7f9f4", padding: "14px 18px", borderRadius: "0 10px 10px 0", margin: "18px 0", color: "#21322a", lineHeight: 1.8, fontSize: 16 }}>
           {children}
         </blockquote>
       );

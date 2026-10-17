@@ -87,12 +87,23 @@ async function search9Router(query, maxResults = 8) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${ROUTER_KEY}`,
       },
-      body: JSON.stringify({ query, max_results: maxResults }),
+      body: JSON.stringify({ 
+        query, 
+        max_results: maxResults,
+        provider: "antigravity"
+      }),
     });
     if (res.ok) {
       const data = await res.json();
+      const parts = [];
+      if (data.answer && data.answer.text) {
+        parts.push(`### Rangkuman Penelusuran Web Terverifikasi:\n${data.answer.text}`);
+      }
       if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-        return data.results.map((r, i) => `${i + 1}. **[${r.title}](${r.url})**\n${r.snippet || r.content || ""}`).join("\n\n");
+        parts.push(data.results.map((r, i) => `${i + 1}. **[${r.title}](${r.url})**\n${r.snippet || r.content || ""}`).join("\n\n"));
+      }
+      if (parts.length > 0) {
+        return parts.join("\n\n");
       }
     }
   } catch (err) {}
@@ -172,8 +183,12 @@ function scoreAcademicRelevance(title, topic, subject = "", extraAliases = []) {
     }
   }
 
-  // Reject false positives that only match 1 single generic word when topic has 2+ keywords
-  if (keywords.length >= 2 && matchedKwCount < 2 && !tLower.includes(topLower) && !Array.from(expandedSynonyms).some(s => tLower.includes(s))) {
+  // Jangan tolak artikel kanonik induk (misal judul "Sosiologi" saat mencari topik "Sosiologi sebagai ilmu...")
+  const isParentDisciplineArticle = (subLower && tLower === subLower) || (keywords.length > 0 && tLower === keywords[0]);
+  if (isParentDisciplineArticle) {
+    score += 40;
+  } else if (keywords.length >= 2 && matchedKwCount < 2 && !tLower.includes(topLower) && !Array.from(expandedSynonyms).some(s => tLower.includes(s))) {
+    // Reject false positives that only match 1 single generic word when topic has 2+ keywords
     return 0;
   }
 
@@ -449,9 +464,10 @@ async function detectDocumentTitle(content, fallback = "Dokumen Materi") {
   try {
     const prompt = `Tentukan topik pembelajaran atau judul materi yang paling akurat, spesifik, dan ringkas (3 sampai 6 kata) berdasarkan isi materi berikut.
 PENTING:
+- Jika teks terdeteksi sebagai kumpulan lembar soal, try out, kisi-kisi, atau bank soal (misalnya Soal TKA Matematika, Ujian Sosiologi, Latihan Fisika), BERIKAN JUDUL EKSPLISIT seperti "Bedah Soal TKA Matematika Wajib", "Pembahasan Soal Sosiologi TKA", atau "Latihan Soal Fisika Mekanika".
 - DILARANG menggunakan nama file berkas seperti "img_...", "scan_...", atau "dokumen 1".
 - DILARANG menggunakan tanda kutip, kata pengantar, kurung, atau emotikon.
-- HANYA tuliskan judul singkatnya saja dalam bahasa Indonesia baku (misal: "Komposisi Transformasi Translasi dan Dilatasi", "Struktur Sosial dan Diferensiasi", "Hukum Permintaan dan Penawaran").\n\nIsi materi:\n"""\n${(content || "").slice(0, 3500)}\n"""`;
+- HANYA tuliskan judul singkatnya saja dalam bahasa Indonesia baku (misal: "Komposisi Transformasi Translasi dan Dilatasi", "Bedah Soal TKA Matematika Wajib", "Hukum Permintaan dan Penawaran").\n\nIsi materi:\n"""\n${(content || "").slice(0, 3500)}\n"""`;
 
     const reply = await callRouter([
       { role: "system", content: "Anda adalah asisten kurikulum akademik. Tugas Anda memberikan judul topik materi yang akurat, baku, dan singkat (3-6 kata) berdasarkan isi materi teks." },
@@ -516,13 +532,26 @@ ATURAN KELUARAN:
 
 function detectQuestionPatterns(text) {
   if (!text || typeof text !== "string") return false;
-  const optionMatches = text.match(/(?:^|\n|\s)[A-Ea-e][\.\)]\s+[^\n]+/g);
-  const questionNumberMatches = text.match(/(?:^|\n)\s*(?:\d+[\.\)]|\bSoal\s*\d+|\bNo\.?\s*\d+)/g);
-  const hasKeywords = /\b(kisi-kisi|pilihan ganda|pilihlah|berikut ini yang|manakah|latihan soal|ulangan harian|ujian sekolah|try out|pertanyaan berikut)\b/i.test(text);
+  
+  // 1. Opsi Pilihan Ganda: huruf A-E, angka, atau simbol bulatan/kotak radio button
+  const optionMatches = text.match(/(?:^|\n|\s)(?:[A-Ea-e][\.\)]|\([A-Ea-e]\)|\[[A-Ea-e]\]|(?:[O○●□■]|\(\s*\)|\[\s*\]))\s+[^\n]+/g);
+  
+  // 2. Penomoran Soal: 1., (1), [1], Soal 1, No. 1, Nomor 1, Indikator, dsb.
+  const questionNumberMatches = text.match(/(?:^|\n)\s*(?:\d+[\.\)]|\(\d+\)|\[\d+\]|\bSoal\s*\d+|\bNo\.?\s*\d+|\bNomor\s*\d+|\bProblem\s*\d+|\bQuestion\s*\d+|\bItem\s*\d+|\bIndikator\b)/gi);
+  
+  // 3. Kata Kunci Spesifik Soal & Ujian
+  const hasKeywords = /\b(kisi-kisi|pilihan ganda|pilihlah|berikut ini yang|manakah|latihan soal|ulangan|ujian|try out|pertanyaan|soal tka|soal utbk|snbt|bentuk soal|kunci jawaban|pembahasan|hitunglah|tentukan|berapakah|bagaimanakah|mengapa|nilai dari|bentuk sederhana dari|hasil dari)\b/i.test(text);
+  
+  // 4. Kode Indikator Ujian Resmi (misal: 25MATBLGBRLMO1SU-000000-0246)
+  const hasIndicatorCode = /\b\d{2}[A-Z]{4,}[A-Z0-9-]+\b/i.test(text);
+  const questionMarks = (text.match(/\?/g) || []).length;
 
-  if (optionMatches && optionMatches.length >= 3) return true;
-  if (questionNumberMatches && questionNumberMatches.length >= 2 && ((optionMatches && optionMatches.length >= 2) || hasKeywords)) return true;
-  if (hasKeywords && optionMatches && optionMatches.length >= 2) return true;
+  if (hasIndicatorCode && (hasKeywords || questionNumberMatches)) return true;
+  if (optionMatches && optionMatches.length >= 2) return true;
+  if (questionNumberMatches && questionNumberMatches.length >= 2 && (hasKeywords || (optionMatches && optionMatches.length >= 1) || questionMarks >= 2)) return true;
+  if (hasKeywords && (optionMatches || questionNumberMatches || questionMarks >= 2)) return true;
+  if (questionMarks >= 3 && (questionNumberMatches || hasKeywords)) return true;
+  
   return false;
 }
 

@@ -65,33 +65,62 @@ def extract_pdf(file_path):
                             final_pages.append(res)
 
         # Extract embedded images and tag pages with their image placeholders
+        # Menggunakan 3-Layer Zero-Token Heuristic Filter:
+        # Layer 1: Eliminasi Header/Metadata dokumen (Hierarki Indikator, Bentuk Soal)
+        # Layer 2: Deteksi Pure Art (Ilustrasi/Lukisan Murni tanpa OCR teks, misal No 16 tolak tambang & No 27 hoax)
+        # Layer 3: Deteksi Infografis, Grafik & Tabel berstruktur (mengandung keyword visual atau data matriks)
         page_images_map = {}
         try:
             uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", "exam_images")
             os.makedirs(uploads_dir, exist_ok=True)
             doc_base = os.path.splitext(os.path.basename(file_path))[0]
             prefix_img = os.path.join(uploads_dir, f"{doc_base}_img")
-            # Extract images and also query page mapping using pdfimages -list
+            
+            # 1. Ekstrak seluruh objek raster asli dari PDF
+            subprocess.run(["pdfimages", "-png", file_path, prefix_img], capture_output=True, timeout=30)
+            
+            # 2. Ambil metadata mapping halaman dari pdfimages -list
             list_res = subprocess.run(["pdfimages", "-list", file_path], capture_output=True, text=True, timeout=20)
             if list_res.returncode == 0:
                 lines = list_res.stdout.splitlines()
-                # Parse pdfimages list output: page num type width height ...
                 for line in lines[2:]:
                     parts = line.split()
-                    if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+                    if len(parts) >= 5 and parts[0].isdigit() and parts[1].isdigit():
                         p_num = int(parts[0])
                         img_idx = int(parts[1])
-                        # If width > 400 and height > 200 (likely diagram/infographic/illustration, not a tiny icon)
-                        if len(parts) >= 5 and parts[3].isdigit() and parts[4].isdigit():
-                            w, h = int(parts[3]), int(parts[4])
-                            if w >= 350 and h >= 150:
-                                if p_num not in page_images_map:
-                                    page_images_map[p_num] = []
-                                # pdfimages -png produces: prefix-000.png, prefix-001.png
-                                img_filename = f"{doc_base}_img-{img_idx:03d}.png"
-                                page_images_map[p_num].append(f"/uploads/exam_images/{img_filename}")
-            subprocess.run(["pdfimages", "-png", file_path, prefix_img], capture_output=True, timeout=30)
-        except Exception:
+                        w, h = int(parts[3]), int(parts[4])
+                        
+                        # Filter ukuran minimum visual (bukan icon kecil)
+                        if w >= 350 and h >= 150:
+                            img_filename = f"{doc_base}_img-{img_idx:03d}.png"
+                            img_filepath = os.path.join(uploads_dir, img_filename)
+                            
+                            if os.path.exists(img_filepath):
+                                # Jalankan OCR lokal cepat pada kandidat gambar
+                                t_res = subprocess.run(
+                                    ["tesseract", img_filepath, "stdout", "-l", "ind+eng", "--oem", "1"],
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=10
+                                )
+                                img_ocr_text = t_res.stdout.strip() if t_res.returncode == 0 else ""
+                                
+                                # Layer 1: Skip jika banner header kurikulum/metadata
+                                if any(h_kw in img_ocr_text for h_kw in ["Hierarki Indikator", "Bentuk Soal", "Kompetensi:", "Subelemen:"]):
+                                    continue
+                                
+                                # Layer 2: Pure Art / Visual Illustration (0 karakter atau minim teks)
+                                is_pure_art = len(img_ocr_text) <= 5
+                                
+                                # Layer 3: True Graphic/Chart/Table/Infographic
+                                visual_keywords = ["grafik", "tabel", "infografis", "diagram", "daur ulang", "partisipasi", "informan", "perspesi", "hambatan"]
+                                is_structured_visual = any(kw in img_ocr_text.lower() for kw in visual_keywords)
+                                
+                                if is_pure_art or is_structured_visual:
+                                    if p_num not in page_images_map:
+                                        page_images_map[p_num] = []
+                                    page_images_map[p_num].append(f"/uploads/exam_images/{img_filename}")
+        except Exception as filter_err:
             pass
 
         # Sort pages back into original sequence and inject image tags

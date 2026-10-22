@@ -567,6 +567,9 @@ function pipelineToTankaFormat(pipelineResult, title) {
 
       guide += `### Soal ${q.nomor}${badgeStr}\n\n`;
 
+      if (q.imageUrl) {
+        guide += `![${q.imageCaption || `Visual Soal ${q.nomor}`}](${q.imageUrl})\n\n`;
+      }
       if (q.stimulus) guide += `> ${q.stimulus.slice(0, 500)}${q.stimulus.length > 500 ? "..." : ""}\n\n`;
       guide += `**${mathify(q.pertanyaan)}**\n\n`;
 

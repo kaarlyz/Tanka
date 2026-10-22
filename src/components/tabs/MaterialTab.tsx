@@ -466,6 +466,28 @@ export const MaterialTab = React.memo(function MaterialTab({
   };
 
   const markdownComponents = React.useMemo(() => ({
+    img: ({ src, alt }: any) => (
+      <div style={{ textAlign: "center", margin: "24px 0" }}>
+        <img
+          src={src}
+          alt={alt || "Ilustrasi Materi"}
+          style={{
+            maxWidth: "100%",
+            maxHeight: 520,
+            borderRadius: 10,
+            border: "1px solid #dde1da",
+            backgroundColor: "#fafbf8",
+            objectFit: "contain",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.06)"
+          }}
+        />
+        {alt && (
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: "#6f7975", marginTop: 8, fontStyle: "italic" }}>
+            {alt}
+          </div>
+        )}
+      </div>
+    ),
     h1: ({ children }: any) => (
       <h1 style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', -apple-system, sans-serif", fontSize: 26, fontWeight: 800, color: "#111a17", letterSpacing: "-0.025em", marginTop: 32, marginBottom: 14, borderBottom: "1px solid #eef1eb", paddingBottom: 8 }}>
         {children}

@@ -635,7 +635,7 @@ export const ExamDrillView = React.memo(function ExamDrillView({
                     <img
                       src={q.imageUrl}
                       alt={q.imageCaption || `Ilustrasi Soal ${q.id}`}
-                      style={{ maxWidth: "100%", maxHeight: 320, borderRadius: 8, border: "1px solid #dce2da" }}
+                      style={{ width: "100%", maxWidth: "100%", maxHeight: 580, borderRadius: 10, border: "1px solid #dce2da", objectFit: "contain", backgroundColor: "#fafbf8", boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }}
                     />
                     {q.imageCaption && (
                       <div style={{ fontSize: 11, color: "#6f7975", marginTop: 4, fontStyle: "italic" }}>

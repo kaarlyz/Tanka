@@ -1346,14 +1346,14 @@ export const QuizTab = React.memo(function QuizTab({
 
                       {/* Image Stimulus Soal jika ada */}
                       {currentQuestion?.imageUrl && (
-                        <div style={{ marginBottom: 16, textAlign: "center" }}>
+                        <div style={{ marginBottom: 20, textAlign: "center" }}>
                           <img
                             src={currentQuestion.imageUrl}
                             alt={currentQuestion.imageCaption || "Stimulus Visual Soal"}
-                            style={{ maxWidth: "100%", maxHeight: 360, borderRadius: 8, border: "1px solid #dde1da", objectFit: "contain", backgroundColor: "#fafbf8" }}
+                            style={{ width: "100%", maxWidth: "100%", maxHeight: 580, borderRadius: 10, border: "1px solid #dde1da", objectFit: "contain", backgroundColor: "#fafbf8", boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }}
                           />
                           {currentQuestion.imageCaption && (
-                            <div style={{ fontSize: 11.5, color: "#727d78", marginTop: 6, fontStyle: "italic" }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "#56615d", marginTop: 8, fontStyle: "italic" }}>
                               {currentQuestion.imageCaption}
                             </div>
                           )}

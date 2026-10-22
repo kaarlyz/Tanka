@@ -1,5 +1,6 @@
 import React from "react";
 import { Star } from "lucide-react";
+import { TiltCard } from "./motion/MotionKit";
 
 export function PersonasSection() {
   return (
@@ -14,7 +15,7 @@ export function PersonasSection() {
 
       <div className="persona-grid">
         {/* Persona 1: Dafa */}
-        <div className="persona-card reveal-scroll">
+        <TiltCard className="persona-card reveal-scroll">
           <div>
             <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
               {[...Array(5)].map((_, i) => (
@@ -34,10 +35,10 @@ export function PersonasSection() {
               </span>
             </div>
           </div>
-        </div>
+        </TiltCard>
 
         {/* Persona 2: Nadia */}
-        <div className="persona-card reveal-scroll delay-1">
+        <TiltCard className="persona-card reveal-scroll delay-1">
           <div>
             <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
               {[...Array(5)].map((_, i) => (
@@ -57,10 +58,10 @@ export function PersonasSection() {
               </span>
             </div>
           </div>
-        </div>
+        </TiltCard>
 
         {/* Persona 3: Rian */}
-        <div className="persona-card reveal-scroll delay-2">
+        <TiltCard className="persona-card reveal-scroll delay-2">
           <div>
             <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
               {[...Array(5)].map((_, i) => (
@@ -80,7 +81,7 @@ export function PersonasSection() {
               </span>
             </div>
           </div>
-        </div>
+        </TiltCard>
       </div>
     </section>
   );

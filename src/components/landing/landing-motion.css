@@ -1,0 +1,51 @@
+/* Impor SETELAH landing.css */
+.tanka-landing-container { scroll-behavior: auto; }
+
+/* progres scroll */
+.lm-progress {
+  position: sticky; top: 0; z-index: 1100; height: 3px; margin-bottom: -3px;
+  background: linear-gradient(90deg, #4b6623, #c8f064); transform-origin: 0 50%;
+}
+
+/* headline split */
+.lm-word-mask { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.14em; margin-bottom: -0.14em; }
+.lm-word { display: inline-block; will-change: transform; transform-origin: 0 100%; }
+
+.lm-magnetic { display: inline-block; will-change: transform; }
+
+/* kartu tilt + sorot */
+.lm-tilt { position: relative; transform-style: preserve-3d; will-change: transform; }
+.lm-tilt-glow { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; z-index: 0; }
+.lm-tilt:hover .lm-tilt-glow { opacity: 1; }
+.lm-tilt > :not(.lm-tilt-glow) { position: relative; z-index: 1; }
+
+/* motion graphic hero */
+.lm-hero-graphic { width: 100%; height: auto; max-height: 520px; display: block; filter: drop-shadow(0 24px 40px rgba(24, 34, 31, 0.08)); }
+
+/* butiran kertas halus */
+.lm-grain {
+  position: sticky; top: 0; height: 100vh; margin-bottom: -100vh; pointer-events: none; z-index: 2; opacity: 0.05; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* penyusutan waktu */
+.lm-shrink {
+  position: relative; z-index: 1; max-width: 1440px; margin: clamp(48px, 8vh, 96px) auto; padding: clamp(32px, 5vw, 64px) clamp(24px, 4.5vw, 64px);
+  display: grid; grid-template-columns: 1fr 1.2fr; gap: clamp(28px, 5vw, 72px); align-items: center;
+  background: #18221f; color: #eff5ec; border-radius: 28px; width: calc(100% - clamp(48px, 9vw, 128px));
+}
+.lm-shrink h2 { font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 3.6vw, 2.8rem); line-height: 1.08; letter-spacing: -0.03em; margin: 0 0 14px; }
+.lm-shrink p { color: #b5c2bc; font-size: 16px; line-height: 1.65; margin: 0; max-width: 44ch; }
+.lm-shrink-num { display: flex; align-items: baseline; gap: 10px; font-family: 'DM Mono', monospace; color: #c8f064; margin-bottom: 18px; }
+.lm-shrink-num span { font-size: clamp(3.4rem, 8vw, 6rem); font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.lm-shrink-num small { font-size: 16px; color: #8da868; }
+.lm-shrink-track { height: 14px; border-radius: 7px; background: #263630; overflow: hidden; }
+.lm-shrink-fill { height: 100%; border-radius: 7px; background: #c8f064; will-change: width; }
+.lm-shrink-chapters { display: flex; gap: 10px; margin-top: 18px; transform-origin: 0 50%; }
+.lm-shrink-chapters span { font-family: 'DM Mono', monospace; font-size: 12.5px; font-weight: 700; padding: 7px 14px; border-radius: 999px; background: #c8f064; color: #18221f; }
+
+@media (max-width: 860px) { .lm-shrink { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) {
+  .lm-word { transform: none !important; }
+  .lm-progress { transition: none; }
+}

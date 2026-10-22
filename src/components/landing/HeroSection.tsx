@@ -1,6 +1,8 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
 import { SimulatorNaraCard } from "./SimulatorNaraCard";
+import { SplitWords, Magnetic } from "./motion/MotionKit";
+import { HeroGraphic } from "./motion/HeroGraphic";
 
 export interface HeroSectionProps {
   onActionLaunch: () => void;
@@ -13,26 +15,29 @@ export function HeroSection({ onActionLaunch }: HeroSectionProps) {
         {/* Kolom Kiri: Headline & Value Proposition Rata Kiri */}
         <div className="hero-split-left">
           <h1 className="hero-title-left">
-            Ubah materi apapun,
+            <SplitWords text="Ubah materi apapun," />
             <span className="hero-title-highlight">
-              jadi langsung bisa dipahami.
+              <SplitWords text="jadi langsung bisa dipahami." delay={0.25} />
             </span>
           </h1>
 
           <p className="hero-subtitle-left">
-            Tumpahkan materi kuliah, buku tebal, atau video YouTube panjang. Tanka membedahnya jadi bab terstruktur dan mendampingimu langkah demi langkah sampai benar-benar mengerti konsep dasarnya.
+            Unggah PDF, slide, foto catatan, atau tempel link video kuliah. Tanka memecahnya jadi bab pendek, menjelaskan rumus langkah demi langkah, lalu menguji pemahamanmu.
           </p>
 
           <div className="hero-cta-left">
-            <button className="hero-btn-main" onClick={onActionLaunch}>
-              <span>Mulai Belajar Sekarang — Gratis</span>
-              <ArrowRight size={17} />
-            </button>
+            <Magnetic>
+              <button className="hero-btn-main" onClick={onActionLaunch}>
+                <span>Mulai Belajar Sekarang — Gratis</span>
+                <ArrowRight size={17} />
+              </button>
+            </Magnetic>
           </div>
         </div>
 
-        {/* Kolom Kanan: Simulator Chat Nara AI yang Hidup */}
+        {/* Kolom Kanan: Motion Graphic & Simulator Chat Nara AI */}
         <div className="hero-split-right" id="tanya-nara">
+          <HeroGraphic />
           <SimulatorNaraCard onActionLaunch={onActionLaunch} />
         </div>
       </div>

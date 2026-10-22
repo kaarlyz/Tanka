@@ -1,10 +1,11 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { MotionConfig } from "motion/react";
 import "./landing.css";
 import "./landing-motion.css";
 import { UserAccount } from "../../types";
 import { useSmoothScroll } from "./motion/useSmoothScroll";
 import { ScrollProgress, TimeShrink } from "./motion/MotionKit";
+import { HeroGraphic } from "./motion/HeroGraphic";
 import { LandingNavbar } from "./LandingNavbar";
 import { HeroSection } from "./HeroSection";
 import { HeroWorkspacePreview } from "./HeroWorkspacePreview";
@@ -38,8 +39,61 @@ export function LandingPage({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Smooth inertial scroll via Lenis + anchor clicks
+  // Smooth inertial scroll via Lenis
   useSmoothScroll(containerRef, contentRef);
+
+  // IntersectionObserver to reveal sections on scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (!("IntersectionObserver" in window)) {
+      container.querySelectorAll(".reveal-scroll").forEach((el) => {
+        el.classList.add("is-revealed");
+      });
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-revealed");
+          }
+        });
+      },
+      {
+        root: container,
+        threshold: 0.05,
+        rootMargin: "80px 0px 80px 0px"
+      }
+    );
+
+    const elements = container.querySelectorAll(".reveal-scroll");
+    elements.forEach((el) => observer.observe(el));
+
+    // Handle internal anchor clicks with offset
+    const handleAnchorClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (href && href.startsWith("#") && href.length > 1) {
+        const dest = container.querySelector<HTMLElement>(href);
+        if (dest) {
+          e.preventDefault();
+          dest.scrollIntoView({ behavior: "smooth" });
+          window.history.pushState(null, "", href);
+        }
+      }
+    };
+    container.addEventListener("click", handleAnchorClick);
+
+    return () => {
+      container.removeEventListener("click", handleAnchorClick);
+      elements.forEach((el) => observer.unobserve(el));
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -55,6 +109,9 @@ export function LandingPage({
             currentUser={currentUser}
           />
           <HeroSection onActionLaunch={handleActionLaunch} />
+          <div style={{ maxWidth: 840, margin: "0 auto 32px", padding: "0 24px" }}>
+            <HeroGraphic />
+          </div>
           <HeroWorkspacePreview onActionLaunch={handleActionLaunch} />
           <MarqueeTicker />
           <TimeShrink container={containerRef} />

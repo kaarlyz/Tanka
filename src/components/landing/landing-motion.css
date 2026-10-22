@@ -1,6 +1,12 @@
 /* Impor SETELAH landing.css */
 .tanka-landing-container { scroll-behavior: auto; }
 
+/* Fail-safe visibility: seluruh seksi wajib tampil utuh tanpa terblokir bug opacity: 0 */
+.reveal-scroll {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 /* progres scroll */
 .lm-progress {
   position: sticky; top: 0; z-index: 1100; height: 3px; margin-bottom: -3px;
@@ -20,7 +26,7 @@
 .lm-tilt > :not(.lm-tilt-glow) { position: relative; z-index: 1; }
 
 /* motion graphic hero */
-.lm-hero-graphic { width: 100%; height: auto; max-height: 520px; display: block; filter: drop-shadow(0 24px 40px rgba(24, 34, 31, 0.08)); }
+.lm-hero-graphic { width: 100%; height: auto; max-height: 480px; display: block; filter: drop-shadow(0 24px 40px rgba(24, 34, 31, 0.08)); margin: 0 auto; }
 
 /* butiran kertas halus */
 .lm-grain {

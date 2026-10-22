@@ -22,13 +22,13 @@ export function SimulatorNaraCard({ onActionLaunch }: SimulatorNaraCardProps) {
       q: "Jelaskan hukum fotosintesis secara singkat",
       chip: "Fotosintesis Singkat",
       answer:
-        "Intinya, tanaman memasak makanannya sendiri memanfaatkan sinar matahari:\n\n$$6CO_2 + 6H_2O \\xrightarrow{\\text{cahaya}} C_6H_{12}O_6 + 6O_2$$\n\nKarbon dioksida dan air diubah jadi **gula (energi tanaman)** plus melepas **oksigen bersih** yang kita hirup setiap hari."
+        "Tumbuhan mengubah karbon dioksida dan air menjadi molekul glukosa dan melepaskan oksigen menggunakan energi foton cahaya:\n\n$$6CO_2 + 6H_2O \\xrightarrow{\\text{cahaya}} C_6H_{12}O_6 + 6O_2$$\n\nReaksi biokimia ini memfiksasi karbon anorganik menjadi energi kimia organik ($C_6H_{12}O_6$) untuk metabolisme sel."
     },
     {
       q: "Kenapa rumus pythagoras a² + b² = c²?",
       chip: "Rumus Pythagoras Berlaku",
       answer:
-        "Pada segitiga siku-siku, luas bujur sangkar di sisi miring ($c$) selalu persis sama dengan gabungan luas kedua sisi lainnya:\n\n$$a^2 + b^2 = c^2 \\implies c = \\sqrt{a^2 + b^2}$$\n\nIni bukti kenapa jalan pintas diagonal selalu jadi rute paling efisien saat mengukur jarak lurus."
+        "Pada setiap segitiga siku-siku berpenyiku $90^\\circ$, kuadrat sisi miring ($c$) selalu sama persis dengan jumlah kuadrat kedua sisi tegaknya:\n\n$$a^2 + b^2 = c^2 \\implies c = \\sqrt{a^2 + b^2}$$\n\n**Contoh substitusi:** jika $a = 3$ dan $b = 4$, maka $c = \\sqrt{3^2 + 4^2} = \\sqrt{9 + 16} = \\sqrt{25} = 5$."
     }
   ];
 

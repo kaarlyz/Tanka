@@ -32,8 +32,8 @@ export function StepperSection({ onActionLaunch }: StepperSectionProps) {
       tag: "TANYA TUTOR",
       title: "Tanya Rumus Kapan Saja Tanpa Rasa Malu",
       detail:
-        "Mentok di baris rumus tertentu? Langsung buka Nara AI. Tanya dari mana asal suatu angka atau minta analogi sehari-hari. Nara menerangkan langkah demi langkah tanpa menghakimi.",
-      chips: ["Tutor Siaga 24 Jam", "Analogi Sederhana", "Respon Langsung Tanpa Jeda"],
+        "Mentok di baris rumus tertentu? Langsung buka Nara AI. Tanya dari mana asal suatu angka atau alur langkah hitungannya. Nara menerangkan langkah demi langkah tanpa menghakimi.",
+      chips: ["Tutor Siaga 24 Jam", "Penjelasan Langsung ke Inti", "Respon Langsung Tanpa Jeda"],
       summary: "Keleluasaan bertanya sepuasnya sampai kepalamu bener-bener ngeh konsep dasarnya."
     },
     {

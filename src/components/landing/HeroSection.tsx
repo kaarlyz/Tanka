@@ -2,7 +2,6 @@ import React from "react";
 import { ArrowRight } from "lucide-react";
 import { SimulatorNaraCard } from "./SimulatorNaraCard";
 import { SplitWords, Magnetic } from "./motion/MotionKit";
-import { HeroGraphic } from "./motion/HeroGraphic";
 
 export interface HeroSectionProps {
   onActionLaunch: () => void;
@@ -35,9 +34,8 @@ export function HeroSection({ onActionLaunch }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Kolom Kanan: Motion Graphic & Simulator Chat Nara AI */}
+        {/* Kolom Kanan: Simulator Chat Nara AI */}
         <div className="hero-split-right" id="tanya-nara">
-          <HeroGraphic />
           <SimulatorNaraCard onActionLaunch={onActionLaunch} />
         </div>
       </div>

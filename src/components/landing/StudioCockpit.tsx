@@ -96,12 +96,12 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
               </span>
               <h3 className="spec-title">Tanya Rumus Serumit Apapun Tanpa Rasa Malu</h3>
               <p className="spec-desc">
-                Sering segan bertanya di kelas karena takut dinilai lambat? Nara adalah ruang amanmu. Menerangkan dari mana asal angka atau rumus dengan analogi konkret sampai kepalamu benar-benar paham.
+                Sering segan bertanya di kelas karena takut dinilai lambat? Nara adalah ruang amanmu. Menerangkan dari mana asal angka atau rumus dengan penurunan logika langkah demi langkah sampai kepalamu benar-benar paham.
               </p>
               <div className="spec-chips-row">
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />
-                  <span>Analogi Konkret Sehari-Hari</span>
+                  <span>Penjelasan Langsung ke Inti Konsep</span>
                 </div>
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />

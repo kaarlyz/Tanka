@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os
+import re
 import subprocess
 import zipfile
 import xml.etree.ElementTree as ET
@@ -108,15 +109,22 @@ def extract_pdf(file_path):
                                 # Layer 1: Skip jika banner header kurikulum/metadata
                                 if any(h_kw in img_ocr_text for h_kw in ["Hierarki Indikator", "Bentuk Soal", "Kompetensi:", "Subelemen:"]):
                                     continue
-                                
+
                                 # Layer 2: Pure Art / Visual Illustration (0 karakter atau minim teks)
                                 is_pure_art = len(img_ocr_text) <= 5
-                                
+
                                 # Layer 3: True Graphic/Chart/Table/Infographic
-                                visual_keywords = ["grafik", "tabel", "infografis", "diagram", "daur ulang", "partisipasi", "informan", "perspesi", "hambatan"]
-                                is_structured_visual = any(kw in img_ocr_text.lower() for kw in visual_keywords)
-                                
-                                if is_pure_art or is_structured_visual:
+                                # Harus mengandung penanda eksplisit grafik/tabel/infografis
+                                has_explicit_heading = any(re.search(rf"\b{kw}\b", img_ocr_text, re.I) for kw in ["grafik", "tabel", "infografis", "diagram", "kementerian", "urbanisasi", "kelompok primer"])
+                                has_chart_symbols = bool(re.search(r"\b\d+\s+\d+\s+\d+\s+\d+\b", img_ocr_text)) # deretan angka sumbu grafik
+                                is_structured_visual = has_explicit_heading or has_chart_symbols
+
+                                # Anti-Leak: Jangan ambil potongan jika itu murni teks soal/pilihan ganda
+                                is_pure_question_or_choice = bool(re.search(r"^\s*(?:[A-Ea-e][\.\)]|Berdasarkan|Manakah|Bagaimana)\b", img_ocr_text, re.I)) and not any(k in img_ocr_text.lower() for k in ["tabel perspesi", "tingkat partisipasi"])
+                                if is_pure_question_or_choice and not is_pure_art:
+                                    continue
+
+                                if is_pure_art or (is_structured_visual and not is_pure_question_or_choice):
                                     if p_num not in page_images_map:
                                         page_images_map[p_num] = []
                                     page_images_map[p_num].append(f"/uploads/exam_images/{img_filename}")

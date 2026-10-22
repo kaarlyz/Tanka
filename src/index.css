@@ -306,12 +306,26 @@
         to { opacity: 1; }
       }
       /* --- Figma Make "nalar." Design System Classes --- */
+      .app-outer-wrapper {
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+        background: #111a17; /* Ambient dark surround di monitor lebar */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
       .app-shell {
         display: flex;
+        width: 100%;
+        max-width: 1440px;
         height: 100%;
         max-height: 100%;
         overflow: hidden;
         background: #eef1eb;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.45);
+        position: relative;
       }
       .figma-sidebar {
         width: 260px;

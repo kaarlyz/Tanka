@@ -834,8 +834,9 @@ export default function App() {
           />
         </Suspense>
       ) : (
-        <div className="app-shell" style={{ display: "flex", height: "100%", minHeight: "100%", maxHeight: "100%", backgroundColor: "#eef1eb", color: "#17201d", overflow: "hidden" }}>
-          {/* Backdrop overlay for mobile drawer */}
+        <div className="app-outer-wrapper">
+          <div className="app-shell" style={{ display: "flex", width: "100%", maxWidth: 1440, height: "100%", minHeight: "100%", maxHeight: "100%", backgroundColor: "#eef1eb", color: "#17201d", overflow: "hidden" }}>
+            {/* Backdrop overlay for mobile drawer */}
       {isMobileDrawerOpen && (
         <div
           className="drawer-overlay"
@@ -1371,6 +1372,7 @@ export default function App() {
           }
         }}
       />
+        </div>
         </div>
       )}
     </>

@@ -373,7 +373,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
               fs.writeFileSync(tmpFilePath, Buffer.from(f.fileData, "base64"));
               const pyRes = await executePythonScriptAsync(scriptPath, [tmpFilePath], {
                 maxBuffer: 25 * 1024 * 1024,
-                timeout: 90000
+                timeout: 180000
               });
               text = pyRes.success ? pyRes.stdout : "";
               if (!pyRes.success) {

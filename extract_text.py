@@ -30,36 +30,46 @@ def extract_pdf(file_path):
                 needs_ocr.append(idx)
 
         # If all or some pages are scanned (sparse/empty text), OCR those specific pages in parallel
+        tess_env = {**os.environ, "OMP_THREAD_LIMIT": "1"}
+        cpu_workers = min(8, os.cpu_count() or 4)
         if needs_ocr:
             from concurrent.futures import ThreadPoolExecutor
             with tempfile.TemporaryDirectory() as tmpdir:
                 # Support up to 60 scanned pages without premature truncation
-                ocr_targets = needs_ocr[:60]
+                ocr_targets = sorted(needs_ocr[:60])
+                min_p, max_p = min(ocr_targets), max(ocr_targets)
+                prefix = os.path.join(tmpdir, "page")
+                # Single batch render instead of N individual subprocess spawns
+                subprocess.run(
+                    ["pdftoppm", "-png", "-r", "150", "-f", str(min_p), "-l", str(max_p), file_path, prefix],
+                    capture_output=True,
+                    timeout=30
+                )
 
+                pad_len = max(len(str(max_p)), 2)
                 def process_ocr_page(page_num):
-                    prefix = os.path.join(tmpdir, f"page_{page_num}")
-                    try:
-                        subprocess.run(
-                            ["pdftoppm", "-png", "-r", "150", "-f", str(page_num), "-l", str(page_num), file_path, prefix],
-                            capture_output=True,
-                            timeout=20
-                        )
-                        pngs = glob.glob(f"{prefix}*.png")
-                        if pngs:
+                    png_name = f"{prefix}-{page_num:0{pad_len}d}.png"
+                    if not os.path.exists(png_name):
+                        cands = glob.glob(f"{prefix}*{page_num}.png")
+                        if cands:
+                            png_name = cands[0]
+                    if os.path.exists(png_name):
+                        try:
                             t_res = subprocess.run(
-                                ["tesseract", pngs[0], "stdout", "-l", "ind+eng", "--oem", "1"],
+                                ["tesseract", png_name, "stdout", "-l", "ind+eng", "--oem", "1"],
                                 capture_output=True,
                                 text=True,
-                                timeout=20
+                                timeout=20,
+                                env=tess_env
                             )
                             ocr_txt = t_res.stdout.strip()
                             if ocr_txt:
                                 return (page_num, ocr_txt)
-                    except Exception as ocr_err:
-                        pass
+                        except Exception:
+                            pass
                     return None
 
-                with ThreadPoolExecutor(max_workers=min(8, os.cpu_count() or 4)) as executor:
+                with ThreadPoolExecutor(max_workers=cpu_workers) as executor:
                     results = list(executor.map(process_ocr_page, ocr_targets))
                     for res in results:
                         if res:
@@ -75,61 +85,86 @@ def extract_pdf(file_path):
             uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", "exam_images")
             os.makedirs(uploads_dir, exist_ok=True)
             doc_base = os.path.splitext(os.path.basename(file_path))[0]
-            prefix_img = os.path.join(uploads_dir, f"{doc_base}_img")
             
-            # 1. Ekstrak seluruh objek raster asli dari PDF
-            subprocess.run(["pdfimages", "-png", file_path, prefix_img], capture_output=True, timeout=30)
-            
-            # 2. Ambil metadata mapping halaman dari pdfimages -list
-            list_res = subprocess.run(["pdfimages", "-list", file_path], capture_output=True, text=True, timeout=20)
-            if list_res.returncode == 0:
-                lines = list_res.stdout.splitlines()
-                for line in lines[2:]:
-                    parts = line.split()
-                    if len(parts) >= 5 and parts[0].isdigit() and parts[1].isdigit():
-                        p_num = int(parts[0])
-                        img_idx = int(parts[1])
-                        w, h = int(parts[3]), int(parts[4])
-                        
-                        # Filter dimensi gambar bermakna (bukan icon / garis pembatas / smask alpha mask)
-                        # Mendukung diagram/kurva matematika (mulai dari 200x120) hingga infografis lebar
-                        is_not_mask = parts[2].lower() != "smask"
-                        if is_not_mask and w >= 220 and h >= 120:
-                            img_filename = f"{doc_base}_img-{img_idx:03d}.png"
-                            img_filepath = os.path.join(uploads_dir, img_filename)
+            with tempfile.TemporaryDirectory() as img_tmpdir:
+                prefix_img = os.path.join(img_tmpdir, "img")
+                # 1. Ekstrak objek raster asli secara native ke tmpfs (tanpa overhead dekompresi PNG)
+                subprocess.run(["pdfimages", file_path, prefix_img], capture_output=True, timeout=25)
+                
+                # 2. Ambil metadata mapping halaman dari pdfimages -list
+                list_res = subprocess.run(["pdfimages", "-list", file_path], capture_output=True, text=True, timeout=20)
+                if list_res.returncode == 0:
+                    lines = list_res.stdout.splitlines()
+                    candidates = []
+                    for line in lines[2:]:
+                        parts = line.split()
+                        if len(parts) >= 5 and parts[0].isdigit() and parts[1].isdigit():
+                            p_num = int(parts[0])
+                            img_idx = int(parts[1])
+                            w, h = int(parts[3]), int(parts[4])
                             
-                            if os.path.exists(img_filepath):
-                                # Jalankan OCR lokal cepat pada kandidat gambar
-                                t_res = subprocess.run(
-                                    ["tesseract", img_filepath, "stdout", "-l", "ind+eng", "--oem", "1"],
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=10
-                                )
-                                img_ocr_text = t_res.stdout.strip() if t_res.returncode == 0 else ""
-                                
-                                # Layer 1: Skip jika banner header kurikulum/metadata
-                                if any(h_kw in img_ocr_text for h_kw in ["Hierarki Indikator", "Bentuk Soal", "Kompetensi:", "Subelemen:"]):
-                                    continue
+                            # Filter dimensi gambar bermakna (bukan icon / garis pembatas / smask alpha mask)
+                            is_not_mask = parts[2].lower() != "smask"
+                            if is_not_mask and w >= 220 and h >= 120:
+                                cands = glob.glob(f"{prefix_img}-{img_idx:03d}.*")
+                                if cands:
+                                    candidates.append((p_num, img_idx, cands[0]))
 
-                                # Layer 2: Pure Art / Visual Illustration (0 karakter atau minim teks)
-                                is_pure_art = len(img_ocr_text) <= 5
+                    def process_candidate_img(cand):
+                        p_num, img_idx, img_filepath = cand
+                        try:
+                            # Jalankan OCR lokal cepat pada kandidat gambar
+                            t_res = subprocess.run(
+                                ["tesseract", img_filepath, "stdout", "-l", "ind+eng", "--oem", "1"],
+                                capture_output=True,
+                                text=True,
+                                timeout=10,
+                                env=tess_env
+                            )
+                            img_ocr_text = t_res.stdout.strip() if t_res.returncode == 0 else ""
+                            
+                            # Layer 1: Skip jika banner header kurikulum/metadata
+                            if any(h_kw in img_ocr_text for h_kw in ["Hierarki Indikator", "Bentuk Soal", "Kompetensi:", "Subelemen:"]):
+                                return None
 
-                                # Layer 3: True Graphic/Chart/Table/Infographic
-                                # Harus mengandung penanda eksplisit grafik/tabel/infografis
-                                has_explicit_heading = any(re.search(rf"\b{kw}\b", img_ocr_text, re.I) for kw in ["grafik", "tabel", "infografis", "diagram", "kementerian", "urbanisasi", "kelompok primer"])
-                                has_chart_symbols = bool(re.search(r"\b\d+\s+\d+\s+\d+\s+\d+\b", img_ocr_text)) # deretan angka sumbu grafik
-                                is_structured_visual = has_explicit_heading or has_chart_symbols
+                            # Layer 2: Pure Art / Visual Illustration (0 karakter atau minim teks)
+                            is_pure_art = len(img_ocr_text) <= 5
 
-                                # Anti-Leak: Jangan ambil potongan jika itu murni teks soal/pilihan ganda
-                                is_pure_question_or_choice = bool(re.search(r"^\s*(?:[A-Ea-e][\.\)]|Berdasarkan|Manakah|Bagaimana)\b", img_ocr_text, re.I)) and not any(k in img_ocr_text.lower() for k in ["tabel perspesi", "tingkat partisipasi"])
-                                if is_pure_question_or_choice and not is_pure_art:
-                                    continue
+                            # Layer 3: True Graphic/Chart/Table/Infographic
+                            # Harus mengandung penanda eksplisit grafik/tabel/infografis
+                            has_explicit_heading = any(re.search(rf"\b{kw}\b", img_ocr_text, re.I) for kw in ["grafik", "tabel", "infografis", "diagram", "kementerian", "urbanisasi", "kelompok primer"])
+                            has_chart_symbols = bool(re.search(r"\b\d+\s+\d+\s+\d+\s+\d+\b", img_ocr_text)) # deretan angka sumbu grafik
+                            is_structured_visual = has_explicit_heading or has_chart_symbols
 
-                                if is_pure_art or (is_structured_visual and not is_pure_question_or_choice):
-                                    if p_num not in page_images_map:
-                                        page_images_map[p_num] = []
-                                    page_images_map[p_num].append(f"/uploads/exam_images/{img_filename}")
+                            # Anti-Leak: Jangan ambil potongan jika itu murni teks soal/pilihan ganda
+                            is_pure_question_or_choice = bool(re.search(r"^\s*(?:[A-Ea-e][\.\)]|Berdasarkan|Manakah|Bagaimana)\b", img_ocr_text, re.I)) and not any(k in img_ocr_text.lower() for k in ["tabel perspesi", "tingkat partisipasi"])
+                            if is_pure_question_or_choice and not is_pure_art:
+                                return None
+
+                            if is_pure_art or (is_structured_visual and not is_pure_question_or_choice):
+                                return (p_num, img_idx, img_filepath)
+                        except Exception:
+                            pass
+                        return None
+
+                    from concurrent.futures import ThreadPoolExecutor
+                    with ThreadPoolExecutor(max_workers=cpu_workers) as img_ex:
+                        matched = list(img_ex.map(process_candidate_img, candidates))
+
+                    for m in matched:
+                        if m:
+                            p_num, img_idx, img_filepath = m
+                            target_filename = f"{doc_base}_img-{img_idx:03d}.png"
+                            target_path = os.path.join(uploads_dir, target_filename)
+                            if img_filepath.endswith(".png"):
+                                import shutil
+                                shutil.copy2(img_filepath, target_path)
+                            else:
+                                subprocess.run(["magick", img_filepath, target_path], capture_output=True)
+                            
+                            if p_num not in page_images_map:
+                                page_images_map[p_num] = []
+                            page_images_map[p_num].append(f"/uploads/exam_images/{target_filename}")
         except Exception as filter_err:
             pass
 

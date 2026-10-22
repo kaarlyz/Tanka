@@ -91,8 +91,10 @@ def extract_pdf(file_path):
                         img_idx = int(parts[1])
                         w, h = int(parts[3]), int(parts[4])
                         
-                        # Filter ukuran minimum visual (bukan icon kecil)
-                        if w >= 350 and h >= 150:
+                        # Filter dimensi gambar bermakna (bukan icon / garis pembatas / smask alpha mask)
+                        # Mendukung diagram/kurva matematika (mulai dari 200x120) hingga infografis lebar
+                        is_not_mask = parts[2].lower() != "smask"
+                        if is_not_mask and w >= 220 and h >= 120:
                             img_filename = f"{doc_base}_img-{img_idx:03d}.png"
                             img_filepath = os.path.join(uploads_dir, img_filename)
                             

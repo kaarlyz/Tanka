@@ -61,9 +61,9 @@ const COMPARISON_DATA: ComparisonItem[] = [
     oldTitle: "Terganggu Iklan & Notifikasi",
     oldDesc: "Belajar di internet sering terdistraksi pop-up iklan, kuota boros, dan notifikasi.",
     oldDetail: "Catatan belajar tercecer di berbagai aplikasi dan rentan hilang.",
-    tankaTitle: "100% Bebas Iklan & Offline",
-    tankaDesc: "Nol iklan, data tersimpan aman di perangkatmu, dan materi bisa dibaca offline.",
-    tankaDetail: "PWA modern hemat kuota dengan persistensi data lokal SQLite yang privat."
+    tankaTitle: "Tanpa Iklan, Bisa Dibaca Offline",
+    tankaDesc: "Nol iklan yang mengalihkan perhatian, dan materi yang sudah dibuka bisa dibaca lagi tanpa internet.",
+    tankaDetail: "Aplikasi PWA ringan, hemat kuota data, dan bebas dari pelacak komersial."
   }
 ];
 

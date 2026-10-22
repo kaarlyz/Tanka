@@ -123,7 +123,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
             <div className="spec-content-fade" key="video-spec">
               <span className="spec-eyebrow">
                 <Play size={14} color="#4b6623" />
-                <span>KAPABILITAS 02 // MULTI-FORMAT SHREDDER</span>
+                <span>KAPABILITAS 02 // RANGKUM VIDEO & DOKUMEN</span>
               </span>
               <h3 className="spec-title">Video 2 Jam Dipotong Jadi Bab Santai 3 Menit</h3>
               <p className="spec-desc">
@@ -132,7 +132,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
               <div className="spec-chips-row">
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />
-                  <span>Auto-Chapter Multi-Segmen</span>
+                  <span>Dipecah Rapi per Bab 3 Menit</span>
                 </div>
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />
@@ -140,7 +140,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
                 </div>
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />
-                  <span>Estimasi Waktu Baca 3 Menitan</span>
+                  <span>Estimasi Waktu Baca Jelas</span>
                 </div>
               </div>
               <button className="spec-action-btn" onClick={onActionLaunch}>
@@ -154,7 +154,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
             <div className="spec-content-fade" key="quiz-spec">
               <span className="spec-eyebrow">
                 <Sparkles size={14} color="#4b6623" />
-                <span>KAPABILITAS 03 // LATIHAN LOGIKA ATOMIK</span>
+                <span>KAPABILITAS 03 // KUIS & BANK SALAH PRIBADI</span>
               </span>
               <h3 className="spec-title">Kuis Cerdas & Bank Salah Otomatis</h3>
               <p className="spec-desc">
@@ -163,7 +163,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
               <div className="spec-chips-row">
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />
-                  <span>Gamifikasi XP & Streak Belajar</span>
+                  <span>Kuis dari Materimu Sendiri</span>
                 </div>
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />
@@ -171,7 +171,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
                 </div>
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />
-                  <span>Pembahasan Deterministik Akurat</span>
+                  <span>Langkah Hitungan Jelas & Pasti</span>
                 </div>
               </div>
               <button className="spec-action-btn" onClick={onActionLaunch}>
@@ -185,11 +185,11 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
             <div className="spec-content-fade" key="graph-spec">
               <span className="spec-eyebrow">
                 <Brain size={14} color="#4b6623" />
-                <span>KAPABILITAS 04 // PETA BESAR MATERI</span>
+                <span>KAPABILITAS 04 // PETA PRASYARAT KONSEP</span>
               </span>
               <h3 className="spec-title">Petakan Hubungan Antar-Konsep Sebelum Ujian</h3>
               <p className="spec-desc">
-                Lihat keterkaitan prasyarat materi dari hulu ke hilir. Jangan sampai ada rantai ilmu yang bolong sebelum kamu mengerjakan soal-soal level tinggi.
+                Lihat keterkaitan prasyarat materi dari hulu ke hilir. Ketahui topik mana yang harus dikuasai lebih dulu sebelum lanjut ke konsep yang lebih rumit.
               </p>
               <div className="spec-chips-row">
                 <div className="spec-chip">
@@ -198,7 +198,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
                 </div>
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />
-                  <span>Visualisasi Saraf Berpendar</span>
+                  <span>Visualisasi Konsep Terhubung</span>
                 </div>
                 <div className="spec-chip">
                   <CheckCircle2 size={16} color="#4b6623" />

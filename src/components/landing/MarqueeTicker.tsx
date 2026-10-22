@@ -8,32 +8,32 @@ export function MarqueeTicker() {
           <div className="landing-marquee-content" key={trackIdx}>
             <span className="marquee-pill">
               <span className="marquee-dot-pulse" />
-              PENURUNAN RUMUS KONTINU
+              RUMUS DIJELASKAN LANGKAH DEMI LANGKAH
             </span>
             <span className="marquee-separator">•</span>
             <span className="marquee-pill">
               <span className="marquee-dot-pulse" />
-              TUTOR NARA SIAGA 24 JAM
+              TANYA NARA KAPAN SAJA
             </span>
             <span className="marquee-separator">•</span>
             <span className="marquee-pill">
               <span className="marquee-dot-pulse" />
-              MODUL PER BAB SIAP SANTAP
+              MATERI DIPECAH JADI BAB PENDEK
             </span>
             <span className="marquee-separator">•</span>
             <span className="marquee-pill">
               <span className="marquee-dot-pulse" />
-              KUIS DETERMINISTIK ATOMIK
+              KUIS DARI MATERIMU SENDIRI
             </span>
             <span className="marquee-separator">•</span>
             <span className="marquee-pill">
               <span className="marquee-dot-pulse" />
-              FOKUS BELAJAR BEBAS DISTRAKSI
+              SOAL SALAH DICATAT OTOMATIS
             </span>
             <span className="marquee-separator">•</span>
             <span className="marquee-pill">
               <span className="marquee-dot-pulse" />
-              PEMAHAMAN BERBASIS BUKTI
+              TANPA IKLAN, BEBAS DISTRAKSI
             </span>
             <span className="marquee-separator">•</span>
           </div>

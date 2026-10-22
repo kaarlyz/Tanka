@@ -117,14 +117,14 @@ export function LandingFooter({ onActionLaunch }: LandingFooterProps) {
                 Pendamping AI Nara 24 Jam
               </span>
               <span style={{ fontSize: 13.5, color: "#55635e" }}>
-                Arsitektur Berintegritas Tinggi
+                Tanpa Iklan, Tanpa Pelacak
               </span>
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <span>© 2026 Tanka. Designed & Architected by Eka Restu Syahputra. Seluruh hak cipta dilindungi.</span>
+          <span>© 2026 Tanka. Dibuat oleh Eka Restu Syahputra. Seluruh hak cipta dilindungi.</span>
           <span
             style={{
               fontFamily: "'DM Mono', monospace",

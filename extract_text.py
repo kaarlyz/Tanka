@@ -64,19 +64,47 @@ def extract_pdf(file_path):
                         if res:
                             final_pages.append(res)
 
-        # Extract embedded images to uploads/exam_images if present
+        # Extract embedded images and tag pages with their image placeholders
+        page_images_map = {}
         try:
             uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", "exam_images")
             os.makedirs(uploads_dir, exist_ok=True)
             doc_base = os.path.splitext(os.path.basename(file_path))[0]
             prefix_img = os.path.join(uploads_dir, f"{doc_base}_img")
+            # Extract images and also query page mapping using pdfimages -list
+            list_res = subprocess.run(["pdfimages", "-list", file_path], capture_output=True, text=True, timeout=20)
+            if list_res.returncode == 0:
+                lines = list_res.stdout.splitlines()
+                # Parse pdfimages list output: page num type width height ...
+                for line in lines[2:]:
+                    parts = line.split()
+                    if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+                        p_num = int(parts[0])
+                        img_idx = int(parts[1])
+                        # If width > 400 and height > 200 (likely diagram/infographic/illustration, not a tiny icon)
+                        if len(parts) >= 5 and parts[3].isdigit() and parts[4].isdigit():
+                            w, h = int(parts[3]), int(parts[4])
+                            if w >= 350 and h >= 150:
+                                if p_num not in page_images_map:
+                                    page_images_map[p_num] = []
+                                # pdfimages -png produces: prefix-000.png, prefix-001.png
+                                img_filename = f"{doc_base}_img-{img_idx:03d}.png"
+                                page_images_map[p_num].append(f"/uploads/exam_images/{img_filename}")
             subprocess.run(["pdfimages", "-png", file_path, prefix_img], capture_output=True, timeout=30)
         except Exception:
             pass
 
-        # Sort pages back into original sequence
+        # Sort pages back into original sequence and inject image tags
         final_pages.sort(key=lambda x: x[0])
-        extracted = "\n\n--- Halaman Berikutnya ---\n\n".join(txt for _, txt in final_pages)
+        augmented_pages = []
+        for p_num, txt in final_pages:
+            p_txt = txt
+            if p_num in page_images_map:
+                for img_url in page_images_map[p_num]:
+                    p_txt = f"[Gambar: {img_url}]\n\n" + p_txt
+            augmented_pages.append(p_txt)
+
+        extracted = "\n\n--- Halaman Berikutnya ---\n\n".join(augmented_pages)
         if extracted.strip():
             return extracted.strip()
 

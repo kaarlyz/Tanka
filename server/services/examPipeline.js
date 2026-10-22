@@ -68,10 +68,10 @@ FORMAT KHUSUS — tangani dengan benar:
 - Soal pernyataan romawi (I, II, III, IV): pertanyaan dan pernyataan masuk ke "pertanyaan", opsi kombinasi (mis. "A. I dan II", "B. II dan III") masuk ke "opsi". Tipe tetap "pilihan_ganda".
 - Soal dengan opsi kurang dari 5 (A-C atau A-D): tulis opsi yang ada saja, jangan tambahkan opsi fiktif.
 - Soal pilihan ganda kompleks kategori (tabel pernyataan Benar/Salah): "tipe": "kategori", simpan baris-baris pernyataan ke dalam array "matrixStatements": [{"statement": "teks pernyataan", "correctAnswer": "BENAR atau SALAH"}]. Jika dokumen tidak memuat kunci jawaban, isi correctAnswer dengan null. Opsi utama biarkan null atau kosong {}.
-- Gambar/grafik/diagram: jika teks mengandung placeholder seperti [Gambar], [Grafik], [Tabel], [Diagram], (Lihat gambar), atau referensi "gambar di atas/bawah/samping", salin placeholder persis ke "pertanyaan" dan tambah field "has_visual": true.
+- Gambar/grafik/diagram: jika teks mengandung placeholder seperti [Gambar: ...], [Gambar], [Grafik], [Tabel], [Diagram], (Lihat gambar), atau referensi "gambar di atas/bawah/samping", salin placeholder persis ke "pertanyaan" atau isi field "imageUrl" dengan path yang tertera, dan tambah field "has_visual": true.
 - Nomor soal tidak urut (misal loncat dari 5 ke 8): gunakan nomor asli dari dokumen, jangan re-number.
 
-Skema output: {"soal":[{"nomor":1,"subtes":"...","tipe":"pilihan_ganda","stimulus":"...atau null","pertanyaan":"...","opsi":{"A":"...","B":"...","C":"...","D":"..."},"matrixStatements":[{"statement":"...","correctAnswer":"BENAR"}],"kunci_dokumen":"A atau null","has_visual":false}],"terpotong":[]}`;
+Skema output: {"soal":[{"nomor":1,"subtes":"...","tipe":"pilihan_ganda","stimulus":"...atau null","pertanyaan":"...","imageUrl":"...atau null","opsi":{"A":"...","B":"...","C":"...","D":"..."},"matrixStatements":[{"statement":"...","correctAnswer":"BENAR"}],"kunci_dokumen":"A atau null","has_visual":false}],"terpotong":[]}`;
 
 // ─── Stage 2: SOLVE ────────────────────────────────────────────────
 const SOLVE_PROMPT = `Kamu penyelesai soal UTBK-SNBT/TKA tingkat ahli.
@@ -448,14 +448,19 @@ function pipelineToTankaFormat(pipelineResult, title) {
     const correctIndices = [...new Set(letters.map(l => "ABCDE".indexOf(l)).filter(idx => idx >= 0))].sort((a, b) => a - b);
     const isMultiple = correctIndices.length > 1;
 
-    // Detect markdown image in stimulus or question if not explicitly provided
+    // Detect markdown or explicit [Gambar: ...] image in stimulus or question if not explicitly provided
     let imageUrl = q.imageUrl || null;
     let imageCaption = q.imageCaption || null;
     if (!imageUrl) {
-      const imgMatch = (q.pertanyaan + " " + (q.stimulus || "")).match(/!\[([^\]]*)\]\(([^)]+)\)/);
-      if (imgMatch) {
-        imageUrl = imgMatch[2];
-        imageCaption = imgMatch[1] || null;
+      const explicitImgMatch = (q.pertanyaan + " " + (q.stimulus || "")).match(/\[Gambar:\s*([^\]]+)\]/i);
+      if (explicitImgMatch) {
+        imageUrl = explicitImgMatch[1].trim();
+      } else {
+        const imgMatch = (q.pertanyaan + " " + (q.stimulus || "")).match(/!\[([^\]]*)\]\(([^)]+)\)/);
+        if (imgMatch) {
+          imageUrl = imgMatch[2];
+          imageCaption = imgMatch[1] || null;
+        }
       }
     }
 

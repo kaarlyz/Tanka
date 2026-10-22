@@ -64,6 +64,16 @@ def extract_pdf(file_path):
                         if res:
                             final_pages.append(res)
 
+        # Extract embedded images to uploads/exam_images if present
+        try:
+            uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", "exam_images")
+            os.makedirs(uploads_dir, exist_ok=True)
+            doc_base = os.path.splitext(os.path.basename(file_path))[0]
+            prefix_img = os.path.join(uploads_dir, f"{doc_base}_img")
+            subprocess.run(["pdfimages", "-png", file_path, prefix_img], capture_output=True, timeout=30)
+        except Exception:
+            pass
+
         # Sort pages back into original sequence
         final_pages.sort(key=lambda x: x[0])
         extracted = "\n\n--- Halaman Berikutnya ---\n\n".join(txt for _, txt in final_pages)

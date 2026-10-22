@@ -460,7 +460,7 @@ function pipelineToTankaFormat(pipelineResult, title) {
     }
 
     // Detect visual reference placeholder from OCR text
-    const hasVisual = q.has_visual || /\[(Gambar|Grafik|Tabel|Diagram)\]|\(Lihat gambar\)|gambar di (atas|bawah|samping|berikut)/i.test(
+    const hasVisual = q.has_visual || /\[(Gambar|Grafik|Tabel|Diagram)\]|\(Lihat gambar\)|gambar di (atas|bawah|samping|berikut)|pada infografis|berdasarkan infografis|berdasarkan grafik|berdasarkan gambar/i.test(
       (q.pertanyaan || "") + " " + (q.stimulus || "")
     );
 

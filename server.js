@@ -14,6 +14,7 @@ const { handleMistakesRoutes } = require("./server/routes/mistakes");
 const { handleCheatsheetRoutes } = require("./server/routes/cheatsheet");
 const { handleChatRoutes } = require("./server/routes/chat");
 const { handleTopicsRoutes } = require("./server/routes/topics");
+const { handleExamResultsRoutes } = require("./server/routes/examResults");
 const { handleAuthRoutes } = require("./server/routes/auth");
 const { handleUsersRoutes } = require("./server/routes/users");
 const { handleRoomsRoutes } = require("./server/routes/rooms");
@@ -132,13 +133,16 @@ const server = http.createServer(async (req, res) => {
     if (await handleCheatsheetRoutes(req, res, pathname, helpers)) return;
     if (await handleChatRoutes(req, res, pathname, helpers)) return;
     if (await handleTopicsRoutes(req, res, pathname, helpers)) return;
+    if (await handleExamResultsRoutes(req, res, pathname, helpers)) return;
     if (await handleAuthRoutes(req, res, pathname, helpers)) return;
     if (await handleUsersRoutes(req, res, pathname, helpers)) return;
     if (await handleRoomsRoutes(req, res, pathname, helpers)) return;
 
-    // Static file fallback (production built frontend)
+    // Static file fallback (production built frontend or uploaded assets)
     const distPath = path.join(__dirname, "dist");
-    let filePath = path.join(distPath, pathname === "/" ? "index.html" : pathname);
+    let filePath = pathname.startsWith("/uploads/")
+      ? path.join(__dirname, pathname)
+      : path.join(distPath, pathname === "/" ? "index.html" : pathname);
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       const ext = path.extname(filePath);
       const mimeTypes = {
@@ -151,6 +155,7 @@ const server = http.createServer(async (req, res) => {
         ".png": "image/png",
         ".jpg": "image/jpeg",
         ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
         ".ico": "image/x-icon",
         ".woff2": "font/woff2",
         ".woff": "font/woff",

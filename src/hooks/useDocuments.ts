@@ -13,6 +13,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const documentsRef = useRef<DocumentItem[]>([]);
   documentsRef.current = documents;
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [activeDocTitle, setActiveDocTitle] = useState("");
   const [activeDocContent, setActiveDocContent] = useState("");
@@ -106,10 +107,14 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
 
         if (isProcessing) {
           let attempts = 0;
+          // Hanya satu poll aktif. Tanpa ini, tiap loadDocument bikin interval baru
+          // yang jalan terus dan niban state dokumen yang lebih baru.
+          if (pollRef.current) clearInterval(pollRef.current);
           const pollInterval = setInterval(async () => {
             attempts++;
             if (attempts > 30) {
               clearInterval(pollInterval);
+              pollRef.current = null;
               return;
             }
             try {
@@ -121,15 +126,19 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
                   setActiveDocContent(pollData.document.content);
                   if (pollData.document.summary) setActiveDocSummary(pollData.document.summary);
                   clearInterval(pollInterval);
+                  pollRef.current = null;
                 } else if (status === "failed") {
                   clearInterval(pollInterval);
+                  pollRef.current = null;
                   showNotice("Pembuatan modul kurikulum mengalami kendala");
                 }
               }
             } catch {
               clearInterval(pollInterval);
+              pollRef.current = null;
             }
           }, 3500);
+          pollRef.current = pollInterval;
         }
       }
     } catch (err) {
@@ -260,6 +269,10 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
   useEffect(() => {
     fetchModels();
     fetchDocuments();
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = null;
+    };
   }, []);
 
   return {

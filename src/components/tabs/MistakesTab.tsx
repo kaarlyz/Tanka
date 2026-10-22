@@ -160,7 +160,7 @@ export function MistakesTab({
                     <button
                       className="check-answer"
                       style={{ width: "auto", margin: "20px auto 0", padding: "10px 22px", borderRadius: 8 }}
-                      onClick={() => setActiveTab("quiz")}
+                      onClick={() => setActiveTab?.("quiz")}
                     >
                       Mulai Latihan Soal <span>→</span>
                     </button>

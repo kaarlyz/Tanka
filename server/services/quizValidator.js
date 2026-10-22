@@ -81,73 +81,98 @@ function validateAndNormalizeQuizQuestion(q, fallbackId = 1, { shuffleOptions = 
 
   let cleanOptions = q.options.map(stripOptionPrefix).map(sanitizeMathString);
 
-  // 3. Resolusi dan validasi correctIndex & legacy answer
+  // 3. Resolusi dan validasi correctIndex, correctIndices & legacy answer
   let resolvedCorrectIndex = null;
-  const hasCorrectIndex = q.correctIndex !== undefined && q.correctIndex !== null;
-  const hasAnswer = q.answer !== undefined && q.answer !== null;
+  let resolvedCorrectIndices = null;
 
-  let parsedCorrectIndex = null;
-  if (hasCorrectIndex) {
-    if (typeof q.correctIndex === "number" && Number.isInteger(q.correctIndex)) {
-      parsedCorrectIndex = q.correctIndex;
-    } else if (typeof q.correctIndex === "string" && /^-?\d+$/.test(q.correctIndex.trim())) {
-      parsedCorrectIndex = parseInt(q.correctIndex.trim(), 10);
-    }
+  // Deteksi multi-kunci (Pilgan Kompleks): e.g. correctIndices=[0, 2] atau answer="A, C" atau answer=["A", "C"]
+  if (Array.isArray(q.correctIndices) && q.correctIndices.length > 0) {
+    resolvedCorrectIndices = q.correctIndices.map(x => typeof x === "number" ? x : parseInt(x, 10)).filter(Number.isInteger);
+  } else if (typeof q.answer === "string" && /[A-Ea-e]\s*,\s*[A-Ea-e]/.test(q.answer)) {
+    const letters = q.answer.match(/[A-Ea-e]/g) || [];
+    resolvedCorrectIndices = [...new Set(letters.map(l => LETTERS.indexOf(l.toUpperCase())).filter(i => i >= 0))];
+  } else if (Array.isArray(q.answer) && q.answer.length > 0) {
+    resolvedCorrectIndices = q.answer.map(x => {
+      if (typeof x === "number") return x;
+      if (typeof x === "string" && LETTERS.includes(x.trim().toUpperCase())) return LETTERS.indexOf(x.trim().toUpperCase());
+      return parseInt(x, 10);
+    }).filter(Number.isInteger);
   }
 
-  let parsedAnswerIndex = null;
-  if (hasAnswer) {
-    if (typeof q.answer === "number" && Number.isInteger(q.answer)) {
-      parsedAnswerIndex = q.answer;
-    } else if (typeof q.answer === "string") {
-      const trimmed = q.answer.trim();
-      const upper = trimmed.toUpperCase();
-      if (LETTERS.includes(upper)) {
-        parsedAnswerIndex = LETTERS.indexOf(upper);
-      } else if (/^-?\d+$/.test(trimmed)) {
-        const numeric = parseInt(trimmed, 10);
-        if (numeric >= 0 && numeric < cleanOptions.length) {
-          parsedAnswerIndex = numeric;
+  if (resolvedCorrectIndices && resolvedCorrectIndices.length > 1) {
+    resolvedCorrectIndices.sort((a, b) => a - b);
+    for (const idx of resolvedCorrectIndices) {
+      if (idx < 0 || idx >= cleanOptions.length) {
+        throw new Error(`Indeks kunci jawaban (${idx}) di luar rentang opsi (0..${cleanOptions.length - 1}) pada soal ${fallbackId}`);
+      }
+    }
+    resolvedCorrectIndex = resolvedCorrectIndices[0];
+  } else {
+    const hasCorrectIndex = q.correctIndex !== undefined && q.correctIndex !== null;
+    const hasAnswer = q.answer !== undefined && q.answer !== null;
+
+    let parsedCorrectIndex = null;
+    if (hasCorrectIndex) {
+      if (typeof q.correctIndex === "number" && Number.isInteger(q.correctIndex)) {
+        parsedCorrectIndex = q.correctIndex;
+      } else if (typeof q.correctIndex === "string" && /^-?\d+$/.test(q.correctIndex.trim())) {
+        parsedCorrectIndex = parseInt(q.correctIndex.trim(), 10);
+      }
+    }
+
+    let parsedAnswerIndex = null;
+    if (hasAnswer) {
+      if (typeof q.answer === "number" && Number.isInteger(q.answer)) {
+        parsedAnswerIndex = q.answer;
+      } else if (typeof q.answer === "string") {
+        const trimmed = q.answer.trim();
+        const upper = trimmed.toUpperCase();
+        if (LETTERS.includes(upper)) {
+          parsedAnswerIndex = LETTERS.indexOf(upper);
+        } else if (/^-?\d+$/.test(trimmed)) {
+          const numeric = parseInt(trimmed, 10);
+          if (numeric >= 0 && numeric < cleanOptions.length) {
+            parsedAnswerIndex = numeric;
+          } else {
+            const matchedIdx = cleanOptions.findIndex((opt) => opt.toLowerCase() === trimmed.toLowerCase());
+            if (matchedIdx !== -1) {
+              parsedAnswerIndex = matchedIdx;
+            } else {
+              parsedAnswerIndex = numeric;
+            }
+          }
         } else {
-          // Jika angka di luar range opsi (misal answer="12" tapi ada opsi "12"), cocokkan teks
           const matchedIdx = cleanOptions.findIndex((opt) => opt.toLowerCase() === trimmed.toLowerCase());
           if (matchedIdx !== -1) {
             parsedAnswerIndex = matchedIdx;
-          } else {
-            parsedAnswerIndex = numeric;
           }
-        }
-      } else {
-        // Cek apakah string answer cocok persis dengan salah satu opsi
-        const matchedIdx = cleanOptions.findIndex((opt) => opt.toLowerCase() === trimmed.toLowerCase());
-        if (matchedIdx !== -1) {
-          parsedAnswerIndex = matchedIdx;
         }
       }
     }
-  }
 
-  // Cek konflik antara correctIndex dan answer
-  if (parsedCorrectIndex !== null && parsedAnswerIndex !== null) {
-    if (parsedCorrectIndex !== parsedAnswerIndex) {
+    // Cek konflik antara correctIndex dan answer
+    if (parsedCorrectIndex !== null && parsedAnswerIndex !== null) {
+      if (parsedCorrectIndex !== parsedAnswerIndex) {
+        throw new Error(
+          `Konflik kunci jawaban pada soal ${fallbackId}: correctIndex (${parsedCorrectIndex}) bertentangan dengan answer (${parsedAnswerIndex})`
+        );
+      }
+      resolvedCorrectIndex = parsedCorrectIndex;
+    } else if (parsedCorrectIndex !== null) {
+      resolvedCorrectIndex = parsedCorrectIndex;
+    } else if (parsedAnswerIndex !== null) {
+      resolvedCorrectIndex = parsedAnswerIndex;
+    } else {
+      throw new Error(`Kunci jawaban tidak ditemukan pada soal nomor ${fallbackId}`);
+    }
+
+    // Validasi batas indeks
+    if (resolvedCorrectIndex < 0 || resolvedCorrectIndex >= cleanOptions.length) {
       throw new Error(
-        `Konflik kunci jawaban pada soal ${fallbackId}: correctIndex (${parsedCorrectIndex}) bertentangan dengan answer (${parsedAnswerIndex})`
+        `Indeks kunci jawaban (${resolvedCorrectIndex}) di luar rentang opsi (0..${cleanOptions.length - 1}) pada soal ${fallbackId}`
       );
     }
-    resolvedCorrectIndex = parsedCorrectIndex;
-  } else if (parsedCorrectIndex !== null) {
-    resolvedCorrectIndex = parsedCorrectIndex;
-  } else if (parsedAnswerIndex !== null) {
-    resolvedCorrectIndex = parsedAnswerIndex;
-  } else {
-    throw new Error(`Kunci jawaban tidak ditemukan pada soal nomor ${fallbackId}`);
-  }
-
-  // Validasi batas indeks
-  if (resolvedCorrectIndex < 0 || resolvedCorrectIndex >= cleanOptions.length) {
-    throw new Error(
-      `Indeks kunci jawaban (${resolvedCorrectIndex}) di luar rentang opsi (0..${cleanOptions.length - 1}) pada soal ${fallbackId}`
-    );
+    resolvedCorrectIndices = [resolvedCorrectIndex];
   }
 
   // 4. Pengacakan opsi (jika diminta) dengan pemetaan presisi
@@ -187,14 +212,37 @@ function validateAndNormalizeQuizQuestion(q, fallbackId = 1, { shuffleOptions = 
     options: cleanOptions,
     correctIndex: resolvedCorrectIndex,
     correct_index: resolvedCorrectIndex, // alias kompatibilitas
+    correctIndices: resolvedCorrectIndices,
+    questionType: resolvedCorrectIndices.length > 1 ? "multiple" : (q.questionType || "single"),
     explanation: cleanExplanation,
     pitfall: typeof q.pitfall === "string" ? sanitizeMathString(q.pitfall.trim()) : "",
     formula: typeof q.formula === "string" ? sanitizeMathString(q.formula.trim()) : ""
   };
 
+  if (q.imageUrl) normalized.imageUrl = q.imageUrl;
+  if (q.imageCaption) normalized.imageCaption = sanitizeMathString(String(q.imageCaption).trim());
+  if (q.has_visual) normalized.has_visual = true;
+
   if (cleanSteps && cleanSteps.length > 0) {
     normalized.steps = cleanSteps;
   }
+
+  // Field dari examPipeline (EXTRACT→SOLVE→WRITE→VERIFY) harus ikut, jangan dibuang normalizer.
+  if (q.stimulus) normalized.stimulus = q.stimulus;
+  if (q.subtes) normalized.subtes = q.subtes;
+  if (q.tingkat) normalized.tingkat = q.tingkat;
+  if (q.estimasi_detik) normalized.estimasi_detik = q.estimasi_detik;
+  if (q.trik_cepat) normalized.trik_cepat = sanitizeMathString(String(q.trik_cepat).trim());
+  if (q.analisis_opsi && typeof q.analisis_opsi === "object") {
+    const cleanAnalisis = {};
+    for (const [k, v] of Object.entries(q.analisis_opsi)) {
+      if (typeof v === "string" && v.trim()) cleanAnalisis[k] = sanitizeMathString(v.trim());
+    }
+    if (Object.keys(cleanAnalisis).length > 0) normalized.analisis_opsi = cleanAnalisis;
+  }
+  if (q.confidence) normalized.confidence = q.confidence;
+  if (q.konflik_kunci) normalized.konflik_kunci = true;
+  if (q.perlu_review) normalized.perlu_review = true;
 
   return normalized;
 }

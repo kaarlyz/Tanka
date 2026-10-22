@@ -23,10 +23,12 @@ import {
   Bookmark,
   Check,
   ChevronDown,
+  Zap,
   X
 } from "lucide-react";
 import { ActiveTab, QuizQuestion, MistakeItem, ChatMessage, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
+import { isQuizAnswerCorrect } from "../../hooks/useQuiz";
 import { AIProcessLoader } from "../common/AIProcessLoader";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -212,9 +214,11 @@ export interface QuizTabProps {
   quizType: any;
   setQuizType: (t: any) => void;
   isDrillingMistakes: boolean;
-  userAnswers: { [key: number]: number };
-  selectedOption: number | null;
-  setSelectedOption: (opt: number | null) => void;
+  userAnswers: { [key: number]: number | number[] };
+  selectedOption: any;
+  setSelectedOption: (opt: any) => void;
+  handleSubmitMultipleAnswer?: () => void;
+  handleSelectMatrixAnswer?: (stmtIdx: number, val: string) => void;
   isAnswerSubmitted: boolean;
   isQuizCompleted: boolean;
   score: number;
@@ -291,6 +295,8 @@ export const QuizTab = React.memo(function QuizTab({
   isGeneratingQuiz,
   handleGenerateQuiz,
   handleSelectQuizOption,
+  handleSubmitMultipleAnswer,
+  handleSelectMatrixAnswer,
   handleNextQuizQuestion,
   handlePrevQuizQuestion,
   handleExamSubmit,
@@ -328,7 +334,14 @@ export const QuizTab = React.memo(function QuizTab({
   }, []);
 
   const currentQuestion = quizQuestions[currentQuestionIndex];
-  const isCorrect = isAnswerSubmitted && selectedOption === currentQuestion?.correctIndex;
+  const isKategori = currentQuestion?.questionType === "kategori" || (Array.isArray(currentQuestion?.matrixStatements) && currentQuestion.matrixStatements.length > 0);
+  const isMultiple = !isKategori && (currentQuestion?.questionType === "multiple" || (Array.isArray(currentQuestion?.correctIndices) && currentQuestion.correctIndices.length > 1));
+  const correctIndices = currentQuestion?.correctIndices || (currentQuestion?.correctIndex !== undefined ? [currentQuestion.correctIndex] : []);
+  const isOptionSelected = (idx: number) => {
+    if (Array.isArray(selectedOption)) return selectedOption.includes(idx);
+    return selectedOption === idx;
+  };
+  const isCorrect = isAnswerSubmitted && isQuizAnswerCorrect(currentQuestion, selectedOption);
 
   return (
     <div className="quiz-view tab-pane-animate" style={{ maxWidth: 940, margin: "0 auto" }}>
@@ -1061,10 +1074,10 @@ export const QuizTab = React.memo(function QuizTab({
 
                     <div style={{ display: "inline-flex", gap: 10, marginBottom: 16, fontSize: 12, fontWeight: 600 }}>
                       <span style={{ color: "#22370c", backgroundColor: "#eef8db", border: "1px solid #c2e28f", padding: "4px 10px", borderRadius: 999 }}>
-                        {quizQuestions.filter((q, i) => userAnswers[i] === q.correctIndex).length} Benar
+                        {quizQuestions.filter((q, i) => isQuizAnswerCorrect(q, userAnswers[i])).length} Benar
                       </span>
                       <span style={{ color: "#991b1b", backgroundColor: "#fef2f2", border: "1px solid #fecaca", padding: "4px 10px", borderRadius: 999 }}>
-                        {quizQuestions.filter((q, i) => userAnswers[i] !== undefined && userAnswers[i] !== q.correctIndex).length} Salah
+                        {quizQuestions.filter((q, i) => userAnswers[i] !== undefined && !isQuizAnswerCorrect(q, userAnswers[i])).length} Salah
                       </span>
                       <span style={{ color: "#56615d", backgroundColor: "#f4f6f2", border: "1px solid #dce1da", padding: "4px 10px", borderRadius: 999 }}>
                         {quizQuestions.filter((q, i) => userAnswers[i] === undefined).length} Dilewati
@@ -1171,6 +1184,28 @@ export const QuizTab = React.memo(function QuizTab({
                       )}
 
                       <button
+                        onClick={() => {
+                          if (setActiveTab) setActiveTab("material");
+                        }}
+                        style={{
+                          backgroundColor: "#f4f6f1",
+                          border: "1px solid #779f2f",
+                          color: "#22370c",
+                          borderRadius: 8,
+                          padding: "10px 18px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6
+                        }}
+                      >
+                        <BookOpen size={14} />
+                        <span>Buka Bedah Teori & Kisi-Kisi</span>
+                      </button>
+
+                      <button
                         onClick={() => handleGenerateQuiz()}
                         style={{
                           backgroundColor: "#18221f",
@@ -1219,43 +1254,42 @@ export const QuizTab = React.memo(function QuizTab({
                 ) : (
                   /* Active Question Card */
                   <div>
-                    {/* Exam Mode CBT Question Strip Navigation */}
-                    {quizMode === "exam" && (
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14, padding: "10px 12px", backgroundColor: "#ffffff", border: "1px solid #dde1da", borderRadius: 10 }}>
-                        {quizQuestions.map((q, idx) => {
-                          const isAns = userAnswers[idx] !== undefined;
-                          const isCur = currentQuestionIndex === idx;
-                          const isFlg = !!examFlagged[idx];
-                          return (
-                            <button
-                              key={idx}
-                              onClick={() => {
-                                setCurrentQuestionIndex(idx);
-                                setSelectedOption(userAnswers[idx] !== undefined ? userAnswers[idx] : null);
-                              }}
-                              style={{
-                                width: 34,
-                                height: 34,
-                                borderRadius: 6,
-                                backgroundColor: isCur ? "#18221f" : (isFlg ? "#fef3c7" : (isAns ? "#eef8db" : "#fafbf8")),
-                                color: isCur ? "#c8f064" : (isFlg ? "#b45309" : (isAns ? "#22370c" : "#56615d")),
-                                border: isCur ? "2px solid #18221f" : (isFlg ? "1px solid #f59e0b" : (isAns ? "1px solid #8dbd42" : "1px solid #dce1da")),
-                                fontSize: 12.5,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                position: "relative"
-                              }}
-                            >
-                              {idx + 1}
-                              {isFlg && <Flag size={8} color="#f59e0b" style={{ position: "absolute", top: -3, right: -2 }} />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                    {/* Question Strip Navigation (Tampil di Exam Mode & Study Mode) */}
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14, padding: "10px 12px", backgroundColor: "#ffffff", border: "1px solid #dde1da", borderRadius: 10 }}>
+                      {quizQuestions.map((q, idx) => {
+                        const isAns = userAnswers[idx] !== undefined;
+                        const isCur = currentQuestionIndex === idx;
+                        const isFlg = !!examFlagged[idx];
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setCurrentQuestionIndex(idx);
+                              setSelectedOption(userAnswers[idx] !== undefined ? userAnswers[idx] : null);
+                            }}
+                            style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: 6,
+                              backgroundColor: isCur ? "#18221f" : (isFlg ? "#fef3c7" : (isAns ? "#eef8db" : "#fafbf8")),
+                              color: isCur ? "#c8f064" : (isFlg ? "#b45309" : (isAns ? "#22370c" : "#56615d")),
+                              border: isCur ? "2px solid #18221f" : (isFlg ? "1px solid #f59e0b" : (isAns ? "1px solid #8dbd42" : "1px solid #dce1da")),
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              position: "relative"
+                            }}
+                            title={`Lompat ke Soal ${idx + 1}`}
+                          >
+                            {idx + 1}
+                            {isFlg && <Flag size={8} color="#f59e0b" style={{ position: "absolute", top: -3, right: -2 }} />}
+                          </button>
+                        );
+                      })}
+                    </div>
 
                     {/* Header Progress Tracker */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -1285,6 +1319,47 @@ export const QuizTab = React.memo(function QuizTab({
                         boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
                       }}
                     >
+                      {/* Indikator Pilihan Ganda Kompleks / Kategori */}
+                      {isKategori && (
+                        <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                            Pilihan Ganda Kompleks Kategori (Pilih Benar / Salah Tiap Baris)
+                          </span>
+                        </div>
+                      )}
+                      {isMultiple && (
+                        <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ backgroundColor: "#e0f2fe", color: "#0369a1", border: "1px solid #bae6fd", fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                            Pilihan Ganda Kompleks (Pilih Lebih Dari 1)
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Indikator Soal Bergambar (visual reference dari OCR) */}
+                      {currentQuestion?.has_visual && !currentQuestion?.imageUrl && (
+                        <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 4, letterSpacing: "0.04em" }}>
+                            ⚠ Soal ini merujuk gambar/grafik yang tidak tersedia digital
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Image Stimulus Soal jika ada */}
+                      {currentQuestion?.imageUrl && (
+                        <div style={{ marginBottom: 16, textAlign: "center" }}>
+                          <img
+                            src={currentQuestion.imageUrl}
+                            alt={currentQuestion.imageCaption || "Stimulus Visual Soal"}
+                            style={{ maxWidth: "100%", maxHeight: 360, borderRadius: 8, border: "1px solid #dde1da", objectFit: "contain", backgroundColor: "#fafbf8" }}
+                          />
+                          {currentQuestion.imageCaption && (
+                            <div style={{ fontSize: 11.5, color: "#727d78", marginTop: 6, fontStyle: "italic" }}>
+                              {currentQuestion.imageCaption}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div style={{ fontSize: 16, fontWeight: 600, lineHeight: "1.6", color: "#17201d", marginBottom: currentQuestion?.formula ? 12 : 18 }}>
                         <MathView text={currentQuestion?.question} />
                       </div>
@@ -1296,12 +1371,95 @@ export const QuizTab = React.memo(function QuizTab({
                         </div>
                       )}
 
-                      {/* 5 Options (A, B, C, D, E) */}
+                      {/* 5 Options (A, B, C, D, E) atau Matrix Kategori */}
+                      {isKategori ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+                          <div style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 90px 90px",
+                            padding: "10px 14px",
+                            backgroundColor: "#18221f",
+                            color: "#c8f064",
+                            borderRadius: 8,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            letterSpacing: "0.5px"
+                          }}>
+                            <span>PERNYATAAN</span>
+                            <span style={{ textAlign: "center" }}>BENAR</span>
+                            <span style={{ textAlign: "center" }}>SALAH</span>
+                          </div>
+                          {(currentQuestion?.matrixStatements || []).map((stmt, sIdx) => {
+                            const userResp = selectedOption && typeof selectedOption === "object" ? selectedOption[sIdx] : null;
+                            const isSubmitted = isAnswerSubmitted && quizMode === "study";
+                            const correctResp = stmt.correctAnswer || "BENAR";
+                            const isRowCorrect = userResp === correctResp;
+
+                            return (
+                              <div
+                                key={sIdx}
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr 90px 90px",
+                                  alignItems: "center",
+                                  padding: "12px 14px",
+                                  backgroundColor: isSubmitted ? (isRowCorrect ? "#f4fbf0" : "#fef2f2") : "#ffffff",
+                                  border: `1.5px solid ${isSubmitted ? (isRowCorrect ? "#8dbd42" : "#f87171") : "#e5e7eb"}`,
+                                  borderRadius: 8,
+                                  gap: 8
+                                }}
+                              >
+                                <div style={{ fontSize: 13.5, color: "#1f2937", lineHeight: 1.5 }}>
+                                  <MathView text={stmt.statement} />
+                                </div>
+                                <div style={{ display: "flex", justifyContent: "center" }}>
+                                  <button
+                                    onClick={() => handleSelectMatrixAnswer && handleSelectMatrixAnswer(sIdx, "BENAR")}
+                                    disabled={quizMode === "study" && isAnswerSubmitted}
+                                    style={{
+                                      padding: "6px 14px",
+                                      borderRadius: 6,
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      cursor: isSubmitted ? "default" : "pointer",
+                                      border: "1px solid",
+                                      borderColor: userResp === "BENAR" ? "#18221f" : "#d1d5db",
+                                      backgroundColor: userResp === "BENAR" ? "#18221f" : "#ffffff",
+                                      color: userResp === "BENAR" ? "#c8f064" : "#4b5563"
+                                    }}
+                                  >
+                                    BENAR
+                                  </button>
+                                </div>
+                                <div style={{ display: "flex", justifyContent: "center" }}>
+                                  <button
+                                    onClick={() => handleSelectMatrixAnswer && handleSelectMatrixAnswer(sIdx, "SALAH")}
+                                    disabled={quizMode === "study" && isAnswerSubmitted}
+                                    style={{
+                                      padding: "6px 14px",
+                                      borderRadius: 6,
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      cursor: isSubmitted ? "default" : "pointer",
+                                      border: "1px solid",
+                                      borderColor: userResp === "SALAH" ? "#18221f" : "#d1d5db",
+                                      backgroundColor: userResp === "SALAH" ? "#18221f" : "#ffffff",
+                                      color: userResp === "SALAH" ? "#c8f064" : "#4b5563"
+                                    }}
+                                  >
+                                    SALAH
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         {currentQuestion?.options.map((opt, idx) => {
                           const optionLetter = String.fromCharCode(65 + idx);
-                          const isSelected = selectedOption === idx;
-                          const isCorrect = idx === currentQuestion.correctIndex;
+                          const isSelected = isOptionSelected(idx);
+                          const isCorrectOption = correctIndices.includes(idx);
 
                           let bgColor = "#fafbf8";
                           let borderColor = "#dfe4dc";
@@ -1310,11 +1468,11 @@ export const QuizTab = React.memo(function QuizTab({
 
                           if (quizMode === "study") {
                             if (isAnswerSubmitted) {
-                              if (isCorrect) {
+                              if (isCorrectOption) {
                                 bgColor = "#eef8db";
                                 borderColor = "#8dbd42";
                                 textColor = "#22370c";
-                              } else if (isSelected && !isCorrect) {
+                              } else if (isSelected && !isCorrectOption) {
                                 bgColor = "#fdf2f2";
                                 borderColor = "#f87171";
                                 textColor = "#991b1b";
@@ -1346,8 +1504,8 @@ export const QuizTab = React.memo(function QuizTab({
                                 minHeight: 48,
                                 backgroundColor: bgColor,
                                 border: `1px solid ${borderColor}`,
-                                borderLeft: isSelected || (isAnswerSubmitted && isCorrect)
-                                  ? `4px solid ${isAnswerSubmitted ? (isCorrect ? "#65a30d" : "#ef4444") : (quizMode === "exam" ? "#c8f064" : "#4b6623")}`
+                                borderLeft: isSelected || (isAnswerSubmitted && isCorrectOption)
+                                  ? `4px solid ${isAnswerSubmitted ? (isCorrectOption ? "#65a30d" : "#ef4444") : (quizMode === "exam" ? "#c8f064" : "#4b6623")}`
                                   : "4px solid transparent",
                                 borderRadius: 4,
                                 color: textColor,
@@ -1362,10 +1520,10 @@ export const QuizTab = React.memo(function QuizTab({
                                 style={{
                                   width: 26,
                                   height: 26,
-                                  borderRadius: 6,
-                                  backgroundColor: quizMode === "study" && isAnswerSubmitted && isCorrect ? "#8dbd42" : quizMode === "study" && isAnswerSubmitted && isSelected ? "#ef4444" : (quizMode === "exam" && isSelected ? "#c8f064" : "#ffffff"),
-                                  color: (quizMode === "study" && isAnswerSubmitted && (isCorrect || isSelected)) ? "#ffffff" : (quizMode === "exam" && isSelected ? "#18221f" : "#17201d"),
-                                  border: "1px solid #dce1da",
+                                  borderRadius: isMultiple ? 4 : 6,
+                                  backgroundColor: quizMode === "study" && isAnswerSubmitted && isCorrectOption ? "#8dbd42" : quizMode === "study" && isAnswerSubmitted && isSelected ? "#ef4444" : (quizMode === "exam" && isSelected ? "#c8f064" : (isSelected ? "#22370c" : "#ffffff")),
+                                  color: (quizMode === "study" && isAnswerSubmitted && (isCorrectOption || isSelected)) ? "#ffffff" : (quizMode === "exam" && isSelected ? "#18221f" : (isSelected ? "#ffffff" : "#17201d")),
+                                  border: isSelected ? "1px solid #18221f" : "1px solid #dce1da",
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "center",
@@ -1375,21 +1533,53 @@ export const QuizTab = React.memo(function QuizTab({
                                   flexShrink: 0
                                 }}
                               >
-                                {quizMode === "study" && isAnswerSubmitted && isCorrect ? (
+                                {quizMode === "study" && isAnswerSubmitted && isCorrectOption ? (
                                   <Check size={14} />
                                 ) : quizMode === "study" && isAnswerSubmitted && isSelected ? (
                                   <X size={14} />
                                 ) : (
-                                  optionLetter
+                                  isMultiple && isSelected ? "✓" : optionLetter
                                 )}
                               </div>
-                              <MathView text={opt} style={{ flex: 1 }} />
+                              <MathView text={opt.replace(/^[A-Ea-e][.)]\s*/, "")} style={{ flex: 1 }} />
                             </button>
                           );
                         })}
                       </div>
+                      )}
 
-                      {/* Explanation & Pitfalls Box when answered (ONLY in Study Mode) */}
+                      {/* Tombol Periksa Jawaban Khusus Mode Belajar untuk Pilgan Kompleks & Kategori */}
+                      {(isMultiple || isKategori) && quizMode === "study" && !isAnswerSubmitted && (
+                        <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
+                          <button
+                            onClick={handleSubmitMultipleAnswer}
+                            disabled={isKategori
+                              ? !selectedOption || Object.keys(selectedOption).length < (currentQuestion?.matrixStatements?.length || 1)
+                              : (!Array.isArray(selectedOption) || selectedOption.length === 0)}
+                            style={{
+                              backgroundColor: (isKategori
+                                ? !selectedOption || Object.keys(selectedOption).length < (currentQuestion?.matrixStatements?.length || 1)
+                                : (!Array.isArray(selectedOption) || selectedOption.length === 0)) ? "#f4f6f2" : "#22370c",
+                              color: (isKategori
+                                ? !selectedOption || Object.keys(selectedOption).length < (currentQuestion?.matrixStatements?.length || 1)
+                                : (!Array.isArray(selectedOption) || selectedOption.length === 0)) ? "#9ca3af" : "#ffffff",
+                              border: "1px solid #c2e28f",
+                              padding: "9px 18px",
+                              borderRadius: 8,
+                              fontSize: 13,
+                              fontWeight: 700,
+                              cursor: (isKategori
+                                ? !selectedOption || Object.keys(selectedOption).length < (currentQuestion?.matrixStatements?.length || 1)
+                                : (!Array.isArray(selectedOption) || selectedOption.length === 0)) ? "not-allowed" : "pointer",
+                              transition: "all 0.15s ease"
+                            }}
+                          >
+                            Periksa Jawaban {isKategori ? `(${Object.keys(selectedOption || {}).length}/${currentQuestion?.matrixStatements?.length || 0} Terisi)` : `(${Array.isArray(selectedOption) ? selectedOption.length : 0} Terpilih)`}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Feedback banner immediately after answering in study mode */}
                       {quizMode === "study" && isAnswerSubmitted && (
                         <div
                           style={{
@@ -1398,11 +1588,11 @@ export const QuizTab = React.memo(function QuizTab({
                             backgroundColor: "#f8f9f5",
                             borderRadius: 12,
                             border: "1px solid #dde1da",
-                            borderLeft: selectedOption === currentQuestion.correctIndex ? "3px solid #8dbd42" : "3px solid #ef4444"
+                            borderLeft: isCorrect ? "3px solid #8dbd42" : "3px solid #ef4444"
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                            {selectedOption === currentQuestion.correctIndex ? (
+                            {isCorrect ? (
                               <>
                                 <CheckCircle2 size={16} color="#4b6623" />
                                 <span style={{ fontSize: 13, fontWeight: 700, color: "#22370c" }}>Jawaban Anda Benar</span>
@@ -1411,7 +1601,13 @@ export const QuizTab = React.memo(function QuizTab({
                               <>
                                 <XCircle size={16} color="#ef4444" />
                                 <span style={{ fontSize: 13, fontWeight: 700, color: "#991b1b" }}>
-                                  Kunci Benar: Pilihan {String.fromCharCode(65 + currentQuestion.correctIndex)}
+                                  Kunci Benar: {isKategori ? (
+                                    currentQuestion?.matrixStatements?.map((s, idx) => `P${idx+1}: ${s.correctAnswer}`).join(", ")
+                                  ) : isMultiple ? (
+                                    `Pilihan ${correctIndices.map(i => String.fromCharCode(65 + i)).join(", ")}`
+                                  ) : (
+                                    `Pilihan ${String.fromCharCode(65 + (currentQuestion.correctIndex ?? 0))}`
+                                  )}
                                 </span>
                               </>
                             )}
@@ -1541,7 +1737,38 @@ export const QuizTab = React.memo(function QuizTab({
                             </div>
                           )}
 
-                          {/* 3. Pitfalls & Trap Analysis */}
+                          {/* 3. Analisis per opsi (dari pipeline exam) */}
+                          {currentQuestion.analisis_opsi && Object.keys(currentQuestion.analisis_opsi).length > 0 && (
+                            <div
+                              style={{
+                                fontSize: 12,
+                                lineHeight: "1.6",
+                                border: "1px solid #dce1da",
+                                borderRadius: 8,
+                                padding: "9px 12px",
+                                backgroundColor: "#fbfcfa"
+                              }}
+                            >
+                              <div style={{ fontSize: 11, fontWeight: 700, color: "#60706a", marginBottom: 5, letterSpacing: ".03em" }}>
+                                ANALISIS OPSI
+                              </div>
+                              {Object.entries(currentQuestion.analisis_opsi).map(([k, v]) => {
+                                const isKey = correctIndices.some(idx => "ABCDE"[idx] === k.toUpperCase());
+                                return (
+                                  <div key={k} style={{ display: "flex", gap: 7, marginBottom: 3 }}>
+                                    <span style={{ fontWeight: 800, color: isKey ? "#3f6212" : "#92400e", minWidth: 12 }}>
+                                      {k}
+                                    </span>
+                                    <span style={{ color: "#45544e", flex: 1 }}>
+                                      <MathView text={v} />
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* 4. Pitfalls & Trap Analysis */}
                           {currentQuestion.pitfall && (
                             <div
                               style={{
@@ -1560,6 +1787,82 @@ export const QuizTab = React.memo(function QuizTab({
                               <span><strong>Analisis Jebakan: </strong><MathView text={currentQuestion.pitfall} /></span>
                             </div>
                           )}
+
+                          {/* 4. Trik Cepat + meta soal dari pipeline exam */}
+                          {(currentQuestion.trik_cepat || currentQuestion.tingkat || currentQuestion.estimasi_detik) && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginTop: 2 }}>
+                              {currentQuestion.tingkat && (
+                                <span style={{ fontSize: 11, fontWeight: 600, color: "#45544e", backgroundColor: "#f1f4ef", border: "1px solid #dce1da", borderRadius: 999, padding: "3px 9px" }}>
+                                  {currentQuestion.tingkat}
+                                </span>
+                              )}
+                              {currentQuestion.estimasi_detik ? (
+                                <span style={{ fontSize: 11, fontWeight: 600, color: "#45544e", backgroundColor: "#f1f4ef", border: "1px solid #dce1da", borderRadius: 999, padding: "3px 9px" }}>
+                                  ~{currentQuestion.estimasi_detik}s ideal
+                                </span>
+                              ) : null}
+                              {currentQuestion.subtes && (
+                                <span style={{ fontSize: 11, fontWeight: 600, color: "#45544e", backgroundColor: "#f1f4ef", border: "1px solid #dce1da", borderRadius: 999, padding: "3px 9px" }}>
+                                  {String(currentQuestion.subtes).replace(/_/g, " ")}
+                                </span>
+                              )}
+                              {currentQuestion.perlu_review && (
+                                <span style={{ fontSize: 11, fontWeight: 700, color: "#92400e", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 999, padding: "3px 9px" }}>
+                                  perlu review
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {currentQuestion.trik_cepat && (
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: "#14532d",
+                                backgroundColor: "#f0fdf4",
+                                border: "1px solid #bbf7d0",
+                                borderRadius: 8,
+                                padding: "8px 12px",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 6
+                              }}
+                            >
+                              <Zap size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+                              <span><strong>Trik Cepat: </strong><MathView text={currentQuestion.trik_cepat} /></span>
+                            </div>
+                          )}
+
+                          {/* Tombol Shortcut Loncat ke Bedah Teori di Tab Materi */}
+                          <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px dashed #dce2da", display: "flex", justifyContent: "flex-end" }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (setActiveTab) {
+                                  window.location.hash = `#soal-${currentQuestion.id || currentQuestionIndex + 1}`;
+                                  setActiveTab("material");
+                                }
+                              }}
+                              style={{
+                                backgroundColor: "#18221f",
+                                color: "#c8f064",
+                                border: "none",
+                                borderRadius: 7,
+                                padding: "7px 14px",
+                                fontSize: 12,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                boxShadow: "0 2px 6px rgba(24,34,31,0.12)",
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              <BookOpen size={13} />
+                              <span>Buka Bedah Teori & Langkah Nomor Ini di Tab Materi →</span>
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1670,29 +1973,55 @@ export const QuizTab = React.memo(function QuizTab({
                               : "Minta Petunjuk / Tanya AI"}
                           </button>
 
-                          {isAnswerSubmitted && (
-                            <button
-                              className="next-quiz-btn"
-                              onClick={handleNextQuizQuestion}
-                              style={{
-                                backgroundColor: "#18221f",
-                                color: "#c8f064",
-                                border: "none",
-                                borderRadius: 8,
-                                padding: "11px 22px",
-                                fontSize: 13,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6,
-                                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)"
-                              }}
-                            >
-                              {currentQuestionIndex < quizQuestions.length - 1 ? "Soal Berikutnya" : "Lihat Hasil Akhir"}
-                              <ChevronRight size={16} />
-                            </button>
-                          )}
+                          {/* Tombol Lewati / Lanjut Soal */}
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                            {!isAnswerSubmitted && currentQuestionIndex < quizQuestions.length - 1 && (
+                              <button
+                                onClick={handleNextQuizQuestion}
+                                style={{
+                                  backgroundColor: "#fafbf8",
+                                  color: "#56615d",
+                                  border: "1px solid #dce1da",
+                                  borderRadius: 8,
+                                  padding: "9px 16px",
+                                  fontSize: 12.5,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 5
+                                }}
+                                title="Lewati soal ini dan kerjakan nanti"
+                              >
+                                <span>Lewati Soal</span>
+                                <ChevronRight size={14} />
+                              </button>
+                            )}
+
+                            {isAnswerSubmitted && (
+                              <button
+                                className="next-quiz-btn"
+                                onClick={handleNextQuizQuestion}
+                                style={{
+                                  backgroundColor: "#18221f",
+                                  color: "#c8f064",
+                                  border: "none",
+                                  borderRadius: 8,
+                                  padding: "11px 22px",
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)"
+                                }}
+                              >
+                                {currentQuestionIndex < quizQuestions.length - 1 ? "Soal Berikutnya" : "Lihat Hasil Akhir"}
+                                <ChevronRight size={16} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
 

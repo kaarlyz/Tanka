@@ -43,16 +43,36 @@ export interface QuizStep {
   formula?: string;
 }
 
+export interface MatrixStatement {
+  statement: string;
+  correctAnswer?: "BENAR" | "SALAH" | "SESUAI" | "TIDAK SESUAI" | string;
+}
+
 export interface QuizQuestion {
   id?: number | string;
   question: string;
   options: string[];
   correctIndex: number;
   correct_index?: number;
+  correctIndices?: number[];
+  questionType?: "single" | "multiple" | "kategori";
+  matrixStatements?: MatrixStatement[];
+  imageUrl?: string | null;
+  imageCaption?: string | null;
   formula?: string;
   steps?: Array<string | QuizStep>;
   explanation?: string;
   pitfall?: string;
+  stimulus?: string | null;
+  subtes?: string;
+  tingkat?: string;
+  estimasi_detik?: number;
+  trik_cepat?: string | null;
+  analisis_opsi?: Record<string, string> | null;
+  confidence?: string;
+  konflik_kunci?: boolean;
+  perlu_review?: boolean;
+  has_visual?: boolean;
 }
 
 export interface FeynmanResult {

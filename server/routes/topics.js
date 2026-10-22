@@ -2,6 +2,7 @@ const { db } = require("../db");
 const { callRouter, multiSourceAcademicSearch } = require("../ai");
 const { NARA_GLOBAL_PERSONA } = require("../prompts/nara");
 const { safeJsonParse } = require("../utils/jsonParser");
+const { mathify } = require("../utils/mathify");
 
 function normalizeTopicQuery(raw) {
   let s = (raw || "").trim();
@@ -268,11 +269,11 @@ SYARAT PEDAGOGIS MATEMATIKA UTBK (TAKTIK, RUMUS PADAT, & MUDAH DIPAHAMI):
     // Sync chapter_plans so downstream features (mind map, Feynman, quiz) can locate chapters
     if (outline && Array.isArray(outline.chapters)) {
       const { syncChapterPlansToDb } = require("../services/curriculumPipeline");
-      syncChapterPlansToDb(outline.chapters, docId, db);
+      syncChapterPlansToDb(db, docId, outline.chapters);
     }
 
     db.prepare("INSERT INTO documents (id, title, content, summary, status, created_at) VALUES (?, ?, ?, ?, 'completed', ?)")
-      .run(docId, title, content, outline.executiveSummary || "", Date.now());
+      .run(docId, title, mathify(content), mathify(outline.executiveSummary || ""), Date.now());
 
     return sendJSON(res, { success: true, docId, title, content_length: content.length });
   }

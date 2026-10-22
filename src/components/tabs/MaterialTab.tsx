@@ -31,6 +31,8 @@ import {
 import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, Flashcard, QuizQuestion, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
+import { ExamInsightPanel } from "../common/ExamInsightPanel";
+import { ExamDrillView } from "./ExamDrillView";
 import { renderVisualDiagramOrPre, extractTextFromNode, isAsciiDiagramText, sanitizeMathMarkdown, sanitizeChildrenText } from "../common/DiagramRenderer";
 
 const InteractiveMindMap = React.lazy(() =>
@@ -232,13 +234,30 @@ export const MaterialTab = React.memo(function MaterialTab({
   documents = [],
   loadDocument = () => {}
 }: MaterialTabProps) {
-  const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full">("chapters");
+  const [materialViewMode, setMaterialViewMode] = React.useState<"chapters" | "mindmap" | "full" | "exam_drill">("chapters");
   const [currentChapterIdx, setCurrentChapterIdx] = React.useState(0);
   const [completedChapters, setCompletedChapters] = React.useState<Record<number, boolean>>({});
   const [mountedChapters, setMountedChapters] = React.useState<Set<number>>(() => new Set([0, 1]));
   const [isTransitioningChapter, setIsTransitioningChapter] = React.useState(false);
   const [targetChapterIdx, setTargetChapterIdx] = React.useState<number | null>(null);
   const readerCardRef = React.useRef<HTMLDivElement>(null);
+
+  // Deteksi lembar soal / bedah kisi-kisi
+  const isExamSheetDoc = React.useMemo(() => {
+    return Boolean(
+      (quizQuestions && quizQuestions.length > 0 && quizQuestions.some((q) => q.subtes || q.trik_cepat || q.pitfall || q.analisis_opsi)) ||
+      (activeDocContent && (activeDocContent.startsWith("# Bedah Tuntas:") || activeDocContent.includes("pipeline 4-tahap") || activeDocContent.includes("### 📋 Soal Latihan Terdeteksi")))
+    );
+  }, [quizQuestions, activeDocContent]);
+
+  // Reset & arahkan ke exam_drill jika dokumen bertipe lembar soal
+  React.useEffect(() => {
+    if (isExamSheetDoc) {
+      setMaterialViewMode("exam_drill");
+    } else {
+      setMaterialViewMode("chapters");
+    }
+  }, [isExamSheetDoc, activeDocId]);
 
   // Reset saat dokumen berganti
   React.useEffect(() => {
@@ -865,6 +884,29 @@ export const MaterialTab = React.memo(function MaterialTab({
                     <div className="material-mode-switcher print-hidden" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "8px 10px", backgroundColor: "#f8faf5", border: "1px solid #dde2d8", borderRadius: 8, margin: "10px 0 16px" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                          {isExamSheetDoc && (
+                            <button
+                              onClick={() => setMaterialViewMode("exam_drill")}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 5,
+                                padding: "6px 12px",
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 700,
+                                border: materialViewMode === "exam_drill" ? "1.5px solid #566b36" : "1px solid transparent",
+                                backgroundColor: materialViewMode === "exam_drill" ? "#eef8db" : "transparent",
+                                color: materialViewMode === "exam_drill" ? "#22370c" : "#45544e",
+                                cursor: "pointer",
+                                transition: "0.15s ease"
+                              }}
+                            >
+                              <Target size={13} color={materialViewMode === "exam_drill" ? "#3f6212" : "currentColor"} />
+                              <span>Bedah Soal ({quizQuestions.length})</span>
+                            </button>
+                          )}
+
                           <button
                             onClick={() => setMaterialViewMode("chapters")}
                             style={{
@@ -1057,6 +1099,10 @@ export const MaterialTab = React.memo(function MaterialTab({
                     {/* View Mode 2: Baca per Bab (Immersive Novel / Literary Book Reader) */}
                     {materialViewMode === "chapters" && (
                       <div style={{ marginTop: 10 }}>
+                        <ExamInsightPanel
+                          docId={activeDocId || null}
+                          onGenerateTopic={(topic) => handleStartTopicClarify(topic)}
+                        />
                         {activeDocContent && !activeDocContent.includes("## ") && (
                           <div style={{
                             display: "flex",
@@ -1455,6 +1501,17 @@ export const MaterialTab = React.memo(function MaterialTab({
                           </div>
                         </div>
                       </div>
+                    )}
+
+                    {/* View Mode 4: Bedah Soal Interaktif (Exam Drill View) */}
+                    {materialViewMode === "exam_drill" && (
+                      <ExamDrillView
+                        docId={activeDocId || ""}
+                        docTitle={activeDocTitle}
+                        questions={quizQuestions}
+                        onGenerateTopic={(topic) => handleStartTopicClarify(topic)}
+                        onOpenQuiz={() => setActiveTab("quiz")}
+                      />
                     )}
 
                     {/* View Mode 3: Dokumen Lengkap (Selalu dicetak utuh saat mode Print/PDF) */}

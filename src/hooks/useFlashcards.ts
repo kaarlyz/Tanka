@@ -64,13 +64,13 @@ export function useFlashcards({ activeDocId, selectedModel, showNotice }: UseFla
 
     setIsFlipped(false);
     setTimeout(() => {
-      if (currentCardIndex < flashcards.length - 1) {
-        setCurrentCardIndex(currentCardIndex + 1);
-      } else {
+      setCurrentCardIndex(prev => {
+        if (prev < flashcards.length - 1) return prev + 1;
         showNotice("Putaran kartu selesai!");
-      }
+        return prev;
+      });
     }, 200);
-  }, [flashcards, currentCardIndex, showNotice]);
+  }, [flashcards, showNotice]);
 
   return {
     flashcards,

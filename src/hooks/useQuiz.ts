@@ -12,14 +12,37 @@ export interface UseQuizProps {
   onExamComplete?: (result: { finalScore: number; correctCount: number; totalQuestions: number }) => void;
 }
 
+export function isQuizAnswerCorrect(q: QuizQuestion | undefined | null, answer: any): boolean {
+  if (!q || answer === undefined || answer === null) return false;
+
+  // Tipe Kategori: matriks per baris pernyataan
+  if (q.questionType === "kategori" && Array.isArray(q.matrixStatements) && q.matrixStatements.length > 0) {
+    if (!answer || typeof answer !== "object") return false;
+    return q.matrixStatements.every((stmt, idx) => {
+      const userResp = String(answer[idx] || "").trim().toUpperCase();
+      const expectedResp = String(stmt.correctAnswer || "").trim().toUpperCase();
+      return userResp === expectedResp;
+    });
+  }
+
+  if (q.questionType === "multiple" || (Array.isArray(q.correctIndices) && q.correctIndices.length > 1)) {
+    const expected = (q.correctIndices || [q.correctIndex]).slice().sort((a, b) => a - b);
+    const actual = (Array.isArray(answer) ? answer : [answer]).slice().sort((a, b) => a - b);
+    if (expected.length !== actual.length) return false;
+    return expected.every((val, idx) => val === actual[idx]);
+  }
+  const singleAns = Array.isArray(answer) ? answer[0] : answer;
+  return singleAns === q.correctIndex;
+}
+
 export function useQuiz({ activeDocId, selectedModel, quizType, setQuizType, showNotice, recordMistake, activeDocContent, onExamComplete }: UseQuizProps) {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [selectedOption, setSelectedOption] = useState<number | number[] | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [score, setScore] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
+  const [userAnswers, setUserAnswers] = useState<Record<number, number | number[]>>({});
   const [isQuizCompleted, setIsQuizCompleted] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [solutionStep, setSolutionStep] = useState(0);
@@ -71,7 +94,7 @@ export function useQuiz({ activeDocId, selectedModel, quizType, setQuizType, sho
           resetQuizState();
         }
       })
-      .catch(() => {});
+      .catch((e: unknown) => { if (!isCancelled) console.error("quiz fetch:", e); });
     return () => {
       isCancelled = true;
     };
@@ -126,17 +149,37 @@ export function useQuiz({ activeDocId, selectedModel, quizType, setQuizType, sho
   }, [activeDocId, selectedModel, quizQuestionCount, quizType, isQuizCompleted, score, showNotice, resetQuizState, setQuizType]);
 
   const handleSelectQuizOption = useCallback((optionIdx: number) => {
+    const currentQ = quizQuestions[currentQuestionIndex];
+    if (currentQ?.questionType === "kategori") return;
+    const isMultiple = currentQ?.questionType === "multiple" || (Array.isArray(currentQ?.correctIndices) && currentQ.correctIndices.length > 1);
+
+    if (isMultiple) {
+      if (quizMode === "study" && isAnswerSubmitted) return;
+      const currentArr: number[] = Array.isArray(selectedOption)
+        ? selectedOption
+        : (selectedOption !== null && selectedOption !== undefined ? [selectedOption as number] : []);
+      const nextArr = currentArr.includes(optionIdx)
+        ? currentArr.filter((i) => i !== optionIdx)
+        : [...currentArr, optionIdx].sort((a, b) => a - b);
+
+      setSelectedOption(nextArr);
+      setUserAnswers((prev) => ({
+        ...prev,
+        [currentQuestionIndex]: nextArr
+      }));
+      return;
+    }
+
     if (quizMode === "study") {
       if (isAnswerSubmitted) return;
       setSelectedOption(optionIdx);
       setIsAnswerSubmitted(true);
 
-      const currentQ = quizQuestions[currentQuestionIndex];
-      const isCorrect = optionIdx === currentQ.correctIndex;
+      const isCorrect = optionIdx === currentQ?.correctIndex;
       if (isCorrect) {
         const points = Math.round(100 / (quizQuestions.length || 5));
         setScore((prev) => prev + points);
-      } else {
+      } else if (currentQ) {
         recordMistake(currentQ, optionIdx);
       }
 
@@ -151,7 +194,39 @@ export function useQuiz({ activeDocId, selectedModel, quizType, setQuizType, sho
         [currentQuestionIndex]: optionIdx
       }));
     }
-  }, [quizMode, isAnswerSubmitted, quizQuestions, currentQuestionIndex, recordMistake]);
+  }, [quizMode, isAnswerSubmitted, quizQuestions, currentQuestionIndex, selectedOption, recordMistake]);
+
+  const handleSubmitMultipleAnswer = useCallback(() => {
+    if (isAnswerSubmitted) return;
+    const currentQ = quizQuestions[currentQuestionIndex];
+    if (!currentQ) return;
+    setIsAnswerSubmitted(true);
+
+    const currentAns = userAnswers[currentQuestionIndex] !== undefined ? userAnswers[currentQuestionIndex] : selectedOption;
+    const isCorrect = isQuizAnswerCorrect(currentQ, currentAns);
+    if (isCorrect) {
+      const points = Math.round(100 / (quizQuestions.length || 5));
+      setScore((prev) => prev + points);
+    } else {
+      const firstSelected = Array.isArray(currentAns) ? (currentAns[0] ?? 0) : (typeof currentAns === 'number' ? currentAns : 0);
+      recordMistake(currentQ, firstSelected);
+    }
+  }, [isAnswerSubmitted, quizQuestions, currentQuestionIndex, userAnswers, selectedOption, recordMistake]);
+
+  const handleSelectMatrixAnswer = useCallback((stmtIdx: number, val: string) => {
+    if (quizMode === "study" && isAnswerSubmitted) return;
+    setUserAnswers((prev) => {
+      const currentAnsObj = (prev[currentQuestionIndex] && typeof prev[currentQuestionIndex] === "object" && !Array.isArray(prev[currentQuestionIndex]))
+        ? { ...(prev[currentQuestionIndex] as any) }
+        : {};
+      currentAnsObj[stmtIdx] = val;
+      setSelectedOption(currentAnsObj as any);
+      return {
+        ...prev,
+        [currentQuestionIndex]: currentAnsObj
+      };
+    });
+  }, [quizMode, isAnswerSubmitted, currentQuestionIndex]);
 
   const handlePrevQuizQuestion = useCallback(() => {
     if (currentQuestionIndex > 0) {
@@ -199,10 +274,11 @@ export function useQuiz({ activeDocId, selectedModel, quizType, setQuizType, sho
     let correctCount = 0;
     quizQuestions.forEach((q, idx) => {
       const uAns = userAnswers[idx];
-      if (uAns === q.correctIndex) {
+      if (isQuizAnswerCorrect(q, uAns)) {
         correctCount++;
       } else if (uAns !== undefined) {
-        recordMistake(q, uAns);
+        const firstSelected = Array.isArray(uAns) ? (uAns[0] ?? 0) : uAns;
+        recordMistake(q, firstSelected);
       }
     });
 
@@ -313,6 +389,9 @@ export function useQuiz({ activeDocId, selectedModel, quizType, setQuizType, sho
     handleSendQuizQuestionChat,
     handleGenerateQuiz,
     handleSelectQuizOption,
+    handleSubmitMultipleAnswer,
+    handleSelectMatrixAnswer,
+    isQuizAnswerCorrect,
     handlePrevQuizQuestion,
     handleNextQuizQuestion,
     toggleFlagQuestion,

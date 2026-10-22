@@ -45,6 +45,7 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
   });
 
   const [isChatSending, setIsChatSending] = useState(false);
+  const [chatInput, setChatInput] = useState("");
   const [stagedAttachment, setStagedAttachment] = useState<StagedChatFile | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -235,6 +236,17 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
       localStorage.setItem(`tanka_chat_${userId}_${currentSessionId}`, JSON.stringify(nextUserMessages));
     } catch {}
 
+    // Kirim gagal → tarik balik pesan optimistis biar ga dobel & ga nyangkut tanpa balasan.
+    const rollbackOptimistic = () => {
+      setMessages((prev) => {
+        const next = prev.filter((m) => m.id !== userMsg.id);
+        try {
+          localStorage.setItem(`tanka_chat_${userId}_${currentSessionId}`, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    };
+
     setIsChatSending(true);
     setTimeout(() => {
       if (chatEndRef.current) {
@@ -278,11 +290,13 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
           ? data.error
           : "Server AI sedang sibuk atau respon melebihi batas waktu. Silakan kirim ulang.";
         showNotice(errorMsg);
+        rollbackOptimistic();
         return;
       }
 
       if (!data || !data.reply) {
         showNotice((data && data.error) || "Server AI sedang sibuk atau respon melebihi batas waktu. Silakan kirim ulang.");
+        rollbackOptimistic();
         return;
       }
 
@@ -317,6 +331,7 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
     } catch (err: any) {
       console.warn("[Tanya-Nara] Chat request failed:", err);
       showNotice("Server AI sedang sibuk atau respon melebihi batas waktu. Silakan kirim ulang.");
+      rollbackOptimistic();
     } finally {
       setIsChatSending(false);
     }
@@ -325,8 +340,8 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
   return {
     messages,
     setMessages,
-    chatInput: "",
-    setChatInput: (() => {}) as (val: string) => void,
+    chatInput,
+    setChatInput,
     isChatSending,
     chatEndRef,
     stagedAttachment,

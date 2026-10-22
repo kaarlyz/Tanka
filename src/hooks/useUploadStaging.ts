@@ -31,6 +31,7 @@ export function useUploadStaging({
   const [stagedCustomInstruction, setStagedCustomInstruction] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
   const [isDragging, setIsDragging] = useState(false);
 
   const handleStageFiles = useCallback((filesInput: FileList | File[] | File) => {
@@ -214,17 +215,26 @@ export function useUploadStaging({
             setUserAnswers({});
             setExamSubmitted(false);
           }
+        } else if (data.isExamSheet) {
+          showNotice(`📋 Terdeteksi lembar soal! Menganalisis dan menyusun pembahasan…`);
         } else {
           showNotice(`Materi "${data.title}" berhasil dibuat dan siap dipelajari!`);
         }
         await fetchDocuments();
         if (data.id) {
-          // Tunggu hingga sintesis bab Nara selesai agar pengguna langsung mendarat pada bab final yang rapi
-          for (let attempt = 0; attempt < 25; attempt++) {
+          // Polling hingga pipeline di latar belakang selesai
+          const maxAttempts = data.isExamSheet ? 120 : 30;
+          for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            setUploadStatus(
+              data.isExamSheet
+                ? `Menganalisis butir soal & menyusun pembahasan… (${attempt + 1}/${maxAttempts})`
+                : `Menyusun bab materi… (${attempt + 1}/${maxAttempts})`
+            );
             try {
               const checkRes = await fetch(`/api/documents/${data.id}`);
               const checkData = await checkRes.json();
-              if (checkData.document?.content?.includes("## Bab ")) {
+              const doc = checkData.document;
+              if (doc?.status === "completed" || doc?.content?.includes("## Bab ")) {
                 break;
               }
             } catch {}
@@ -232,14 +242,19 @@ export function useUploadStaging({
           }
           await loadDocument(data.id);
         }
+        setUploadStatus("");
         handleCancelStaging();
-        setActiveTab("material");
+        setActiveTab(data.isExamSheet ? "quiz" : "material");
+        if (data.isExamSheet) {
+          showNotice(`📋 Kisi-kisi soal "${data.title}" siap dipelajari di menu Latihan Soal!`);
+        }
       } else {
         setUploadError(data.error || "Gagal memproses berkas dokumen");
       }
     } catch (err: any) {
       setUploadError("Gagal mengunggah berkas: " + err.message);
     } finally {
+      setUploadStatus("");
       setIsUploading(false);
     }
   }, [
@@ -270,6 +285,7 @@ export function useUploadStaging({
     setStagedCustomInstruction,
     isUploading,
     uploadError,
+    uploadStatus,
     isDragging,
     setIsDragging,
     handleStageFiles,

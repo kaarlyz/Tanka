@@ -18,6 +18,7 @@ db.exec(`
     content TEXT NOT NULL,
     summary TEXT,
     status TEXT NOT NULL DEFAULT 'completed',
+    content_hash TEXT,
     created_at INTEGER NOT NULL
   );
 
@@ -241,6 +242,11 @@ function runMigrations(targetDb = db) {
       if (!docColumns.includes("status")) {
         targetDb.prepare("ALTER TABLE documents ADD COLUMN status TEXT DEFAULT 'completed'").run();
         console.log("[tanka-db] Added status column to documents table");
+      }
+      if (!docColumns.includes("content_hash")) {
+        targetDb.prepare("ALTER TABLE documents ADD COLUMN content_hash TEXT").run();
+        targetDb.prepare("CREATE INDEX IF NOT EXISTS idx_documents_content_hash ON documents(content_hash)").run();
+        console.log("[tanka-db] Added content_hash column to documents table");
       }
     }
   } catch (err) {

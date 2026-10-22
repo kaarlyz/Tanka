@@ -166,12 +166,21 @@ test("Upload: dokumen terdeteksi sebagai lembar ujian — status DB = completed,
     "A. 10  B. 11  C. 12  D. 13"
   ].join("\n");
 
-  const examResponse = JSON.stringify({
-    questions: [
-      { id: 1, question: "Berapa nilai x jika 2x + 4 = 10?", options: ["A. 2", "B. 3", "C. 4", "D. 5"], correctIndex: 1, explanation: "2x=6, x=3", formula: "", pitfall: "" },
-      { id: 2, question: "Akar dari 144 adalah?", options: ["A. 10", "B. 11", "C. 12", "D. 13"], correctIndex: 2, explanation: "√144=12", formula: "", pitfall: "" }
+  const examExtractResponse = JSON.stringify({
+    soal: [
+      { nomor: 1, pertanyaan: "Berapa nilai x jika 2x + 4 = 10?", opsi: { A: "2", B: "3", C: "4", D: "5" }, kunci: "B" },
+      { nomor: 2, pertanyaan: "Akar dari 144 adalah?", opsi: { A: "10", B: "11", C: "12", D: "13" }, kunci: "C" }
     ],
-    studyGuide: "# Panduan Belajar\n## 1. Peta Materi\nAljabar dasar.\n## 2. Formula\nx diisolasi.\n## 3. Pola Soal\nCek substitusi.\n## 4. Jebakan\nPerhatikan tanda."
+    terpotong: []
+  });
+
+  const examSolveResponse = JSON.stringify({ jawaban_benar: "B", yakin: true });
+  const examWriteResponse = JSON.stringify({
+    kunci: "B",
+    konsep_diuji: "Aljabar",
+    langkah: "Selesaikan persamaan",
+    analisis_opsi: { A: "Salah", B: "Benar", C: "Salah", D: "Salah" },
+    jebakan: "Tanda operasi"
   });
 
   setLLM(async (messages) => {
@@ -179,15 +188,22 @@ test("Upload: dokumen terdeteksi sebagai lembar ujian — status DB = completed,
     if (content.includes("judul akademis") || content.includes("Judul Materi") || content.includes("Tentukan topik")) {
       return "Ujian Matematika";
     }
-    if (content.includes("lembar soal") || content.includes("kisi-kisi")) {
-      return examResponse;
+    if (content.includes("parser dokumen soal") || content.includes("lembar soal") || content.includes("kisi-kisi")) {
+      return examExtractResponse;
+    }
+    if (content.includes("Selesaikan soal berikut") || content.includes("jawaban_benar")) {
+      return examSolveResponse;
+    }
+    if (content.includes("Tulis pembahasan mendalam") || content.includes("analisis_opsi")) {
+      return examWriteResponse;
     }
     return JSON.stringify({ status: "ok", title: "Test", executiveSummary: "", concepts: [], chapters: [] });
   });
   // Python extraction nyata (.txt)
 
   const body = {
-    files: [{ fileName: "ujian_mat.txt", fileData: b64(examText) }]
+    files: [{ fileName: "ujian_mat.txt", fileData: b64(examText) }],
+    sync: true
   };
   const mock = makeMock(body);
   await handleDocumentsRoutes({ method: "POST" }, mock.res, "/api/documents/upload", mock.helpers);
@@ -278,4 +294,51 @@ test("Upload: respons API mengandung semua field yang dibutuhkan frontend", asyn
   assert.ok(data.created_at > 0, "created_at harus timestamp valid");
 
   cleanupDoc(data.id);
+});
+
+test("Upload: Content-Addressable Cache hit — upload berkas identik mengembalikan dokumen cache tanpa LLM", async () => {
+  const crypto = require("node:crypto");
+  const testText = "Ini materi cache unik untuk uji coba konten identik.";
+  const testHash = crypto.createHash("sha256").update(testText.trim()).digest("hex");
+  const docId = "doc_test_cache_" + Date.now();
+
+  // Seed dokumen completed dengan content_hash
+  db.prepare("INSERT INTO documents (id, title, content, status, content_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)").run(
+    docId,
+    "Materi Uji Cache",
+    testText,
+    "completed",
+    testHash,
+    Date.now()
+  );
+
+  // Pasang quiz untuk doc ini
+  const quizQuestions = [{ id: 1, question: "Soal Cache 1?", options: ["A", "B"], correctIndex: 0 }];
+  db.prepare("INSERT INTO quizzes (id, doc_id, questions, created_at) VALUES (?, ?, ?, ?)").run(
+    "quiz_" + docId,
+    docId,
+    JSON.stringify(quizQuestions),
+    Date.now()
+  );
+
+  // Pastikan LLM stub melempar error jika terpanggil (bukti zero LLM call)
+  setLLM(async () => { throw new Error("LLM tidak boleh dipanggil saat cache hit!"); });
+
+  const body = {
+    files: [{ fileName: "cache_test.txt", fileData: b64(testText) }]
+  };
+  const mock = makeMock(body);
+  await handleDocumentsRoutes({ method: "POST" }, mock.res, "/api/documents/upload", mock.helpers);
+  const { status, data } = mock.result();
+
+  resetLLM();
+
+  assert.equal(status, 200);
+  assert.equal(data.success, true);
+  assert.equal(data.id, docId, "Harus mengembalikan id dokumen dari cache");
+  assert.equal(data.cached, true, "Harus ditandai cached=true");
+  assert.equal(data.status, "completed", "Status dokumen cache harus completed");
+  assert.equal(data.questionCount, 1, "Question count harus sesuai quiz tersimpan");
+
+  cleanupDoc(docId);
 });

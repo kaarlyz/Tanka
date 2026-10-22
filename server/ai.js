@@ -56,7 +56,7 @@ async function callRouter(messages, model = "ag/gemini-3.8-flash-low", temperatu
             const parsed = JSON.parse(dataStr);
             const delta = parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.message?.content || "";
             fullContent += delta;
-          } catch {}
+          } catch { /* SSE JSON chunk malformed — skip */ }
         }
       } else {
         try {
@@ -106,7 +106,7 @@ async function search9Router(query, maxResults = 8) {
         return parts.join("\n\n");
       }
     }
-  } catch (err) {}
+  } catch (err) { console.warn("[9router-search]", err.message); }
   return "";
 }
 
@@ -273,7 +273,7 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
         }
       }
     }
-  } catch (err) {}
+  } catch (err) { console.warn("[research:wikipedia]", err.message); }
 
   // 2. Wikibooks Indonesia
   try {
@@ -299,7 +299,7 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
         }
       }
     }
-  } catch (err) {}
+  } catch (err) { console.warn("[research:wikibooks]", err.message); }
 
   // 3. Ruangguru Pedagogical Articles (High Priority for National Curriculum)
   try {
@@ -356,9 +356,9 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
             findings.ruangguru.push({ title: art.title, url: art.url, snippet: fullBody.slice(0, 6000) });
           }
         }
-      } catch {}
+      } catch { /* single ruangguru article fetch */ }
     }
-  } catch (err) {}
+  } catch (err) { console.warn("[research:ruangguru]", err.message); }
 
   // 4. CrossRef Open Academic API (Protected by Strict Relevance Gate & School Subject Lock)
   // Deactivated by default for general school curricula to prevent off-topic thesis paper contamination
@@ -382,7 +382,7 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
           }
         }
       }
-    } catch (err) {}
+    } catch (err) { console.warn("[research:crossref]", err.message); }
   }
 
   // 5. 9Router Search (Deep Web Search - Free, Unrestricted Queries)
@@ -395,7 +395,7 @@ async function multiSourceAcademicSearch(topic, subject = "", extraQueries = [],
       ]);
       if (resRaw) findings.web.push(resRaw);
       if (resDeep && resDeep !== resRaw) findings.web.push(resDeep);
-    } catch (err) {}
+    } catch (err) { console.warn("[research:9router-deep]", err.message); }
   }
 
   let bundle = "";

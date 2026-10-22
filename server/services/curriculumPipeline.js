@@ -2,6 +2,20 @@ const { callRouter } = require("../ai");
 const { NARA_GLOBAL_PERSONA } = require("../prompts/nara");
 const { safeJsonParse } = require("../utils/jsonParser");
 
+// Batasi berapa bab yang digenerate paralel supaya 9Router tidak rate-limit.
+async function limitConcurrency(thunks, limit = 3) {
+  const results = new Array(thunks.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, thunks.length) }, async () => {
+    while (cursor < thunks.length) {
+      const i = cursor++;
+      results[i] = await thunks[i]();
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 /**
  * Segment raw text into logical parts (per page, per slide, or per ~750 words).
  */
@@ -463,6 +477,8 @@ PETUNJUK PENULISAN BAB MATEMATIKA:
    Setiap sub-bab konsep WAJIB memuat:
    a. Definisi Padat (1-2 kalimat).
    b. Tabel Formula KaTeX komprehensif ($...$ atau $$...$$) lengkap dengan notasi dan syarat batas.
+      ATURAN NOTASI: SETIAP simbol matematis wajib dibungkus $...$ — termasuk pangkat dan subskrip
+      (tulis $a^{m} \\times a^{n}$, bukan a^m x a^n). Teks di luar rumus jangan dimasukkan ke dalam $.
    c. 1 Contoh Soal Taktis & Bedah Penurunan Langkah demi Langkah (Worked Example) berstandar UTBK.
    d. Peringatan Jebakan Soal (Pitfall) aljabar/tanda minus.
 4. Akhiri bab dengan "### Cek Intuisi Taktis" (1 pertanyaan penalaran analitis tanpa pilihan ganda).
@@ -564,7 +580,7 @@ async function generateModularCurriculumModule(outline, fullText, segments = [],
 
   console.log(`[curriculumPipeline] Memulai generasi modular untuk ${chapters.length} bab pada dokumen "${safeOutline.title}"...`);
 
-  const chapterPromises = chapters.map(async (ch) => {
+  const chapterThunks = chapters.map((ch) => async () => {
     const rawKeys = Array.isArray(ch.keyConceptIds) ? ch.keyConceptIds : [];
     const chConcepts = rawKeys.map((kId) => conceptMap.get(kId)).filter(Boolean);
 
@@ -637,7 +653,7 @@ async function generateModularCurriculumModule(outline, fullText, segments = [],
     }
   });
 
-  const generatedChapters = await Promise.all(chapterPromises);
+  const generatedChapters = await limitConcurrency(chapterThunks, 3);
 
   // 5. Urutkan bab sesuai nomor urut dan gabungkan
   generatedChapters.sort((a, b) => a.chapterNumber - b.chapterNumber);

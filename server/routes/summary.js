@@ -1,4 +1,5 @@
 const { db } = require("../db");
+const { mathify } = require("../utils/mathify");
 const { callRouter, detectRealMath } = require("../ai");
 
 function sanitizeSummaryMath(md) {
@@ -76,11 +77,11 @@ async function handleSummaryRoutes(req, res, pathname, helpers) {
 
     let conceptsList = [];
     try {
-      conceptsList = db.prepare("SELECT name, definisi_baku FROM document_concepts WHERE doc_id = ? ORDER BY id ASC").all(docId);
+      conceptsList = db.prepare("SELECT name, definition FROM document_concepts WHERE doc_id = ? ORDER BY id ASC").all(docId);
     } catch (e) {}
 
     const conceptsClause = conceptsList.length > 0
-      ? `\nDAFTAR KONSEP BAKU & FORMULA KANONIKAL YANG WAJIB DICAKUP:\n${conceptsList.map((c, idx) => `${idx + 1}. **${c.name}**: ${c.definisi_baku || ""}`).join("\n")}\n`
+      ? `\nDAFTAR KONSEP BAKU & FORMULA KANONIKAL YANG WAJIB DICAKUP:\n${conceptsList.map((c, idx) => `${idx + 1}. **${c.name}**: ${c.definition || ""}`).join("\n")}\n`
       : "";
 
     let styleGuidance = "";
@@ -155,7 +156,7 @@ ${doc.content.slice(0, 25000)}
     ], model);
 
     const summary = sanitizeSummaryMath(rawSummary);
-    db.prepare("UPDATE documents SET summary = ? WHERE id = ?").run(summary, docId);
+    db.prepare("UPDATE documents SET summary = ? WHERE id = ?").run(mathify(summary), docId);
     return sendJSON(res, { success: true, summary, style });
   }
 
@@ -195,7 +196,7 @@ Tulis ulang secara penuh hasil rangkuman yang telah disesuaikan:`;
 
     const newSummary = sanitizeSummaryMath(rawNewSummary);
     // Save the new version
-    db.prepare("UPDATE documents SET summary = ? WHERE id = ?").run(newSummary, docId);
+    db.prepare("UPDATE documents SET summary = ? WHERE id = ?").run(mathify(newSummary), docId);
     return sendJSON(res, { success: true, summary: newSummary });
   }
 

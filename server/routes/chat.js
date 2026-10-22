@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { db } = require("../db");
 const { callRouter, extractTextWithAIVision } = require("../ai");
-const { executePythonScript } = require("../utils/pythonResolver");
+const { executePythonScript, executePythonScriptAsync } = require("../utils/pythonResolver");
 
 function buildCleanChatContext(history = [], maxPairs = 10, maxTotalChars = 12000) {
   if (!Array.isArray(history) || history.length === 0) return [];
@@ -86,7 +86,7 @@ async function handleChatRoutes(req, res, pathname, helpers) {
         const tmpFilePath = path.join(scratchDir, `chat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
         try {
           fs.writeFileSync(tmpFilePath, Buffer.from(attachment.fileData, "base64"));
-          const pyRes = executePythonScript(scriptPath, [tmpFilePath], { timeout: 30000 });
+          const pyRes = await executePythonScriptAsync(scriptPath, [tmpFilePath], { timeout: 30000 });
           if (pyRes.success && pyRes.stdout && !pyRes.stdout.startsWith("[Error")) {
             attachmentContext = `\n\n[LAMPIRAN DOKUMEN DARI SISWA: ${attachment.fileName}]\nIsi Dokumen Sumber:\n"""\n${pyRes.stdout.slice(0, 15000)}\n"""\n`;
           } else {

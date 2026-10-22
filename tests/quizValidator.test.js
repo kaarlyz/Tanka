@@ -232,3 +232,53 @@ test("Quiz Validator: preserves and validates questions across quiz difficulty t
   }
 });
 
+test("Quiz Validator: mendukung Pilihan Ganda Kompleks (multi-key answers)", () => {
+  const rawMultiple = [
+    {
+      id: 1,
+      question: "Manakah pernyataan yang BENAR mengenai sistem akuntansi? (Pilih semua yang sesuai)",
+      options: ["Aset = Liabilitas + Ekuitas", "Beban mengurangi ekuitas", "Pendapatan mengurangi aset", "Prive menambah modal"],
+      answer: "A, B"
+    },
+    {
+      id: 2,
+      question: "Pilih faktor yang memengaruhi pergeseran kurva penawaran:",
+      options: ["Biaya produksi", "Teknologi", "Selera konsumen", "Pendapatan pembeli"],
+      correctIndices: [0, 1]
+    }
+  ];
+
+  const normalized = validateAndNormalizeQuiz(rawMultiple);
+  assert.equal(normalized.length, 2);
+
+  // Soal 1 (string "A, B")
+  assert.equal(normalized[0].questionType, "multiple");
+  assert.deepEqual(normalized[0].correctIndices, [0, 1]);
+  assert.equal(normalized[0].correctIndex, 0);
+
+  // Soal 2 (array [0, 1])
+  assert.equal(normalized[1].questionType, "multiple");
+  assert.deepEqual(normalized[1].correctIndices, [0, 1]);
+  assert.equal(normalized[1].correctIndex, 0);
+});
+
+test("Quiz Validator: mendukung pertanyaan bergambar (imageUrl dan imageCaption)", () => {
+  const rawImageQ = [
+    {
+      id: 1,
+      question: "Berdasarkan kurva permintaan di bawah, hitung elastisitas harga:",
+      imageUrl: "/uploads/soal/kurva_permintaan_1.png",
+      imageCaption: "Gambar 1.1 Kurva Permintaan Linier",
+      options: ["0.5", "1.0", "1.5", "2.0"],
+      correctIndex: 1,
+      explanation: "Elastisitas dihitung dari kemiringan kurva."
+    }
+  ];
+
+  const normalized = validateAndNormalizeQuiz(rawImageQ);
+  assert.equal(normalized.length, 1);
+  assert.equal(normalized[0].imageUrl, "/uploads/soal/kurva_permintaan_1.png");
+  assert.equal(normalized[0].imageCaption, "Gambar 1.1 Kurva Permintaan Linier");
+  assert.equal(normalized[0].questionType, "single");
+});
+

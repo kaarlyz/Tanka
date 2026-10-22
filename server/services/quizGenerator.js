@@ -169,7 +169,12 @@ STANDAR KUALITAS SOAL (STANDAR RESMI UTBK & ANTI AI-SLOP MUTLAK):
    - DILARANG menulis basa-basi seperti "Tentu saja", "Mari kita bahas", "Jawaban yang benar adalah...".
    - Pembahasan langsung membedah bukti faktual/matematis langkah demi langkah pada field "steps".
    - Field "pitfall" WAJIB menjelaskan jebakan logika spesifik yang sengaja dipasang pada opsi pengecoh.
-4. KUNCI JAWABAN: correctIndex 0=A, 1=B, 2=C, 3=D, 4=E.
+4. KUNCI JAWABAN & VARIASI TIPE SOAL:
+   - Pilihan Ganda Biasa: "questionType": "single", "correctIndex": 0..4 (0=A, 1=B, 2=C, 3=D, 4=E).
+   - Pilihan Ganda Kompleks (diizinkan pada soal analitis/HOTS jika menanyakan pernyataan yang benar lebih dari satu):
+     "questionType": "multiple",
+     "correctIndices": [0, 2] (array seluruh indeks opsi yang benar, misal [0, 2] untuk A dan C),
+     "correctIndex": 0 (indeks opsi benar pertama untuk kompatibilitas).
 5. FORMAT TEKS OPSI: DILARANG menyertakan prefix huruf seperti "A.", "B." di teks options.
 
 ${mathRule}
@@ -179,8 +184,10 @@ Format output WAJIB HANYA berupa array JSON valid tanpa markdown fence:
   {
     "id": ${offsetId},
     "question": "...",
+    "questionType": "single",
     "options": ["...", "...", "...", "...", "..."],
     "correctIndex": 1,
+    "correctIndices": [1],
     "formula": "",
     "steps": [
       {"step": 1, "title": "Identifikasi", "desc": "..."},

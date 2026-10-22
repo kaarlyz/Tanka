@@ -8,6 +8,7 @@ export interface StagingUploadModalProps {
   stagedFiles: Array<any>;
   isUploading: boolean;
   uploadError: string;
+  uploadStatus?: string;
   stagedDocTitle: string;
   setStagedDocTitle: (val: string) => void;
   stagedGoal: string;
@@ -28,6 +29,7 @@ export function StagingUploadModal({
   stagedFiles,
   isUploading,
   uploadError,
+  uploadStatus = "",
   stagedDocTitle,
   setStagedDocTitle,
   stagedGoal,
@@ -118,12 +120,12 @@ export function StagingUploadModal({
                 <div style={{ padding: "8px 0" }}>
                   <AIProcessLoader
                     title="Membaca Berkas & Foto Catatan"
-                    subtitle="AI memindai dokumen dan tulisan tangan untuk menyusun modul belajar mandiri."
-                    badge="Vision Multimodal"
+                    subtitle={uploadStatus || "AI memindai dokumen dan tulisan tangan untuk menyusun modul belajar mandiri."}
+                    badge={uploadStatus ? "Sintesis Bab" : "Vision Multimodal"}
                     steps={[
                       { label: "Membaca Berkas & Gambar", detail: `Mengurai ${stagedFiles.length} berkas yang Anda pilih...` },
                       { label: "Transkripsi Multimodal Vision", detail: "Mengenali tulisan tangan, rumus matematika KaTeX, diagram, dan tabel." },
-                      { label: "Menata Format Pembelajaran Baku", detail: "Menyusun catatan belajar terstruktur dan materi siap dipelajari." }
+                      { label: "Menata Format Pembelajaran Baku", detail: uploadStatus || "Menyusun catatan belajar terstruktur dan materi siap dipelajari." }
                     ]}
                   />
                 </div>
@@ -292,18 +294,15 @@ export function StagingUploadModal({
                     </div>
                   </div>
 
-                  {/* Goal & Custom Intent Suggestion Chips */}
+                  {/* Goal Selection — 2 clear paths */}
                   <div style={{ marginTop: 12 }}>
                     <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#45544e", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
-                      Tujuan / Mau Diapakan Berkas Ini?
+                      Mau Diapakan Berkas Ini?
                     </label>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                       {[
-                        { id: "theory", label: "📖 Pelajari Teori & Konsep", prompt: "Susun modul penjelasan teori konsep dasar secara mendalam." },
-                        { id: "solve", label: "✍️ Bahas Tuntas & Kunci Soal", prompt: "Bahas tuntas setiap langkah pengerjaan soal dan berikan kunci jawabannya." },
-                        { id: "clone", label: "🔄 Buat Latihan Soal Mirip", prompt: "Buatkan variasi latihan soal kloning (tipe serupa angka beda) untuk uji pemahaman." },
-                        { id: "hots", label: "🎯 Bedah Kisi-Kisi / Tantangan HOTS", prompt: "Analisis sebagai kisi-kisi ujian, ekstrak soal, dan siapkan variasi tantangan HOTS." },
-                        { id: "summary", label: "⚡ Rangkum Rumus & Intisari", prompt: "Rangkum rumus kunci KaTeX dan poin esensial ringkas tanpa bertele-tele." }
+                        { id: "theory", label: "Susun Materi", desc: "Buat modul teori, konsep, dan rangkuman belajar", icon: "📖" },
+                        { id: "solve", label: "Bedah Soal", desc: "Bahas tuntas jawaban, jebakan, dan trik per nomor", icon: "✍️" }
                       ].map((g) => {
                         const isSelected = stagedGoal === g.id;
                         return (
@@ -311,31 +310,33 @@ export function StagingUploadModal({
                             key={g.id}
                             type="button"
                             onClick={() => {
-                              if (stagedGoal === g.id) {
-                                setStagedGoal("");
-                                setStagedCustomInstruction("");
-                              } else {
-                                setStagedGoal(g.id);
-                                setStagedCustomInstruction(g.prompt);
-                              }
+                              setStagedGoal(g.id);
+                              setStagedCustomInstruction("");
                             }}
                             style={{
-                              padding: "6px 10px",
-                              borderRadius: 7,
+                              padding: "12px 14px",
+                              borderRadius: 10,
                               border: `1.5px solid ${isSelected ? "#566b36" : "#dce2da"}`,
                               backgroundColor: isSelected ? "#f0fdf4" : "#ffffff",
                               color: isSelected ? "#166534" : "#374151",
-                              fontSize: 11.5,
-                              fontWeight: isSelected ? 800 : 500,
                               cursor: "pointer",
                               transition: "all 0.15s ease",
+                              textAlign: "left",
                               display: "flex",
-                              alignItems: "center",
-                              gap: 5
+                              alignItems: "flex-start",
+                              gap: 10
                             }}
                           >
-                            {isSelected && <Check size={11} strokeWidth={3} />}
-                            <span>{g.label}</span>
+                            <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{g.icon}</span>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: isSelected ? "#166534" : "#17201d", display: "flex", alignItems: "center", gap: 5 }}>
+                                {isSelected && <Check size={12} strokeWidth={3} />}
+                                {g.label}
+                              </div>
+                              <div style={{ fontSize: 10.5, color: isSelected ? "#15803d" : "#6f7975", marginTop: 2, lineHeight: 1.35 }}>
+                                {g.desc}
+                              </div>
+                            </div>
                           </button>
                         );
                       })}
@@ -344,7 +345,7 @@ export function StagingUploadModal({
                       rows={2}
                       value={stagedCustomInstruction}
                       onChange={(e) => setStagedCustomInstruction(e.target.value)}
-                      placeholder="Catatan tambahan (opsional): misal 'fokus ke cara substitusi kuadrat aljabar', 'jelaskan sifat bayangan'..."
+                      placeholder="Catatan tambahan (opsional): misal 'fokus ke integral substitusi', 'buat variasi soal kloning angka beda'..."
                       style={{
                         width: "100%",
                         backgroundColor: "#fafbf8",

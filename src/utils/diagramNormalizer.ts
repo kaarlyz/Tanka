@@ -86,18 +86,32 @@ export function sanitizeMathMarkdown(md: string): string {
 
   let result = processedLines.join("\n");
 
-  // Fix unmatched inline math: single unclosed $ on a line
+  // Fix unmatched inline math: single unclosed $ pada satu baris.
+  // JANGAN asal tutup — kalau isinya bukan LaTeX (mis. "harga $50"), escape $ jadi \$ supaya
+  // tidak terbaca sebagai math mode.
   result = result.split("\n").map((l) => {
     if (l.includes("$$")) return l;
-    const count = (l.match(/\$/g) || []).length;
+    const count = (l.match(/(?<!\\)\$/g) || []).length;
     if (count % 2 === 1) {
-      return l + "$";
+      const lastIdx = l.search(/(?<!\\)\$(?![\s\S]*?(?<!\\)\$)/);
+      const tail = lastIdx >= 0 ? l.slice(lastIdx + 1) : "";
+      if (/\\[a-zA-Z]+/.test(tail)) {
+        return l + "$";
+      }
+      return lastIdx >= 0
+        ? l.slice(0, lastIdx) + "\\$" + l.slice(lastIdx + 1)
+        : l;
     }
     return l;
   }).join("\n");
 
-  // Trim excessive whitespace inside inline math delimiters for remark-math compatibility (e.g. "$ 2^3 $" -> "$2^3$")
-  result = result.replace(/(?<!\$)\$(?!\$)\s*([^\$\n]+?)\s*(?<!\$)\$(?!\$)/g, "$$$1$$");
+  // Trim excessive whitespace inside inline math delimiters for remark-math compatibility
+  // Only trim when there's actual LaTeX content (has backslash, exponent, or math operator)
+  result = result.replace(/(?<!\$)\$(?!\$)\s+([^\$\n]*[\\^_{}=+\-*/][^\$\n]*?)\s+(?<!\$)\$(?!\$)/g, "$$$1$$");
+
+  // Escape remaining currency $ patterns that normalizeMathExpression might have missed
+  // Pattern: $ then digits with optional currency suffixes, at word boundary
+  result = result.replace(/(?<!\\)\$(\d[\d,.]*)\s+(juta|ribu|miliar|rb|jt)\b/g, "\\$$1 $2");
 
   // Normalize leaked technical jargon in table headers or text
   result = result.replace(/\|\s*Notasi\s+KaTeX\s*\|/gi, "| Notasi Simbol |");

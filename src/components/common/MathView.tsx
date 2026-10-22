@@ -11,15 +11,13 @@ interface MathViewProps {
 }
 
 export const MathView = React.memo(function MathView({ text, style, className }: MathViewProps) {
-  if (!text) return null;
-
-  // Ultra-fast path: If string contains zero math tokens, bypass regexes entirely
-  const hasMathTokens = /[\$\\^√∑_±]|\\[a-zA-Z]+|\([^)]+\)\s*\/|\\\(|\\\[|\\begin\{|\b\d+\/\d+\b/.test(text);
-  if (!hasMathTokens) {
-    return <span style={style} className={className}>{text}</span>;
-  }
-
   const renderedHTML = useMemo(() => {
+    if (!text) return null;
+
+    // Ultra-fast path: If string contains zero math tokens, bypass regexes entirely
+    const hasMathTokens = /[\$\\^√∑_±]|\\[a-zA-Z]+|\([^)]+\)\s*\/|\\\(|\\\[|\\begin\{|\b\d+\/\d+\b/.test(text);
+    if (!hasMathTokens) return null;
+
     if (mathRenderCache.has(text)) {
       return mathRenderCache.get(text)!;
     }
@@ -87,8 +85,13 @@ export const MathView = React.memo(function MathView({ text, style, className }:
             return `${a}/(${b})`;
           }
         });
+        // Hanya konversi a/b yang benar-benar pecahan: penyebut lazim & pembilang < penyebut.
+        // Menghindari tanggal (12/31), skor (7/10), rasio.
+        const COMMON_DENOMS = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 100]);
         str = str.replace(/\b([0-9]{1,3})\/([0-9]{1,3})\b/g, (match, a, b) => {
-          if (match === "10/10") return match;
+          const num = Number(a);
+          const den = Number(b);
+          if (!COMMON_DENOMS.has(den) || num >= den) return match;
           try {
             return katex.renderToString(`\\frac{${a}}{${b}}`, { displayMode: false, throwOnError: false });
           } catch {
@@ -160,17 +163,40 @@ export const MathView = React.memo(function MathView({ text, style, className }:
       }
 
       // 4. UNMASKING AND RENDERING KATEX
+      // Helper: clean double-escaped backslashes + unicode symbols
+      const cleanMathStr = (raw: string): string => {
+        let m = healControlCharsToLatex(raw);
+        // Fix double-escaped backslashes from AI JSON: \\frac -> \frac
+        m = m.replace(/\\\\(frac|sqrt|sum|prod|int|log|ln|sin|cos|tan|cot|sec|csc|text|mathrm|mathbf|mathit|mathcal|mathbb|operatorname|left|right|begin|end|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|subset|supset|infty|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|to|rightarrow|leftarrow|iff|implies|forall|exists|nabla|partial|lim|max|min|sup|inf|binom|choose|overline|underline|hat|bar|vec|dot|ddot|tilde|widehat|widetilde|not|in|notin|cup|cap|vee|wedge|oplus|otimes|vert|lvert|rvert|lVert|rVert|quad|qquad|hspace|vspace|displaystyle|textstyle|boxed|cancel|bcancel|xcancel|overset|underset|stackrel)\b/g, "\\$1");
+        // Unicode math symbols to LaTeX
+        m = m.replace(/±/g, "\\pm ")
+          .replace(/≤/g, "\\le ")
+          .replace(/≥/g, "\\ge ")
+          .replace(/≠/g, "\\neq ")
+          .replace(/×/g, "\\times ")
+          .replace(/÷/g, "\\div ")
+          .replace(/∞/g, "\\infty ")
+          .replace(/∈/g, "\\in ")
+          .replace(/∉/g, "\\notin ")
+          .replace(/⊂/g, "\\subset ")
+          .replace(/⊃/g, "\\supset ")
+          .replace(/∪/g, "\\cup ")
+          .replace(/∩/g, "\\cap ")
+          .replace(/→/g, "\\to ")
+          .replace(/←/g, "\\leftarrow ")
+          .replace(/⇒/g, "\\Rightarrow ")
+          .replace(/⇔/g, "\\iff ")
+          .replace(/∀/g, "\\forall ")
+          .replace(/∃/g, "\\exists ");
+        return m.trim();
+      };
+
       // Render Block Math
       str = str.replace(/@@@TANKA_BLOCK_(\d+)@@@/g, (_, idxStr) => {
         const idx = Number(idxStr);
         const rawMath = blockMathList[idx] || "";
         try {
-          const cleanMath = healControlCharsToLatex(rawMath)
-            .replace(/±/g, "\\pm ")
-            .replace(/≤/g, "\\le ")
-            .replace(/≥/g, "\\ge ")
-            .replace(/≠/g, "\\neq ")
-            .trim();
+          const cleanMath = cleanMathStr(rawMath);
           const rendered = katex.renderToString(cleanMath, { displayMode: true, throwOnError: false });
           return `<div class="katex-block-wrapper" style="margin: 10px 0; overflow-x: auto; text-align: center;">${rendered}</div>`;
         } catch {
@@ -183,12 +209,7 @@ export const MathView = React.memo(function MathView({ text, style, className }:
         const idx = Number(idxStr);
         const rawMath = inlineMathList[idx] || "";
         try {
-          const cleanMath = healControlCharsToLatex(rawMath)
-            .replace(/±/g, "\\pm ")
-            .replace(/≤/g, "\\le ")
-            .replace(/≥/g, "\\ge ")
-            .replace(/≠/g, "\\neq ")
-            .trim();
+          const cleanMath = cleanMathStr(rawMath);
           return katex.renderToString(cleanMath, { displayMode: false, throwOnError: false });
         } catch {
           return `$${rawMath}$`;
@@ -202,6 +223,13 @@ export const MathView = React.memo(function MathView({ text, style, className }:
       return text;
     }
   }, [text]);
+
+  if (!text) return null;
+
+  // No math tokens (or memo short-circuit) → render plain text, no dangerouslySetInnerHTML
+  if (renderedHTML === null) {
+    return <span className={className} style={style}>{text}</span>;
+  }
 
   return (
     <span

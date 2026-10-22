@@ -47,7 +47,7 @@ function TabFallbackSkeleton() {
 import { useAppRoute } from "./hooks/useAppRoute";
 import { useAuth } from "./hooks/useAuth";
 import { useDocuments } from "./hooks/useDocuments";
-import { useQuiz } from "./hooks/useQuiz";
+import { useQuiz, isQuizAnswerCorrect } from "./hooks/useQuiz";
 import { useMistakes } from "./hooks/useMistakes";
 import { useStudyTimer } from "./hooks/useStudyTimer";
 import { useAudioSpeech } from "./hooks/useAudioSpeech";
@@ -332,6 +332,8 @@ export default function App() {
     handleSendQuizQuestionChat,
     handleGenerateQuiz,
     handleSelectQuizOption,
+    handleSubmitMultipleAnswer,
+    handleSelectMatrixAnswer,
     handlePrevQuizQuestion,
     handleNextQuizQuestion,
     toggleFlagQuestion,
@@ -515,6 +517,7 @@ export default function App() {
     setStagedCustomInstruction,
     isUploading,
     uploadError,
+    uploadStatus,
     isDragging,
     setIsDragging,
     handleStageFiles,
@@ -600,7 +603,7 @@ export default function App() {
     if (isQuizCompleted && quizQuestions.length > 0) {
       let correct = 0;
       quizQuestions.forEach((q, idx) => {
-        if (userAnswers[idx] === q.correctIndex) correct++;
+        if (isQuizAnswerCorrect(q, userAnswers[idx])) correct++;
       });
       recordActivity({
         activityType: "quiz",
@@ -1082,6 +1085,8 @@ export default function App() {
                         isGeneratingQuiz={isGeneratingQuiz}
                         handleGenerateQuiz={handleGenerateQuiz}
                         handleSelectQuizOption={handleSelectQuizOption}
+                        handleSubmitMultipleAnswer={handleSubmitMultipleAnswer}
+                        handleSelectMatrixAnswer={handleSelectMatrixAnswer}
                         handlePrevQuizQuestion={handlePrevQuizQuestion}
                         handleNextQuizQuestion={handleNextQuizQuestion}
                         handleExamSubmit={handleExamSubmit}
@@ -1291,6 +1296,7 @@ export default function App() {
           stagedFiles={stagedFiles}
           isUploading={isUploading}
           uploadError={uploadError}
+          uploadStatus={uploadStatus}
           stagedDocTitle={stagedDocTitle}
           setStagedDocTitle={setStagedDocTitle}
           stagedGoal={stagedGoal}

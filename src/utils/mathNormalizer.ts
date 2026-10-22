@@ -26,6 +26,38 @@ export function normalizeMathExpression(text: string): string {
 
   let str = healControlCharsToLatex(text).replace(/\r\n/g, "\n");
 
+  // 0. Fix double-escaped backslashes from AI JSON output:
+  //    \\\\frac -> \\frac, \\\\sqrt -> \\sqrt, etc.
+  //    Only inside math delimiters ($...$, $$...$$) or before known LaTeX commands
+  str = str.replace(/\\\\(frac|sqrt|sum|prod|int|log|ln|sin|cos|tan|cot|sec|csc|text|mathrm|mathbf|mathit|mathcal|mathbb|operatorname|left|right|begin|end|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|subset|supset|infty|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|to|rightarrow|leftarrow|iff|implies|forall|exists|nabla|partial|lim|max|min|sup|inf|binom|choose|overline|underline|hat|bar|vec|dot|ddot|tilde|widehat|widetilde|not|in|notin|cup|cap|vee|wedge|oplus|otimes|vert|lvert|rvert|lVert|rVert|quad|qquad|hspace|vspace|displaystyle|textstyle|boxed|cancel|bcancel|xcancel|overset|underset|stackrel)\b/g, "\\$1");
+
+  // Escape bare $ yang benar-benar mata uang. JANGAN escape kalau di baris itu ada pasangan $
+  // yang isinya rumus — dulu "$4, 7, 10, \dots$" ikut di-escape jadi "\$4, ... \$" dan
+  // tampil sebagai teks mentah ber-backslash.
+  const looksLikeMathSpan = (s: string): boolean => {
+    const withoutCommands = s.replace(/\\[a-zA-Z]+/g, ""); // \dots, \quad, \frac bukan prosa
+    return !/[A-Za-z]{4,}/.test(withoutCommands) && (/\\/.test(s) || /[=^_{}()+\-*/]/.test(s) || /^\s*[\d\s,.]+\s*$/.test(s));
+  };
+  str = str
+    .split("\n")
+    .map((line) => {
+      if (line.includes("$$")) return line; // display math, jangan disentuh
+      const dollars = (line.match(/(?<!\\)\$/g) || []).length;
+      if (dollars >= 2 && dollars % 2 === 0) {
+        const spans: string[] = [];
+        line.replace(/(?<!\\)\$([^$\n]*)(?<!\\)\$/g, (_, inner) => {
+          spans.push(inner);
+          return "";
+        });
+        if (spans.length > 0 && spans.every(looksLikeMathSpan)) return line;
+      }
+      return line.replace(
+        /\$(\d[\d,.]*(?:\s*(?:juta|ribu|miliar|rb|jt|M|K|B|triliun|billion|million|thousand))?)\b(?!\$)/g,
+        (_, num) => `\\$${num}`
+      );
+    })
+    .join("\n");
+
   // 1. Convert display math \[ ... \] to $$\n...\n$$
   str = str.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => {
     return `$$\n${math.trim()}\n$$`;

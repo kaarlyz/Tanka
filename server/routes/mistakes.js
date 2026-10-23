@@ -1,7 +1,9 @@
 const { db } = require("../db");
+const { getSessionUser } = require("./auth");
 
-async function handleMistakesRoutes(req, res, pathname, helpers) {
-  const { sendJSON, getBody, getUserId } = helpers;
+async function handleMistakesRoutes(req, res, pathname, helpers = {}) {
+  const { sendJSON, getBody, getUserId, getSessionUser: helperGetSessionUser } = helpers;
+  const resolveUser = () => (helperGetSessionUser ? helperGetSessionUser(req) : getSessionUser(req, db));
 
   // 1. POST /api/mistakes/record - record or update a mistake
   if (req.method === "POST" && pathname === "/api/mistakes/record") {
@@ -75,6 +77,16 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
   // 3. POST /api/mistakes/:id/resolve - mark a mistake as resolved
   if (req.method === "POST" && pathname.startsWith("/api/mistakes/") && pathname.endsWith("/resolve")) {
     const mistakeId = pathname.split("/")[3];
+    const sessionUser = resolveUser();
+    const mistake = db.prepare("SELECT * FROM mistake_notebook WHERE id = ?").get(mistakeId);
+    if (!mistake) return sendJSON(res, { error: "Catatan kesalahan tidak ditemukan" }, 404);
+
+    if (mistake.user_id && mistake.user_id !== "anon") {
+      if (!sessionUser || sessionUser.id !== mistake.user_id) {
+        return sendJSON(res, { error: "Akses ditolak. Tidak diizinkan mengubah catatan pengguna lain." }, 403);
+      }
+    }
+
     db.prepare("UPDATE mistake_notebook SET resolved = 1, updated_at = ? WHERE id = ?").run(Date.now(), mistakeId);
     return sendJSON(res, { success: true, id: mistakeId, resolved: true });
   }
@@ -82,6 +94,16 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
   // 4. DELETE /api/mistakes/:id - delete a single mistake
   if (req.method === "DELETE" && pathname.startsWith("/api/mistakes/") && pathname.split("/").length === 4) {
     const mistakeId = pathname.split("/")[3];
+    const sessionUser = resolveUser();
+    const mistake = db.prepare("SELECT * FROM mistake_notebook WHERE id = ?").get(mistakeId);
+    if (!mistake) return sendJSON(res, { error: "Catatan kesalahan tidak ditemukan" }, 404);
+
+    if (mistake.user_id && mistake.user_id !== "anon") {
+      if (!sessionUser || sessionUser.id !== mistake.user_id) {
+        return sendJSON(res, { error: "Akses ditolak. Tidak diizinkan menghapus catatan pengguna lain." }, 403);
+      }
+    }
+
     db.prepare("DELETE FROM mistake_notebook WHERE id = ?").run(mistakeId);
     return sendJSON(res, { success: true, id: mistakeId });
   }
@@ -90,11 +112,23 @@ async function handleMistakesRoutes(req, res, pathname, helpers) {
   if ((req.method === "POST" && pathname === "/api/mistakes/clear") || (req.method === "DELETE" && pathname === "/api/mistakes")) {
     const urlObj = new URL(req.url, "http://localhost");
     const docId = urlObj.searchParams.get("docId");
-    const userId = getUserId ? getUserId(req) : "anon";
-    if (docId) {
-      db.prepare("DELETE FROM mistake_notebook WHERE doc_id = ? AND (user_id = ? OR user_id IS NULL)").run(docId, userId);
+    const sessionUser = resolveUser();
+    let targetUserId = "anon";
+
+    if (sessionUser) {
+      targetUserId = sessionUser.id;
     } else {
-      db.prepare("DELETE FROM mistake_notebook WHERE (user_id = ? OR user_id IS NULL)").run(userId);
+      const candidateId = getUserId ? getUserId(req) : (urlObj.searchParams.get("userId") || "anon");
+      if (candidateId.startsWith("usr_") || candidateId.startsWith("guest_")) {
+        return sendJSON(res, { error: "Autentikasi diperlukan untuk menghapus catatan akun ini." }, 401);
+      }
+      targetUserId = candidateId;
+    }
+
+    if (docId) {
+      db.prepare("DELETE FROM mistake_notebook WHERE doc_id = ? AND (user_id = ? OR user_id IS NULL)").run(docId, targetUserId);
+    } else {
+      db.prepare("DELETE FROM mistake_notebook WHERE (user_id = ? OR user_id IS NULL)").run(targetUserId);
     }
     return sendJSON(res, { success: true });
   }

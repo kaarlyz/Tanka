@@ -4,6 +4,8 @@ const { db, runMigrations } = require("../server/db");
 const { handleAuthRoutes, createSessionToken } = require("../server/routes/auth");
 const { handleUsersRoutes } = require("../server/routes/users");
 const { handleDocumentsRoutes } = require("../server/routes/documents");
+const { handleMistakesRoutes } = require("../server/routes/mistakes");
+const { handleChatRoutes } = require("../server/routes/chat");
 
 function createMock(method, path, body = {}, headers = {}) {
   let status = 200;
@@ -143,4 +145,49 @@ test("Security: DELETE /api/documents bulk delete dinonaktifkan (403)", async ()
 
   assert.equal(res.status, 403);
   assert.match(res.data.error, /dinonaktifkan/i);
+});
+
+test("Security: DELETE /api/mistakes/:id milik user lain ditolak 403", async () => {
+  runMigrations(db);
+
+  const victimId = `usr_vic_mst_${Date.now()}`;
+  const attackerId = `usr_att_mst_${Date.now()}`;
+  const mistakeId = `mst_target_${Date.now()}`;
+
+  db.prepare("INSERT INTO users (id, username, password_hash, name, created_at) VALUES (?, ?, ?, ?, ?)").run(
+    victimId, `vicmst_${Date.now()}`, "h", "Victim", Date.now()
+  );
+  db.prepare("INSERT INTO users (id, username, password_hash, name, created_at) VALUES (?, ?, ?, ?, ?)").run(
+    attackerId, `attmst_${Date.now()}`, "h", "Attacker", Date.now()
+  );
+
+  db.prepare(`
+    INSERT INTO mistake_notebook (id, user_id, doc_id, question, options, correct_index, user_answer_index, created_at, updated_at)
+    VALUES (?, ?, 'doc_1', 'Soal 1', '["A","B"]', 0, 1, ?, ?)
+  `).run(mistakeId, victimId, Date.now(), Date.now());
+
+  const { token: attackerToken } = createSessionToken(attackerId);
+
+  // Attacker coba hapus mistake victim
+  const mock = createMock("DELETE", `/api/mistakes/${mistakeId}`, {}, { authorization: `Bearer ${attackerToken}` });
+  await handleMistakesRoutes(mock.req, mock.res, `/api/mistakes/${mistakeId}`, mock.helpers);
+  assert.equal(mock.getResult().status, 403);
+
+  // Attacker coba resolve mistake victim
+  const mockResolve = createMock("POST", `/api/mistakes/${mistakeId}/resolve`, {}, { authorization: `Bearer ${attackerToken}` });
+  await handleMistakesRoutes(mockResolve.req, mockResolve.res, `/api/mistakes/${mistakeId}/resolve`, mockResolve.helpers);
+  assert.equal(mockResolve.getResult().status, 403);
+
+  // Pastikan record di DB masih ada dan unresolved
+  const row = db.prepare("SELECT resolved FROM mistake_notebook WHERE id = ?").get(mistakeId);
+  assert.equal(row.resolved, 0);
+});
+
+test("Security: DELETE /api/documents/:id/chat dengan userId target tanpa token ditolak 401", async () => {
+  runMigrations(db);
+
+  const victimId = `usr_vic_chat_${Date.now()}`;
+  const mock = createMock("DELETE", `/api/documents/global/chat?userId=${victimId}`);
+  await handleChatRoutes(mock.req, mock.res, `/api/documents/global/chat`, mock.helpers);
+  assert.equal(mock.getResult().status, 401);
 });

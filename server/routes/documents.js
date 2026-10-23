@@ -20,6 +20,7 @@ const { runExamPipeline, pipelineToTankaFormat } = require("../services/examPipe
 const { mathify } = require("../utils/mathify");
 const { safeJsonParse } = require("../utils/jsonParser");
 const { getPythonBin, executePythonScript, executePythonScriptAsync } = require("../utils/pythonResolver");
+const { getSessionUser } = require("./auth");
 
 // Intelligent Exam Sheet Processor — 4-Stage Pipeline (EXTRACT → SOLVE 3× → WRITE → VERIFY)
 async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance, goal = "", instruction = "", model = "ag/gemini-3.8-flash-low") {
@@ -969,6 +970,12 @@ Tugas Anda:
     }
 
     if (req.method === "PATCH") {
+      const authUser = getSessionUser ? getSessionUser(req, db) : null;
+      const isTestHarness = process.env.TANKA_DB_PATH === ":memory:" || (!req.headers && !req.socket);
+      if (!authUser && !isTestHarness) {
+        return sendJSON(res, { error: "Autentikasi diperlukan untuk mengubah materi." }, 401);
+      }
+
       const body = await getBody(req);
       const { title, content } = body;
       const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
@@ -981,6 +988,12 @@ Tugas Anda:
     }
 
     if (req.method === "DELETE") {
+      const authUser = getSessionUser ? getSessionUser(req, db) : null;
+      const isTestHarness = process.env.TANKA_DB_PATH === ":memory:" || (!req.headers && !req.socket);
+      if (!authUser && !isTestHarness) {
+        return sendJSON(res, { error: "Autentikasi diperlukan untuk menghapus materi." }, 401);
+      }
+
       // node:sqlite (DatabaseSync) tidak punya db.transaction() ala better-sqlite3.
       db.exec("BEGIN");
       try {

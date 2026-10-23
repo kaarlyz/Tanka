@@ -2,7 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const { db } = require("../db");
 const { callRouter, extractTextWithAIVision } = require("../ai");
-const { executePythonScript, executePythonScriptAsync } = require("../utils/pythonResolver");
+const { getPythonBin, executePythonScript, executePythonScriptAsync } = require("../utils/pythonResolver");
+const { getSessionUser } = require("./auth");
 
 function buildCleanChatContext(history = [], maxPairs = 10, maxTotalChars = 12000) {
   if (!Array.isArray(history) || history.length === 0) return [];
@@ -217,11 +218,24 @@ ${documentSection}`;
   // 3. DELETE /api/documents/:id/chat - clear chat history
   if (chatHistMatch && req.method === "DELETE") {
     const docId = chatHistMatch[1];
-    const userId = getUserId ? getUserId(req) : "anon";
-    if (docId === "global") {
-      db.prepare("DELETE FROM chat_messages WHERE (doc_id = 'global' OR doc_id IS NULL OR doc_id = '') AND (user_id = ? OR user_id IS NULL)").run(userId);
+    const sessionUser = getSessionUser ? getSessionUser(req, db) : null;
+    let targetUserId = "anon";
+
+    if (sessionUser) {
+      targetUserId = sessionUser.id;
     } else {
-      db.prepare("DELETE FROM chat_messages WHERE doc_id = ? AND (user_id = ? OR user_id IS NULL)").run(docId, userId);
+      const urlObj = new URL(req.url, "http://localhost");
+      const candidateId = getUserId ? getUserId(req) : (urlObj.searchParams.get("userId") || "anon");
+      if (candidateId.startsWith("usr_") || candidateId.startsWith("guest_")) {
+        return sendJSON(res, { error: "Autentikasi diperlukan untuk menghapus riwayat obrolan akun ini." }, 401);
+      }
+      targetUserId = candidateId;
+    }
+
+    if (docId === "global") {
+      db.prepare("DELETE FROM chat_messages WHERE (doc_id = 'global' OR doc_id IS NULL OR doc_id = '') AND (user_id = ? OR user_id IS NULL)").run(targetUserId);
+    } else {
+      db.prepare("DELETE FROM chat_messages WHERE doc_id = ? AND (user_id = ? OR user_id IS NULL)").run(docId, targetUserId);
     }
     return sendJSON(res, { success: true });
   }

@@ -176,7 +176,15 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     if (e && e.stopPropagation) e.stopPropagation();
     if (!confirm("Hapus materi ini beserta kartu dan riwayat obrolannya?")) return;
     try {
-      await fetch(`/api/documents/${id}`, { method: "DELETE" });
+      const token = typeof window !== "undefined" ? localStorage.getItem("tanka_session_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`/api/documents/${id}`, { method: "DELETE", headers });
+      const data = await res.json();
+      if (!res.ok) {
+        showNotice(data.error || "Gagal menghapus dokumen");
+        return;
+      }
       showNotice("Materi dan seluruh catatan terkait berhasil dihapus");
       if (activeDocId === id) {
         if (typeof window !== "undefined") {

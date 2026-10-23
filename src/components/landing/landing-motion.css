@@ -28,6 +28,14 @@
 /* motion graphic hero */
 .lm-hero-graphic { width: 100%; height: auto; max-height: 480px; display: block; filter: drop-shadow(0 24px 40px rgba(24, 34, 31, 0.08)); margin: 0 auto; }
 
+/* arus garis berdenyut mengalir kontinu */
+.lm-flow-dash {
+  animation: lmFlowPulse 1.2s linear infinite;
+}
+@keyframes lmFlowPulse {
+  to { stroke-dashoffset: -18; }
+}
+
 /* butiran kertas halus */
 .lm-grain {
   position: sticky; top: 0; height: 100vh; margin-bottom: -100vh; pointer-events: none; z-index: 2; opacity: 0.05; mix-blend-mode: multiply;

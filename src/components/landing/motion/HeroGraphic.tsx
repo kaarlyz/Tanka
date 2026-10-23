@@ -17,7 +17,12 @@ const OUT_PATHS = [
   "M314 210 C 350 210, 345 320, 392 320"
 ];
 
-/** Motion graphic hero: materi mentah masuk, Nara mengolah, bab rapi keluar. */
+/** 
+ * Motion graphic hero: alur data materi mentah (PDF/Video/Slide) masuk ke Nara,
+ * diproses secara cerdas, lalu keluar menjadi modul bab ringkas 3 menit.
+ * Menggunakan whileInView (once: false) agar animasi memicu ulang secara anggun
+ * setiap kali pengguna scroll masuk dan kembali ke seksi ini.
+ */
 export function HeroGraphic() {
   const reduce = useReducedMotion();
 
@@ -28,35 +33,55 @@ export function HeroGraphic() {
       role="img"
       aria-label="Materi PDF, video, dan slide diolah Nara menjadi bab-bab pendek"
     >
-      {/* jalur */}
+      {/* 1. Jalur dasar yang terlukis saat scroll in-view */}
       {[...IN_PATHS, ...OUT_PATHS].map((d, i) => (
         <motion.path
-          key={d}
+          key={`base-${d}`}
           d={d}
           fill="none"
-          stroke={i < 3 ? "#8da868" : OLIVE}
+          stroke={i < 3 ? "#b0c49b" : "#658245"}
           strokeWidth={2}
           strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.1, ease: EASE, delay: 0.9 + (i % 3) * 0.12 + (i >= 3 ? 0.5 : 0) }}
+          initial={{ pathLength: 0, opacity: 0.3 }}
+          whileInView={{ pathLength: 1, opacity: 1 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{
+            duration: 0.85,
+            ease: EASE,
+            delay: i < 3 ? 0.25 + (i % 3) * 0.1 : 0.75 + (i % 3) * 0.1
+          }}
         />
       ))}
 
-      {/* titik data yang mengalir */}
+      {/* 2. Jalur arus data putus-putus elektrik yang mengalir tanpa henti */}
       {!reduce &&
         [...IN_PATHS, ...OUT_PATHS].map((d, i) => (
-          <circle key={`dot-${d}`} r={3.5} fill={LIME} stroke={INK} strokeWidth={1}>
+          <path
+            key={`flow-${d}`}
+            d={d}
+            fill="none"
+            stroke={i < 3 ? LIME : "#a3e635"}
+            strokeWidth={1.8}
+            strokeDasharray="6 8"
+            className="lm-flow-dash"
+            opacity={0.85}
+          />
+        ))}
+
+      {/* 3. Titik partikel data kinetik berdenyut */}
+      {!reduce &&
+        [...IN_PATHS, ...OUT_PATHS].map((d, i) => (
+          <circle key={`dot-${d}`} r={3.8} fill={LIME} stroke={INK} strokeWidth={1}>
             <animateMotion
-              dur={`${2.6 + (i % 3) * 0.4}s`}
-              begin={`${2.2 + i * 0.35}s`}
+              dur={`${2.2 + (i % 3) * 0.35}s`}
+              begin={`${0.5 + i * 0.3}s`}
               repeatCount="indefinite"
               path={d}
             />
           </circle>
         ))}
 
-      {/* materi mentah: PDF, video, slide */}
+      {/* 4. Materi mentah: PDF, video, slide (masuk dari kiri saat scroll) */}
       {[
         { y: 60, rot: -4, kind: "pdf" },
         { y: 165, rot: 3, kind: "video" },
@@ -64,13 +89,14 @@ export function HeroGraphic() {
       ].map((s, i) => (
         <motion.g
           key={s.kind}
-          initial={{ opacity: 0, x: -24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: EASE, delay: 0.15 + i * 0.12 }}
+          initial={{ opacity: 0, x: -32 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.65, ease: EASE, delay: 0.08 + i * 0.1 }}
         >
           <motion.g
-            animate={reduce ? undefined : { y: [0, -7, 0], rotate: [s.rot, s.rot + 2, s.rot] }}
-            transition={{ duration: 5 + i, repeat: Infinity, ease: "easeInOut" }}
+            animate={reduce ? undefined : { y: [0, -6, 0], rotate: [s.rot, s.rot + 2, s.rot] }}
+            transition={{ duration: 4.5 + i, repeat: Infinity, ease: "easeInOut" }}
           >
             <rect x={20} y={s.y} width={150} height={90} rx={10} fill="#fff" stroke={SAGE} strokeWidth={1.5} />
             {s.kind === "pdf" && (
@@ -102,11 +128,12 @@ export function HeroGraphic() {
         </motion.g>
       ))}
 
-      {/* Nara */}
+      {/* 5. Inti Pemrosesan Nara (muncul dan berdenyut di tengah saat scroll) */}
       <motion.g
-        initial={{ scale: 0.4, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 140, damping: 14, delay: 0.7 }}
+        initial={{ scale: 0.35, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 1 }}
+        viewport={{ once: false, amount: 0.2 }}
+        transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.4 }}
         style={{ originX: "280px", originY: "210px" }}
       >
         {!reduce &&
@@ -118,9 +145,9 @@ export function HeroGraphic() {
               fill="none"
               stroke={LIME}
               strokeWidth={2}
-              initial={{ r: 34, opacity: 0.7 }}
-              animate={{ r: 70, opacity: 0 }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut", delay: 2 + n * 1.4 }}
+              initial={{ r: 34, opacity: 0.8 }}
+              animate={{ r: [34, 72], opacity: [0.8, 0] }}
+              transition={{ duration: 2.6, repeat: Infinity, ease: "easeOut", delay: n * 1.3 }}
             />
           ))}
         <motion.circle
@@ -132,17 +159,23 @@ export function HeroGraphic() {
           strokeWidth={1.2}
           strokeDasharray="3 7"
           animate={reduce ? undefined : { rotate: 360 }}
-          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
           style={{ originX: "280px", originY: "210px" }}
         />
-        <circle cx={280} cy={210} r={34} fill={INK} stroke={LIME} strokeWidth={2.5} />
-        <path
-          d="M280 192 L285 205 L298 210 L285 215 L280 228 L275 215 L262 210 L275 205 Z"
-          fill={LIME}
-        />
+        <motion.g
+          animate={reduce ? undefined : { scale: [1, 1.05, 1] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          style={{ originX: "280px", originY: "210px" }}
+        >
+          <circle cx={280} cy={210} r={34} fill={INK} stroke={LIME} strokeWidth={2.5} />
+          <path
+            d="M280 192 L285 205 L298 210 L285 215 L280 228 L275 215 L262 210 L275 205 Z"
+            fill={LIME}
+          />
+        </motion.g>
       </motion.g>
 
-      {/* bab rapi */}
+      {/* 6. Modul Bab Rapi Siap Santap (meluncur dari kanan saat scroll) */}
       {[
         { y: 55, t: "Bab 1", m: "2 mnt" },
         { y: 165, t: "Bab 2", m: "3 mnt" },
@@ -150,9 +183,10 @@ export function HeroGraphic() {
       ].map((c, i) => (
         <motion.g
           key={c.t}
-          initial={{ opacity: 0, x: -18 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: EASE, delay: 1.9 + i * 0.18 }}
+          initial={{ opacity: 0, x: 32 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.65, ease: EASE, delay: 0.75 + i * 0.12 }}
         >
           <rect x={392} y={c.y} width={150} height={90} rx={10} fill="#fff" stroke={INK} strokeWidth={1.5} />
           <rect x={406} y={c.y + 14} width={46} height={16} rx={8} fill={LIME} />
@@ -171,8 +205,9 @@ export function HeroGraphic() {
             rx={2.5}
             fill={OLIVE}
             initial={{ scaleX: 0 }}
-            animate={{ scaleX: [0, 1 - i * 0.28] }}
-            transition={{ duration: 1.3, ease: EASE, delay: 2.5 + i * 0.2 }}
+            whileInView={{ scaleX: [0, 1 - i * 0.28] }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 1.1, ease: EASE, delay: 1.05 + i * 0.15 }}
             style={{ originX: 0, originY: 0.5 }}
           />
         </motion.g>

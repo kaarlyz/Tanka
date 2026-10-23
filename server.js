@@ -15,7 +15,7 @@ const { handleCheatsheetRoutes } = require("./server/routes/cheatsheet");
 const { handleChatRoutes } = require("./server/routes/chat");
 const { handleTopicsRoutes } = require("./server/routes/topics");
 const { handleExamResultsRoutes } = require("./server/routes/examResults");
-const { handleAuthRoutes } = require("./server/routes/auth");
+const { handleAuthRoutes, getSessionUser } = require("./server/routes/auth");
 const { handleUsersRoutes } = require("./server/routes/users");
 const { handleRoomsRoutes } = require("./server/routes/rooms");
 
@@ -107,7 +107,12 @@ function getBody(req, res) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const helpers = { sendJSON, getBody: (r) => getBody(r || req, res), getUserId };
+  const helpers = {
+    sendJSON,
+    getBody: (r) => getBody(r || req, res),
+    getUserId,
+    getSessionUser: (r) => getSessionUser(r || req)
+  };
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     res.writeHead(204, {

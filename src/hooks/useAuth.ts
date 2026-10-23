@@ -223,9 +223,12 @@ export function useAuth(showNotice: (msg: string) => void) {
   const updateProfile = useCallback(async (fields: Partial<UserAccount>) => {
     if (!currentUser?.id) return false;
     try {
+      const token = localStorage.getItem(SESSION_TOKEN_KEY);
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch("/api/users/profile", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ id: currentUser.id, ...fields })
       });
       const data = await res.json();
@@ -253,9 +256,12 @@ export function useAuth(showNotice: (msg: string) => void) {
   }) => {
     if (!currentUser?.id) return;
     try {
+      const token = localStorage.getItem(SESSION_TOKEN_KEY);
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch("/api/users/activity", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           userId: currentUser.id,
           ...activity

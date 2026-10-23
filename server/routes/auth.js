@@ -535,10 +535,37 @@ async function handleAuthRoutes(req, res, pathname, { sendJSON, getBody }) {
   return false;
 }
 
+function getSessionUser(req, dbInstance = db) {
+  if (!req) return null;
+  const headers = req.headers || {};
+  const authHeader = headers["authorization"] || headers["Authorization"] || "";
+  let token = "";
+  if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
+    token = authHeader.slice(7).trim();
+  }
+  if (!token && req.url) {
+    try {
+      const parsedUrl = new URL(req.url, "http://localhost");
+      token = parsedUrl.searchParams.get("token") || "";
+    } catch {}
+  }
+  if (!token) return null;
+
+  try {
+    const session = dbInstance.prepare("SELECT * FROM user_sessions WHERE token = ? AND expires_at > ?").get(token, Date.now());
+    if (!session) return null;
+    return dbInstance.prepare("SELECT * FROM users WHERE id = ?").get(session.user_id) || null;
+  } catch (err) {
+    console.error("[getSessionUser] error:", err);
+    return null;
+  }
+}
+
 module.exports = {
   handleAuthRoutes,
   createSessionToken,
   hashPassword,
   normalizePhone,
-  formatSafeUser
+  formatSafeUser,
+  getSessionUser
 };

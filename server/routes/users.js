@@ -1,4 +1,5 @@
 const { db } = require("../db");
+const { getSessionUser } = require("./auth");
 
 function getTodayStr() {
   const d = new Date();
@@ -12,7 +13,9 @@ function getDayOfWeekIndex() {
   return (day + 6) % 7;
 }
 
-async function handleUsersRoutes(req, res, pathname, { sendJSON, getBody }) {
+async function handleUsersRoutes(req, res, pathname, helpers = {}) {
+  const { sendJSON, getBody, getSessionUser: helperGetSessionUser } = helpers;
+  const resolveUser = () => (helperGetSessionUser ? helperGetSessionUser(req) : getSessionUser(req, db));
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
 
   // 1. GET /api/users/profile - Get profile by id or username
@@ -80,13 +83,18 @@ async function handleUsersRoutes(req, res, pathname, { sendJSON, getBody }) {
   // 2. PATCH /api/users/profile - Update profile details & weekly target
   if (pathname === "/api/users/profile" && req.method === "PATCH") {
     try {
-      const body = await getBody(req);
-      const id = body.id;
-      if (!id) {
-        return sendJSON(res, { error: "ID pengguna diperlukan" }, 400);
+      const authUser = resolveUser();
+      if (!authUser) {
+        return sendJSON(res, { error: "Autentikasi diperlukan. Sesi tidak valid atau telah berakhir." }, 401);
       }
 
-      const existing = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
+      const body = await getBody(req);
+      const targetId = body.id || authUser.id;
+      if (targetId !== authUser.id) {
+        return sendJSON(res, { error: "Akses ditolak. Tidak diizinkan memperbarui profil pengguna lain." }, 403);
+      }
+
+      const existing = db.prepare("SELECT * FROM users WHERE id = ?").get(authUser.id);
       if (!existing) {
         return sendJSON(res, { error: "Pengguna tidak ditemukan" }, 404);
       }
@@ -101,9 +109,9 @@ async function handleUsersRoutes(req, res, pathname, { sendJSON, getBody }) {
         UPDATE users 
         SET name = ?, bio = ?, school_class = ?, avatar_color = ?, target_weekly_days = ?
         WHERE id = ?
-      `).run(name, bio, schoolClass, avatarColor, targetWeeklyDays, id);
+      `).run(name, bio, schoolClass, avatarColor, targetWeeklyDays, authUser.id);
 
-      const updated = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
+      const updated = db.prepare("SELECT * FROM users WHERE id = ?").get(authUser.id);
       let activeDays = [];
       try { activeDays = JSON.parse(updated.active_days_json || "[]"); } catch {}
 
@@ -136,13 +144,18 @@ async function handleUsersRoutes(req, res, pathname, { sendJSON, getBody }) {
   // 3. POST /api/users/activity - Record study activity (pomodoro, reading, quiz)
   if (pathname === "/api/users/activity" && req.method === "POST") {
     try {
-      const body = await getBody(req);
-      const userId = body.userId;
-      if (!userId) {
-        return sendJSON(res, { error: "ID pengguna diperlukan" }, 400);
+      const authUser = resolveUser();
+      if (!authUser) {
+        return sendJSON(res, { error: "Autentikasi diperlukan. Sesi tidak valid atau telah berakhir." }, 401);
       }
 
-      const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
+      const body = await getBody(req);
+      const userId = body.userId || authUser.id;
+      if (userId !== authUser.id) {
+        return sendJSON(res, { error: "Akses ditolak. Tidak diizinkan memperbarui aktivitas pengguna lain." }, 403);
+      }
+
+      const user = db.prepare("SELECT * FROM users WHERE id = ?").get(authUser.id);
       if (!user) {
         return sendJSON(res, { error: "Pengguna tidak ditemukan" }, 404);
       }

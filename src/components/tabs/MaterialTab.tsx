@@ -1330,7 +1330,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                         )}
 
                         {/* Chapter Reader Canvas (Full Edge-to-Edge on Mobile, Elegant Book on Desktop) */}
-                        <div className="reader-chapter-card" ref={readerCardRef}>
+                        <div key={chapters[currentChapterIdx]?.id || currentChapterIdx} className="reader-chapter-card chapter-content-fade" ref={readerCardRef}>
                           {/* Chapter Heading Banner */}
                           <div style={{ maxWidth: 820, margin: "0 auto 28px auto", paddingBottom: 20, borderBottom: "1px solid #edf1eb" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>

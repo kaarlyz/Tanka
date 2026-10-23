@@ -26,6 +26,7 @@ export const ChatMessageItem = React.memo(
 
     return (
       <div
+        className="chat-bubble-enter"
         style={{
           display: "flex",
           flexDirection: "column",

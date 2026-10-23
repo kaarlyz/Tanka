@@ -967,7 +967,7 @@ export default function App() {
             <div className="content-scroll" ref={contentScrollRef} onScroll={handleContentScroll} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: "16px 20px max(112px, calc(80px + env(safe-area-inset-bottom, 0px))) 20px" }}>
               <div style={{ maxWidth: (activeTab === "material" || activeTab === "summary") ? 1440 : 1080, margin: "0 auto", width: "100%" }}>
                 {isTabMounted("home") && (
-                  <div key="tab-pane-home" style={{ display: activeTab === "home" ? "block" : "none" }}>
+                  <div key="tab-pane-home" className={`tab-pane-container ${activeTab === "home" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <HomeHubTab
                       activeTab={activeTab}
                       setActiveTab={setActiveTab}
@@ -1003,7 +1003,7 @@ export default function App() {
                 )}
 
                 {isTabMounted("material") && (
-                  <div key="tab-pane-material" style={{ display: activeTab === "material" ? "block" : "none" }}>
+                  <div key="tab-pane-material" className={`tab-pane-container ${activeTab === "material" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <Suspense fallback={<TabFallbackSkeleton />}>
                       <MaterialTab
                         documents={documents}
@@ -1051,7 +1051,7 @@ export default function App() {
                 )}
 
                 {isTabMounted("quiz") && (
-                  <div key="tab-pane-quiz" style={{ display: activeTab === "quiz" ? "block" : "none" }}>
+                  <div key="tab-pane-quiz" className={`tab-pane-container ${activeTab === "quiz" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <Suspense fallback={<TabFallbackSkeleton />}>
                       <QuizTab
                         quizQuestions={quizQuestions}
@@ -1121,7 +1121,7 @@ export default function App() {
                 )}
 
                 {isTabMounted("mistakes") && (
-                  <div key="tab-pane-mistakes" style={{ display: activeTab === "mistakes" ? "block" : "none" }}>
+                  <div key="tab-pane-mistakes" className={`tab-pane-container ${activeTab === "mistakes" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <Suspense fallback={<TabFallbackSkeleton />}>
                       <MistakesTab
                         mistakes={mistakes}
@@ -1146,7 +1146,7 @@ export default function App() {
                 )}
 
                 {isTabMounted("feynman") && (
-                  <div key="tab-pane-feynman" style={{ display: activeTab === "feynman" ? "block" : "none" }}>
+                  <div key="tab-pane-feynman" className={`tab-pane-container ${activeTab === "feynman" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <Suspense fallback={<TabFallbackSkeleton />}>
                       <FeynmanTab
                         feynmanTopic={feynmanTopic}
@@ -1166,7 +1166,7 @@ export default function App() {
                 )}
 
                 {isTabMounted("flashcards") && (
-                  <div key="tab-pane-flashcards" style={{ display: activeTab === "flashcards" ? "block" : "none" }}>
+                  <div key="tab-pane-flashcards" className={`tab-pane-container ${activeTab === "flashcards" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <Suspense fallback={<TabFallbackSkeleton />}>
                       <FlashcardsTab
                         flashcards={flashcards}
@@ -1183,7 +1183,7 @@ export default function App() {
                 )}
 
                 {isTabMounted("summary") && (
-                  <div key="tab-pane-summary" style={{ display: activeTab === "summary" ? "block" : "none" }}>
+                  <div key="tab-pane-summary" className={`tab-pane-container ${activeTab === "summary" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <Suspense fallback={<TabFallbackSkeleton />}>
                       <SummaryTab
                         activeDoc={activeDoc}

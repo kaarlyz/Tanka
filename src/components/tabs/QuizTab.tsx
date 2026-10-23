@@ -1310,6 +1310,8 @@ export const QuizTab = React.memo(function QuizTab({
 
                     {/* Question Card */}
                     <div
+                      key={currentQuestionIndex}
+                      className="quiz-card-enter"
                       style={{
                         backgroundColor: "#ffffff",
                         border: "1px solid #dde1da",

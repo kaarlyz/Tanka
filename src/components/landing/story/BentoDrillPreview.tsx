@@ -1,5 +1,6 @@
 import { useCallback, useState, type KeyboardEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { MathView } from "../../common/MathView";
 
 interface DemoQuestion {
   subject: string;
@@ -16,32 +17,32 @@ const QUESTIONS: readonly DemoQuestion[] = [
   {
     subject: "Matematika",
     level: "sedang",
-    stem: "Jika f(x) = 2x + 3 dan g(x) = x², maka (f∘g)(2) = …",
+    stem: "Jika $f(x) = 2x + 3$ dan $g(x) = x^2$, maka $(f \\circ g)(2) = \\dots$",
     options: ["7", "11", "49", "8"],
     correct: 1,
-    steps: "g(2) = 2² = 4, lalu f(4) = 2·4 + 3 = 11.",
-    pitfall: "Urutan komposisi sering terbalik. (g∘f)(2) memberi 49, bukan (f∘g)(2).",
-    trick: "Kerjakan dari fungsi paling dalam: g dulu, hasilnya masuk ke f."
+    steps: "$g(2) = 2^2 = 4$, lalu $f(4) = 2(4) + 3 = 11$.",
+    pitfall: "Urutan komposisi sering terbalik. $(g \\circ f)(2)$ menghasilkan $49$, bukan $(f \\circ g)(2)$.",
+    trick: "Kerjakan dari fungsi paling dalam: hitung $g(2)$ dulu, lalu masukkan hasilnya ke $f$."
   },
   {
     subject: "Ekonomi",
     level: "sedang",
-    stem: "Harga naik dari 10 ke 12 (ribu rupiah), jumlah diminta turun dari 50 ke 40. Berapa |Ed|?",
-    options: ["0,5", "1", "2", "0,2"],
+    stem: "Harga naik dari 10 ke 12 (ribu rupiah), jumlah diminta turun dari 50 ke 40. Berapa nilai $|E_d|$?",
+    options: ["0{,}5", "1", "2", "0{,}2"],
     correct: 1,
-    steps: "%ΔQ = 10/50 = 20%. %ΔP = 2/10 = 20%. |Ed| = 20/20 = 1.",
+    steps: "$\\%\\Delta Q = \\frac{10}{50} = 20\\%$. $\\%\\Delta P = \\frac{2}{10} = 20\\%$. Maka $|E_d| = \\frac{20\\%}{20\\%} = 1$.",
     pitfall: "Persentase perubahan dihitung terhadap nilai awal, bukan nilai akhir.",
-    trick: "Kedua persentase sama besar, jadi rasionya langsung 1."
+    trick: "Kedua persentase sama besar ($20\\%$), jadi rasionya langsung $1$."
   },
   {
     subject: "Matematika",
     level: "mudah",
-    stem: "Tentukan f⁻¹(x) jika f(x) = 3x − 6.",
-    options: ["(x − 6)/3", "(x + 6)/3", "3x + 6", "1/(3x − 6)"],
+    stem: "Tentukan rumus invers fungsi $f^{-1}(x)$ jika $f(x) = 3x - 6$.",
+    options: ["\\frac{x - 6}{3}", "\\frac{x + 6}{3}", "3x + 6", "\\frac{1}{3x - 6}"],
     correct: 1,
-    steps: "y = 3x − 6. Tukar x dan y: x = 3y − 6. Maka y = (x + 6)/3.",
-    pitfall: "Invers bukan sekadar membalik tanda. Tukar x dan y, lalu selesaikan untuk y.",
-    trick: "Cek cepat: f(f⁻¹(x)) harus kembali menjadi x."
+    steps: "Misalkan $y = 3x - 6$. Tukar variabel $x$ dan $y$: $x = 3y - 6 \\implies 3y = x + 6 \\implies y = \\frac{x + 6}{3}$.",
+    pitfall: "Invers bukan sekadar membalik tanda. Tukar $x$ dan $y$, lalu selesaikan untuk $y$.",
+    trick: "Uji cepat: nilai $f(f^{-1}(x))$ harus kembali menjadi $x$."
   }
 ];
 
@@ -127,7 +128,9 @@ export function BentoDrillPreview() {
                 <span>{q.subject}</span>
                 <span>{q.level}</span>
               </div>
-              <p className="bd-stem">{q.stem}</p>
+              <div className="bd-stem">
+                <MathView text={q.stem} />
+              </div>
             </div>
 
             <div className="bd-card">
@@ -137,7 +140,7 @@ export function BentoDrillPreview() {
                   return (
                     <button key={opt} className={`bd-opt${state}`} onClick={() => pick(i)} disabled={answered && i !== choice && i !== q.correct}>
                       <b>{LETTERS[i]}</b>
-                      <span>{opt}</span>
+                      <span><MathView text={opt} /></span>
                     </button>
                   );
                 })}
@@ -156,11 +159,11 @@ export function BentoDrillPreview() {
                   >
                     <div className="bd-fb-box steps">
                       <b>Langkah penyelesaian</b>
-                      <span>{q.steps}</span>
+                      <div><MathView text={q.steps} /></div>
                     </div>
                     <div className={`bd-fb-box ${right ? "trick" : "pitfall"}`}>
                       <b>{right ? "Trik cepat" : "Radar jebakan"}</b>
-                      <span>{right ? q.trick : q.pitfall}</span>
+                      <div><MathView text={right ? q.trick : q.pitfall} /></div>
                     </div>
                   </motion.div>
                 )}

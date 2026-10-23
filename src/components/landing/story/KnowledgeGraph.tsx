@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
+import { MathView } from "../../common/MathView";
 
 interface GNode {
   id: string;
@@ -11,12 +12,12 @@ interface GNode {
 }
 
 const NODES: readonly GNode[] = [
-  { id: "himpunan", label: "Himpunan", title: "Himpunan", x: 56, y: 170, def: "Kumpulan objek yang terdefinisi jelas, ditulis dengan notasi {…}." },
-  { id: "relasi", label: "Relasi", title: "Relasi", x: 186, y: 170, def: "Aturan yang memasangkan anggota himpunan A dengan anggota himpunan B." },
-  { id: "fungsi", label: "Fungsi", title: "Fungsi", x: 316, y: 170, def: "Relasi di mana setiap anggota A dipasangkan dengan tepat satu anggota B." },
-  { id: "komposisi", label: "Komposisi", title: "Fungsi Komposisi", x: 446, y: 100, def: "(f∘g)(x) = f(g(x)): hasil g(x) dipakai sebagai input f." },
-  { id: "grafik", label: "Grafik", title: "Grafik Fungsi", x: 446, y: 240, def: "Himpunan semua titik (x, f(x)) pada bidang koordinat." },
-  { id: "invers", label: "Invers", title: "Fungsi Invers", x: 576, y: 100, def: "f⁻¹ memenuhi f(f⁻¹(x)) = x. Ada jika f satu-satu dan onto." }
+  { id: "himpunan", label: "Himpunan", title: "Himpunan", x: 56, y: 170, def: "Kumpulan objek yang terdefinisi jelas, ditulis dengan notasi $\\{x \\mid P(x)\\}$." },
+  { id: "relasi", label: "Relasi", title: "Relasi", x: 186, y: 170, def: "Aturan pengaitan anggota himpunan $A$ ke himpunan $B$." },
+  { id: "fungsi", label: "Fungsi", title: "Fungsi", x: 316, y: 170, def: "Relasi khusus di mana setiap anggota $A$ dipasangkan tepat satu anggota $B$." },
+  { id: "komposisi", label: "Komposisi", title: "Fungsi Komposisi", x: 446, y: 100, def: "$(f \\circ g)(x) = f(g(x))$: nilai keluaran $g(x)$ menjadi masukan bagi fungsi $f$." },
+  { id: "grafik", label: "Grafik", title: "Grafik Fungsi", x: 446, y: 240, def: "Himpunan titik koordinat $(x, f(x))$ pada bidang Cartesius." },
+  { id: "invers", label: "Invers", title: "Fungsi Invers", x: 576, y: 100, def: "Fungsi $f^{-1}$ memenuhi $f(f^{-1}(x)) = x$. Syarat ada jika $f$ bijektif." }
 ];
 
 const EDGES: ReadonlyArray<readonly [string, string]> = [
@@ -66,7 +67,9 @@ export function KnowledgeGraph() {
         </p>
         <div className="kg-panel" role="status" aria-live="polite">
           <strong>{node.title}</strong>
-          <p>{node.def}</p>
+          <div style={{ margin: "8px 0", fontSize: 14.5, lineHeight: 1.55 }}>
+            <MathView text={node.def} />
+          </div>
           <small>{prereqNames.length > 0 ? `Prasyarat: ${prereqNames.join(" → ")}` : "Tidak ada prasyarat di peta ini."}</small>
         </div>
       </div>

@@ -327,7 +327,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
                 <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 10, background: "#eef8dc", color: "#273e1c", border: "1px solid #c7e89d", fontSize: 13 }}>
                   <strong>✓ Jawaban Tepat! +50 XP Diperoleh</strong>
                   <div style={{ fontSize: 12, marginTop: 2 }}>
-                    Irisan ($A \cap B$) adalah angka yang ada di kedua himpunan ($4$ dan $6$).
+                    <MathView text="Irisan ($A \cap B$) adalah angka yang ada di kedua himpunan ($4$ dan $6$)." />
                   </div>
                 </div>
               )}
@@ -336,7 +336,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
                 <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 10, background: "#fee2e2", color: "#991b1b", border: "1px solid #fecaca", fontSize: 13 }}>
                   <strong>⚠️ Dicatat ke Bank Salah Pribadi!</strong>
                   <div style={{ fontSize: 12, marginTop: 2 }}>
-                    {quizSelected === "A" ? "Angka 2 bukan anggota B dan angka 8 bukan anggota A." : "Itu hasil gabungan ($A \cup B$), bukan irisan ($A \cap B$)."}
+                    <MathView text={quizSelected === "A" ? "Angka 2 bukan anggota $B$ dan angka 8 bukan anggota $A$." : "Itu hasil gabungan ($A \\cup B$), bukan irisan ($A \\cap B$)."} />
                   </div>
                 </div>
               )}

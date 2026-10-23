@@ -93,8 +93,16 @@ export function ComparisonLedger() {
   const isAllFlipped = Object.values(flippedCards).filter(Boolean).length >= 3;
 
   return (
-    <section id="perbandingan" className="landing-section landing-section--dark">
-      <div className="section-header-left comparison-header-area reveal-scroll">
+    <section id="perbandingan" className="landing-section">
+      {/* Decorative grid accent */}
+      <svg className="section-accent-svg section-accent-svg--top-right" width="260" height="260" viewBox="0 0 260 260" fill="none" aria-hidden="true">
+        <circle cx="130" cy="130" r="120" stroke="#8da868" strokeWidth="1" strokeDasharray="6 8" />
+        <circle cx="130" cy="130" r="80" stroke="#2d3d34" strokeWidth="0.8" strokeDasharray="4 6" />
+        <circle cx="130" cy="130" r="40" stroke="#8da868" strokeWidth="0.6" />
+        <line x1="10" y1="130" x2="250" y2="130" stroke="#dce2da" strokeWidth="0.5" />
+        <line x1="130" y1="10" x2="130" y2="250" stroke="#dce2da" strokeWidth="0.5" />
+      </svg>
+      <div className="section-header-left comparison-header-area reveal-scroll--right">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 14 }}>
           <div>
             <span className="section-kicker">PERBANDINGAN NYATA</span>
@@ -118,7 +126,7 @@ export function ComparisonLedger() {
       </div>
 
       {/* 4-Column Responsive 3D Flashcard Grid */}
-      <div className="comparison-flashcard-grid reveal-scroll">
+      <div className="comparison-flashcard-grid reveal-scroll--scale">
         {COMPARISON_DATA.map((item, idx) => {
           const Icon = item.icon;
           const isFlipped = !!flippedCards[item.id];

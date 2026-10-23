@@ -3,15 +3,16 @@ import { MotionConfig } from "motion/react";
 import "./landing.css";
 import "./landing-motion.css";
 import "./landing-story.css";
+import "./landing-redesign.css";
 import { UserAccount } from "../../types";
 import { useSmoothScroll } from "./motion/useSmoothScroll";
 import { ScrollProgress } from "./motion/MotionKit";
-import { HeroScene, LearningStory } from "./story/LearningScene";
+import { HeroStage } from "./story/HeroStage";
+import { LearningStory } from "./story/LearningScene";
 import { FormulaBreakdown } from "./story/FormulaBreakdown";
 import { KnowledgeGraph } from "./story/KnowledgeGraph";
 import { BentoDrillPreview } from "./story/BentoDrillPreview";
 import { LandingNavbar } from "./LandingNavbar";
-import { HeroSection } from "./HeroSection";
 import { HeroWorkspacePreview } from "./HeroWorkspacePreview";
 import { MarqueeTicker } from "./MarqueeTicker";
 import { StudioCockpit } from "./StudioCockpit";
@@ -51,8 +52,12 @@ export function LandingPage({
     const container = containerRef.current;
     if (!container) return;
 
+    const targets = container.querySelectorAll(
+      ".reveal-scroll, .reveal-scroll--left, .reveal-scroll--right, .reveal-scroll--scale"
+    );
+
     if (!("IntersectionObserver" in window)) {
-      container.querySelectorAll(".reveal-scroll").forEach((el) => {
+      targets.forEach((el) => {
         el.classList.add("is-revealed");
       });
       return;
@@ -68,13 +73,12 @@ export function LandingPage({
       },
       {
         root: null,
-        threshold: 0.05,
-        rootMargin: "0px 0px -60px 0px"
+        threshold: 0.03,
+        rootMargin: "0px 0px -40px 0px"
       }
     );
 
-    const elements = container.querySelectorAll(".reveal-scroll");
-    elements.forEach((el) => observer.observe(el));
+    targets.forEach((el) => observer.observe(el));
 
     // Handle internal anchor clicks with offset
     const handleAnchorClick = (e: MouseEvent) => {
@@ -94,7 +98,7 @@ export function LandingPage({
 
     return () => {
       container.removeEventListener("click", handleAnchorClick);
-      elements.forEach((el) => observer.unobserve(el));
+      targets.forEach((el) => observer.unobserve(el));
       observer.disconnect();
     };
   }, []);
@@ -112,8 +116,10 @@ export function LandingPage({
             onOpenAuth={onOpenAuth}
             currentUser={currentUser}
           />
-          <HeroSection onActionLaunch={handleActionLaunch} />
-          <HeroScene />
+          <HeroStage
+            container={containerRef}
+            onActionLaunch={handleActionLaunch}
+          />
           <HeroWorkspacePreview onActionLaunch={handleActionLaunch} />
           <MarqueeTicker />
           <LearningStory container={containerRef} />
@@ -123,7 +129,10 @@ export function LandingPage({
           <FormulaBreakdown />
           <ComparisonLedger />
           <PersonasSection />
-          <StepperSection onActionLaunch={handleActionLaunch} container={containerRef} />
+          <StepperSection
+            onActionLaunch={handleActionLaunch}
+            container={containerRef}
+          />
           <CtaBanner onActionLaunch={handleActionLaunch} />
           <LandingFooter onActionLaunch={handleActionLaunch} />
         </div>

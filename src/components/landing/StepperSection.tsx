@@ -51,7 +51,7 @@ export function StepperSection({ onActionLaunch, container }: StepperSectionProp
 
   return (
     <section id="alur" className="landing-section landing-section--sage">
-      <div className="section-header-left reveal-scroll">
+      <div className="section-header-left reveal-scroll--left">
         <span className="section-kicker">CARA KERJA</span>
         <h2 className="section-title">4 Langkah Menguasai Materi Apapun</h2>
         <p className="section-desc">
@@ -63,7 +63,7 @@ export function StepperSection({ onActionLaunch, container }: StepperSectionProp
       {container && <StepRail container={container} />}
 
       {/* Stepper Tabs */}
-      <div className="stepper-tabs reveal-scroll">
+      <div className="stepper-tabs reveal-scroll--scale">
         {steps.map((s, idx) => (
           <button
             key={idx}
@@ -77,7 +77,7 @@ export function StepperSection({ onActionLaunch, container }: StepperSectionProp
       </div>
 
       {/* Stepper Active Detail Card */}
-      <div className="stepper-card reveal-scroll delay-1">
+      <div className="stepper-card reveal-scroll--right">
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
             <span

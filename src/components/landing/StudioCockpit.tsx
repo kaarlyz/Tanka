@@ -39,7 +39,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
       className="landing-section"
       style={{ padding: "clamp(60px, 8vh, 100px) clamp(24px, 4.5vw, 64px)" }}
     >
-      <div className="section-header-left reveal-scroll">
+      <div className="section-header-left reveal-scroll--left">
         <span className="section-kicker">ARSITEKTUR BELAJAR TANKA</span>
         <h2 className="section-title">Bukan Sekadar Baca Materi. Ini Mesin Belajar Mandiri.</h2>
         <p className="section-desc">
@@ -48,7 +48,7 @@ export function StudioCockpit({ onActionLaunch }: StudioCockpitProps) {
       </div>
 
       {/* Floating Studio Dock Switcher (Linear / Stripe Style) */}
-      <div className="studio-dock-container reveal-scroll">
+      <div className="studio-dock-container reveal-scroll--scale">
         <div className="studio-dock">
           <button
             className={`studio-dock-btn ${studioMode === "nara" ? "active" : ""}`}

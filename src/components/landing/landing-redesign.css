@@ -1,0 +1,90 @@
+/* Impor SETELAH landing-story.css */
+.tanka-landing-container { --ink-deep: #121a17; }
+
+/* ===== HERO: panggung gelap, tipografi besar, SVG berlapis ===== */
+.hx { position: relative; background: var(--color-ink); color: #eff5ec; min-height: max(720px, calc(100vh - 64px)); overflow: hidden; isolation: isolate; padding-bottom: 130px; }
+.hx-art { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.hx-flow { stroke-dasharray: 3 15; opacity: 0; animation: hxIn 0.6s 2.6s forwards, hxFlow 1.8s linear infinite; }
+@keyframes hxIn { to { opacity: 0.9; } }
+@keyframes hxFlow { to { stroke-dashoffset: -18; } }
+.hx-inner { position: relative; z-index: 2; max-width: 1440px; margin: 0 auto; padding: clamp(40px, 8vh, 92px) clamp(20px, 4.5vw, 64px) 0; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.86fr); gap: clamp(24px, 4vw, 64px); align-items: start; }
+.hx-kicker { display: flex; align-items: center; gap: 14px; font: 700 12px 'DM Mono', monospace; letter-spacing: 0.2em; color: var(--accent-lime); margin: 0; }
+.hx-kicker::before { content: ""; width: 44px; height: 2px; background: var(--accent-lime); }
+.hx-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2.6rem, 5.1vw, 5.9rem); line-height: 0.98; letter-spacing: -0.045em; color: #fcfdfa; margin: 22px 0 26px; }
+.hx-title .hl { color: var(--accent-lime); }
+.hx-sub { color: #b5c2bc; font-size: clamp(15px, 1.25vw, 18px); line-height: 1.65; max-width: 50ch; margin: 0; }
+.hx-cta { display: flex; align-items: center; flex-wrap: wrap; gap: 22px; margin-top: 30px; }
+.hx-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 12px; border: 2px solid var(--accent-lime); background: var(--accent-lime); color: var(--color-ink); font: 700 15.5px 'Inter', sans-serif; cursor: pointer; transition: background 0.2s var(--ease-out), color 0.2s var(--ease-out); }
+.hx-btn:hover { background: transparent; color: var(--accent-lime); }
+.hx-btn:focus-visible, .hx-link:focus-visible { outline: 3px solid #fcfdfa; outline-offset: 3px; }
+.hx-link { font: 600 13px 'DM Mono', monospace; color: #eff5ec; text-decoration: underline; text-underline-offset: 6px; text-decoration-color: #4b6623; min-height: 44px; display: inline-flex; align-items: center; }
+.hx-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 0; padding: 0; }
+.hx-chips li { font: 600 12px 'DM Mono', monospace; color: var(--accent-lime); border: 1px solid #34463f; border-radius: 6px; padding: 6px 12px; background: rgba(18, 26, 23, 0.7); }
+.hx-sim { margin-top: clamp(0px, 5vh, 56px); }
+.hx-sim .hero-simulator-card { box-shadow: 12px 12px 0 var(--accent-lime); border: 2px solid var(--color-ink); }
+.hx-edge { position: absolute; left: 0; bottom: -1px; width: 100%; height: 90px; z-index: 3; display: block; }
+@media (max-width: 960px) { .hx-inner { grid-template-columns: 1fr; } .hx-sim .hero-simulator-card { box-shadow: 8px 8px 0 var(--accent-lime); } }
+@media (max-width: 720px) { .hx { padding-bottom: 96px; } .hx-title { font-size: clamp(2.3rem, 11vw, 3.2rem); } }
+@media (prefers-reduced-motion: reduce) { .hx-flow { animation: none; opacity: 0.6; } }
+
+/* ===== ADEGAN CERITA ===== */
+.ls-edge { stroke: var(--accent-olive); stroke-width: 2.4; stroke-dasharray: 7 6; animation: kgFlow 1.2s linear infinite; }
+.ls-lbl { font: 600 13px 'DM Mono', monospace; fill: var(--color-ink); }
+.ls-note { font: 600 11px 'DM Mono', monospace; fill: var(--accent-olive); letter-spacing: 0.08em; }
+.ls-numeral { font: 800 300px 'Syne', sans-serif; fill: none; stroke: #e4e9e1; stroke-width: 2; }
+.ls-panel-h { font: 800 17px 'Syne', sans-serif; fill: var(--color-ink); }
+.ls-panel-h:first-of-type { fill: var(--accent-lime); }
+.ls-panel-t { font: 500 16px 'DM Mono', monospace; fill: var(--color-ink); }
+.ls-card-h { font: 800 17px 'Syne', sans-serif; fill: var(--color-ink); }
+.ls-card-s { font: 500 13px 'Inter', sans-serif; fill: var(--text-muted); }
+.ls-tray-a { font: 500 11px 'DM Mono', monospace; fill: #eff5ec; }
+.ls-tray-b { font: 700 12px 'DM Mono', monospace; fill: var(--accent-lime); }
+@media (max-width: 720px) {
+  .ls-lbl { font-size: 20px; } .ls-panel-t { font-size: 19px; } .ls-card-h { font-size: 22px; } .ls-card-s { font-size: 16px; }
+  .ls-tray-a { font-size: 14px; } .ls-tray-b { font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) { .ls-edge { animation: none; } }
+
+/* ===== PETA KONSEP: pita gelap selebar layar ===== */
+.kg-section { background: var(--color-ink); box-shadow: 0 0 0 100vmax var(--color-ink); clip-path: inset(0 -100vmax); color: #eff5ec; margin-top: clamp(40px, 8vh, 96px); margin-bottom: clamp(40px, 8vh, 96px); }
+.kg-copy h2 { color: #fcfdfa; } .kg-copy > p { color: #b5c2bc; }
+.kg-panel { background: var(--ink-deep); border: 1px solid #2f4139; }
+.kg-edge { stroke: #3a4d45; color: #3a4d45; } .kg-edge.on { stroke: var(--accent-lime); color: var(--accent-lime); }
+.kg-node rect { fill: #22302b; stroke: #3a4d45; } .kg-node text { fill: #eff5ec; }
+.kg-node.lit rect { fill: #2c4a2c; stroke: var(--accent-lime); }
+.kg-node.focus rect { fill: var(--accent-lime); stroke: #fcfdfa; } .kg-node.focus text { fill: var(--color-ink); }
+
+/* ===== PERSONA: komposisi tangga asimetris ===== */
+@media (min-width: 900px) {
+  .persona-grid .persona-card:nth-child(2) { margin-top: 56px; }
+  .persona-grid .persona-card:nth-child(3) { margin-top: 112px; }
+}
+
+/* ===== COCKPIT: transisi dan gerak bermakna ===== */
+.spec-content-fade { animation: lsWipe 0.7s var(--ease-out) both; }
+@keyframes lsWipe { from { clip-path: inset(0 100% 0 0); opacity: 0; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
+.cockpit-timeline-track { position: relative; overflow: hidden; }
+.cockpit-timeline-track::after { content: ""; position: absolute; top: -2px; bottom: -2px; width: 3px; background: var(--accent-lime); box-shadow: 0 0 0 1px var(--color-ink); animation: lsPlay 5s linear infinite; }
+@keyframes lsPlay { from { left: 0; } to { left: 100%; } }
+.cockpit-chapter-strip { animation: lsRise 0.6s var(--ease-out) both; }
+.cockpit-chapter-strip:nth-of-type(2) { animation-delay: 0.1s; } .cockpit-chapter-strip:nth-of-type(3) { animation-delay: 0.2s; }
+@keyframes lsRise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .spec-content-fade, .cockpit-chapter-strip { animation: none; } .cockpit-timeline-track::after { animation: none; left: 40%; } }
+
+/* ===== BANDINGKAN: depan kertas usang bergaris, belakang charcoal ===== */
+.tanka-landing-container .comparison-face-front { background: repeating-linear-gradient(0deg, #f1f3ed 0 27px, #e3e8df 27px 28px); }
+.tanka-landing-container .flashcard-title.old { text-decoration: line-through; text-decoration-color: rgba(194, 65, 12, 0.55); text-decoration-thickness: 2px; }
+.tanka-landing-container .comparison-flashcard-inner { transition-duration: 0.9s; transition-timing-function: var(--ease-out); }
+.tanka-landing-container .comparison-flashcard-container.is-flipped .comparison-flashcard-inner { box-shadow: 0 28px 48px -22px rgba(24, 34, 31, 0.5); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-story { height: 240vh; }
+  .ls-sticky { position: sticky; overflow: hidden; height: calc(100vh - 64px); }
+  .ls-sticky .ls-svg { height: 100%; }
+}
+
+/* koreksi hasil render mobile: kolom tidak boleh melebar karena isi simulator */
+.hx-left, .hx-sim { min-width: 0; }
+@media (max-width: 960px) { .hx-inner { grid-template-columns: minmax(0, 1fr); } }
+.hx-sim .hero-simulator-card { max-width: 100%; }
+@media (max-width: 720px) { .hx-art text { display: none; } }

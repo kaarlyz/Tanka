@@ -1,12 +1,6 @@
 /* Impor SETELAH landing.css */
 .tanka-landing-container { scroll-behavior: auto; }
 
-/* Fail-safe visibility: seluruh seksi wajib tampil utuh tanpa terblokir bug opacity: 0 */
-.reveal-scroll {
-  opacity: 1 !important;
-  transform: none !important;
-}
-
 /* progres scroll */
 .lm-progress {
   position: sticky; top: 0; z-index: 1100; height: 3px; margin-bottom: -3px;

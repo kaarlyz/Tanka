@@ -91,8 +91,56 @@
           to { opacity: 1; transform: translateY(0); }
         }
 
+        /* ── Directional reveal variants ── */
+        .reveal-scroll--left {
+          opacity: 0;
+          transform: translateX(-48px);
+          transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: opacity, transform;
+        }
+        .reveal-scroll--left.is-revealed {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        .reveal-scroll--right {
+          opacity: 0;
+          transform: translateX(48px);
+          transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: opacity, transform;
+        }
+        .reveal-scroll--right.is-revealed {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        .reveal-scroll--scale {
+          opacity: 0;
+          transform: scale(0.92);
+          transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: opacity, transform;
+        }
+        .reveal-scroll--scale.is-revealed {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        /* ── Decorative section accent SVGs ── */
+        .section-accent-svg {
+          position: absolute;
+          pointer-events: none;
+          z-index: 0;
+          opacity: 0.06;
+        }
+        .landing-section--dark .section-accent-svg { opacity: 0.08; }
+        .section-accent-svg--top-right { top: -20px; right: -20px; }
+        .section-accent-svg--bottom-left { bottom: -20px; left: -20px; }
+
         @media (prefers-reduced-motion: reduce) {
-          .reveal-scroll {
+          .reveal-scroll,
+          .reveal-scroll--left,
+          .reveal-scroll--right,
+          .reveal-scroll--scale {
             opacity: 1 !important;
             transform: none !important;
             transition: none !important;

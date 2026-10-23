@@ -104,9 +104,32 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
   // 1. GET /api/documents - list all documents
   if (req.method === "GET" && pathname === "/api/documents") {
     const docs = db.prepare("SELECT * FROM documents ORDER BY created_at DESC").all();
+    const enrichedDocs = docs.map((doc) => {
+      const quizRows = db.prepare("SELECT questions, quiz_type FROM quizzes WHERE doc_id = ?").all(doc.id);
+      let questionCount = 0;
+      let hasExamSheet = false;
+      for (const row of quizRows) {
+        if (row.quiz_type === "exam_sheet") hasExamSheet = true;
+        try {
+          const parsed = JSON.parse(row.questions);
+          if (Array.isArray(parsed)) {
+            questionCount += parsed.length;
+          }
+        } catch {}
+      }
+      const isExam = hasExamSheet || Boolean(
+        /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|soal/i.test(doc.title || "")
+      );
+      return {
+        ...doc,
+        question_count: questionCount,
+        is_exam_sheet: isExam,
+      };
+    });
+
     const acceptEncoding = (req.headers && req.headers["accept-encoding"]) || "";
     if (acceptEncoding.includes("gzip")) {
-      const jsonStr = JSON.stringify({ ok: true, success: true, documents: docs });
+      const jsonStr = JSON.stringify({ ok: true, success: true, documents: enrichedDocs });
       const compressed = zlib.gzipSync(Buffer.from(jsonStr));
       res.writeHead(200, {
         "Content-Type": "application/json",
@@ -116,7 +139,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
       });
       return res.end(compressed);
     }
-    return sendJSON(res, { documents: docs });
+    return sendJSON(res, { documents: enrichedDocs });
   }
 
   // 1b. DELETE /api/documents - bulk delete ALL documents and cascading records

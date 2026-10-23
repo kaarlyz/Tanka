@@ -1908,41 +1908,101 @@ export const QuizTab = React.memo(function QuizTab({
                             <span>{examFlagged[currentQuestionIndex] ? "Batal Tandai" : "Tandai Ragu-ragu"}</span>
                           </button>
 
-                          <div style={{ display: "flex", gap: 8 }}>
-                            {currentQuestionIndex < quizQuestions.length - 1 && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                            {currentQuestionIndex > 0 && (
                               <button
-                                onClick={handleNextQuizQuestion}
+                                onClick={handlePrevQuizQuestion}
                                 style={{
-                                  backgroundColor: "#ffffff",
-                                  color: "#17201d",
+                                  backgroundColor: "#fafbf8",
+                                  color: "#56615d",
                                   border: "1px solid #dce1da",
                                   borderRadius: 8,
-                                  padding: "10px 18px",
+                                  padding: "10px 16px",
                                   fontSize: 13,
                                   fontWeight: 600,
                                   cursor: "pointer"
                                 }}
                               >
-                                Berikutnya →
+                                ← Sebelumnya
                               </button>
                             )}
 
-                            <button
-                              onClick={handleExamSubmit}
-                              style={{
-                                backgroundColor: "#18221f",
-                                color: "#c8f064",
-                                border: "none",
-                                borderRadius: 8,
-                                padding: "10px 18px",
-                                fontSize: 13,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)"
-                              }}
-                            >
-                              Kumpulkan Lembar Tryout
-                            </button>
+                            {currentQuestionIndex < quizQuestions.length - 1 && (
+                              <button
+                                onClick={handleNextQuizQuestion}
+                                style={{
+                                  backgroundColor: "#18221f",
+                                  color: "#c8f064",
+                                  border: "none",
+                                  borderRadius: 8,
+                                  padding: "10px 22px",
+                                  fontSize: 13.5,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)"
+                                }}
+                              >
+                                <span>Soal Berikutnya</span>
+                                <ChevronRight size={15} />
+                              </button>
+                            )}
+
+                            {/* Tombol Kumpulkan HANYA MUNCUL JIKA SEMUA SOAL SUDAH DIJAWAB! */}
+                            {(() => {
+                              const answeredCount = Object.keys(userAnswers || {}).filter(k => {
+                                const ans = userAnswers[Number(k)];
+                                if (ans === undefined || ans === null) return false;
+                                if (Array.isArray(ans)) return ans.length > 0;
+                                return true;
+                              }).length;
+                              const totalQuestions = quizQuestions.length;
+                              const isAllAnswered = totalQuestions > 0 && answeredCount >= totalQuestions;
+
+                              if (isAllAnswered) {
+                                return (
+                                  <button
+                                    onClick={handleExamSubmit}
+                                    style={{
+                                      backgroundColor: "#15803d",
+                                      color: "#ffffff",
+                                      border: "none",
+                                      borderRadius: 8,
+                                      padding: "10px 20px",
+                                      fontSize: 13.5,
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: 6,
+                                      boxShadow: "0 2px 10px rgba(21, 128, 61, 0.3)"
+                                    }}
+                                  >
+                                    <CheckCircle2 size={16} />
+                                    <span>Kumpulkan Lembar Tryout ({answeredCount}/{totalQuestions})</span>
+                                  </button>
+                                );
+                              }
+
+                              return (
+                                <span
+                                  style={{
+                                    fontSize: 12,
+                                    fontFamily: "'DM Mono', monospace",
+                                    color: "#6b7280",
+                                    backgroundColor: "#f3f4f6",
+                                    padding: "6px 12px",
+                                    borderRadius: 6,
+                                    border: "1px solid #e5e7eb"
+                                  }}
+                                  title="Selesaikan seluruh soal untuk memunculkan tombol kumpulkan"
+                                >
+                                  Terjawab: {answeredCount}/{totalQuestions} Soal
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
                       ) : (

@@ -80,7 +80,7 @@ export function RoomModal({
       const cleanTitle = (doc.title || "").replace(/^(Tryout|Ujian|Kuis|Latihan)\s*[:\-]?\s*/i, "").trim();
       setRoomTitle(`⚔️ Battle Tryout: ${cleanTitle}`);
       setQuizType("exam_sheet");
-      setQuizCount(doc.question_count && doc.question_count > 0 ? doc.question_count : 20);
+      setQuizCount(doc.question_count && doc.question_count > 0 ? doc.question_count : 30);
     } else {
       setRoomTitle(`Kompetisi: ${doc.title}`);
       setQuizType("conceptual");

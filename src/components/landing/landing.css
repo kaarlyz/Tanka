@@ -293,9 +293,6 @@
           color: #4b6623;
           margin-top: 6px;
           letter-spacing: -0.025em;
-          background: linear-gradient(135deg, #18221f 20%, #4b6623 85%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
         }
 
         .hero-subtitle-left {

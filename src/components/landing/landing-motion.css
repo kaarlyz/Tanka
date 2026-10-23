@@ -15,7 +15,7 @@
 
 /* headline split */
 .lm-word-mask { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.14em; margin-bottom: -0.14em; }
-.lm-word { display: inline-block; will-change: transform; transform-origin: 0 100%; }
+.lm-word { display: inline-block; will-change: transform; transform-origin: 0 100%; color: inherit; }
 
 .lm-magnetic { display: inline-block; will-change: transform; }
 

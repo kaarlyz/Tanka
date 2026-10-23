@@ -28,6 +28,12 @@ export function SplitWords({
   className?: string;
   delay?: number;
 }) {
+  const reduce = useReducedMotion();
+
+  if (reduce) {
+    return <span className={className}>{text}</span>;
+  }
+
   return (
     <span className={className} aria-label={text}>
       {text.split(" ").map((word, i) => (

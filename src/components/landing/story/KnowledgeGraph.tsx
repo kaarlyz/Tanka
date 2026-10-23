@@ -128,10 +128,10 @@ export function KnowledgeGraph() {
           <AnimatePresence mode="wait">
             <motion.div
               key={node.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, y: 12, filter: "blur(3px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -10, filter: "blur(2px)" }}
+              transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                 <strong>{node.title}</strong>
@@ -145,14 +145,45 @@ export function KnowledgeGraph() {
                 <span className="kg-chain-label">
                   {prereqNodes.length > 0 ? "URUTAN PENGUASAAN PRASYARAT:" : "STATUS TOPIK:"}
                 </span>
-                <div className="kg-chain-pills">
+                <motion.div
+                  className="kg-chain-pills"
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: {
+                        staggerChildren: 0.06,
+                        delayChildren: 0.08
+                      }
+                    }
+                  }}
+                >
                   {prereqNodes.map((pn) => (
-                    <span key={pn.id} className="kg-chain-pill">
+                    <motion.span
+                      key={pn.id}
+                      className="kg-chain-pill"
+                      variants={{
+                        hidden: { opacity: 0, scale: 0.85, y: 5 },
+                        visible: { opacity: 1, scale: 1, y: 0 }
+                      }}
+                      transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                    >
                       ✓ {pn.label}
-                    </span>
+                    </motion.span>
                   ))}
-                  <span className="kg-chain-pill active">★ {node.label}</span>
-                </div>
+                  <motion.span
+                    className="kg-chain-pill active"
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.85, y: 5 },
+                      visible: { opacity: 1, scale: 1, y: 0 }
+                    }}
+                    transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  >
+                    ★ {node.label}
+                  </motion.span>
+                </motion.div>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -196,7 +227,48 @@ export function KnowledgeGraph() {
           );
         })}
 
-        {/* 2. Simpul-simpul materi */}
+        {/* 2. Reticle kursor penanda fokus yang meluncur mulus antar simpul dengan fisika spring */}
+        {!reduce && (
+          <motion.g
+            animate={{ x: node.x, y: node.y }}
+            transition={{
+              type: "spring",
+              stiffness: 250,
+              damping: 23,
+              mass: 0.7
+            }}
+            pointerEvents="none"
+          >
+            {/* Halo cincin luar memancar */}
+            <motion.rect
+              x={-HALF_W - 5}
+              y={-24}
+              width={HALF_W * 2 + 10}
+              height={48}
+              rx={16}
+              fill="none"
+              stroke="#c8f064"
+              strokeWidth={2}
+              animate={{ scale: [1, 1.12, 1.18], opacity: [0.8, 0.25, 0] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
+            />
+            {/* Bingkai kursor fokus aktif */}
+            <rect
+              x={-HALF_W - 3}
+              y={-22}
+              width={HALF_W * 2 + 6}
+              height={44}
+              rx={14}
+              fill="rgba(200, 240, 100, 0.12)"
+              stroke="#18221f"
+              strokeWidth={2}
+              strokeDasharray="4 3"
+              className="kg-reticle-pulse"
+            />
+          </motion.g>
+        )}
+
+        {/* 3. Simpul-simpul materi */}
         {NODES.map((n) => {
           const isLit = lit.has(n.id);
           const isFocus = n.id === focusId;
@@ -208,8 +280,8 @@ export function KnowledgeGraph() {
               tabIndex={0}
               aria-pressed={pinned === n.id}
               aria-label={`${n.title}. ${n.def}`}
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.96 }}
               transition={{ type: "spring", stiffness: 350, damping: 20 }}
               style={{ originX: `${n.x}px`, originY: `${n.y}px` }}
               onMouseEnter={() => setHover(n.id)}
@@ -224,23 +296,6 @@ export function KnowledgeGraph() {
                 }
               }}
             >
-              {/* Cincin denyut radar pada simpul yang sedang dipilih */}
-              {isFocus && !reduce && (
-                <motion.rect
-                  x={n.x - HALF_W - 5}
-                  y={n.y - 23}
-                  width={HALF_W * 2 + 10}
-                  height={46}
-                  rx={23}
-                  fill="none"
-                  stroke="#c8f064"
-                  strokeWidth={2}
-                  animate={{ scale: [1, 1.14, 1.2], opacity: [0.8, 0.25, 0] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
-                  style={{ originX: `${n.x}px`, originY: `${n.y}px` }}
-                />
-              )}
-
               {/* Badan Simpul */}
               <rect x={n.x - HALF_W} y={n.y - 20} width={HALF_W * 2} height={40} rx={12} />
 

@@ -29,6 +29,15 @@
 .kg-node.focus text.kg-sub { fill: #18221f; font-weight: 700; }
 .kg-node:focus-visible rect { stroke: var(--color-ink); stroke-width: 3; }
 
+/* Reticle kursor penanda target yang meluncur antar simpul */
+.kg-reticle-pulse {
+  animation: kgReticleSpin 12s linear infinite;
+  transform-origin: 0 0;
+}
+@keyframes kgReticleSpin {
+  to { transform: rotate(360deg); }
+}
+
 /* Panel chain & badges */
 .kg-node-badge { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: #25332e; color: var(--accent-lime); border: 1px solid #364841; }
 .kg-prereq-chain { margin-top: 10px; padding-top: 10px; border-top: 1px solid #283932; }

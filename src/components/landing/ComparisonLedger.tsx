@@ -93,7 +93,7 @@ export function ComparisonLedger() {
   const isAllFlipped = Object.values(flippedCards).filter(Boolean).length >= 3;
 
   return (
-    <section id="perbandingan" className="landing-section">
+    <section id="perbandingan" className="landing-section landing-section--dark">
       <div className="section-header-left comparison-header-area reveal-scroll">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 14 }}>
           <div>

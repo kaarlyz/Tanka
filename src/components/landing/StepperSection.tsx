@@ -50,7 +50,7 @@ export function StepperSection({ onActionLaunch, container }: StepperSectionProp
   ];
 
   return (
-    <section id="alur" className="landing-section">
+    <section id="alur" className="landing-section landing-section--sage">
       <div className="section-header-left reveal-scroll">
         <span className="section-kicker">CARA KERJA</span>
         <h2 className="section-title">4 Langkah Menguasai Materi Apapun</h2>

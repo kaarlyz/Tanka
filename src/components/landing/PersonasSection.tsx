@@ -8,7 +8,7 @@ const CASES = [
 
 export function PersonasSection() {
   return (
-    <section id="testimoni" className="landing-section">
+    <section id="testimoni" className="landing-section landing-section--ruled">
       <div className="section-header-center">
         <span className="section-kicker">UNTUK SIAPA</span>
         <h2 className="section-title">Dibuat untuk tiga cara belajar</h2>

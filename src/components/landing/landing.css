@@ -75,6 +75,22 @@
           transform: translateY(0);
         }
 
+        /* stagger children inside a revealed parent */
+        .reveal-scroll.is-revealed > * {
+          animation: revealChild 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .reveal-scroll.is-revealed > *:nth-child(1) { animation-delay: 0s; }
+        .reveal-scroll.is-revealed > *:nth-child(2) { animation-delay: 0.07s; }
+        .reveal-scroll.is-revealed > *:nth-child(3) { animation-delay: 0.14s; }
+        .reveal-scroll.is-revealed > *:nth-child(4) { animation-delay: 0.21s; }
+        .reveal-scroll.is-revealed > *:nth-child(5) { animation-delay: 0.28s; }
+        .reveal-scroll.is-revealed > *:nth-child(6) { animation-delay: 0.35s; }
+
+        @keyframes revealChild {
+          from { opacity: 0; transform: translateY(14px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .reveal-scroll {
             opacity: 1 !important;
@@ -870,6 +886,31 @@
           scroll-margin-top: 96px !important;
         }
 
+        /* ── Visual rhythm: alternating section tints ── */
+        .landing-section--dark {
+          background: #18221f;
+          color: #eff5ec;
+          max-width: none;
+          padding-left: clamp(20px, 4vw, 48px);
+          padding-right: clamp(20px, 4vw, 48px);
+        }
+        .landing-section--dark .section-kicker { color: #c8f064; }
+        .landing-section--dark .section-title { color: #eff5ec; }
+        .landing-section--dark .section-desc { color: #b0c49b; }
+
+        .landing-section--sage {
+          background: #f2f5ee;
+          max-width: none;
+          padding-left: clamp(20px, 4vw, 48px);
+          padding-right: clamp(20px, 4vw, 48px);
+          border-top: 1px solid #dce4d6;
+          border-bottom: 1px solid #dce4d6;
+        }
+
+        .landing-section--ruled {
+          border-top: 1px solid #dce4d6;
+        }
+
         /* Left-aligned or Centered Header Rhythm */
         .section-header-left {
           text-align: left;
@@ -1295,6 +1336,17 @@
           box-shadow: 0 1px 3px rgba(24, 34, 31, 0.04);
         }
 
+        .landing-section--dark .flashcard-toggle-all-btn {
+          background: #2d3d34;
+          border-color: #415748;
+          color: #eff5ec;
+        }
+        .landing-section--dark .flashcard-toggle-all-btn:hover {
+          background: #364841;
+          border-color: #c8f064;
+          color: #c8f064;
+        }
+
         .flashcard-toggle-all-btn:hover {
           background: #f4f7ee;
           border-color: #8da868;
@@ -1377,6 +1429,17 @@
           border-top: 4px solid #dc2626;
           box-shadow: 0 8px 24px rgba(24, 34, 31, 0.03);
         }
+
+        .landing-section--dark .comparison-face-front {
+          background: #1c2a23;
+          border-color: #2d3d34;
+          border-top-color: #dc2626;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        .landing-section--dark .comparison-face-front .flashcard-title.old,
+        .landing-section--dark .comparison-face-front .flashcard-desc.old { color: #d1ddd6; }
+        .landing-section--dark .comparison-face-front .flashcard-category-tag span { color: #8da868; }
+        .landing-section--dark .comparison-face-front .flashcard-step-num { color: #8da868; }
 
         /* Sisi Belakang (Cara Tanka) */
         .comparison-face-back {

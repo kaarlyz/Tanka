@@ -15,12 +15,17 @@ export function useSmoothScroll(
     if (!wrapper || !content) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
     const lenis = new Lenis({
       wrapper,
       content,
-      duration: 1.15,
+      duration: isTouch ? 0.85 : 1.15,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true
+      smoothWheel: true,
+      syncTouch: true,
+      syncTouchLerp: 0.09,
+      touchMultiplier: 1.2
     });
 
     let raf = 0;

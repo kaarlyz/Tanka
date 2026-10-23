@@ -10,7 +10,6 @@
           overflow-y: auto;
           overflow-x: hidden;
           box-sizing: border-box;
-          contain: paint;
           -webkit-overflow-scrolling: touch;
           background-color: #fbfdf9;
           background-image: 
@@ -50,6 +49,16 @@
           pointer-events: none;
           z-index: 0;
           animation: orbDriftReverse 11s ease-in-out infinite alternate;
+        }
+
+        @media (max-width: 768px) {
+          .landing-ambient-orb-1,
+          .landing-ambient-orb-2 {
+            display: none !important;
+          }
+          .lm-grain {
+            display: none !important;
+          }
         }
 
         @keyframes orbDrift {

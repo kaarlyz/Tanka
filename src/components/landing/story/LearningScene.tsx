@@ -205,7 +205,12 @@ export function LearningStory({ container }: { container: RefObject<HTMLElement 
   const [step, setStep] = useState(0);
   const narrow = useNarrow();
   const { scrollYProgress } = useScroll({ target: ref, container, offset: ["start start", "end end"] });
-  const p = useSpring(scrollYProgress, { stiffness: 80, damping: 24, mass: 0.6 });
+  const p = useSpring(
+    scrollYProgress,
+    narrow
+      ? { stiffness: 180, damping: 26, mass: 0.3 }
+      : { stiffness: 80, damping: 24, mass: 0.6 }
+  );
   useMotionValueEvent(p, "change", (v) => setStep(v < 0.25 ? 0 : v < 0.5 ? 1 : v < 0.75 ? 2 : 3));
 
   return (

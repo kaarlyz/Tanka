@@ -171,7 +171,7 @@
 .ls-title { max-width: none; font-size: clamp(1.4rem, 2.6vw, 2rem); }
 .ls-hero { margin-bottom: clamp(24px, 6vh, 72px); }
 @media (max-width: 720px) {
-  .ls-story { height: 380vh; }
+  .ls-story { height: 220vh; }
   .ls-sticky .ls-svg { max-height: 44vh; }
 }
 @media (prefers-reduced-motion: reduce) { .ls-sticky { height: auto; } }

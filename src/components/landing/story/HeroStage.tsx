@@ -100,7 +100,13 @@ export function HeroStage({ container, onActionLaunch }: { container: RefObject<
   const mx = useSpring(rx, { stiffness: 60, damping: 20, mass: 0.8 });
   const my = useSpring(ry, { stiffness: 60, damping: 20, mass: 0.8 });
   const { scrollYProgress } = useScroll({ target: ref, container, offset: ["start start", "end start"] });
-  const sp = useSpring(scrollYProgress, { stiffness: 90, damping: 26 });
+  const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  const sp = useSpring(
+    scrollYProgress,
+    isTouch
+      ? { stiffness: 160, damping: 24, mass: 0.4 }
+      : { stiffness: 90, damping: 26 }
+  );
 
   const onMove = (e: PointerEvent<HTMLElement>): void => {
     if (reduce || e.pointerType !== "mouse" || !ref.current) return;

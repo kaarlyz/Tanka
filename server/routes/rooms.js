@@ -62,11 +62,18 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
       if (docId && docId !== "global") {
         const targetDoc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
         if (targetDoc) {
+          const isDocExam = Boolean(
+            quizType === "exam_sheet" ||
+            (targetDoc.title && /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|kedinasan|soal/i.test(targetDoc.title))
+          );
           // 1. Ambil dari bank soal yang sudah tersimpan khusus untuk materi ini
           const rows = db.prepare("SELECT * FROM quizzes WHERE doc_id = ?").all(docId);
           if (rows && rows.length > 0) {
             const extracted = extractQuestionsFromRows(rows);
-            if (extracted.length >= quizCount) {
+            if (isDocExam && extracted.length > 0) {
+              // Format SNBT / TKA: gunakan seluruh butir naskah asli yang sudah ada tanpa pemotongan acak
+              questions = extracted;
+            } else if (extracted.length >= quizCount) {
               questions = extracted.slice(0, quizCount);
             } else if (extracted.length > 0) {
               questions = extracted;

@@ -79,8 +79,8 @@ export function RoomModal({
     if (isTkaSnbt) {
       const cleanTitle = (doc.title || "").replace(/^(Tryout|Ujian|Kuis|Latihan)\s*[:\-]?\s*/i, "").trim();
       setRoomTitle(`⚔️ Battle Tryout: ${cleanTitle}`);
-      setQuizType("hots");
-      setQuizCount(doc.question_count && doc.question_count >= 15 ? 15 : 10);
+      setQuizType("exam_sheet");
+      setQuizCount(doc.question_count && doc.question_count > 0 ? doc.question_count : 20);
     } else {
       setRoomTitle(`Kompetisi: ${doc.title}`);
       setQuizType("conceptual");
@@ -888,56 +888,122 @@ export function RoomModal({
                   </div>
 
                   {/* Settings Grid: Tipe Soal & Jumlah Soal */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
-                        TIPE / KUALITAS SOAL
-                      </label>
-                      <select
-                        value={quizType}
-                        onChange={e => setQuizType(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          backgroundColor: "#1e2622",
-                          border: "1px solid #33403a",
-                          color: "#ffffff",
-                          fontSize: 12.5,
-                          boxSizing: "border-box"
-                        }}
-                      >
-                        <option value="conceptual">Standar Ujian (Konseptual)</option>
-                        <option value="hots">HOTS (Analisis & Kasus Kritis)</option>
-                        <option value="beginner">Pemula & Fondasi Bertahap</option>
-                      </select>
-                    </div>
+                  {(() => {
+                    const currentDoc = documents.find(d => d.id === selectedDocId);
+                    const isTkaSnbt = Boolean(
+                      currentDoc?.is_exam_sheet ||
+                      /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|kedinasan|soal/i.test(currentDoc?.title || "")
+                    );
 
-                    <div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
-                        JUMLAH SOAL
-                      </label>
-                      <select
-                        value={quizCount}
-                        onChange={e => setQuizCount(Number(e.target.value))}
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          backgroundColor: "#1e2622",
-                          border: "1px solid #33403a",
-                          color: "#ffffff",
-                          fontSize: 12.5,
-                          boxSizing: "border-box"
-                        }}
-                      >
-                        <option value={5}>5 Soal (Duel Cepat)</option>
-                        <option value={10}>10 Soal (Standar Ujian)</option>
-                        <option value={15}>15 Soal (Kompetisi Seru)</option>
-                        <option value={20}>20 Soal (Tryout Penuh)</option>
-                      </select>
-                    </div>
-                  </div>
+                    if (isTkaSnbt) {
+                      return (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                          <div>
+                            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                              TIPE / KUALITAS SOAL
+                            </label>
+                            <div
+                              style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: 8,
+                                backgroundColor: "#17201b",
+                                border: "1px solid #2e4035",
+                                color: "#c8f064",
+                                fontSize: 12.5,
+                                fontFamily: "'DM Mono', monospace",
+                                fontWeight: 700,
+                                boxSizing: "border-box"
+                              }}
+                            >
+                              🔒 Naskah Asli Ujian
+                            </div>
+                            <p style={{ margin: "4px 0 0", fontSize: 10.5, color: "#6f7975" }}>
+                              Tipe soal baku (Single, MCMA, Kategori).
+                            </p>
+                          </div>
+
+                          <div>
+                            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                              JUMLAH SOAL
+                            </label>
+                            <div
+                              style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: 8,
+                                backgroundColor: "#17201b",
+                                border: "1px solid #2e4035",
+                                color: "#c8f064",
+                                fontSize: 12.5,
+                                fontFamily: "'DM Mono', monospace",
+                                fontWeight: 700,
+                                boxSizing: "border-box"
+                              }}
+                            >
+                              🔒 {currentDoc?.question_count || quizCount} Soal Lengkap
+                            </div>
+                            <p style={{ margin: "4px 0 0", fontSize: 10.5, color: "#6f7975" }}>
+                              Seluruh butir naskah asli diujikan.
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div>
+                          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                            TIPE / KUALITAS SOAL
+                          </label>
+                          <select
+                            value={quizType}
+                            onChange={e => setQuizType(e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              backgroundColor: "#1e2622",
+                              border: "1px solid #33403a",
+                              color: "#ffffff",
+                              fontSize: 12.5,
+                              boxSizing: "border-box"
+                            }}
+                          >
+                            <option value="conceptual">Standar Ujian (Konseptual)</option>
+                            <option value="hots">HOTS (Analisis & Kasus Kritis)</option>
+                            <option value="beginner">Pemula & Fondasi Bertahap</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                            JUMLAH SOAL
+                          </label>
+                          <select
+                            value={quizCount}
+                            onChange={e => setQuizCount(Number(e.target.value))}
+                            style={{
+                              width: "100%",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              backgroundColor: "#1e2622",
+                              border: "1px solid #33403a",
+                              color: "#ffffff",
+                              fontSize: 12.5,
+                              boxSizing: "border-box"
+                            }}
+                          >
+                            <option value={5}>5 Soal (Duel Cepat)</option>
+                            <option value={10}>10 Soal (Standar Ujian)</option>
+                            <option value={15}>15 Soal (Kompetisi Seru)</option>
+                            <option value={20}>20 Soal (Tryout Penuh)</option>
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div>
                     <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>

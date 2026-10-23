@@ -66,10 +66,12 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
             quizType === "exam_sheet" ||
             (targetDoc.title && /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|kedinasan|soal/i.test(targetDoc.title))
           );
-          // 1. Ambil dari bank soal yang sudah tersimpan khusus untuk materi ini
-          const rows = db.prepare("SELECT * FROM quizzes WHERE doc_id = ?").all(docId);
-          if (rows && rows.length > 0) {
-            const extracted = extractQuestionsFromRows(rows);
+          // 1. Ambil dari paket kuis kanonikal tunggal yang tersimpan untuk materi ini
+          const canonicalRow = db.prepare(
+            "SELECT * FROM quizzes WHERE doc_id = ? ORDER BY (CASE WHEN quiz_type = 'exam_sheet' OR id LIKE 'quiz_exam_%' THEN 1 ELSE 2 END), created_at DESC LIMIT 1"
+          ).get(docId);
+          if (canonicalRow) {
+            const extracted = extractQuestionsFromRows([canonicalRow]);
             if (isDocExam && extracted.length > 0) {
               // Format SNBT / TKA: gunakan seluruh butir naskah asli yang sudah ada tanpa pemotongan acak
               questions = extracted;

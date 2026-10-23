@@ -105,15 +105,18 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
   if (req.method === "GET" && pathname === "/api/documents") {
     const docs = db.prepare("SELECT * FROM documents ORDER BY created_at DESC").all();
     const enrichedDocs = docs.map((doc) => {
-      const quizRows = db.prepare("SELECT questions, quiz_type FROM quizzes WHERE doc_id = ?").all(doc.id);
+      // Ambil paket kuis kanonikal tunggal (prioritaskan naskah ujian asli)
+      const canonicalQuiz = db.prepare(
+        "SELECT questions, quiz_type FROM quizzes WHERE doc_id = ? ORDER BY (CASE WHEN quiz_type = 'exam_sheet' OR id LIKE 'quiz_exam_%' THEN 1 ELSE 2 END), created_at DESC LIMIT 1"
+      ).get(doc.id);
       let questionCount = 0;
       let hasExamSheet = false;
-      for (const row of quizRows) {
-        if (row.quiz_type === "exam_sheet") hasExamSheet = true;
+      if (canonicalQuiz) {
+        if (canonicalQuiz.quiz_type === "exam_sheet") hasExamSheet = true;
         try {
-          const parsed = JSON.parse(row.questions);
+          const parsed = JSON.parse(canonicalQuiz.questions);
           if (Array.isArray(parsed)) {
-            questionCount += parsed.length;
+            questionCount = parsed.length;
           }
         } catch {}
       }

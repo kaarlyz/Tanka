@@ -114,6 +114,7 @@ export function BentoDrillPreview() {
           {QUESTIONS.map((_, i) => (
             <button
               key={i}
+              type="button"
               role="tab"
               aria-selected={i === index}
               className={`bd-rail-btn${i === index ? " active" : ""}${picked[i] !== undefined ? " done" : ""}`}
@@ -125,14 +126,14 @@ export function BentoDrillPreview() {
           <span className="bd-rail-hint">← → pindah soal</span>
         </div>
 
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence initial={false}>
           <motion.div
             key={index}
             className="bd-grid"
-            initial={{ opacity: 0, x: 18 }}
+            initial={{ opacity: 0, x: 14 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -18 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, x: -14 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="bd-card">
               <div className="bd-meta">
@@ -201,8 +202,30 @@ export function BentoDrillPreview() {
         </AnimatePresence>
 
         <div className="bd-nav">
-          <button onClick={() => go(index - 1)} disabled={index === 0}>Soal sebelumnya</button>
-          <button onClick={() => go(index + 1)} disabled={index === QUESTIONS.length - 1}>Soal berikutnya</button>
+          <button
+            type="button"
+            onClick={() => (index > 0 ? go(index - 1) : null)}
+            className={index === 0 ? "is-disabled" : ""}
+            aria-disabled={index === 0}
+          >
+            ← Soal sebelumnya
+          </button>
+          {index === QUESTIONS.length - 1 ? (
+            <button
+              type="button"
+              onClick={() => go(0)}
+              className="bd-nav-restart"
+            >
+              Ulangi dari #1 ↺
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => go(index + 1)}
+            >
+              Soal berikutnya →
+            </button>
+          )}
         </div>
       </div>
     </section>

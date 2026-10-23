@@ -48,7 +48,7 @@
 
 /* ---------- Panggung Bento ---------- */
 .bd-head { margin-bottom: 28px; }
-.bd-stage { background: #fff; border: 1px solid var(--border-sage); border-radius: 20px; padding: clamp(14px, 2.5vw, 26px); outline: none; }
+.bd-stage { background: #fff; border: 1px solid var(--border-sage); border-radius: 20px; padding: clamp(14px, 2.5vw, 26px); outline: none; min-height: 520px; display: flex; flex-direction: column; }
 .bd-stage:focus-visible { box-shadow: 0 0 0 3px var(--accent-lime); }
 .bd-rail { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; overflow-x: auto; scrollbar-width: none; }
 .bd-rail::-webkit-scrollbar { display: none; }
@@ -57,8 +57,8 @@
 .bd-rail-btn.active { background: var(--color-ink); color: var(--accent-lime); border-color: var(--color-ink); }
 .bd-rail-btn.done:not(.active) { border-color: var(--accent-olive); }
 .bd-rail-hint { margin-left: auto; font: 12px 'DM Mono', monospace; color: var(--text-muted); white-space: nowrap; }
-.bd-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 16px; }
-.bd-card { background: var(--surface-subtle); border: 1px solid var(--border-sage); border-radius: 14px; padding: 18px; min-width: 0; }
+.bd-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 16px; min-height: 380px; align-items: start; flex: 1; }
+.bd-card { background: var(--surface-subtle); border: 1px solid var(--border-sage); border-radius: 14px; padding: 18px; min-width: 0; min-height: 100%; box-sizing: border-box; }
 .bd-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .bd-meta span { font: 600 11.5px 'DM Mono', monospace; padding: 4px 10px; border-radius: 6px; background: #fff; border: 1px solid var(--border-sage); color: var(--accent-olive); }
 .bd-meta .bd-meta-badge { background: #18221f; color: var(--accent-lime); border-color: #18221f; font-weight: 700; }
@@ -98,8 +98,11 @@
 .bd-fb-box.trick { background: var(--success-bg); border: 1px solid #bbf7d0; color: var(--success); }
 .bd-fb-box.pitfall { background: var(--danger-bg); border: 1px solid #fecaca; color: var(--danger); }
 .bd-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
-.bd-nav button { min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--border-sage); background: #fff; font-weight: 600; color: var(--color-ink); cursor: pointer; }
-.bd-nav button:disabled { opacity: 0.4; cursor: default; }
+.bd-nav button { min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--border-sage); background: #fff; font-weight: 600; color: var(--color-ink); cursor: pointer; transition: transform 0.15s var(--ease-out), background 0.15s var(--ease-out); }
+.bd-nav button:hover:not(.is-disabled) { transform: translateY(-1px); border-color: var(--color-ink); }
+.bd-nav button.bd-nav-restart { background: var(--color-ink); color: var(--accent-lime); border-color: var(--color-ink); font-family: 'DM Mono', monospace; }
+.bd-nav button.is-disabled { opacity: 0.35; pointer-events: none; }
+.bd-nav button:disabled { opacity: 0.35; cursor: default; }
 
 /* ---------- Rel langkah ---------- */
 .sr-rail { position: relative; height: 72px; margin: 8px 28px 28px; }
@@ -114,6 +117,7 @@
 @media (max-width: 860px) {
   .kg-section, .bd-grid { grid-template-columns: 1fr; }
   .kg-panel { min-height: 172px; }
+  .bd-stage { min-height: 640px; }
   .bd-rail-hint { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

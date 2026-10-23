@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   X, Swords, Users, Copy, Check, Play, Trophy, 
-  Sparkles, Award, ArrowRight, Share2, RefreshCw, CheckCircle2, AlertCircle, Link2
+  Sparkles, Award, ArrowRight, Share2, RefreshCw, CheckCircle2, AlertCircle, Link2, Zap
 } from "lucide-react";
 import { UserAccount, StudyRoom, RoomParticipant } from "../../types";
 
@@ -11,7 +11,7 @@ export interface RoomModalProps {
   currentUser: UserAccount | null;
   activeDocId: string | null;
   activeDocTitle: string | null;
-  documents: Array<{ id: string; title: string }>;
+  documents: Array<{ id: string; title: string; is_exam_sheet?: boolean; question_count?: number }>;
   showNotice: (msg: string) => void;
   onOpenAuthModal: () => void;
   onStartRoomExam?: (room: StudyRoom, questions: any[]) => void;
@@ -70,17 +70,35 @@ export function RoomModal({
   const [isStartingMatch, setIsStartingMatch] = useState<boolean>(false);
   const isCountdownRunningRef = useRef(false);
 
+  const applyDocDefaults = (doc: any) => {
+    if (!doc) return;
+    const isTkaSnbt = Boolean(
+      doc.is_exam_sheet ||
+      /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|kedinasan|soal/i.test(doc.title || "")
+    );
+    if (isTkaSnbt) {
+      const cleanTitle = (doc.title || "").replace(/^(Tryout|Ujian|Kuis|Latihan)\s*[:\-]?\s*/i, "").trim();
+      setRoomTitle(`⚔️ Battle Tryout: ${cleanTitle}`);
+      setQuizType("hots");
+      setQuizCount(doc.question_count && doc.question_count >= 15 ? 15 : 10);
+    } else {
+      setRoomTitle(`Kompetisi: ${doc.title}`);
+      setQuizType("conceptual");
+      setQuizCount(10);
+    }
+  };
+
   useEffect(() => {
     if (activeDocId) {
       setSelectedDocId(activeDocId);
+      const found = documents.find(d => d.id === activeDocId);
+      if (found) {
+        applyDocDefaults(found);
+      } else if (activeDocTitle && !roomTitle) {
+        setRoomTitle(`Kompetisi Kuis: ${activeDocTitle}`);
+      }
     }
-  }, [activeDocId]);
-
-  useEffect(() => {
-    if (activeDocTitle && !roomTitle) {
-      setRoomTitle(`Kompetisi Kuis: ${activeDocTitle}`);
-    }
-  }, [activeDocTitle]);
+  }, [activeDocId, documents]);
 
   // Trigger smooth 3-second animated countdown for both Host & Guest
   const triggerMatchCountdown = (room: StudyRoom, quizQuestions: any[]) => {
@@ -782,6 +800,36 @@ export function RoomModal({
 
               {hubTab === "create" ? (
                 <form onSubmit={handleCreateRoom} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {selectedDocId && (() => {
+                    const currentDoc = documents.find(d => d.id === selectedDocId);
+                    const isTkaSnbt = Boolean(
+                      currentDoc?.is_exam_sheet ||
+                      /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|kedinasan|soal/i.test(currentDoc?.title || "")
+                    );
+                    if (!isTkaSnbt) return null;
+                    return (
+                      <div
+                        style={{
+                          padding: "10px 14px",
+                          borderRadius: 8,
+                          background: "rgba(200, 240, 100, 0.1)",
+                          border: "1px solid rgba(200, 240, 100, 0.35)",
+                          color: "#c8f064",
+                          fontSize: 12,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          marginBottom: -2
+                        }}
+                      >
+                        <Zap size={14} color="#c8f064" />
+                        <span>
+                          Format <b>TKA / SNBT</b> Terdeteksi: Mode <b>HOTS</b> dan durasi otomatis disiapkan.
+                        </span>
+                      </div>
+                    );
+                  })()}
+
                   <div>
                     <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
                       PILIH MATERI KUIS
@@ -792,9 +840,7 @@ export function RoomModal({
                         const newDocId = e.target.value;
                         setSelectedDocId(newDocId);
                         const found = documents.find(d => d.id === newDocId);
-                        if (found && (!roomTitle || roomTitle.startsWith("Kompetisi:"))) {
-                          setRoomTitle(`Kompetisi: ${found.title}`);
-                        }
+                        applyDocDefaults(found);
                       }}
                       style={{
                         width: "100%",

@@ -7,18 +7,18 @@
 }
 
 /* ---------- Peta konsep ---------- */
-.kg-section, .bd-section { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: clamp(56px, 8vh, 100px) clamp(24px, 4.5vw, 64px); }
+.kg-section, .bd-section { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: clamp(56px, 8vh, 100px) clamp(24px, 4.5vw, 64px); scroll-margin-top: 84px; }
 .kg-section { display: grid; grid-template-columns: 1fr 1.25fr; gap: clamp(28px, 5vw, 72px); align-items: center; }
 .kg-copy h2, .bd-head h2 { font-family: 'Syne', sans-serif; font-size: clamp(1.7rem, 3.4vw, 2.6rem); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 14px; color: var(--color-ink); }
 .kg-copy > p, .bd-head p { color: var(--text-muted); font-size: 16px; line-height: 1.65; margin: 0 0 22px; max-width: 52ch; }
-.kg-panel { background: var(--color-ink); color: #eff5ec; border-radius: 16px; padding: 18px 20px; min-height: 124px; }
+.kg-panel { background: var(--color-ink); color: #eff5ec; border-radius: 16px; padding: 18px 20px; min-height: 154px; display: flex; flex-direction: column; justify-content: space-between; }
 .kg-panel strong { color: var(--accent-lime); font-family: 'DM Mono', monospace; font-size: 14px; }
 .kg-panel p { margin: 8px 0; font-size: 14.5px; line-height: 1.55; }
 .kg-panel small { color: #8da868; font-family: 'DM Mono', monospace; font-size: 12px; }
-.kg-svg { width: 100%; height: auto; display: block; overflow: visible; }
-.kg-edge { stroke: #b9c4b5; stroke-width: 2; color: #b9c4b5; transition: stroke 0.25s var(--ease-out), color 0.25s var(--ease-out); }
-.kg-edge.on { stroke: var(--accent-olive); color: var(--accent-olive); stroke-dasharray: 6 6; animation: kgFlow 1.1s linear infinite; }
-@keyframes kgFlow { to { stroke-dashoffset: -12; } }
+.kg-svg { width: 100%; height: auto; max-height: 340px; display: block; overflow: visible; }
+.kg-edge { stroke: #c8d3c5; stroke-width: 2; color: #c8d3c5; fill: none; transition: stroke 0.25s var(--ease-out), color 0.25s var(--ease-out); }
+.kg-edge.on { stroke: var(--accent-olive); color: var(--accent-olive); stroke-width: 2.2; stroke-dasharray: 6 5; animation: kgFlow 1.2s linear infinite; }
+@keyframes kgFlow { to { stroke-dashoffset: -11; } }
 .kg-node { cursor: pointer; outline: none; }
 .kg-node rect { fill: #fff; stroke: var(--border-sage); stroke-width: 1.5; transition: fill 0.22s var(--ease-out), stroke 0.22s var(--ease-out); }
 .kg-node text { font: 600 12px 'DM Mono', monospace; fill: var(--color-ink); pointer-events: none; }
@@ -93,6 +93,7 @@
 
 @media (max-width: 860px) {
   .kg-section, .bd-grid { grid-template-columns: 1fr; }
+  .kg-panel { min-height: 172px; }
   .bd-rail-hint { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

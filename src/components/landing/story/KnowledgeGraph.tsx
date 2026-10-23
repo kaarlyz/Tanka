@@ -76,8 +76,8 @@ export function KnowledgeGraph() {
 
       <svg className="kg-svg" viewBox="0 0 640 340" role="group" aria-label="Peta konsep Matematika">
         <defs>
-          <marker id="kg-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
+          <marker id="kg-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="currentColor" />
           </marker>
         </defs>
 
@@ -85,19 +85,15 @@ export function KnowledgeGraph() {
           const s = byId(a);
           const t = byId(b);
           const x1 = s.x + HALF_W;
-          const x2 = t.x - HALF_W - 4;
+          const x2 = t.x - HALF_W - 3;
           const on = lit.has(a) && lit.has(b);
           return (
-            <motion.path
+            <path
               key={`${a}-${b}`}
-              d={`M${x1} ${s.y} C ${x1 + 26} ${s.y}, ${x2 - 26} ${t.y}, ${x2} ${t.y}`}
+              d={`M${x1} ${s.y} C ${x1 + 28} ${s.y}, ${x2 - 28} ${t.y}, ${x2} ${t.y}`}
               className={`kg-edge${on ? " on" : ""}`}
               fill="none"
               markerEnd="url(#kg-arrow)"
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             />
           );
         })}

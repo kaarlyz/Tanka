@@ -39,10 +39,49 @@ function sendJSON(res, data, statusCode = 200) {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-User-Id, X-Session-Id",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
   });
   res.end(JSON.stringify(payload));
   return true;
 }
+
+// In-Memory Rate Limiter (sliding-window bucket per client IP)
+const rateLimitMap = new Map();
+
+function checkRateLimit(ip, category, maxRequests, windowMs) {
+  if (process.env.NODE_ENV === "test" || process.env.TANKA_DB_PATH === ":memory:") {
+    return { allowed: true };
+  }
+
+  const key = `${category}:${ip}`;
+  const now = Date.now();
+  let record = rateLimitMap.get(key);
+
+  if (!record || now - record.resetTime > windowMs) {
+    record = { count: 1, resetTime: now };
+    rateLimitMap.set(key, record);
+    return { allowed: true, remaining: maxRequests - 1 };
+  }
+
+  if (record.count >= maxRequests) {
+    const retryAfter = Math.ceil((record.resetTime + windowMs - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  record.count += 1;
+  return { allowed: true, remaining: maxRequests - record.count };
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitMap.entries()) {
+    if (now - record.resetTime > 15 * 60 * 1000) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 10 * 60 * 1000).unref();
 
 function getCompressionStream(req, headers, isCompressible) {
   if (!isCompressible) return null;
@@ -126,6 +165,24 @@ const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
 
+  // Rate Limiting Guards
+  const clientIp = (req.headers && (
+    req.headers["cf-connecting-ip"] ||
+    (typeof req.headers["x-forwarded-for"] === "string" ? req.headers["x-forwarded-for"].split(",")[0].trim() : null)
+  )) || (req.socket && req.socket.remoteAddress) || "127.0.0.1";
+
+  if (pathname.startsWith("/api/ai/")) {
+    const rate = checkRateLimit(clientIp, "ai", 30, 60 * 1000);
+    if (!rate.allowed) {
+      return sendJSON(res, { error: `Terlalu banyak permintaan AI. Silakan tunggu ${rate.retryAfter || 60} detik.` }, 429);
+    }
+  } else if (pathname.startsWith("/api/auth/")) {
+    const rate = checkRateLimit(clientIp, "auth", 15, 60 * 1000);
+    if (!rate.allowed) {
+      return sendJSON(res, { error: `Terlalu banyak percobaan autentikasi. Silakan tunggu ${rate.retryAfter || 60} detik.` }, 429);
+    }
+  }
+
   try {
     // Dispatch to modular route handlers
     if (await handleModelsRoutes(req, res, pathname, helpers)) return;
@@ -144,11 +201,15 @@ const server = http.createServer(async (req, res) => {
     if (await handleRoomsRoutes(req, res, pathname, helpers)) return;
 
     // Static file fallback (production built frontend or uploaded assets)
-    const distPath = path.join(__dirname, "dist");
-    let filePath = pathname.startsWith("/uploads/")
+    const distPath = path.resolve(__dirname, "dist");
+    const uploadsPath = path.resolve(__dirname, "uploads");
+    const rawFilePath = pathname.startsWith("/uploads/")
       ? path.join(__dirname, pathname)
       : path.join(distPath, pathname === "/" ? "index.html" : pathname);
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const filePath = path.resolve(rawFilePath);
+
+    const isSafePath = filePath.startsWith(distPath) || filePath.startsWith(uploadsPath);
+    if (isSafePath && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       const ext = path.extname(filePath);
       const mimeTypes = {
         ".html": "text/html",
@@ -173,6 +234,9 @@ const server = http.createServer(async (req, res) => {
       const headers = {
         "Content-Type": mimeTypes[ext] || "application/octet-stream",
         "Access-Control-Allow-Origin": "*",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
         "Cache-Control": isHashedAsset
           ? "public, max-age=31536000, immutable"
           : "no-store, no-cache, must-revalidate, proxy-revalidate"

@@ -258,7 +258,10 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     if (!activeDocId) return;
     setIsDetectingTitle(true);
     try {
-      const res = await fetch(`/api/documents/${activeDocId}/detect-title`, { method: "POST" });
+      const token = typeof window !== "undefined" ? localStorage.getItem("tanka_session_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`/api/documents/${activeDocId}/detect-title`, { method: "POST", headers });
       const data = await res.json();
       if (data.success && data.title) {
         setActiveDocTitle(data.title);

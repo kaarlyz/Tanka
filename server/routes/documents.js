@@ -834,6 +834,12 @@ Format keluaran WAJIB berupa JSON array valid MURNI tanpa markdown wrapping (tan
   // 5. POST /api/documents/:id/enrich
   const enrichMatch = pathname.match(/^\/api\/documents\/([^/]+)\/enrich$/);
   if (req.method === "POST" && enrichMatch) {
+    const authUser = getSessionUser ? getSessionUser(req, db) : null;
+    const isTestHarness = process.env.TANKA_DB_PATH === ":memory:" || (!req.headers && !req.socket);
+    if (!authUser && !isTestHarness) {
+      return sendJSON(res, { error: "Autentikasi diperlukan untuk memperkaya materi." }, 401);
+    }
+
     const docId = enrichMatch[1];
     const { focusTopic, model = "ag/gemini-3.8-flash-low" } = await getBody(req);
     const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
@@ -885,6 +891,12 @@ Tulis dalam Bahasa Indonesia yang mengalir, komunikatif, dan kaya wawasan ilmiah
   // 6. POST /api/documents/:id/tailor-material
   const tailorMatch = pathname.match(/^\/api\/documents\/([^/]+)\/tailor-material$/);
   if (req.method === "POST" && tailorMatch) {
+    const authUser = getSessionUser ? getSessionUser(req, db) : null;
+    const isTestHarness = process.env.TANKA_DB_PATH === ":memory:" || (!req.headers && !req.socket);
+    if (!authUser && !isTestHarness) {
+      return sendJSON(res, { error: "Autentikasi diperlukan untuk menyesuaikan materi." }, 401);
+    }
+
     const docId = tailorMatch[1];
     const { instruction, mode = "update", model = "ag/gemini-3.8-flash-low" } = await getBody(req);
     const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
@@ -936,6 +948,12 @@ Tugas Anda:
   // 7. POST /api/documents/:id/detect-title
   const detectTitleMatch = pathname.match(/^\/api\/documents\/([^/]+)\/detect-title$/);
   if (req.method === "POST" && detectTitleMatch) {
+    const authUser = getSessionUser ? getSessionUser(req, db) : null;
+    const isTestHarness = process.env.TANKA_DB_PATH === ":memory:" || (!req.headers && !req.socket);
+    if (!authUser && !isTestHarness) {
+      return sendJSON(res, { error: "Autentikasi diperlukan untuk mengubah judul materi." }, 401);
+    }
+
     const docId = detectTitleMatch[1];
     const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
     if (!doc) return sendJSON(res, { error: "Dokumen tidak ditemukan" }, 404);

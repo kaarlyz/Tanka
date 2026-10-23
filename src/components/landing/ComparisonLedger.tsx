@@ -119,7 +119,7 @@ export function ComparisonLedger() {
 
       {/* 4-Column Responsive 3D Flashcard Grid */}
       <div className="comparison-flashcard-grid reveal-scroll">
-        {COMPARISON_DATA.map((item) => {
+        {COMPARISON_DATA.map((item, idx) => {
           const Icon = item.icon;
           const isFlipped = !!flippedCards[item.id];
 
@@ -138,7 +138,10 @@ export function ComparisonLedger() {
               tabIndex={0}
               aria-label={`Kartu ${item.category}: ${isFlipped ? "Solusi Tanka" : "Cara Lama"}. Klik untuk membalik.`}
             >
-              <div className="comparison-flashcard-inner">
+              <div
+                className="comparison-flashcard-inner"
+                style={{ "--i": idx } as React.CSSProperties}
+              >
                 {/* SISI DEPAN (CARA LAMA) */}
                 <div className="comparison-flashcard-face comparison-face-front">
                   <div>

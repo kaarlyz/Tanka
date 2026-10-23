@@ -5,15 +5,16 @@ import "./landing-motion.css";
 import "./landing-story.css";
 import { UserAccount } from "../../types";
 import { useSmoothScroll } from "./motion/useSmoothScroll";
-import { ScrollProgress, TimeShrink } from "./motion/MotionKit";
-import { HeroGraphic } from "./motion/HeroGraphic";
+import { ScrollProgress } from "./motion/MotionKit";
+import { HeroScene, LearningStory } from "./story/LearningScene";
+import { FormulaBreakdown } from "./story/FormulaBreakdown";
+import { KnowledgeGraph } from "./story/KnowledgeGraph";
+import { BentoDrillPreview } from "./story/BentoDrillPreview";
 import { LandingNavbar } from "./LandingNavbar";
 import { HeroSection } from "./HeroSection";
 import { HeroWorkspacePreview } from "./HeroWorkspacePreview";
 import { MarqueeTicker } from "./MarqueeTicker";
 import { StudioCockpit } from "./StudioCockpit";
-import { KnowledgeGraph } from "./story/KnowledgeGraph";
-import { BentoDrillPreview } from "./story/BentoDrillPreview";
 import { ComparisonLedger } from "./ComparisonLedger";
 import { PersonasSection } from "./PersonasSection";
 import { StepperSection } from "./StepperSection";
@@ -112,15 +113,14 @@ export function LandingPage({
             currentUser={currentUser}
           />
           <HeroSection onActionLaunch={handleActionLaunch} />
-          <div style={{ maxWidth: 840, margin: "0 auto 32px", padding: "0 24px" }}>
-            <HeroGraphic />
-          </div>
+          <HeroScene />
           <HeroWorkspacePreview onActionLaunch={handleActionLaunch} />
           <MarqueeTicker />
-          <TimeShrink container={containerRef} />
+          <LearningStory container={containerRef} />
           <StudioCockpit onActionLaunch={handleActionLaunch} />
           <KnowledgeGraph />
           <BentoDrillPreview />
+          <FormulaBreakdown />
           <ComparisonLedger />
           <PersonasSection />
           <StepperSection onActionLaunch={handleActionLaunch} container={containerRef} />

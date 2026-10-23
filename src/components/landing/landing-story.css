@@ -20,11 +20,22 @@
 .kg-edge.on { stroke: var(--accent-olive); color: var(--accent-olive); stroke-width: 2.2; stroke-dasharray: 6 5; animation: kgFlow 1.2s linear infinite; }
 @keyframes kgFlow { to { stroke-dashoffset: -11; } }
 .kg-node { cursor: pointer; outline: none; }
-.kg-node rect { fill: #fff; stroke: var(--border-sage); stroke-width: 1.5; transition: fill 0.22s var(--ease-out), stroke 0.22s var(--ease-out); }
-.kg-node text { font: 600 12px 'DM Mono', monospace; fill: var(--color-ink); pointer-events: none; }
-.kg-node.lit rect { fill: #eef8dc; stroke: var(--accent-olive); }
-.kg-node.focus rect { fill: var(--accent-lime); stroke: var(--color-ink); stroke-width: 2; }
+.kg-node rect { fill: #fff; stroke: var(--border-sage); stroke-width: 1.5; transition: fill 0.22s var(--ease-out), stroke 0.22s var(--ease-out); filter: drop-shadow(0 4px 10px rgba(24, 34, 31, 0.05)); }
+.kg-node text { font: 700 12px 'DM Mono', monospace; fill: var(--color-ink); pointer-events: none; }
+.kg-node text.kg-sub { font: 500 9.5px 'DM Mono', monospace; fill: #6f7f78; }
+.kg-node.lit rect { fill: #eef8dc; stroke: var(--accent-olive); stroke-width: 1.8; }
+.kg-node.lit text.kg-sub { fill: var(--accent-olive); }
+.kg-node.focus rect { fill: var(--accent-lime); stroke: var(--color-ink); stroke-width: 2.2; filter: drop-shadow(0 8px 20px rgba(200, 240, 100, 0.4)); }
+.kg-node.focus text.kg-sub { fill: #18221f; font-weight: 700; }
 .kg-node:focus-visible rect { stroke: var(--color-ink); stroke-width: 3; }
+
+/* Panel chain & badges */
+.kg-node-badge { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: #25332e; color: var(--accent-lime); border: 1px solid #364841; }
+.kg-prereq-chain { margin-top: 10px; padding-top: 10px; border-top: 1px solid #283932; }
+.kg-chain-label { font-family: 'DM Mono', monospace; font-size: 10.5px; color: #8da868; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 6px; }
+.kg-chain-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.kg-chain-pill { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: #23342e; color: #d1ded6; border: 1px solid #334840; }
+.kg-chain-pill.active { background: var(--accent-lime); color: var(--color-ink); font-weight: 700; border-color: var(--accent-lime); }
 
 /* ---------- Panggung Bento ---------- */
 .bd-head { margin-bottom: 28px; }

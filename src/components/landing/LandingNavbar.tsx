@@ -24,6 +24,8 @@ export function LandingNavbar({
         <div className="landing-nav-links">
           <a href="#tanya-nara" className="landing-nav-link">Tanya Nara</a>
           <a href="#keunggulan" className="landing-nav-link">Keunggulan</a>
+          <a href="#peta-konsep" className="landing-nav-link">Peta Konsep</a>
+          <a href="#bedah-soal" className="landing-nav-link">Bedah Soal</a>
           <a href="#perbandingan" className="landing-nav-link">Bandingkan</a>
           <a href="#alur" className="landing-nav-link">Cara Kerja</a>
           <a href="#testimoni" className="landing-nav-link">Cerita Mereka</a>

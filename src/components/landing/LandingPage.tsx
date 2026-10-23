@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { MotionConfig } from "motion/react";
 import "./landing.css";
 import "./landing-motion.css";
+import "./landing-story.css";
 import { UserAccount } from "../../types";
 import { useSmoothScroll } from "./motion/useSmoothScroll";
 import { ScrollProgress, TimeShrink } from "./motion/MotionKit";
@@ -11,6 +12,8 @@ import { HeroSection } from "./HeroSection";
 import { HeroWorkspacePreview } from "./HeroWorkspacePreview";
 import { MarqueeTicker } from "./MarqueeTicker";
 import { StudioCockpit } from "./StudioCockpit";
+import { KnowledgeGraph } from "./story/KnowledgeGraph";
+import { BentoDrillPreview } from "./story/BentoDrillPreview";
 import { ComparisonLedger } from "./ComparisonLedger";
 import { PersonasSection } from "./PersonasSection";
 import { StepperSection } from "./StepperSection";
@@ -116,9 +119,11 @@ export function LandingPage({
           <MarqueeTicker />
           <TimeShrink container={containerRef} />
           <StudioCockpit onActionLaunch={handleActionLaunch} />
+          <KnowledgeGraph />
+          <BentoDrillPreview />
           <ComparisonLedger />
           <PersonasSection />
-          <StepperSection onActionLaunch={handleActionLaunch} />
+          <StepperSection onActionLaunch={handleActionLaunch} container={containerRef} />
           <CtaBanner onActionLaunch={handleActionLaunch} />
           <LandingFooter onActionLaunch={handleActionLaunch} />
         </div>

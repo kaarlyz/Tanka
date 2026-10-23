@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, type RefObject } from "react";
 import { CheckCircle2, Zap, ChevronRight } from "lucide-react";
+import { StepRail } from "./story/StepRail";
 
 export interface StepperSectionProps {
   onActionLaunch: () => void;
+  container?: RefObject<HTMLElement | null>;
 }
 
-export function StepperSection({ onActionLaunch }: StepperSectionProps) {
+export function StepperSection({ onActionLaunch, container }: StepperSectionProps) {
   const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
@@ -56,6 +58,9 @@ export function StepperSection({ onActionLaunch }: StepperSectionProps) {
           Empat langkah mudah untuk memecah materi sulit menjadi unit belajar yang siap kamu kuasai.
         </p>
       </div>
+
+      {/* Interactive Step Rail */}
+      {container && <StepRail container={container} />}
 
       {/* Stepper Tabs */}
       <div className="stepper-tabs reveal-scroll">

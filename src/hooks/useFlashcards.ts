@@ -20,9 +20,12 @@ export function useFlashcards({ activeDocId, selectedModel, showNotice }: UseFla
     }
     setIsGeneratingCards(true);
     try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("tanka_session_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch("/api/ai/generate-flashcards", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           docId: activeDocId,
           model: selectedModel

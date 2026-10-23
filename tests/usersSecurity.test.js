@@ -6,6 +6,8 @@ const { handleUsersRoutes } = require("../server/routes/users");
 const { handleDocumentsRoutes } = require("../server/routes/documents");
 const { handleMistakesRoutes } = require("../server/routes/mistakes");
 const { handleChatRoutes } = require("../server/routes/chat");
+const { handleRoomsRoutes } = require("../server/routes/rooms");
+const { handleFlashcardsRoutes } = require("../server/routes/flashcards");
 
 function createMock(method, path, body = {}, headers = {}) {
   let status = 200;
@@ -190,4 +192,88 @@ test("Security: DELETE /api/documents/:id/chat dengan userId target tanpa token 
   const mock = createMock("DELETE", `/api/documents/global/chat?userId=${victimId}`);
   await handleChatRoutes(mock.req, mock.res, `/api/documents/global/chat`, mock.helpers);
   assert.equal(mock.getResult().status, 401);
+});
+
+test("Security: WhatsApp OTP max 5 attempts lockout (Brute-force protection)", async () => {
+  runMigrations(db);
+
+  const phone = `62899${Math.floor(1000000 + Math.random() * 9000000)}`;
+  const mockSend = createMock("POST", "/api/auth/whatsapp/send-otp", { phone });
+  await handleAuthRoutes(mockSend.req, mockSend.res, "/api/auth/whatsapp/send-otp", mockSend.helpers);
+  assert.equal(mockSend.getResult().status, 200);
+
+  // 5x wrong attempts
+  for (let i = 0; i < 5; i++) {
+    const mockWrong = createMock("POST", "/api/auth/whatsapp/verify", { phone, code: "000000" });
+    await handleAuthRoutes(mockWrong.req, mockWrong.res, "/api/auth/whatsapp/verify", mockWrong.helpers);
+  }
+
+  // Percobaan ke-6 harus ditolak 429 atau 400 karena terkunci
+  const mockLocked = createMock("POST", "/api/auth/whatsapp/verify", { phone, code: "000000" });
+  await handleAuthRoutes(mockLocked.req, mockLocked.res, "/api/auth/whatsapp/verify", mockLocked.helpers);
+  assert.ok([400, 429].includes(mockLocked.getResult().status));
+});
+
+test("Security: POST /api/rooms/:id/start bukan oleh host ditolak 403", async () => {
+  runMigrations(db);
+
+  const hostId = `usr_host_${Date.now()}`;
+  const imposterId = `usr_imposter_${Date.now()}`;
+  const roomId = `room_sec_${Date.now()}`;
+
+  db.prepare("INSERT INTO users (id, username, password_hash, name, created_at) VALUES (?, ?, 'h', 'Host', ?)").run(
+    hostId, `host_${Date.now()}`, Date.now()
+  );
+  db.prepare("INSERT INTO users (id, username, password_hash, name, created_at) VALUES (?, ?, 'h', 'Imposter', ?)").run(
+    imposterId, `imposter_${Date.now()}`, Date.now()
+  );
+
+  db.prepare(`
+    INSERT INTO study_rooms (id, doc_id, title, host_user_id, host_name, status, quiz_count, created_at)
+    VALUES (?, 'doc_1', 'Room Test', ?, 'Host', 'waiting', 5, ?)
+  `).run(roomId, hostId, Date.now());
+
+  const { token: imposterToken } = createSessionToken(imposterId);
+
+  // Imposter mengirim request start
+  const mock = createMock("POST", `/api/rooms/${roomId}/start`, { userId: imposterId }, { authorization: `Bearer ${imposterToken}` });
+  await handleRoomsRoutes(mock.req, mock.res, `/api/rooms/${roomId}/start`, mock.helpers);
+  assert.equal(mock.getResult().status, 403);
+});
+
+test("Security: POST /api/rooms/:id/submit menolak spoofing userId pengguna lain", async () => {
+  runMigrations(db);
+
+  const victimId = `usr_vic_submit_${Date.now()}`;
+  const attackerId = `usr_att_submit_${Date.now()}`;
+  const roomId = `room_sub_${Date.now()}`;
+
+  db.prepare("INSERT INTO users (id, username, password_hash, name, created_at) VALUES (?, ?, 'h', 'Victim', ?)").run(
+    victimId, `vic_${Date.now()}`, Date.now()
+  );
+  db.prepare("INSERT INTO users (id, username, password_hash, name, created_at) VALUES (?, ?, 'h', 'Attacker', ?)").run(
+    attackerId, `att_${Date.now()}`, Date.now()
+  );
+
+  db.prepare(`
+    INSERT INTO study_rooms (id, doc_id, title, host_user_id, host_name, status, quiz_count, created_at)
+    VALUES (?, 'doc_1', 'Room Test', 'host_1', 'Host', 'active', 5, ?)
+  `).run(roomId, Date.now());
+
+  db.prepare(`
+    INSERT INTO room_participants (id, room_id, user_id, user_name, school_class, avatar_color, is_ready, score, correct_answers, total_answered, joined_at)
+    VALUES (?, ?, ?, 'Victim', 'XII', '#fff', 1, 0, 0, 0, ?)
+  `).run(`rp_${Date.now()}`, roomId, victimId, Date.now());
+
+  const { token: attackerToken } = createSessionToken(attackerId);
+
+  // Attacker mencoba submit jawaban atas nama victimId
+  const mock = createMock(
+    "POST",
+    `/api/rooms/${roomId}/submit`,
+    { userId: victimId, score: 100, correctAnswers: 5, totalAnswered: 5 },
+    { authorization: `Bearer ${attackerToken}` }
+  );
+  await handleRoomsRoutes(mock.req, mock.res, `/api/rooms/${roomId}/submit`, mock.helpers);
+  assert.equal(mock.getResult().status, 403);
 });

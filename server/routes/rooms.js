@@ -1,5 +1,6 @@
 const { db } = require("../db");
 const { generateQuestionsCore } = require("../services/quizGenerator");
+const { getSessionUser } = require("./auth");
 
 function generateRoomCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -354,8 +355,10 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
       try {
         const body = await getBody(req);
         const { userId } = body;
+        const sessionUser = getSessionUser ? getSessionUser(req, db) : null;
+        const effectiveRequesterId = sessionUser ? sessionUser.id : userId;
 
-        if (room.host_user_id !== userId) {
+        if (room.host_user_id !== effectiveRequesterId) {
           return sendJSON(res, { error: "Hanya pembuat room (host) yang dapat memulai kompetisi" }, 403);
         }
 
@@ -395,27 +398,44 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
       try {
         const body = await getBody(req);
         const { userId, score = 0, correctAnswers = 0, totalAnswered = 0 } = body;
+        const sessionUser = getSessionUser ? getSessionUser(req, db) : null;
+        const effectiveUserId = sessionUser ? sessionUser.id : userId;
 
-        if (!userId) {
+        if (!effectiveUserId) {
           return sendJSON(res, { error: "User ID diperlukan" }, 400);
         }
+
+        if (sessionUser && userId && userId !== sessionUser.id) {
+          return sendJSON(res, { error: "Akses ditolak. Tidak diizinkan mengirim jawaban atas nama pengguna lain." }, 403);
+        }
+
+        // Bounded sanitization to prevent score/XP manipulation
+        let maxQuestions = room.quiz_count || 30;
+        try {
+          const qList = JSON.parse(room.questions_json || "[]");
+          if (qList.length > 0) maxQuestions = qList.length;
+        } catch {}
+
+        const safeCorrect = Math.max(0, Math.min(maxQuestions, Number(correctAnswers) || 0));
+        const safeTotal = Math.max(safeCorrect, Math.min(maxQuestions, Number(totalAnswered) || safeCorrect));
+        const safeScore = Math.max(0, Math.min(100, Number(score) || Math.round((safeCorrect / (maxQuestions || 1)) * 100)));
 
         db.prepare(`
           UPDATE room_participants 
           SET score = ?, correct_answers = ?, total_answered = ?
           WHERE room_id = ? AND user_id = ?
-        `).run(score, correctAnswers, totalAnswered, roomId, userId);
+        `).run(safeScore, safeCorrect, safeTotal, roomId, effectiveUserId);
 
-        // Add bonus XP to user profile
+        // Add bonus XP to user profile (capped safely)
         try {
-          const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
+          const user = db.prepare("SELECT * FROM users WHERE id = ?").get(effectiveUserId);
           if (user) {
-            const xpGained = 40 + (correctAnswers * 15);
+            const xpGained = Math.min(200, 40 + (safeCorrect * 15));
             db.prepare(`
               UPDATE users 
               SET xp = xp + ?, quiz_correct_count = quiz_correct_count + ?, quizzes_completed = quizzes_completed + 1
               WHERE id = ?
-            `).run(xpGained, correctAnswers, userId);
+            `).run(xpGained, safeCorrect, effectiveUserId);
           }
         } catch (e) {
           console.warn("[rooms-xp-grant] notice:", e.message);

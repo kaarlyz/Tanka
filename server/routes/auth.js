@@ -265,13 +265,19 @@ async function handleAuthRoutes(req, res, pathname, { sendJSON, getBody }) {
 
       console.log(`[auth-whatsapp] OTP sent to ${normPhone}: ${code}`);
 
-      return sendJSON(res, {
+      const responsePayload = {
         success: true,
         message: "Kode OTP berhasil dikirim ke nomor WhatsApp Anda",
         phone: normPhone,
-        isNewUser,
-        debugCode: code
-      });
+        isNewUser
+      };
+
+      // Only expose debugCode in test environment
+      if (process.env.NODE_ENV === "test" || process.env.TANKA_DB_PATH === ":memory:") {
+        responsePayload.debugCode = code;
+      }
+
+      return sendJSON(res, responsePayload);
     } catch (err) {
       console.error("[auth-whatsapp-send] error:", err);
       return sendJSON(res, { error: "Gagal mengirim kode verifikasi WhatsApp" }, 500);
@@ -291,11 +297,25 @@ async function handleAuthRoutes(req, res, pathname, { sendJSON, getBody }) {
       }
 
       const verification = db.prepare("SELECT * FROM auth_verifications WHERE phone = ? ORDER BY created_at DESC LIMIT 1").get(normPhone);
-      if (!verification || verification.code !== code || verification.expires_at < Date.now()) {
-        if (verification) {
-          db.prepare("UPDATE auth_verifications SET attempts = attempts + 1 WHERE id = ?").run(verification.id);
-        }
-        return sendJSON(res, { error: "Kode verifikasi salah atau telah kadaluarsa" }, 400);
+      if (!verification) {
+        return sendJSON(res, { error: "Kode verifikasi tidak ditemukan atau telah kadaluarsa" }, 400);
+      }
+
+      if (verification.attempts >= 5) {
+        db.prepare("DELETE FROM auth_verifications WHERE id = ?").run(verification.id);
+        return sendJSON(res, { error: "Terlalu banyak percobaan salah. Silakan minta kode verifikasi baru." }, 429);
+      }
+
+      if (verification.expires_at < Date.now()) {
+        db.prepare("DELETE FROM auth_verifications WHERE id = ?").run(verification.id);
+        return sendJSON(res, { error: "Kode verifikasi telah kadaluarsa. Silakan minta kode baru." }, 400);
+      }
+
+      if (verification.code !== code) {
+        const newAttempts = verification.attempts + 1;
+        db.prepare("UPDATE auth_verifications SET attempts = ? WHERE id = ?").run(newAttempts, verification.id);
+        const remaining = Math.max(0, 5 - newAttempts);
+        return sendJSON(res, { error: `Kode verifikasi salah. Sisa kesempatan: ${remaining}` }, 400);
       }
 
       let user = db.prepare("SELECT * FROM users WHERE phone = ?").get(normPhone);
@@ -335,6 +355,9 @@ async function handleAuthRoutes(req, res, pathname, { sendJSON, getBody }) {
 
         user = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
       }
+
+      // Valid OTP & authentication confirmed -> immediately purge to prevent replay attack
+      db.prepare("DELETE FROM auth_verifications WHERE id = ?").run(verification.id);
 
       db.prepare("DELETE FROM auth_verifications WHERE phone = ?").run(normPhone);
 

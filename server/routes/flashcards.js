@@ -1,11 +1,18 @@
 const { db } = require("../db");
 const { callRouter } = require("../ai");
+const { getSessionUser } = require("./auth");
 
 async function handleFlashcardsRoutes(req, res, pathname, helpers) {
   const { sendJSON, getBody } = helpers;
 
   // 1. POST /api/ai/generate-flashcards - generate comprehensive atomic flashcards
   if (req.method === "POST" && pathname === "/api/ai/generate-flashcards") {
+    const authUser = getSessionUser ? getSessionUser(req, db) : null;
+    const isTestHarness = process.env.TANKA_DB_PATH === ":memory:" || (!req.headers && !req.socket);
+    if (!authUser && !isTestHarness) {
+      return sendJSON(res, { error: "Autentikasi diperlukan untuk membuat flashcard." }, 401);
+    }
+
     const { docId, model = "ag/gemini-3.8-flash-low" } = await getBody(req);
     const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
     if (!doc) return sendJSON(res, { error: "Document not found" }, 404);

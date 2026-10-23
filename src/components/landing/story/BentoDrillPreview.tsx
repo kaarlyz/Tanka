@@ -5,7 +5,11 @@ import { MathView } from "../../common/MathView";
 interface DemoQuestion {
   subject: string;
   level: string;
+  badge?: string;
+  timeEst?: string;
   stem: string;
+  imageUrl?: string;
+  imageCaption?: string;
   options: readonly string[];
   correct: number;
   steps: string;
@@ -15,34 +19,42 @@ interface DemoQuestion {
 
 const QUESTIONS: readonly DemoQuestion[] = [
   {
-    subject: "Matematika",
-    level: "sedang",
-    stem: "Jika $f(x) = 2x + 3$ dan $g(x) = x^2$, maka $(f \\circ g)(2) = \\dots$",
+    subject: "Matematika Wajib",
+    level: "Sedang",
+    badge: "HOTS",
+    timeEst: "⏱️ 45 detik",
+    stem: "Jika $f(x) = 2x + 3$ dan $g(x) = x^2$, maka nilai komposisi $(f \\circ g)(2) = \\dots$",
     options: ["7", "11", "49", "8"],
     correct: 1,
     steps: "$g(2) = 2^2 = 4$, lalu $f(4) = 2(4) + 3 = 11$.",
-    pitfall: "Urutan komposisi sering terbalik. $(g \\circ f)(2)$ menghasilkan $49$, bukan $(f \\circ g)(2)$.",
-    trick: "Kerjakan dari fungsi paling dalam: hitung $g(2)$ dulu, lalu masukkan hasilnya ke $f$."
+    pitfall: "Urutan komposisi sering terbalik! Menghitung $(g \\circ f)(2)$ menghasilkan $49$, bukan $(f \\circ g)(2)$.",
+    trick: "Prinsip bawang: kupas dari fungsi paling dalam $g(2)$, lalu oper hasilnya ke fungsi luar $f$."
   },
   {
-    subject: "Ekonomi",
-    level: "sedang",
-    stem: "Harga naik dari 10 ke 12 (ribu rupiah), jumlah diminta turun dari 50 ke 40. Berapa nilai $|E_d|$?",
+    subject: "Ekonomi UTBK",
+    level: "Sedang",
+    badge: "Analisis Kurva",
+    timeEst: "⏱️ 50 detik",
+    imageUrl: "/uploads/exam_images/ekonomi_img-018.png",
+    imageCaption: "Grafik Keseimbangan Pasar: Pergeseran Titik Permintaan dan Elastisitas",
+    stem: "Berdasarkan grafik kurva di atas, ketika harga naik dari $P_1 = 10$ ke $P_2 = 12$, jumlah permintaan bergerak dari $Q_1 = 50$ ke $Q_2 = 40$. Berapa koefisien elastisitas permintaan $|E_d|$?",
     options: ["0{,}5", "1", "2", "0{,}2"],
     correct: 1,
-    steps: "$\\%\\Delta Q = \\frac{10}{50} = 20\\%$. $\\%\\Delta P = \\frac{2}{10} = 20\\%$. Maka $|E_d| = \\frac{20\\%}{20\\%} = 1$.",
-    pitfall: "Persentase perubahan dihitung terhadap nilai awal, bukan nilai akhir.",
-    trick: "Kedua persentase sama besar ($20\\%$), jadi rasionya langsung $1$."
+    steps: "$\\%\\Delta Q = \\frac{10}{50} = 20\\%$. $\\%\\Delta P = \\frac{2}{10} = 20\\%$. Maka $|E_d| = \\frac{20\\%}{20\\%} = 1$ (Elastisitas Uniter).",
+    pitfall: "Persentase perubahan elastisitas dihitung terhadap basis nilai mula-mula ($Q_1$), bukan nilai akhir ($Q_2$).",
+    trick: "Kedua persentase perubahan sama besar ($20\\%$), jadi rasionya langsung $1$ tanpa perlu coretan panjang."
   },
   {
-    subject: "Matematika",
-    level: "mudah",
+    subject: "Matematika Wajib",
+    level: "Mudah",
+    badge: "Aljabar",
+    timeEst: "⏱️ 30 detik",
     stem: "Tentukan rumus invers fungsi $f^{-1}(x)$ jika $f(x) = 3x - 6$.",
     options: ["\\frac{x - 6}{3}", "\\frac{x + 6}{3}", "3x + 6", "\\frac{1}{3x - 6}"],
     correct: 1,
     steps: "Misalkan $y = 3x - 6$. Tukar variabel $x$ dan $y$: $x = 3y - 6 \\implies 3y = x + 6 \\implies y = \\frac{x + 6}{3}$.",
-    pitfall: "Invers bukan sekadar membalik tanda. Tukar $x$ dan $y$, lalu selesaikan untuk $y$.",
-    trick: "Uji cepat: nilai $f(f^{-1}(x))$ harus kembali menjadi $x$."
+    pitfall: "Invers bukan sekadar membalik tanda aljabar. Tukar variabel $x$ dan $y$, lalu selesaikan kembali untuk $y$.",
+    trick: "Cek substitusi cepat: nilai $f(f^{-1}(x))$ harus kembali menjadi identitas $x$."
   }
 ];
 
@@ -127,20 +139,36 @@ export function BentoDrillPreview() {
                 <span>#{index + 1}</span>
                 <span>{q.subject}</span>
                 <span>{q.level}</span>
+                {q.badge && <span className="bd-meta-badge">{q.badge}</span>}
+                {q.timeEst && <span className="bd-meta-time">{q.timeEst}</span>}
               </div>
               <div className="bd-stem">
                 <MathView text={q.stem} />
               </div>
+              {q.imageUrl && (
+                <div className="bd-image-wrapper">
+                  <img src={q.imageUrl} alt={q.imageCaption || "Stimulus grafik ujian"} className="bd-image" loading="lazy" />
+                  {q.imageCaption && <div className="bd-image-caption">{q.imageCaption}</div>}
+                </div>
+              )}
             </div>
 
             <div className="bd-card">
               <div className="bd-options" role="group" aria-label="Pilihan jawaban">
                 {q.options.map((opt, i) => {
-                  const state = !answered ? "" : i === q.correct ? " correct" : i === choice ? " wrong" : "";
+                  const isUserPick = choice === i;
+                  const isCorrectAnswer = i === q.correct;
+                  const state = !answered ? "" : isCorrectAnswer ? " correct" : isUserPick ? " wrong" : "";
                   return (
                     <button key={opt} className={`bd-opt${state}`} onClick={() => pick(i)} disabled={answered && i !== choice && i !== q.correct}>
                       <b>{LETTERS[i]}</b>
                       <span><MathView text={opt} /></span>
+                      {answered && isUserPick && !isCorrectAnswer && (
+                        <span className="bd-opt-badge wrong">✗ Pilihanmu</span>
+                      )}
+                      {answered && isCorrectAnswer && (
+                        <span className="bd-opt-badge correct">✓ Kunci Jawaban</span>
+                      )}
                     </button>
                   );
                 })}

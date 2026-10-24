@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const LIME = "#c8f064";
-const MUTED = "#8da868";
+const SAGE = "#8da868";
 
 export interface TankaLoadingScreenProps {
   label?: string;
@@ -11,10 +11,10 @@ export interface TankaLoadingScreenProps {
   fullScreen?: boolean;
 }
 
-const TELEMETRY_STEPS = [
-  "MEMUAT MODUL & KISI-KISI TKA 2026",
-  "KALIBRASI GRAF PRASYARAT MATERI",
-  "MENYIAPKAN RUANG BELAJAR NARA AI"
+const WARM_STEPS = [
+  "Memuat pembelajaran kamu...",
+  "Menyiapkan catatan & materi...",
+  "Menghubungkan ruang belajar Nara..."
 ];
 
 export function TankaLoadingScreen({
@@ -26,12 +26,12 @@ export function TankaLoadingScreen({
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setStepIdx((prev) => (prev + 1) % TELEMETRY_STEPS.length);
-    }, 1800);
+      setStepIdx((prev) => (prev + 1) % WARM_STEPS.length);
+    }, 2200);
     return () => clearInterval(timer);
   }, []);
 
-  const activeSublabel = sublabel || TELEMETRY_STEPS[stepIdx];
+  const activeSublabel = sublabel || WARM_STEPS[stepIdx];
 
   return (
     <div
@@ -42,7 +42,7 @@ export function TankaLoadingScreen({
         justifyContent: "center",
         width: "100%",
         height: fullScreen ? "100vh" : "100%",
-        minHeight: fullScreen ? "100vh" : "380px",
+        minHeight: fullScreen ? "100vh" : "360px",
         backgroundColor: "#121a17",
         color: "#eff5ec",
         position: fullScreen ? "fixed" : "relative",
@@ -55,32 +55,20 @@ export function TankaLoadingScreen({
       role="status"
       aria-live="polite"
     >
-      {/* Background Architectural Blueprint Lines (Claude Pattern) */}
-      <svg
+      {/* Warm Ambient Lime Aura (Calm Study Vibe, Anti-Rigid Tech) */}
+      <div
         style={{
           position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
-          opacity: 0.4
+          width: 380,
+          height: 380,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(200, 240, 100, 0.08) 0%, rgba(18, 26, 23, 0) 70%)",
+          filter: "blur(40px)",
+          pointerEvents: "none"
         }}
-        viewBox="0 0 1000 600"
-        preserveAspectRatio="xMidYMid slice"
-        aria-hidden="true"
-      >
-        <defs>
-          <pattern id="tl-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1d2923" strokeWidth="0.8" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#tl-grid)" />
-        <circle cx="500" cy="300" r="180" fill="none" stroke="#25352c" strokeWidth="1" strokeDasharray="4 6" />
-        <circle cx="500" cy="300" r="260" fill="none" stroke="#1f2c25" strokeWidth="1" />
-        <path d="M500 40 V560 M240 300 H760" stroke="#25352c" strokeWidth="0.8" strokeDasharray="2 4" />
-      </svg>
+      />
 
-      {/* Main Kinetic Assembly Center */}
+      {/* Main Focus Capsule */}
       <div
         style={{
           position: "relative",
@@ -88,156 +76,153 @@ export function TankaLoadingScreen({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          maxWidth: 420,
+          maxWidth: 380,
           width: "100%",
           textAlign: "center"
         }}
       >
-        {/* Kinetic Interactive Logo Stage */}
-        <div style={{ position: "relative", width: 140, height: 110, marginBottom: 12 }}>
-          <svg width="140" height="110" viewBox="0 0 140 110" fill="none" style={{ overflow: "visible" }}>
-            {/* Connected Concept Nodes */}
-            <motion.path
-              d="M 28 72 Q 70 25 112 72"
-              fill="none"
-              stroke="#2c3e34"
-              strokeWidth="2"
-              strokeDasharray="4 4"
-            />
-            <motion.path
-              d="M 28 72 Q 70 25 112 72"
-              fill="none"
-              stroke={LIME}
-              strokeWidth="2"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: [0, 1, 1], opacity: [0, 1, 0] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: EASE }}
-            />
-
-            {/* Left Node */}
-            <motion.circle
-              cx="28"
-              cy="72"
-              r="7"
-              fill="#18221f"
-              stroke="#3a4f43"
-              strokeWidth="2"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: [0.8, 1.1, 0.8] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <circle cx="28" cy="72" r="3" fill={MUTED} />
-
-            {/* Right Node */}
-            <motion.circle
-              cx="112"
-              cy="72"
-              r="7"
-              fill="#18221f"
-              stroke="#3a4f43"
-              strokeWidth="2"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: [0.8, 1.1, 0.8] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-            />
-            <circle cx="112" cy="72" r="3" fill={LIME} />
-
-            {/* Center Monogram Pod */}
-            <g transform="translate(42, 14)">
-              <motion.rect
-                width="56"
-                height="56"
-                rx="16"
-                fill="#18221f"
-                stroke="#2d3d34"
-                strokeWidth="1.5"
-                initial={{ scale: 0.95 }}
-                animate={{ scale: [0.95, 1.02, 0.95] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <motion.circle
-                cx="46"
-                cy="12"
-                r="4.5"
-                fill={LIME}
-                initial={{ opacity: 0.6, scale: 0.8 }}
-                animate={{ opacity: [0.6, 1, 0.6], scale: [0.8, 1.2, 0.8] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <text
-                x="28"
-                y="38"
-                textAnchor="middle"
-                fill="#fcfdfa"
-                fontFamily="'DM Mono', monospace"
-                fontWeight="800"
-                fontSize="28"
-                letterSpacing="-0.02em"
-              >
-                t
-              </text>
-            </g>
-          </svg>
-        </div>
-
-        {/* Brand Typography */}
-        <div style={{ marginBottom: 20 }}>
-          <div
+        {/* Breathing Logo Capsule with Glowing Aura */}
+        <motion.div
+          style={{
+            position: "relative",
+            width: 64,
+            height: 64,
+            borderRadius: 18,
+            backgroundColor: "#18221f",
+            border: "1.5px solid #2d3d34",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 20,
+            boxShadow: "0 12px 32px -8px rgba(0, 0, 0, 0.4)"
+          }}
+          animate={{
+            scale: [1, 1.03, 1],
+            boxShadow: [
+              "0 0 0 0 rgba(200, 240, 100, 0.25), 0 12px 32px -8px rgba(0,0,0,0.4)",
+              "0 0 0 14px rgba(200, 240, 100, 0), 0 16px 36px -6px rgba(0,0,0,0.5)",
+              "0 0 0 0 rgba(200, 240, 100, 0), 0 12px 32px -8px rgba(0,0,0,0.4)"
+            ]
+          }}
+          transition={{
+            duration: 2.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <span
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              padding: "4px 10px",
-              borderRadius: 999,
-              backgroundColor: "#18221f",
-              border: "1px solid #2d3d34",
-              marginBottom: 10
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                backgroundColor: LIME,
-                boxShadow: `0 0 8px ${LIME}`
-              }}
-            />
-            <span
-              style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#98a89c",
-                letterSpacing: "0.06em"
-              }}
-            >
-              TANKA ENGINE
-            </span>
-          </div>
-
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "'DM Mono', monospace",
               fontWeight: 800,
-              fontSize: 22,
-              letterSpacing: "-0.03em",
+              fontSize: 30,
               color: "#fcfdfa",
-              margin: "0 0 6px 0"
+              lineHeight: 1
             }}
           >
-            {label}
-          </h2>
-        </div>
+            t
+          </span>
+          {/* Active Lime Glow Dot */}
+          <motion.div
+            style={{
+              position: "absolute",
+              bottom: 6,
+              right: 6,
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              backgroundColor: LIME,
+              boxShadow: `0 0 10px ${LIME}`
+            }}
+            animate={{
+              opacity: [0.6, 1, 0.6],
+              scale: [0.9, 1.25, 0.9]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+        </motion.div>
 
-        {/* Precision Progress Track (Claude 1px Border Ledger Style) */}
+        {/* Soft Glowing Status Badge (Scanning Effect) */}
+        <motion.div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "5px 14px",
+            borderRadius: 999,
+            backgroundColor: "#192420",
+            border: "1px solid #2e3e35",
+            marginBottom: 14,
+            position: "relative",
+            overflow: "hidden"
+          }}
+        >
+          {/* Soft Lime Glow Scanner Bar */}
+          <motion.div
+            style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              width: "40%",
+              background: `linear-gradient(90deg, transparent, rgba(200, 240, 100, 0.25), transparent)`,
+              pointerEvents: "none"
+            }}
+            animate={{
+              x: ["-100%", "260%"]
+            }}
+            transition={{
+              duration: 2.4,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              backgroundColor: LIME,
+              boxShadow: `0 0 8px ${LIME}`
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: LIME,
+              letterSpacing: "0.02em"
+            }}
+          >
+            Mempersiapkan
+          </span>
+        </motion.div>
+
+        {/* Main Clean Headline */}
+        <h2
+          style={{
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 800,
+            fontSize: 22,
+            letterSpacing: "-0.03em",
+            color: "#fcfdfa",
+            margin: "0 0 16px 0"
+          }}
+        >
+          {label}
+        </h2>
+
+        {/* Smooth Organic Loading Track */}
         <div
           style={{
-            width: 220,
+            width: 200,
             height: 4,
             borderRadius: 999,
-            backgroundColor: "#1a2520",
-            border: "1px solid #26362e",
+            backgroundColor: "#1b2722",
+            border: "1px solid #2a3a31",
             overflow: "hidden",
             position: "relative",
             marginBottom: 16
@@ -245,38 +230,37 @@ export function TankaLoadingScreen({
         >
           <motion.div
             style={{
-              width: "45%",
+              width: "40%",
               height: "100%",
               borderRadius: 999,
               background: `linear-gradient(90deg, transparent, ${LIME}, transparent)`
             }}
             animate={{
-              x: ["-100%", "280%"]
+              x: ["-100%", "260%"]
             }}
             transition={{
-              duration: 1.7,
+              duration: 1.8,
               repeat: Infinity,
               ease: EASE
             }}
           />
         </div>
 
-        {/* Monospace Step Indicator with Crossfade */}
-        <div style={{ height: 18, position: "relative", width: "100%", overflow: "hidden" }}>
+        {/* Friendly Natural Subtitle with Crossfade */}
+        <div style={{ height: 20, position: "relative", width: "100%", overflow: "hidden" }}>
           <AnimatePresence mode="wait">
             <motion.p
               key={activeSublabel}
-              initial={{ opacity: 0, y: 6 }}
+              initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
+              exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.35, ease: EASE }}
               style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 10.5,
-                color: MUTED,
-                letterSpacing: "0.08em",
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 12.5,
+                color: SAGE,
                 margin: 0,
-                textTransform: "uppercase"
+                letterSpacing: "0.01em"
               }}
             >
               {activeSublabel}

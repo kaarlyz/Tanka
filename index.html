@@ -19,73 +19,54 @@
   </head>
   <body>
     <div id="root">
-      <div id="tanka-preloader" style="position:fixed;inset:0;background:#121a17;color:#eff5ec;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden;">
+      <div id="tanka-preloader" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;height:-webkit-fill-available;background:#121a17;color:#eff5ec;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none;box-sizing:border-box;padding:24px;">
         <style>
-          @keyframes tankaPreloadPulse {
-            0% { transform: scale(0.96); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(0.96); }
+          @keyframes tankaHaloPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200, 240, 100, 0.25), 0 12px 32px -8px rgba(0,0,0,0.4); }
+            50% { transform: scale(1.03); box-shadow: 0 0 0 14px rgba(200, 240, 100, 0), 0 16px 36px -6px rgba(0,0,0,0.5); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200, 240, 100, 0), 0 12px 32px -8px rgba(0,0,0,0.4); }
           }
-          @keyframes tankaPreloadDot {
-            0% { opacity: 0.5; transform: scale(0.85); }
-            50% { opacity: 1; transform: scale(1.2); }
-            100% { opacity: 0.5; transform: scale(0.85); }
+          @keyframes tankaDotGlow {
+            0% { opacity: 0.6; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.25); }
+            100% { opacity: 0.6; transform: scale(0.9); }
           }
-          @keyframes tankaPreloadBar {
+          @keyframes tankaScanSweep {
             0% { transform: translateX(-100%); }
-            100% { transform: translateX(250%); }
-          }
-          @keyframes tankaPreloadFlow {
-            0% { stroke-dashoffset: 160; }
-            100% { stroke-dashoffset: 0; }
+            100% { transform: translateX(260%); }
           }
         </style>
 
-        <!-- Blueprint Background Grid -->
-        <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.35;" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <defs>
-            <pattern id="tp-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1d2923" stroke-width="0.8" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#tp-grid)" />
-          <circle cx="500" cy="300" r="180" fill="none" stroke="#25352c" stroke-width="1" stroke-dasharray="4 6" />
-          <path d="M500 40 V560 M240 300 H760" stroke="#25352c" stroke-width="0.8" stroke-dasharray="2 4" />
-        </svg>
+        <!-- Ambient Lime Glow Aura -->
+        <div style="position:absolute;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle, rgba(200, 240, 100, 0.08) 0%, rgba(18, 26, 23, 0) 70%);filter:blur(40px);pointer-events:none;"></div>
 
-        <!-- Kinetic Node Arc Graphic -->
+        <!-- Center Focus Block -->
         <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;max-width:380px;width:100%;text-align:center;">
-          <div style="position:relative;width:130px;height:100px;margin-bottom:8px;">
-            <svg width="130" height="100" viewBox="0 0 130 100" fill="none" style="overflow:visible;">
-              <path d="M 24 66 Q 65 22 106 66" fill="none" stroke="#2c3e34" stroke-width="2" stroke-dasharray="4 4" />
-              <path d="M 24 66 Q 65 22 106 66" fill="none" stroke="#c8f064" stroke-width="2" stroke-dasharray="80" stroke-dashoffset="80" style="animation:tankaPreloadFlow 2.4s ease-in-out infinite;" />
-              <circle cx="24" cy="66" r="6" fill="#18221f" stroke="#3a4f43" stroke-width="2" />
-              <circle cx="24" cy="66" r="2.5" fill="#8da868" />
-              <circle cx="106" cy="66" r="6" fill="#18221f" stroke="#3a4f43" stroke-width="2" />
-              <circle cx="106" cy="66" r="2.5" fill="#c8f064" />
-              <g transform="translate(39, 10)">
-                <rect width="52" height="52" rx="14" fill="#18221f" stroke="#2d3d34" stroke-width="1.5" style="animation:tankaPreloadPulse 2.8s ease-in-out infinite;" />
-                <circle cx="43" cy="11" r="4" fill="#c8f064" style="animation:tankaPreloadDot 1.8s ease-in-out infinite;" />
-                <text x="26" y="35" text-anchor="middle" fill="#fcfdfa" font-family="'DM Mono', monospace" font-weight="800" font-size="26">t</text>
-              </g>
-            </svg>
+          <!-- Breathing Monogram Pod -->
+          <div style="position:relative;width:64px;height:64px;border-radius:18px;background:#18221f;border:1.5px solid #2d3d34;display:flex;align-items:center;justify-content:center;margin-bottom:20px;animation:tankaHaloPulse 2.8s ease-in-out infinite;">
+            <span style="font-family:'DM Mono',monospace,sans-serif;font-weight:800;font-size:30px;color:#fcfdfa;line-height:1;">t</span>
+            <div style="position:absolute;bottom:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#c8f064;box-shadow:0 0 10px #c8f064;animation:tankaDotGlow 2s ease-in-out infinite;"></div>
           </div>
 
-          <!-- Brand Kicker Tag -->
-          <div style="display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:999px;background:#18221f;border:1px solid #2d3d34;margin-bottom:12px;">
+          <!-- Soft Glowing Status Pill -->
+          <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:999px;background:#192420;border:1px solid #2e3e35;margin-bottom:14px;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,rgba(200,240,100,0.25),transparent);pointer-events:none;animation:tankaScanSweep 2.4s ease-in-out infinite;"></div>
             <span style="width:6px;height:6px;border-radius:50%;background:#c8f064;box-shadow:0 0 8px #c8f064;"></span>
-            <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:#98a89c;letter-spacing:0.06em;">TANKA ENGINE</span>
+            <span style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:11.5px;font-weight:600;color:#c8f064;letter-spacing:0.02em;">Mempersiapkan</span>
           </div>
 
-          <!-- Headline -->
-          <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.03em;color:#fcfdfa;margin:0 0 16px 0;">Menyiapkan ruang belajar<span style="color:#c8f064;">.</span></h1>
+          <!-- Clean Headline -->
+          <h2 style="font-family:'Syne',-apple-system,sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.03em;color:#fcfdfa;margin:0 0 16px 0;">Menyiapkan ruang belajar<span style="color:#c8f064;">.</span></h2>
 
           <!-- Precision Progress Track -->
-          <div style="width:200px;height:4px;border-radius:999px;background:#1a2520;border:1px solid #26362e;overflow:hidden;position:relative;margin-bottom:14px;">
-            <div style="width:45%;height:100%;border-radius:999px;background:linear-gradient(90deg,transparent,#c8f064,transparent);animation:tankaPreloadBar 1.6s cubic-bezier(0.16,1,0.3,1) infinite;"></div>
+          <div style="width:200px;height:4px;border-radius:999px;background:#1b2722;border:1px solid #2a3a31;overflow:hidden;position:relative;margin-bottom:16px;">
+            <div style="width:40%;height:100%;border-radius:999px;background:linear-gradient(90deg,transparent,#c8f064,transparent);animation:tankaScanSweep 1.8s cubic-bezier(0.16,1,0.3,1) infinite;"></div>
           </div>
 
-          <span style="font-family:'DM Mono',monospace;font-size:10.5px;color:#8da868;letter-spacing:0.08em;text-transform:uppercase;">MEMUAT MODUL & KISI-KISI TKA 2026</span>
+          <!-- Calm Subtitle -->
+          <div style="height:20px;line-height:20px;position:relative;width:100%;overflow:hidden;">
+            <p style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:12.5px;color:#8da868;margin:0;letter-spacing:0.01em;">Memuat pembelajaran kamu...</p>
+          </div>
         </div>
       </div>
     </div>

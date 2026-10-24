@@ -82,6 +82,191 @@ const PALETTE: MindMapColor[] = [
 ];
 
 /**
+ * Parser Khusus Ujian & Soal TKA/UTBK
+ * Memetakan: Judul Ujian ➔ Subtes / Ranah Materi ➔ Konsep Kunci yang Diuji ➔ Soal-soal yang ngetes konsep itu.
+ * Secara ketat MENYARING opsi A-B-C-D dan distractor soal agar tidak mengotori Mind Map.
+ */
+function parseExamMarkdownToMindMapTree(markdown: string, fallbackTitle: string): MindMapTree {
+  const lines = markdown.split("\n");
+  let rootTitle = fallbackTitle || "Peta Kisi-Kisi Ujian";
+
+  // 1. Ekstrak judul utama jika ada
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (line.startsWith("# ") && !line.startsWith("## ")) {
+      rootTitle = line.replace(/^#\s+(?:Bedah Tuntas:\s*)?/, "").replace(/[*_#]/g, "").trim();
+      break;
+    }
+  }
+
+  // 2. Kumpulkan Konsep Kunci umum jika ada di bagian ## Konsep Kunci yang Diuji
+  const globalConcepts: string[] = [];
+  let inGlobalConceptsSection = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (line.startsWith("## ") && line.toLowerCase().includes("konsep kunci")) {
+      inGlobalConceptsSection = true;
+      continue;
+    }
+    if (inGlobalConceptsSection) {
+      if (line.startsWith("## ") || line.startsWith("---")) {
+        inGlobalConceptsSection = false;
+      } else if (line.startsWith("- ") || line.startsWith("* ")) {
+        const c = line.replace(/^[-*]\s+/, "").replace(/[*_`]/g, "").trim();
+        if (c && c.length > 2) globalConcepts.push(c);
+      }
+    }
+  }
+
+  // 3. Parse subtes dan butir soal di dalamnya
+  interface ExamQ {
+    num: string;
+    stem: string;
+    concept: string;
+    tingkat: string;
+    trik: string;
+  }
+  const subtesMap = new Map<string, ExamQ[]>();
+  let currentSubtes = "Kompetensi Utama";
+  let currentQ: ExamQ | null = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Deteksi Subtes (## )
+    if (line.startsWith("## ") && !line.toLowerCase().includes("konsep kunci")) {
+      currentSubtes = line.replace(/^##\s+/, "").replace(/[*_#]/g, "").trim();
+      if (!subtesMap.has(currentSubtes)) {
+        subtesMap.set(currentSubtes, []);
+      }
+      currentQ = null;
+      continue;
+    }
+
+    // Deteksi Nomor Soal (### Soal X)
+    const soalMatch = line.match(/^###\s+Soal\s+(\d+)/i);
+    if (soalMatch) {
+      if (!subtesMap.has(currentSubtes)) {
+        subtesMap.set(currentSubtes, []);
+      }
+      currentQ = {
+        num: soalMatch[1],
+        stem: "",
+        concept: "",
+        tingkat: "Sedang",
+        trik: ""
+      };
+      subtesMap.get(currentSubtes)!.push(currentQ);
+      continue;
+    }
+
+    // Ekstrak detail soal untuk simpul mind map
+    if (currentQ) {
+      // Abaikan opsi A-E dari konten mind map
+      if (/^\s*[-*•]?\s*[A-Ea-e][.)]\s+/.test(line) || /^\s*\d+\.\s*[A-Ea-e][.)]\s+/.test(line)) {
+        continue;
+      }
+
+      if (line.includes("**Konsep Kunci:**") || line.includes("Konsep Kunci:")) {
+        const cVal = line.replace(/.*?\*\*?Konsep Kunci:\*\*?\s*/i, "").replace(/[*_`]/g, "").trim();
+        if (cVal) currentQ.concept = cVal.split(/[;,]/)[0].trim();
+      } else if (line.includes("**Trik Cepat:**") || line.includes("Trik Cepat:")) {
+        const tVal = line.replace(/.*?\*\*?Trik Cepat:\*\*?\s*/i, "").replace(/[*_`]/g, "").trim();
+        if (tVal) currentQ.trik = tVal.slice(0, 160);
+      } else if (line.includes("HOTS") || line.includes("Sulit")) {
+        currentQ.tingkat = "HOTS";
+      } else if (line.includes("Mudah")) {
+        currentQ.tingkat = "Mudah";
+      } else if (line.startsWith("**") && !currentQ.stem && line.length > 8) {
+        currentQ.stem = line.replace(/[*_`]/g, "").trim().slice(0, 80);
+      }
+    }
+  }
+
+  // Jika tidak ada subtes yang terdeteksi, fallback
+  if (subtesMap.size === 0) {
+    return {
+      id: "root",
+      title: rootTitle,
+      color: PALETTE[0],
+      children: []
+    };
+  }
+
+  const stages: MindMapStage[] = [];
+  let stageNumber = 1;
+
+  subtesMap.forEach((qList, subtesName) => {
+    const color = PALETTE[(stageNumber - 1) % PALETTE.length];
+    const conceptBuckets = new Map<string, ExamQ[]>();
+
+    qList.forEach((q, idx) => {
+      let assignedConcept = q.concept;
+      if (!assignedConcept && globalConcepts.length > 0) {
+        const matched = globalConcepts.find((gc) => (q.stem || "").toLowerCase().includes(gc.toLowerCase()));
+        if (matched) assignedConcept = matched;
+      }
+      if (!assignedConcept) {
+        assignedConcept = q.stem ? q.stem.slice(0, 32).trim() : `Kompetensi Bagian ${Math.floor(idx / 4) + 1}`;
+      }
+
+      if (!conceptBuckets.has(assignedConcept)) {
+        conceptBuckets.set(assignedConcept, []);
+      }
+      conceptBuckets.get(assignedConcept)!.push(q);
+    });
+
+    const subModules: MindMapSubModule[] = [];
+    let subIdx = 1;
+
+    conceptBuckets.forEach((matchedQs, cName) => {
+      const subNum = `${stageNumber}.${subIdx}`;
+      const children: MindMapConcept[] = [];
+
+      matchedQs.forEach((q, qIdx) => {
+        children.push({
+          id: `soal_${q.num}_${stageNumber}_${subIdx}_${qIdx}`,
+          title: `Soal #${q.num} [${q.tingkat}]`,
+          conceptNumber: `${subNum}.${qIdx + 1}`,
+          desc: q.trik ? `💡 Trik: ${q.trik}` : (q.stem ? `Materi: ${q.stem}` : `Butir soal nomor ${q.num} menguji penguasaan ${cName}.`)
+        });
+      });
+
+      subModules.push({
+        id: `exam_concept_${stageNumber}_${subIdx}`,
+        title: cName,
+        subNumber: subNum,
+        desc: `Domain ${subtesName}: menguji ${matchedQs.length} butir soal (${matchedQs.map((q) => "#" + q.num).join(", ")}).`,
+        children
+      });
+
+      subIdx++;
+    });
+
+    stages.push({
+      id: `stage_${stageNumber}`,
+      title: subtesName,
+      shortTitle: subtesName.replace(/^Subtes\s+\d+:\s*/i, "").trim(),
+      stageNumber,
+      desc: `Kisi-kisi soal ${subtesName} (${qList.length} butir soal, ${conceptBuckets.size} indikator materi).`,
+      color,
+      children: subModules
+    });
+
+    stageNumber++;
+  });
+
+  return {
+    id: "root",
+    title: `Peta Kisi-Kisi: ${rootTitle}`,
+    color: PALETTE[0],
+    children: stages
+  };
+}
+
+/**
  * Robust & Pedagogy-Aware Markdown to Mind Map Parser
  * Excludes quiz questions, worked examples, steps, and options.
  * Organizes cleanly into: Root -> Stages (Chapters) -> Sub-Modules -> Atomic Concepts.
@@ -89,6 +274,20 @@ const PALETTE: MindMapColor[] = [
 export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: string): MindMapTree {
   if (!markdown || !markdown.trim()) {
     return { id: "root", title: fallbackTitle || "Peta Konsep", children: [] };
+  }
+
+  // Deteksi naskah soal ujian untuk pohon kompetensi khusus (bebas opsi ABC)
+  const isExamSheet =
+    markdown.includes("# Bedah Tuntas:") ||
+    markdown.includes("Soal Latihan Terdeteksi") ||
+    /###\s+Soal\s+\d+/i.test(markdown) ||
+    (markdown.includes("Kunci Jawaban") && /###\s+Soal/i.test(markdown));
+
+  if (isExamSheet) {
+    const examTree = parseExamMarkdownToMindMapTree(markdown, fallbackTitle);
+    if (examTree.children.length > 0) {
+      return examTree;
+    }
   }
 
   const lines = markdown.split("\n");
@@ -101,6 +300,17 @@ export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: stri
   for (let rawLine of lines) {
     const line = rawLine.trim();
     if (!line) continue;
+
+    // Filter ketat: opsi soal A-E dan radio options DILARANG masuk mind map
+    if (
+      /^\s*[-*•]?\s*[A-Ea-e][.)]\s+/.test(line) ||
+      /^\s*\d+\.\s*[A-Ea-e][.)]\s+/.test(line) ||
+      /^\s*[-*•]?\s*\*\*([A-Ea-e])[.)]?\*\*/i.test(line) ||
+      line.includes("✓ Kunci Jawaban") ||
+      line.includes("✗ Pilihanmu")
+    ) {
+      continue;
+    }
 
     // Detect Root Title (# )
     if (line.startsWith("# ") && !line.startsWith("## ") && !line.startsWith("### ")) {
@@ -232,6 +442,7 @@ export function parseMarkdownToMindMapTree(markdown: string, fallbackTitle: stri
       const lower = conceptName.toLowerCase();
       // Exclude quiz options and question solving steps
       if (
+        /^(opsi\s*)?[a-e][.)]?$/i.test(conceptName) ||
         lower.startsWith("langkah") ||
         lower.startsWith("jawaban benar") ||
         lower.startsWith("soal") ||

@@ -56,6 +56,46 @@ async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance,
         Date.now()
       );
       console.log(`[Exam Pipeline] Saved ${quizQuestions.length} questions to quizzes table`);
+
+      // Persist extracted exam concepts into document_concepts table
+      try {
+        const now = Date.now();
+        const insertConcept = dbInstance.prepare(`
+          INSERT OR IGNORE INTO document_concepts (id, doc_id, name, definition, prerequisites, origin, created_at, category, is_required, evidence_quote, segment_id, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const seenConcepts = new Set();
+        quizQuestions.forEach((q, qIdx) => {
+          let concepts = [];
+          if (q.formula && typeof q.formula === "string") {
+            concepts = q.formula.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+          }
+          concepts.forEach((cName) => {
+            const clean = cName.replace(/^[-*•]\s*/, "").trim();
+            if (!clean || seenConcepts.has(clean.toLowerCase())) return;
+            seenConcepts.add(clean.toLowerCase());
+            const cId = `concept_${docId}_${qIdx}_${Math.random().toString(36).slice(2, 6)}`;
+            const def = `Indikator kompetensi ujian: menguji penguasaan ${clean} pada ${q.subtes || "soal"}.`;
+            insertConcept.run(
+              cId,
+              docId,
+              clean,
+              def,
+              JSON.stringify({ rumus: q.formula || "", trik_cepat: q.trik_cepat || "", jebakan: q.pitfall || "" }),
+              "exam_pipeline",
+              now,
+              "core",
+              1,
+              q.question ? q.question.slice(0, 200) : "",
+              String(q.id),
+              now
+            );
+          });
+        });
+        console.log(`[Exam Pipeline] Synced ${seenConcepts.size} competency concepts to document_concepts table`);
+      } catch (conceptErr) {
+        console.warn("[Exam Pipeline] Notice syncing concepts:", conceptErr.message);
+      }
     }
 
     // Save study guide as document content

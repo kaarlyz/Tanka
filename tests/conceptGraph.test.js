@@ -173,3 +173,50 @@ test("Concept Graph: integrasi database SQLite getConceptGraphForDocument", () =
   assert.equal(savedEdges[0].source_id, "c1");
   assert.equal(savedEdges[0].target_id, "c2");
 });
+
+test("Concept Graph: buildExamMindMapTree menyusun pohon kisi-kisi ujian bebas opsi ABC", () => {
+  const { buildExamMindMapTree } = require("../server/services/conceptGraphService");
+  const sampleQuestions = [
+    {
+      id: 1,
+      subtes: "penalaran_matematika",
+      formula: "Fungsi Komposisi",
+      question: "Jika f(x)=2x dan g(x)=x+1...",
+      tingkat: "sedang",
+      trik_cepat: "Kupas dari fungsi dalam"
+    },
+    {
+      id: 2,
+      subtes: "penalaran_matematika",
+      formula: "Fungsi Komposisi",
+      question: "Tentukan (g o f)(3)...",
+      tingkat: "mudah",
+      trik_cepat: "Substitusi langsung"
+    },
+    {
+      id: 3,
+      subtes: "pengetahuan_kuantitatif",
+      formula: "Pertidaksamaan Kuadrat",
+      question: "Himpunan penyelesaian x^2 - 4 < 0...",
+      tingkat: "sulit",
+      pitfall: "Perhatikan tanda pembuat nol"
+    }
+  ];
+
+  const tree = buildExamMindMapTree("Simulasi TKA Saintek 2026", sampleQuestions);
+
+  assert.ok(tree);
+  assert.equal(tree.children.length, 2, "Harus ada 2 subtes (Penalaran Matematika & Pengetahuan Kuantitatif)");
+
+  const st1 = tree.children.find(s => s.title === "Penalaran Matematika");
+  assert.ok(st1);
+  assert.equal(st1.children.length, 1, "Harus ada 1 konsep di Penalaran Matematika (Fungsi Komposisi)");
+  assert.equal(st1.children[0].title, "Fungsi Komposisi");
+  assert.equal(st1.children[0].children.length, 2, "Harus ada 2 butir soal di bawah Fungsi Komposisi");
+  assert.ok(st1.children[0].children[0].title.includes("Soal #1"));
+  assert.ok(st1.children[0].children[1].title.includes("Soal #2"));
+
+  // Pastikan tidak ada opsi A-E di pohon
+  const allTitles = JSON.stringify(tree);
+  assert.ok(!allTitles.includes("A. ") && !allTitles.includes("B. "), "Tidak boleh ada opsi ABC di mind map");
+});

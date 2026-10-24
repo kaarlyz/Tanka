@@ -258,6 +258,127 @@ function syncConceptEdgesToDb(dbInstance, docId, edges) {
 }
 
 /**
+ * Membangun Peta Kisi-Kisi & Kompetensi Ujian dari butir-butir soal ujian (TKA/UTBK).
+ * Menghilangkan ranting opsi A-B-C-D dan menyusun pohon kompetensi:
+ * Root (Judul Ujian) ➔ Subtes / Ranah Materi ➔ Konsep Kunci yang Diuji ➔ Butir Soal & Trik Cepat.
+ */
+function buildExamMindMapTree(docTitle, questions = []) {
+  const rootTitle = docTitle || "Peta Kisi-Kisi Kompetensi Ujian";
+  const subtesMap = new Map();
+
+  const subtesLabels = {
+    penalaran_umum: "Penalaran Umum",
+    pengetahuan_pemahaman_umum: "Pengetahuan & Pemahaman Umum",
+    pemahaman_bacaan_menulis: "Pemahaman Bacaan & Menulis",
+    pengetahuan_kuantitatif: "Pengetahuan Kuantitatif",
+    literasi_indonesia: "Literasi Bahasa Indonesia",
+    literasi_inggris: "Literasi Bahasa Inggris",
+    penalaran_matematika: "Penalaran Matematika",
+    mapel_tka: "Mata Pelajaran TKA",
+    lainnya: "Kompetensi Utama"
+  };
+
+  questions.forEach((q) => {
+    const rawSt = q.subtes || "lainnya";
+    const stKey = subtesLabels[rawSt] || String(rawSt).replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    if (!subtesMap.has(stKey)) {
+      subtesMap.set(stKey, []);
+    }
+    subtesMap.get(stKey).push(q);
+  });
+
+  const stages = [];
+  let stageIdx = 1;
+
+  subtesMap.forEach((qList, subtesName) => {
+    const color = PALETTE[(stageIdx - 1) % PALETTE.length];
+
+    // Kelompokkan soal berdasarkan Konsep Kunci di dalam subtes ini
+    const conceptGroups = new Map();
+
+    qList.forEach((q) => {
+      let concepts = [];
+      if (q.formula && typeof q.formula === "string") {
+        concepts = q.formula.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+      }
+      if (concepts.length === 0 && q._pembahasan && Array.isArray(q._pembahasan.konsep_kunci)) {
+        concepts = q._pembahasan.konsep_kunci.map((s) => String(s).trim()).filter(Boolean);
+      }
+      if (concepts.length === 0) {
+        // Fallback: judul ringkas materi soal
+        const cleanQ = String(q.question || "").replace(/<[^>]+>/g, "").replace(/\$[^$]+\$/g, "").trim();
+        const shortDesc = cleanQ.slice(0, 32).trim() || `Indikator Soal #${q.id}`;
+        concepts = [shortDesc];
+      }
+
+      concepts.forEach((cName) => {
+        // Bersihkan nama konsep dari awalan berlebih
+        const cleanName = cName.replace(/^[-*•]\s*/, "").trim();
+        if (!cleanName) return;
+        if (!conceptGroups.has(cleanName)) {
+          conceptGroups.set(cleanName, []);
+        }
+        conceptGroups.get(cleanName).push(q);
+      });
+    });
+
+    const subModules = [];
+    let subIdx = 1;
+
+    conceptGroups.forEach((matchedQuestions, cName) => {
+      const subNum = `${stageIdx}.${subIdx}`;
+      const children = [];
+
+      matchedQuestions.forEach((q, qIdx) => {
+        const tingkat = q.tingkat ? String(q.tingkat).toUpperCase() : "SEDANG";
+        const parts = [];
+        if (q.trik_cepat) parts.push(`💡 Trik: ${q.trik_cepat}`);
+        if (q.pitfall) parts.push(`⚠️ Jebakan: ${q.pitfall}`);
+        if (parts.length === 0 && q.explanation) {
+          parts.push(q.explanation.slice(0, 140) + "...");
+        }
+
+        children.push({
+          id: `soal_${q.id}_${qIdx}`,
+          title: `Soal #${q.id} [${tingkat}]`,
+          conceptNumber: `${subNum}.${qIdx + 1}`,
+          desc: parts.join(" | ") || `Butir soal nomor ${q.id} menguji penguasaan materi ${cName}.`
+        });
+      });
+
+      subModules.push({
+        id: `exam_concept_${stageIdx}_${subIdx}`,
+        title: cName,
+        subNumber: subNum,
+        desc: `Domain materi ${subtesName}: menguji ${matchedQuestions.length} butir soal (${matchedQuestions.map((q) => "#" + q.id).join(", ")}).`,
+        children
+      });
+
+      subIdx++;
+    });
+
+    stages.push({
+      id: `stage_subtes_${stageIdx}`,
+      title: subtesName,
+      shortTitle: subtesName,
+      stageNumber: stageIdx,
+      desc: `Kisi-kisi materi ${subtesName} (${qList.length} butir soal terdistribusi dalam ${conceptGroups.size} indikator kompetensi).`,
+      color,
+      children: subModules
+    });
+
+    stageIdx++;
+  });
+
+  return {
+    id: "root",
+    title: `Peta Kisi-Kisi: ${rootTitle}`,
+    color: PALETTE[0],
+    children: stages
+  };
+}
+
+/**
  * Mengambil payload lengkap Concept Graph dan MindMapTree untuk dokumen tertentu.
  */
 function getConceptGraphForDocument(dbInstance, docId) {
@@ -265,6 +386,44 @@ function getConceptGraphForDocument(dbInstance, docId) {
 
   const doc = dbInstance.prepare("SELECT id, title, summary FROM documents WHERE id = ?").get(docId);
   if (!doc) return null;
+
+  // 1. Cek apakah dokumen ini memiliki butir soal ujian (exam sheet / naskah soal)
+  let quizQuestions = [];
+  try {
+    const canonicalQuiz = dbInstance.prepare(
+      "SELECT id, questions, quiz_type FROM quizzes WHERE doc_id = ? ORDER BY (CASE WHEN quiz_type = 'exam_sheet' OR id LIKE 'quiz_exam_%' THEN 1 ELSE 2 END), created_at DESC LIMIT 1"
+    ).get(docId);
+
+    if (canonicalQuiz && canonicalQuiz.questions) {
+      const parsed = JSON.parse(canonicalQuiz.questions);
+      if (Array.isArray(parsed) && parsed.length > 0) quizQuestions = parsed;
+    }
+
+    const concepts = dbInstance.prepare("SELECT * FROM document_concepts WHERE doc_id = ? ORDER BY created_at ASC").all(docId);
+    const chapters = dbInstance.prepare("SELECT * FROM chapter_plans WHERE doc_id = ? ORDER BY chapter_number ASC").all(docId);
+    let edges = dbInstance.prepare("SELECT * FROM concept_edges WHERE doc_id = ? ORDER BY created_at ASC").all(docId);
+
+    // Jika naskah ujian dengan butir soal terverifikasi, gunakan Peta Kisi-Kisi Kompetensi Soal
+    if (quizQuestions.length > 0 && (concepts.length === 0 || chapters.length === 0 || (canonicalQuiz && (canonicalQuiz.quiz_type === "exam_sheet" || canonicalQuiz.id.startsWith("quiz_exam_"))))) {
+      const examTree = buildExamMindMapTree(doc.title, quizQuestions);
+      return {
+        success: true,
+        docId,
+        title: doc.title,
+        summary: doc.summary,
+        isExamSheet: true,
+        questionCount: quizQuestions.length,
+        nodeCount: examTree.children.reduce((acc, st) => acc + st.children.length, 0),
+        edgeCount: 0,
+        chapterCount: examTree.children.length,
+        nodes: [],
+        edges: [],
+        tree: examTree
+      };
+    }
+  } catch (quizErr) {
+    // Quizzes table might not exist in isolated test mocks
+  }
 
   const concepts = dbInstance.prepare("SELECT * FROM document_concepts WHERE doc_id = ? ORDER BY created_at ASC").all(docId);
   const chapters = dbInstance.prepare("SELECT * FROM chapter_plans WHERE doc_id = ? ORDER BY chapter_number ASC").all(docId);
@@ -314,6 +473,7 @@ function getConceptGraphForDocument(dbInstance, docId) {
 module.exports = {
   buildOrInferConceptEdges,
   buildMindMapTreeFromCanonicalGraph,
+  buildExamMindMapTree,
   syncConceptEdgesToDb,
   getConceptGraphForDocument
 };

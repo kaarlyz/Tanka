@@ -21,7 +21,16 @@ const ATURAN_MODE_SOAL = `ATURAN MODE SOAL
 6. Output HANYA JSON valid sesuai skema. Tanpa markdown, tanpa teks di luar JSON.`;
 
 // ─── Subtes Detection ──────────────────────────────────────────────
-function detectSubtes(questionText, options) {
+function detectSubtes(questionText, options, docTitle = "") {
+  const titleStr = String(docTitle || "").toLowerCase();
+  const isTkaDoc = /tka\s*(?:ekonomi|sosiologi|geografi|sejarah|fisika|kimia|biologi|matematika)/i.test(titleStr)
+    || /\b(tka\s+ekonomi|tka\s+sosiologi|tka\s+geografi|tka\s+sejarah)\b/i.test(titleStr)
+    || /\b(ekonomi|sosiologi|geografi|sejarah|biologi|kimia|fisika)\s+sma\b/i.test(titleStr);
+
+  if (isTkaDoc) {
+    return "mapel_tka";
+  }
+
   const optText = Array.isArray(options)
     ? options.join(" ")
     : options && typeof options === "object"
@@ -29,20 +38,33 @@ function detectSubtes(questionText, options) {
       : String(options || "");
   const t = (questionText + " " + optText).toLowerCase();
 
+  // Prioritas 1: Mapel TKA (Ekonomi, Sosiologi, Geografi, dll.) agar kata "harga/persen/tabel/fungsi" tidak salah dibajak TPS
+  if (/\b(kelangkaan|permintaan|penawaran|inflasi|deflasi|gdp|pdb|apbn|fiskal|moneter|ketenagakerjaan|koperasi|perdagangan|akuntansi|neraca|laba|rugi|ekonomi|biaya\s+peluang|pasar\s+monopoli|pasar\s+oligopoli|pajak|kurs|devisa)\b/.test(t))
+    return "mapel_tka";
+  if (/\b(sosiologi|stratifikasi|mobilitas|konflik|integrasi|globalisasi|perubahan\s+sosial|interaksi\s+sosial|lembaga|kelompok\s+sosial|diferensiasi|etnosentrisme|asimilasi|akulturasi)\b/.test(t))
+    return "mapel_tka";
+  if (/\b(geografi|geomorfologi|litosfer|atmosfer|hidrosfer|kartografi|sig|penginderaan\s+jauh|lempeng|tektonik|vulkanisme|iklim|bioma)\b/.test(t))
+    return "mapel_tka";
+  if (/\b(sejarah|kolonialisme|imperialisme|revolusi|kemerdekaan|hindia\s+belanda|voc|perang\s+dunia|prasasti|kerajaan)\b/.test(t))
+    return "mapel_tka";
+
+  // Prioritas 2: Literasi Bahasa
   if (/\b(paragraph|passage|read|text|the\s+author|main\s+idea|implies?|infer|vocabulary|synonym|antonym|closest\s+in\s+meaning)\b/i.test(t))
     return "literasi_inggris";
   if (/\b(paragraf|bacaan|teks|penulis|gagasan\s+utama|simpulan|kalimat\s+efektif|ejaan|diksi|puebi|konjungsi|klausa)\b/.test(t))
     return "literasi_indonesia";
-  if (/\b(integral|turunan|limit|logaritma|trigonometri|persamaan|pertidaksamaan|fungsi|matriks|vektor|peluang|statistik|barisan|deret|eksponen|akar|pangkat)\b/.test(t))
+
+  // Prioritas 3: Penalaran Matematika murni
+  if (/\b(integral|turunan|limit|logaritma|trigonometri|persamaan\s+kuadrat|pertidaksamaan\s+linear|matriks|vektor|peluang|barisan\s+aritmetika|deret\s+geometri|eksponen|aljabar)\b/.test(t))
     return "penalaran_matematika";
-  if (/\b(persen|diskon|bunga|untung|rugi|harga|rasio|perbandingan|rata-rata|median|modus|diagram|tabel|data|grafik)\b/.test(t))
+
+  // Prioritas 4: Pengetahuan Kuantitatif UTBK
+  if (/\b(persen|diskon|bunga|rasio|perbandingan|rata-rata|median|modus)\b/.test(t))
     return "pengetahuan_kuantitatif";
+
+  // Prioritas 5: Penalaran Umum & PPU
   if (/\b(silogisme|premis|kesimpulan|logika|penalaran|analitik|pola|deret\s+angka|hubungan\s+antar|sebab-akibat|argumen)\b/.test(t))
     return "penalaran_umum";
-  if (/\b(kelangkaan|permintaan|penawaran|inflasi|deflasi|gdp|pdb|apbn|fiskal|moneter|ketenagakerjaan|koperasi|perdagangan|akuntansi|neraca|laba|rugi|ekonomi)\b/.test(t))
-    return "mapel_tka";
-  if (/\b(sosiologi|stratifikasi|mobilitas|konflik|integrasi|globalisasi|perubahan\s+sosial|interaksi\s+sosial|lembaga|kelompok\s+sosial|diferensiasi)\b/.test(t))
-    return "mapel_tka";
   if (/\b(makna|kata|struktur|ide\s+pokok|pemahaman|umum)\b/.test(t))
     return "pengetahuan_pemahaman_umum";
 
@@ -131,14 +153,26 @@ Jika lolos=false, jangan memperbaiki; cukup laporkan.`;
 // ─── Orchestrator ──────────────────────────────────────────────────
 
 function splitDocumentIntoQuestionChunks(rawText) {
-  // Cek apakah dokumen memiliki pola pemisah butir soal resmi TKA
-  // Pola 1: Indikator: ... (N)
-  // Pola 2: Bentuk Soal :
-  // Pola 3: Soal No. N / Nomor N
-  const splitRegex = /(?=(?:Indikator:[^\n]*\(\d+\)|Bentuk Soal\s*:|Soal No\.\s*\d+))/i;
-  const rawParts = rawText.split(splitRegex).map(p => p.trim()).filter(Boolean);
+  // Delimiter batas butir soal wajib unik per nomor:
+  // 1. Hierarki Indikator (TKA resmi BSNP/Pusmendik)
+  // 2. Indikator: ... (N)
+  // 3. Soal No. N / Nomor N
+  // 4. Nomor soal awal baris (1., 2., dst)
+  // JANGAN potong di "Bentuk Soal :" agar Indikator dan pertanyaan tetap utuh dalam satu butir.
+  const countMatches = (rx) => (rawText.match(rx) || []).length;
 
-  if (rawParts.length <= 1) {
+  let boundaryRegex = null;
+  if (countMatches(/Hierarki\s+Indikator/gi) >= 2) {
+    boundaryRegex = /(?:^|\n)(?:(?:\[Gambar:[^\]]+\]\s+)?(?:[A-Z0-9$]+\s+)?Hierarki\s+Indikator)/gi;
+  } else if (countMatches(/Indikator:[^\n]*\(\d+\)/gi) >= 2) {
+    boundaryRegex = /(?:^|\n)(?:(?:\[Gambar:[^\]]+\]\s+)?Indikator:[^\n]*\(\d+\))/gi;
+  } else if (countMatches(/(?:Soal\s+(?:No\.?\s*)?|Nomor\s+)\d+/gi) >= 2) {
+    boundaryRegex = /(?:^|\n)(?:(?:\[Gambar:[^\]]+\]\s+)?(?:Soal\s+(?:No\.?\s*)?|Nomor\s+)\d+)/gi;
+  } else if (countMatches(/(?:^|\n)\s*\d+[\.\)]\s+[A-Z]/g) >= 2) {
+    boundaryRegex = /(?:^|\n)(?:(?:\[Gambar:[^\]]+\]\s+)?\d+[\.\)]\s+[A-Z])/gi;
+  }
+
+  if (!boundaryRegex) {
     // Fallback: chunk biasa per 40.000 karakter
     const chunks = [];
     for (let i = 0; i < rawText.length; i += 40000) {
@@ -147,7 +181,40 @@ function splitDocumentIntoQuestionChunks(rawText) {
     return chunks;
   }
 
-  // Gabungkan per 5-6 soal per chunk agar tidak token fatigue dan anti-missing
+  const matches = [];
+  let m;
+  while ((m = boundaryRegex.exec(rawText)) !== null) {
+    const matchStart = m[0].startsWith("\n") ? m.index + 1 : m.index;
+    matches.push(matchStart);
+  }
+
+  if (matches.length <= 1) {
+    const chunks = [];
+    for (let i = 0; i < rawText.length; i += 40000) {
+      chunks.push(rawText.slice(i, i + 40000));
+    }
+    return chunks;
+  }
+
+  const rawParts = [];
+  if (matches[0] > 0) {
+    const preamble = rawText.slice(0, matches[0]).trim();
+    if (preamble) rawParts.push(preamble);
+  }
+
+  for (let i = 0; i < matches.length; i++) {
+    const start = matches[i];
+    const end = (i + 1 < matches.length) ? matches[i + 1] : rawText.length;
+    rawParts.push(rawText.slice(start, end).trim());
+  }
+
+  // Jika bagian awal hanya judul/kop dokumen tanpa konten soal, lekatkan ke soal pertama
+  if (rawParts.length > 1 && !/Bentuk Soal|Hierarki\s+Indikator|Indikator:[^\n]*\(\d+\)|(?:^|\n)\s*[A-E][\.\)]/i.test(rawParts[0])) {
+    const preamble = rawParts.shift();
+    rawParts[0] = preamble + "\n\n" + rawParts[0];
+  }
+
+  // Gabungkan per 5 soal utuh per chunk agar tidak token fatigue dan anti-missing
   const CHUNK_SOAL_COUNT = 5;
   const batchedChunks = [];
   for (let i = 0; i < rawParts.length; i += CHUNK_SOAL_COUNT) {
@@ -195,6 +262,25 @@ async function runExamPipeline(rawText, title, userModel = "ag/gemini-3.8-flash-
       }
     } catch (err) {
       console.warn(`[ExamPipeline] Extraction error on chunk ${cIdx + 1}: ${err.message}`);
+    }
+  }
+
+  // Pastikan setiap soal memiliki nomor kanonikal terisi (1 s/d N)
+  for (let i = 0; i < allExtractedQuestions.length; i++) {
+    const q = allExtractedQuestions[i];
+    if (!q) continue;
+    if (q.nomor === undefined || q.nomor === null || isNaN(Number(q.nomor)) || Number(q.nomor) <= 0) {
+      const fullText = (q.pertanyaan || "") + " " + (q.stimulus || "");
+      const numMatch = fullText.match(/Indikator:[^\n]*\((?:no\.?\s*)?(\d+)\)/i)
+        || fullText.match(/\((?:no\.?\s*)?(\d+)\)\s*(?:\n|[A-Z0-9-]+\s*Bentuk)/i)
+        || (q.pertanyaan || "").match(/(?:Soal\s+(?:No\.?\s*)?|^)(\d+)[\.\)]/im);
+      if (numMatch) {
+        q.nomor = parseInt(numMatch[1], 10);
+      } else {
+        q.nomor = i + 1;
+      }
+    } else {
+      q.nomor = Number(q.nomor);
     }
   }
 
@@ -270,9 +356,9 @@ async function runExamPipeline(rawText, title, userModel = "ag/gemini-3.8-flash-
       }
       
       // Auto-detect subtes if not set or generic
-      if (!q.subtes || q.subtes === "mapel_tka") {
+      if (!q.subtes || q.subtes === "mapel_tka" || q.subtes === "lainnya") {
         const optionsText = q.opsi ? Object.values(q.opsi).join(" ") : "";
-        q.subtes = detectSubtes(q.pertanyaan + " " + (q.stimulus || ""), optionsText);
+        q.subtes = detectSubtes(q.pertanyaan + " " + (q.stimulus || ""), optionsText, title);
       }
       
       stats.solved++;
@@ -440,8 +526,11 @@ function voteAnswers(parsedSolves, kunciDokumen) {
 function pipelineToTankaFormat(pipelineResult, title) {
   const { soal, terpotong, stats } = pipelineResult;
 
+  // Susun output akhir urut dari nomor 1 sampai selesai (kanonikal)
+  const sortedSoal = [...(soal || [])].sort((a, b) => (Number(a.nomor) || 0) - (Number(b.nomor) || 0));
+
   // Build quiz-compatible questions
-  const quizQuestions = soal.map(q => {
+  const quizQuestions = sortedSoal.map(q => {
     const options = q.opsi ? Object.entries(q.opsi).map(([k, v]) => `${k}. ${v}`) : [];
     const rawAnswer = String(q._jawaban_final || "A").trim().toUpperCase();
     const letters = rawAnswer.match(/[A-E]/g) || ["A"];
@@ -524,10 +613,15 @@ function pipelineToTankaFormat(pipelineResult, title) {
 
   // Group by subtes
   const bySubtes = {};
-  for (const q of soal) {
+  for (const q of sortedSoal) {
     const st = q.subtes || "lainnya";
     if (!bySubtes[st]) bySubtes[st] = [];
     bySubtes[st].push(q);
+  }
+
+  // Ensure each subtes preserves canonical question order
+  for (const st of Object.keys(bySubtes)) {
+    bySubtes[st].sort((a, b) => (Number(a.nomor) || 0) - (Number(b.nomor) || 0));
   }
 
   const subtesLabels = {
@@ -623,4 +717,5 @@ module.exports = {
   pipelineToTankaFormat,
   ATURAN_MODE_SOAL,
   detectSubtes,
+  splitDocumentIntoQuestionChunks,
 };

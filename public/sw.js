@@ -1,4 +1,4 @@
-const CACHE_NAME = "tanka-pwa-v6";
+const CACHE_NAME = "tanka-pwa-v7";
 const ASSETS_TO_CACHE = [
   "/",
   "/manifest.json",
@@ -44,5 +44,25 @@ self.addEventListener("fetch", (event) => {
         return response;
       })
       .catch(() => caches.match(event.request))
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && "focus" in client) {
+          if ("navigate" in client && targetUrl !== "/") {
+            client.navigate(targetUrl);
+          }
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
   );
 });

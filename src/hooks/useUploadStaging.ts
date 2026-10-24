@@ -1,5 +1,11 @@
 import { useState, useCallback } from "react";
 import { StagedFile } from "../types";
+import {
+  requestNotificationPermission,
+  addProcessingDoc,
+  removeProcessingDoc,
+  notifyDocumentCompleted
+} from "../utils/notification";
 
 export interface UseUploadStagingProps {
   selectedModel?: string;
@@ -112,6 +118,7 @@ export function useUploadStaging({
 
   const handleConfirmStagedUpload = useCallback(async () => {
     if (stagedFiles.length === 0) return;
+    requestNotificationPermission().catch(() => {});
     setIsUploading(true);
     setUploadError("");
 
@@ -221,7 +228,9 @@ export function useUploadStaging({
           showNotice(`Materi "${data.title}" berhasil dibuat dan siap dipelajari!`);
         }
         await fetchDocuments();
+        let isStillProcessing = false;
         if (data.id) {
+          addProcessingDoc(data.id);
           // Polling hingga pipeline di latar belakang selesai
           const maxAttempts = data.isExamSheet ? 120 : 30;
           for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -235,18 +244,40 @@ export function useUploadStaging({
               const checkData = await checkRes.json();
               const doc = checkData.document;
               if (doc?.status === "completed" || doc?.content?.includes("## Bab ")) {
+                removeProcessingDoc(data.id);
+                notifyDocumentCompleted(doc);
+                break;
+              }
+              if (doc?.status === "failed") {
+                removeProcessingDoc(data.id);
                 break;
               }
             } catch {}
             await new Promise((r) => setTimeout(r, 2500));
           }
+          try {
+            const finalCheck = await fetch(`/api/documents/${data.id}`);
+            const finalDoc = (await finalCheck.json())?.document;
+            if (finalDoc?.status === "completed") {
+              removeProcessingDoc(data.id);
+              notifyDocumentCompleted(finalDoc);
+            } else if (finalDoc?.status === "failed") {
+              removeProcessingDoc(data.id);
+            } else if (finalDoc?.status === "processing") {
+              isStillProcessing = true;
+            }
+          } catch {}
           await loadDocument(data.id);
         }
         setUploadStatus("");
         handleCancelStaging();
-        setActiveTab(data.isExamSheet ? "quiz" : "material");
+        setActiveTab("material");
         if (data.isExamSheet) {
-          showNotice(`📋 Kisi-kisi soal "${data.title}" siap dipelajari di menu Latihan Soal!`);
+          if (isStillProcessing) {
+            showNotice(`📋 Lembar soal "${data.title}" tersimpan. Analisis butir soal sedang berjalan di latar belakang.`);
+          } else {
+            showNotice(`📋 Kisi-kisi soal "${data.title}" siap dipelajari di Bedah Soal!`);
+          }
         }
       } else {
         setUploadError(data.error || "Gagal memproses berkas dokumen");

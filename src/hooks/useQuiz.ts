@@ -98,7 +98,7 @@ export function useQuiz({ activeDocId, selectedModel, quizType, setQuizType, sho
     return () => {
       isCancelled = true;
     };
-  }, [activeDocId, resetQuizState, setQuizType]);
+  }, [activeDocId, activeDocContent, resetQuizState, setQuizType]);
 
   const [isQuizChatOpen, setIsQuizChatOpen] = useState(false);
 

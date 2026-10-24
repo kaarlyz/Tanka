@@ -244,11 +244,15 @@ export const MaterialTab = React.memo(function MaterialTab({
 
   // Deteksi lembar soal / bedah kisi-kisi
   const isExamSheetDoc = React.useMemo(() => {
+    const metaDoc = documents.find((d) => d.id === activeDocId);
     return Boolean(
+      metaDoc?.is_exam_sheet ||
+      (metaDoc?.question_count && metaDoc.question_count > 0) ||
       (quizQuestions && quizQuestions.length > 0 && quizQuestions.some((q) => q.subtes || q.trik_cepat || q.pitfall || q.analisis_opsi)) ||
-      (activeDocContent && (activeDocContent.startsWith("# Bedah Tuntas:") || activeDocContent.includes("pipeline 4-tahap") || activeDocContent.includes("### 📋 Soal Latihan Terdeteksi")))
+      (activeDocContent && (activeDocContent.startsWith("# Bedah Tuntas:") || activeDocContent.includes("pipeline 4-tahap") || activeDocContent.includes("### 📋 Soal Latihan Terdeteksi"))) ||
+      /\b(soal|tka|utbk|ujian|latihan|kisi|try\s*out|kuis|exam|quiz|test|ulangan|bank\s*soal|drill)\b/i.test(activeDocTitle || "")
     );
-  }, [quizQuestions, activeDocContent]);
+  }, [quizQuestions, activeDocContent, documents, activeDocId, activeDocTitle]);
 
   // Reset & arahkan ke exam_drill jika dokumen bertipe lembar soal
   React.useEffect(() => {
@@ -925,7 +929,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                               }}
                             >
                               <Target size={13} color={materialViewMode === "exam_drill" ? "#3f6212" : "currentColor"} />
-                              <span>Bedah Soal ({quizQuestions.length})</span>
+                              <span>{quizQuestions.length > 0 ? `Bedah Soal (${quizQuestions.length})` : "Bedah Soal"}</span>
                             </button>
                           )}
 
@@ -1527,13 +1531,48 @@ export const MaterialTab = React.memo(function MaterialTab({
 
                     {/* View Mode 4: Bedah Soal Interaktif (Exam Drill View) */}
                     {materialViewMode === "exam_drill" && (
-                      <ExamDrillView
-                        docId={activeDocId || ""}
-                        docTitle={activeDocTitle}
-                        questions={quizQuestions}
-                        onGenerateTopic={(topic) => handleStartTopicClarify(topic)}
-                        onOpenQuiz={() => setActiveTab("quiz")}
-                      />
+                      quizQuestions && quizQuestions.length > 0 ? (
+                        <ExamDrillView
+                          docId={activeDocId || ""}
+                          docTitle={activeDocTitle}
+                          questions={quizQuestions}
+                          onGenerateTopic={(topic) => handleStartTopicClarify(topic)}
+                          onOpenQuiz={() => setActiveTab("quiz")}
+                        />
+                      ) : (
+                        <div style={{
+                          padding: "36px 24px",
+                          backgroundColor: "#fdfefc",
+                          border: "1.5px dashed #cdd7c3",
+                          borderRadius: 14,
+                          textAlign: "center",
+                          margin: "20px 0"
+                        }}>
+                          <div style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: "50%",
+                            backgroundColor: "#eef8db",
+                            color: "#3f6212",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginBottom: 12
+                          }}>
+                            <Target size={22} />
+                          </div>
+                          <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 800, color: "#18221f" }}>
+                            Sedang Membedah Butir Soal Ujian
+                          </h3>
+                          <p style={{ margin: "0 auto 16px", maxWidth: 520, fontSize: 13, color: "#56615d", lineHeight: 1.6 }}>
+                            Naskah lembar soal sedang dianalisis oleh Pipeline 4-Tahap (Ekstraksi Soal, 3× Solve Multi-Vote, Pembahasan Trik Cepat, dan Verifikasi). Butir soal beserta kunci dan analisis opsi akan otomatis muncul di sini.
+                          </p>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, color: "#3f6212", backgroundColor: "#eef8db", padding: "6px 14px", borderRadius: 20 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#3f6212" }} />
+                            <span>Proses AI Multi-Vote Berjalan di Latar Belakang</span>
+                          </div>
+                        </div>
+                      )
                     )}
 
                     {/* View Mode 3: Dokumen Lengkap (Selalu dicetak utuh saat mode Print/PDF) */}

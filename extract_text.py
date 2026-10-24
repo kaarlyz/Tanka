@@ -21,13 +21,17 @@ def extract_pdf(file_path):
 
         final_pages = []
         needs_ocr = []
+        sparse_pages = {}
 
         for idx, page in enumerate(pages, 1):
             p_strip = page.strip()
-            if len(p_strip) >= 30:
+            # Halaman dengan teks minimal (< 150 karakter) atau tanpa pola soal utuh tetap wajib OCR
+            if len(p_strip) >= 150:
                 final_pages.append((idx, p_strip))
             else:
                 needs_ocr.append(idx)
+                if p_strip:
+                    sparse_pages[idx] = p_strip
 
         # If all or some pages are scanned (sparse/empty text), OCR those specific pages in parallel
         tess_env = {**os.environ, "OMP_THREAD_LIMIT": "1"}
@@ -50,7 +54,7 @@ def extract_pdf(file_path):
                 def process_ocr_page(page_num):
                     png_name = f"{prefix}-{page_num:0{pad_len}d}.png"
                     if not os.path.exists(png_name):
-                        cands = glob.glob(f"{prefix}*{page_num}.png")
+                        cands = [f for f in glob.glob(f"{prefix}*.png") if re.search(rf"-0*{page_num}\.png$", f)]
                         if cands:
                             png_name = cands[0]
                     if os.path.exists(png_name):
@@ -64,9 +68,15 @@ def extract_pdf(file_path):
                             )
                             ocr_txt = t_res.stdout.strip()
                             if ocr_txt:
+                                orig_sparse = sparse_pages.get(page_num, "")
+                                if orig_sparse and orig_sparse not in ocr_txt:
+                                    return (page_num, f"{orig_sparse}\n\n{ocr_txt}".strip())
                                 return (page_num, ocr_txt)
                         except Exception:
                             pass
+                    orig_sparse = sparse_pages.get(page_num, "")
+                    if orig_sparse:
+                        return (page_num, orig_sparse)
                     return None
 
                 with ThreadPoolExecutor(max_workers=cpu_workers) as executor:

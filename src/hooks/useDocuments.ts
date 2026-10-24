@@ -1,5 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { DocumentItem } from "../types";
+import {
+  PROCESSING_DOCS_KEY,
+  getProcessingDocs,
+  addProcessingDoc,
+  removeProcessingDoc,
+  notifyDocumentCompleted
+} from "../utils/notification";
 
 export const ACTIVE_DOC_STORAGE_KEY = "tanka_active_doc_id";
 
@@ -15,6 +22,8 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
   documentsRef.current = documents;
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
+  const activeDocIdRef = useRef<string | null>(null);
+  activeDocIdRef.current = activeDocId;
   const [activeDocTitle, setActiveDocTitle] = useState("");
   const [activeDocContent, setActiveDocContent] = useState("");
   const [activeDocSummary, setActiveDocSummary] = useState("");
@@ -106,13 +115,14 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
           (data.document.content && !data.document.content.includes("## ") && (Date.now() - (data.document.created_at || 0) < 300000));
 
         if (isProcessing) {
+          addProcessingDoc(targetId);
           let attempts = 0;
           // Hanya satu poll aktif. Tanpa ini, tiap loadDocument bikin interval baru
           // yang jalan terus dan niban state dokumen yang lebih baru.
           if (pollRef.current) clearInterval(pollRef.current);
           const pollInterval = setInterval(async () => {
             attempts++;
-            if (attempts > 30) {
+            if (attempts > 200) {
               clearInterval(pollInterval);
               pollRef.current = null;
               return;
@@ -123,11 +133,15 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
               if (pollData.document) {
                 const status = pollData.document.status;
                 if (status === "completed" || status === "partial" || (pollData.document.content && pollData.document.content.includes("## "))) {
+                  removeProcessingDoc(targetId);
                   setActiveDocContent(pollData.document.content);
                   if (pollData.document.summary) setActiveDocSummary(pollData.document.summary);
                   clearInterval(pollInterval);
                   pollRef.current = null;
+                  notifyDocumentCompleted(pollData.document);
+                  fetchDocuments();
                 } else if (status === "failed") {
+                  removeProcessingDoc(targetId);
                   clearInterval(pollInterval);
                   pollRef.current = null;
                   showNotice("Pembuatan modul kurikulum mengalami kendala");
@@ -157,6 +171,11 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       const data = await res.json();
       if (data.documents) {
         setDocuments(data.documents);
+        data.documents.forEach((d: any) => {
+          if (d.status === "processing") {
+            addProcessingDoc(d.id);
+          }
+        });
         const docToLoad = (urlDocId && data.documents.some((d: any) => d.id === urlDocId))
           ? urlDocId
           : (savedDocId && data.documents.some((d: any) => d.id === savedDocId))
@@ -186,6 +205,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
         return;
       }
       showNotice("Materi dan seluruh catatan terkait berhasil dihapus");
+      removeProcessingDoc(id);
       if (activeDocId === id) {
         if (typeof window !== "undefined") {
           localStorage.removeItem(ACTIVE_DOC_STORAGE_KEY);
@@ -218,6 +238,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
         showNotice("Seluruh modul berhasil dihapus bersih");
         if (typeof window !== "undefined") {
           localStorage.removeItem(ACTIVE_DOC_STORAGE_KEY);
+          localStorage.removeItem(PROCESSING_DOCS_KEY);
         }
         setActiveDocId(null);
         setActiveDocTitle("");
@@ -280,6 +301,83 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     }
   }, [activeDocId, fetchDocuments, showNotice]);
 
+  const checkProcessingDocs = useCallback(async () => {
+    const pendingIds = getProcessingDocs();
+    if (pendingIds.length === 0) return;
+
+    for (const docId of pendingIds) {
+      try {
+        const res = await fetch(`/api/documents/${docId}`);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const doc = data?.document;
+        if (!doc) continue;
+
+        if (doc.status === "completed" || doc.status === "partial" || (doc.content && doc.content.includes("## "))) {
+          removeProcessingDoc(docId);
+          notifyDocumentCompleted(doc);
+          showNotice(`Materi "${doc.title || "Dokumen"}" selesai diproses!`);
+          if (docId === activeDocIdRef.current) {
+            setActiveDocContent(doc.content || "");
+            if (doc.summary) setActiveDocSummary(doc.summary);
+          }
+          fetchDocuments();
+        } else if (doc.status === "failed") {
+          removeProcessingDoc(docId);
+          showNotice(`Pembuatan materi "${doc.title || docId}" mengalami kendala`);
+        }
+      } catch (err) {
+        console.warn("Gagal mengecek status dokumen background:", docId, err);
+      }
+    }
+  }, [fetchDocuments, showNotice]);
+
+  const backgroundPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const runPoller = async () => {
+      const pending = getProcessingDocs();
+      if (pending.length > 0) {
+        await checkProcessingDocs();
+      }
+    };
+
+    runPoller();
+    backgroundPollRef.current = setInterval(runPoller, 3500);
+
+    return () => {
+      if (backgroundPollRef.current) {
+        clearInterval(backgroundPollRef.current);
+        backgroundPollRef.current = null;
+      }
+    };
+  }, [checkProcessingDocs]);
+
+  useEffect(() => {
+    const handleWakeUp = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchDocuments();
+        checkProcessingDocs();
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleWakeUp);
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("focus", handleWakeUp);
+    }
+
+    return () => {
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleWakeUp);
+      }
+      if (typeof window !== "undefined") {
+        window.removeEventListener("focus", handleWakeUp);
+      }
+    };
+  }, [fetchDocuments, checkProcessingDocs]);
+
   useEffect(() => {
     fetchModels();
     fetchDocuments();
@@ -312,6 +410,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     docSearchQuery,
     setDocSearchQuery,
     handleSaveDocument,
-    handleAutoDetectTitle
+    handleAutoDetectTitle,
+    checkProcessingDocs
   };
 }

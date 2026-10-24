@@ -680,10 +680,21 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                 </h4>
 
                                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11.5, color: "#8a9691", marginBottom: 14 }}>
-                                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                    <Layers size={12} color="#6f7975" />
-                                    <span>{doc.flashcard_count || 0} Flashcard</span>
-                                  </div>
+                                  {Boolean(doc.is_exam_sheet || (doc.question_count && doc.question_count > 0) || /\b(soal|tka|utbk|ujian|latihan|kisi|try\s*out|kuis|exam|quiz|test|ulangan|bank\s*soal|drill)\b/i.test(doc.title || "")) ? (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                      <Target size={12} color="#15803d" />
+                                      <span style={{ fontWeight: 600, color: "#166534" }}>
+                                        {doc.question_count && doc.question_count > 0
+                                          ? `${doc.question_count} Butir Soal`
+                                          : "Lembar Soal Ujian"}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                      <Layers size={12} color="#6f7975" />
+                                      <span>{doc.flashcard_count || 0} Flashcard</span>
+                                    </div>
+                                  )}
                                   <span>•</span>
                                   <span>{new Date(doc.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
                                 </div>
@@ -693,30 +704,57 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                 className="home-doc-card-actions"
                                 style={{ display: "flex", alignItems: "center", gap: 6, borderTop: "1px solid #f0f2ee", paddingTop: 10 }}
                               >
-                                <button
-                                  onClick={() => {
-                                    loadDocument(doc);
-                                    setActiveTab("material");
-                                  }}
-                                  style={{
-                                    flex: 1,
-                                    backgroundColor: "#18221f",
-                                    color: "#c8f064",
-                                    border: "none",
-                                    borderRadius: 6,
-                                    padding: "7px 10px",
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    gap: 5
-                                  }}
-                                >
-                                  <BookOpen size={13} />
-                                  <span>Baca Materi</span>
-                                </button>
+                                {Boolean(doc.is_exam_sheet || (doc.question_count && doc.question_count > 0) || /\b(soal|tka|utbk|ujian|latihan|kisi|try\s*out|kuis|exam|quiz|test|ulangan|bank\s*soal|drill)\b/i.test(doc.title || "")) ? (
+                                  <button
+                                    onClick={() => {
+                                      loadDocument(doc);
+                                      setActiveTab("material");
+                                    }}
+                                    style={{
+                                      flex: 1,
+                                      backgroundColor: "#18221f",
+                                      color: "#c8f064",
+                                      border: "none",
+                                      borderRadius: 6,
+                                      padding: "7px 10px",
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: 5
+                                    }}
+                                  >
+                                    <Target size={13} />
+                                    <span>Bedah Soal</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      loadDocument(doc);
+                                      setActiveTab("material");
+                                    }}
+                                    style={{
+                                      flex: 1,
+                                      backgroundColor: "#18221f",
+                                      color: "#c8f064",
+                                      border: "none",
+                                      borderRadius: 6,
+                                      padding: "7px 10px",
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: 5
+                                    }}
+                                  >
+                                    <BookOpen size={13} />
+                                    <span>Baca Materi</span>
+                                  </button>
+                                )}
 
                                 <button
                                   onClick={() => {

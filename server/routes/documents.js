@@ -100,7 +100,7 @@ async function processExamQuestionsIfDetected(docId, rawText, title, dbInstance,
 
     // Save study guide as document content
     if (studyGuide) {
-      const enrichedContent = `${studyGuide}\n\n---\n\n### 📋 Soal Latihan Terdeteksi\nButir-butir soal telah otomatis dimasukkan ke menu **Latihan Soal**.\n\n${rawText.slice(0, 5000)}`;
+      const enrichedContent = studyGuide;
 
       dbInstance.prepare("UPDATE documents SET content = ? WHERE id = ?").run(enrichedContent, docId);
       console.log(`[Exam Pipeline] Document content updated with structured study guide`);

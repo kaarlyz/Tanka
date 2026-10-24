@@ -74,8 +74,10 @@ export function ComparisonLedger() {
     mentor: true,
     environment: false
   });
+  const [isWaving, setIsWaving] = useState(false);
 
   const toggleCard = (id: string) => {
+    setIsWaving(false);
     setFlippedCards((prev) => ({
       ...prev,
       [id]: !prev[id]
@@ -83,11 +85,13 @@ export function ComparisonLedger() {
   };
 
   const flipAllCards = (targetState: boolean) => {
+    setIsWaving(true);
     const nextState: Record<string, boolean> = {};
     COMPARISON_DATA.forEach((item) => {
       nextState[item.id] = targetState;
     });
     setFlippedCards(nextState);
+    setTimeout(() => setIsWaving(false), 600);
   };
 
   const isAllFlipped = Object.values(flippedCards).filter(Boolean).length >= 3;
@@ -126,7 +130,7 @@ export function ComparisonLedger() {
       </div>
 
       {/* 4-Column Responsive 3D Flashcard Grid */}
-      <div className="comparison-flashcard-grid reveal-scroll--scale">
+      <div className={`comparison-flashcard-grid reveal-scroll--scale ${isWaving ? "is-waving" : ""}`}>
         {COMPARISON_DATA.map((item, idx) => {
           const Icon = item.icon;
           const isFlipped = !!flippedCards[item.id];

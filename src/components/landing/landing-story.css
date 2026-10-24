@@ -162,7 +162,7 @@
 @media (max-width: 860px) { .fb-section { grid-template-columns: 1fr; } }
 
 /* ---------- Flip-all bergelombang ---------- */
-.comparison-flashcard-inner { transition-delay: calc(var(--i, 0) * 70ms); }
+.comparison-flashcard-grid.is-waving .comparison-flashcard-inner { transition-delay: calc(var(--i, 0) * 70ms); }
 
 /* koreksi hasil render: adegan sticky harus muat di satu layar */
 .ls-story { height: 290vh; }

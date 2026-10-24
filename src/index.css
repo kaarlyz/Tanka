@@ -64,9 +64,11 @@
         width: 100%;
         min-height: 320px;
         transform-style: preserve-3d;
-        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
         user-select: none;
+        will-change: transform;
+        touch-action: manipulation;
       }
       .flashcard-card.flipped {
         transform: rotateY(180deg);

@@ -74,7 +74,7 @@
 /* ===== BANDINGKAN: depan kertas usang bergaris, belakang charcoal ===== */
 .tanka-landing-container .comparison-face-front { background: repeating-linear-gradient(0deg, #f1f3ed 0 27px, #e3e8df 27px 28px); }
 .tanka-landing-container .flashcard-title.old { text-decoration: line-through; text-decoration-color: rgba(194, 65, 12, 0.55); text-decoration-thickness: 2px; }
-.tanka-landing-container .comparison-flashcard-inner { transition-duration: 0.9s; transition-timing-function: var(--ease-out); }
+.tanka-landing-container .comparison-flashcard-inner { transition-duration: 0.42s; transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; }
 .tanka-landing-container .comparison-flashcard-container.is-flipped .comparison-flashcard-inner { box-shadow: 0 28px 48px -22px rgba(24, 34, 31, 0.5); }
 
 @media (prefers-reduced-motion: reduce) {

@@ -18,7 +18,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Charter&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..600&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="tanka-preloader" style="position:fixed;inset:0;background:#121a17;color:#eff5ec;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+        <style>
+          @keyframes tankaPreloadPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200, 240, 100, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(200, 240, 100, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200, 240, 100, 0); }
+          }
+          @keyframes tankaPreloadBar {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(35%); }
+            100% { transform: translateX(100%); }
+          }
+        </style>
+        <div style="width:52px;height:52px;border-radius:14px;background:#18221f;border:2px solid #2d3d34;display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;animation:tankaPreloadPulse 2.2s ease-in-out infinite;">
+          <span style="font-family:'DM Mono',monospace,sans-serif;font-weight:800;font-size:27px;color:#c8f064;line-height:1;">t</span>
+          <div style="position:absolute;bottom:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#c8f064;"></div>
+        </div>
+        <div style="text-align:center;margin-bottom:20px;">
+          <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.03em;color:#fcfdfa;margin:0 0 6px 0;">tanka<span style="color:#c8f064;">.</span></h1>
+          <p style="font-size:12.5px;color:#8da868;margin:0;letter-spacing:0.02em;">Memuat platform belajar mandiri...</p>
+        </div>
+        <div style="width:160px;height:3px;border-radius:999px;background:#22302b;overflow:hidden;position:relative;margin-bottom:14px;">
+          <div style="width:50%;height:100%;border-radius:999px;background:linear-gradient(90deg,transparent,#c8f064,transparent);animation:tankaPreloadBar 1.5s cubic-bezier(0.16,1,0.3,1) infinite;"></div>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:#566b60;letter-spacing:0.1em;text-transform:uppercase;">Nara AI Study Engine</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ("serviceWorker" in navigator) {

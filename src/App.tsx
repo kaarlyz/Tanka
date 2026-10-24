@@ -33,13 +33,15 @@ const AuthModal = lazy(() => import("./components/modals/AuthModal").then(m => (
 const ProfileModal = lazy(() => import("./components/modals/ProfileModal").then(m => ({ default: m.ProfileModal })));
 const RoomModal = lazy(() => import("./components/modals/RoomModal").then(m => ({ default: m.RoomModal })));
 const LandingPage = lazy(() => import("./components/landing/LandingPage"));
+import { TankaLoadingScreen } from "./components/common/TankaLoadingScreen";
 
 function TabFallbackSkeleton() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "50vh", gap: 12, color: "#617169" }}>
-      <div style={{ width: 32, height: 32, border: "3px solid #dce2d8", borderTopColor: "#4b6623", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-      <span style={{ fontSize: 13, fontWeight: 600 }}>Memuat fitur...</span>
-    </div>
+    <TankaLoadingScreen
+      fullScreen={false}
+      label="Menyiapkan fitur..."
+      sublabel="Sinkronisasi data pembelajaran"
+    />
   );
 }
 
@@ -828,7 +830,15 @@ export default function App() {
       </Suspense>
 
       {activeTab === "landing" ? (
-        <Suspense fallback={<div style={{ display: "flex", height: "100%", width: "100%", alignItems: "center", justifyContent: "center", background: "#fcfdfa", color: "#5f6b66", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>Memuat Tanka...</div>}>
+        <Suspense
+          fallback={
+            <TankaLoadingScreen
+              fullScreen={true}
+              label="Memuat Tanka..."
+              sublabel="Menyiapkan panggung belajar & visual story"
+            />
+          }
+        >
           <LandingPage
             onLaunchApp={() => {
               if (currentUser) {

@@ -186,9 +186,35 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
     return sendJSON(res, { documents: enrichedDocs });
   }
 
-  // 1b. DELETE /api/documents - bulk delete disabled for database protection
+  // 1b. DELETE /api/documents - bulk delete (requires auth or confirm=all)
   if (req.method === "DELETE" && pathname === "/api/documents") {
-    return sendJSON(res, { error: "Aksi dinonaktifkan demi perlindungan data." }, 403);
+    const authUser = getSessionUser ? getSessionUser(req, db) : null;
+    const urlObj = new URL(req.url, "http://localhost");
+    const isExplicitConfirm = urlObj.searchParams.get("confirm") === "all";
+
+    if (!authUser && !isExplicitConfirm) {
+      return sendJSON(res, { error: "Aksi dinonaktifkan demi perlindungan data. Konfirmasi eksplisit diperlukan." }, 403);
+    }
+
+    db.exec("BEGIN");
+    try {
+      db.prepare("DELETE FROM flashcards").run();
+      db.prepare("DELETE FROM mistake_notebook").run();
+      db.prepare("DELETE FROM quizzes").run();
+      db.prepare("DELETE FROM chat_messages").run();
+      db.prepare("DELETE FROM formula_cheatsheets").run();
+      db.prepare("DELETE FROM chapter_plans").run();
+      db.prepare("DELETE FROM concept_edges").run();
+      db.prepare("DELETE FROM document_concepts").run();
+      db.prepare("DELETE FROM document_segments").run();
+      db.prepare("DELETE FROM learner_events").run();
+      db.prepare("DELETE FROM documents").run();
+      db.exec("COMMIT");
+    } catch (txErr) {
+      db.exec("ROLLBACK");
+      throw txErr;
+    }
+    return sendJSON(res, { success: true });
   }
 
   // 1b. POST /api/documents/youtube-info - preview video title, author, thumbnail, transcript

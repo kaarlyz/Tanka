@@ -104,9 +104,9 @@ export function normalizeMathExpression(text: string): string {
     });
   }
 
-  // 5. Normalize newlines inside inline math $...$ and strip trailing \\ that crashes KaTeX inline
+  // 5. Normalize newlines inside inline math $...$ and strip trailing \ or \\ that crashes KaTeX inline
   str = str.replace(/(?<!\$)\$(?!\$)((?:[^\$\n]|\n(?!\s*\n))+?)(?<!\$)\$(?!\$)/g, (_, math) => {
-    let normalized = math.replace(/\n\s*/g, " ").replace(/\\\\+\s*$/, "").trim();
+    let normalized = math.replace(/\n\s*/g, " ").replace(/\\+\s*$/, "").trim();
     return `$${normalized}$`;
   });
 

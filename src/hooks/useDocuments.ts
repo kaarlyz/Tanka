@@ -209,7 +209,10 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       return;
     }
     try {
-      const res = await fetch("/api/documents", { method: "DELETE" });
+      const token = typeof window !== "undefined" ? localStorage.getItem("tanka_session_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/documents?confirm=all", { method: "DELETE", headers });
       const data = await res.json();
       if (data.success) {
         showNotice("Seluruh modul berhasil dihapus bersih");

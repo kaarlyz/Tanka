@@ -168,6 +168,8 @@ export const MathView = React.memo(function MathView({ text, style, className }:
         let m = healControlCharsToLatex(raw);
         // Fix double-escaped backslashes from AI JSON: \\frac -> \frac
         m = m.replace(/\\\\(frac|sqrt|sum|prod|int|log|ln|sin|cos|tan|cot|sec|csc|text|mathrm|mathbf|mathit|mathcal|mathbb|operatorname|left|right|begin|end|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|subset|supset|infty|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|to|rightarrow|leftarrow|iff|implies|forall|exists|nabla|partial|lim|max|min|sup|inf|binom|choose|overline|underline|hat|bar|vec|dot|ddot|tilde|widehat|widetilde|not|in|notin|cup|cap|vee|wedge|oplus|otimes|vert|lvert|rvert|lVert|rVert|quad|qquad|hspace|vspace|displaystyle|textstyle|boxed|cancel|bcancel|xcancel|overset|underset|stackrel)\b/g, "\\$1");
+        // Strip trailing backslashes that crash KaTeX
+        m = m.replace(/\\+\s*$/, "").trim();
         // Unicode math symbols to LaTeX
         m = m.replace(/±/g, "\\pm ")
           .replace(/≤/g, "\\le ")

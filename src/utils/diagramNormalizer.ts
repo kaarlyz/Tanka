@@ -118,6 +118,9 @@ export function sanitizeMathMarkdown(md: string): string {
   result = result.replace(/\|\s*KaTeX\s*\|/gi, "| Notasi Simbol |");
   result = result.replace(/\bNotasi\s+KaTeX\b/gi, "Notasi Simbol");
 
+  // Safeguard: strip any trailing backslashes inside inline math $...$
+  result = result.replace(/(?<!\$)\$(?!\$)((?:[^\$\n]|\n(?!\s*\n))+?)(?<!\$)\$(?!\$)/g, (_, m) => "$" + m.replace(/\\+\s*$/, "").trim() + "$");
+
   return result;
 }
 

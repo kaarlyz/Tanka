@@ -4,6 +4,7 @@ import "./landing.css";
 import "./landing-motion.css";
 import "./landing-story.css";
 import "./landing-redesign.css";
+import "./landing-finish.css";
 import { UserAccount } from "../../types";
 import { useSmoothScroll } from "./motion/useSmoothScroll";
 import { ScrollProgress } from "./motion/MotionKit";

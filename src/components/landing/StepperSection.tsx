@@ -1,164 +1,96 @@
-import React, { useState, type RefObject } from "react";
-import { CheckCircle2, Zap, ChevronRight } from "lucide-react";
-import { StepRail } from "./story/StepRail";
+import { useRef, type ReactNode, type RefObject } from "react";
+import { ArrowRight } from "lucide-react";
+import { motion, useScroll, useSpring } from "motion/react";
 
 export interface StepperSectionProps {
   onActionLaunch: () => void;
-  container?: RefObject<HTMLElement | null>;
+  container: RefObject<HTMLElement | null>;
 }
 
+const VIEW = { once: true, margin: "-15% 0px" } as const;
+const INK = "#18221f";
+const LIME = "#c8f064";
+const SAGE = "#dce2da";
+
+function Art({ children }: { children: ReactNode }) {
+  return <svg viewBox="0 0 240 150" className="sp-art" aria-hidden="true">{children}</svg>;
+}
+
+const ART: readonly ReactNode[] = [
+  <Art key="a">
+    <path d="M30 110 h180 l-14 24 h-152 z" fill="#fff" stroke={INK} strokeWidth={2} strokeLinejoin="round" />
+    {["PDF", "SLIDE", "FOTO", "YT"].map((t, i) => (
+      <motion.g key={t} initial={{ y: -60, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={VIEW} transition={{ type: "spring", stiffness: 120, damping: 14, delay: i * 0.12 }}>
+        <rect x={34 + i * 44} y={56 + (i % 2) * 8} width={38} height={46} rx={5} fill={i === 0 ? LIME : "#fff"} stroke={INK} strokeWidth={2} />
+        <text x={53 + i * 44} y={84 + (i % 2) * 8} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={INK} fontFamily="'DM Mono', monospace">{t}</text>
+      </motion.g>
+    ))}
+  </Art>,
+  <Art key="b">
+    {[0, 1, 2].map((i) => (
+      <g key={i}>
+        <rect x={30} y={22 + i * 38} width={180} height={30} rx={8} fill="#fff" stroke={INK} strokeWidth={2} />
+        <rect x={42} y={34 + i * 38} width={120} height={6} rx={3} fill={SAGE} />
+        <motion.rect x={42} y={34 + i * 38} width={120} height={6} rx={3} fill="#4b6623" initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 - i * 0.3 }} viewport={VIEW} transition={{ duration: 1, delay: 0.2 + i * 0.2, ease: [0.16, 1, 0.3, 1] }} style={{ originX: 0, originY: 0.5 }} />
+        <text x={186} y={42 + i * 38} textAnchor="middle" fontSize={10} fontWeight={700} fill={INK} fontFamily="'DM Mono', monospace">{2 + i} mnt</text>
+      </g>
+    ))}
+  </Art>,
+  <Art key="c">
+    <rect x={20} y={18} width={130} height={36} rx={10} fill="#fff" stroke={INK} strokeWidth={2} />
+    <text x={32} y={41} fontSize={12} fill={INK} fontFamily="'DM Mono', monospace">g(2) = ?</text>
+    <rect x={70} y={66} width={150} height={66} rx={10} fill={INK} />
+    {["g(2) = 2² = 4", "f(4) = 11"].map((t, i) => (
+      <motion.text key={t} x={84} y={92 + i * 24} fontSize={12.5} fill={i === 1 ? LIME : "#eff5ec"} fontFamily="'DM Mono', monospace" initial={{ opacity: 0, x: -8 }} whileInView={{ opacity: 1, x: 0 }} viewport={VIEW} transition={{ delay: 0.3 + i * 0.5, duration: 0.5 }}>{t}</motion.text>
+    ))}
+  </Art>,
+  <Art key="d">
+    {[0, 1, 2].map((i) => (
+      <motion.g key={i} initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={VIEW} transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 + i * 0.2 }} style={{ originX: `${50 + i * 70}px`, originY: "50px" }}>
+        <circle cx={50 + i * 70} cy={50} r={22} fill={i === 2 ? "#c2410c" : LIME} stroke={INK} strokeWidth={2} />
+        {i === 2 ? <path d={`M${41 + i * 70} 41 l18 18 M${59 + i * 70} 41 l-18 18`} stroke="#fff" strokeWidth={3} strokeLinecap="round" /> : <path d={`M${40 + i * 70} 51 l7 7 l13 -14`} fill="none" stroke={INK} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />}
+      </motion.g>
+    ))}
+    <motion.path d="M190 76 C 190 100, 160 108, 130 112" fill="none" stroke="#c2410c" strokeWidth={2} strokeLinecap="round" strokeDasharray="5 5" initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={VIEW} transition={{ delay: 0.9, duration: 0.8 }} />
+    <rect x={30} y={106} width={110} height={30} rx={8} fill={INK} />
+    <text x={42} y={126} fontSize={11} fontWeight={700} fill={LIME} fontFamily="'DM Mono', monospace">Bank Soal Salah</text>
+  </Art>
+];
+
+const STEPS = [
+  { k: "Input", t: "Masukkan materimu", d: "PDF, slide, foto catatan, atau tautan video. Tanka membaca dan merapikannya jadi satu modul.", out: "Hasil: modul yang tersusun dari materimu." },
+  { k: "Baca", t: "Baca bab yang pendek", d: "Setiap bab diberi perkiraan waktu baca, jadi kamu tahu persis berapa menit yang dibutuhkan.", out: "Hasil: bab pendek dengan rumus yang terbaca jelas." },
+  { k: "Tanya", t: "Tanya Nara saat mentok", d: "Nara menjelaskan langsung ke rumus dan menurunkan tiap langkah hitungnya.", out: "Hasil: penjelasan literal, tanpa perumpamaan." },
+  { k: "Uji", t: "Uji, lalu ulangi yang salah", d: "Kuis dibuat dari materimu sendiri. Soal yang keliru masuk Bank Soal Salah.", out: "Hasil: daftar ulang yang fokus pada kelemahanmu." }
+] as const;
+
 export function StepperSection({ onActionLaunch, container }: StepperSectionProps) {
-  const [activeStep, setActiveStep] = useState(0);
-
-  const steps = [
-    {
-      num: "01",
-      tag: "INPUT BAHAN",
-      title: "Tumpahkan Materi Belajarmu",
-      detail:
-        "Punya PDF 200 halaman, slide presentasi dosen, foto catatan di buku tulis, atau video YouTube 2 jam? Cukup unggah ke Tanka. Sistem akan langsung membersihkan teks dan merapikannya.",
-      chips: ["Multi-format PDF & Dokumen", "Transkrip YouTube Otomatis", "Bebas Iklan & Bersih"],
-      summary: "Gak perlu lagi buang waktu berjam-jam cuma buat merapikan atau mencatat ulang materi."
-    },
-    {
-      num: "02",
-      tag: "BACA RINGKAS",
-      title: "Materi Jadi Bab Kecil Siap Santap",
-      detail:
-        "Tanka memotong materi tebal menjadi modul bab terstruktur yang bisa diselesaikan dalam 3-5 menit baca. Rumus matematika dan grafik diterjemahkan presisi tanpa font rusak.",
-      chips: ["Modul Bab 3 Menitan", "Penurunan Rumus Rapi", "Tampilan Ramah Mata"],
-      summary: "Belajar jadi gak kerasa berat karena materi dipecah jadi potongan-potongan kecil yang ringan."
-    },
-    {
-      num: "03",
-      tag: "TANYA TUTOR",
-      title: "Tanya Rumus Kapan Saja Tanpa Rasa Malu",
-      detail:
-        "Mentok di baris rumus tertentu? Langsung buka Nara AI. Tanya dari mana asal suatu angka atau alur langkah hitungannya. Nara menerangkan langkah demi langkah tanpa menghakimi.",
-      chips: ["Tutor Siaga 24 Jam", "Penjelasan Langsung ke Inti", "Respon Langsung Tanpa Jeda"],
-      summary: "Keleluasaan bertanya sepuasnya sampai kepalamu bener-bener ngeh konsep dasarnya."
-    },
-    {
-      num: "04",
-      tag: "UJI PEMAHAMAN",
-      title: "Kuis Pintar & Bank Salah Pribadi",
-      detail:
-        "Uji ingatanmu lewat kuis 1 kartu 1 fakta. Setiap kesalahan otomatis dicatat ke Bank Salah pribadimu, jadi kamu tahu persis titik lemah yang perlu diulang sebelum hari H ujian.",
-      chips: ["Kuis Logika Teruji", "Bank Salah Otomatis", "Peta Konsep Menyeluruh"],
-      summary: "Bukan sekadar merasa sudah baca, tapi kamu benar-benar siap saat ujian di depan mata."
-    }
-  ];
-
+  const listRef = useRef<HTMLOListElement>(null);
+  const { scrollYProgress } = useScroll({ target: listRef, container, offset: ["start 70%", "end 55%"] });
+  const fill = useSpring(scrollYProgress, { stiffness: 90, damping: 24 });
   return (
-    <section id="alur" className="landing-section landing-section--sage">
-      <div className="section-header-left reveal-scroll--left">
-        <span className="section-kicker">CARA KERJA</span>
-        <h2 className="section-title">4 Langkah Menguasai Materi Apapun</h2>
-        <p className="section-desc">
-          Empat langkah mudah untuk memecah materi sulit menjadi unit belajar yang siap kamu kuasai.
-        </p>
+    <section id="alur" className="sp-section" aria-labelledby="sp-title">
+      <div className="sp-head">
+        <p className="section-kicker">CARA KERJA</p>
+        <h2 id="sp-title">Empat langkah, satu kebiasaan belajar.</h2>
       </div>
-
-      {/* Interactive Step Rail */}
-      {container && <StepRail container={container} />}
-
-      {/* Stepper Tabs */}
-      <div className="stepper-tabs reveal-scroll--scale">
-        {steps.map((s, idx) => (
-          <button
-            key={idx}
-            className={`stepper-tab ${activeStep === idx ? "active" : ""}`}
-            onClick={() => setActiveStep(idx)}
-          >
-            <span className="stepper-num">{s.num} // {s.tag}</span>
-            <span className="stepper-tab-title">{s.title}</span>
-          </button>
+      <ol className="sp-list" ref={listRef}>
+        <span className="sp-rail" aria-hidden="true"><motion.span style={{ scaleY: fill }} /></span>
+        {STEPS.map((s, i) => (
+          <li key={s.k} className="sp-row">
+            <motion.span className="sp-dot" aria-hidden="true" initial={{ scale: 0.6 }} whileInView={{ scale: 1 }} viewport={VIEW}>{i + 1}</motion.span>
+            <div className="sp-copy">
+              <small>{s.k.toUpperCase()}</small>
+              <h3>{s.t}</h3>
+              <p>{s.d}</p>
+              <em>{s.out}</em>
+            </div>
+            <div className="sp-visual">{ART[i]}</div>
+          </li>
         ))}
-      </div>
-
-      {/* Stepper Active Detail Card */}
-      <div className="stepper-card reveal-scroll--right">
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <span
-              style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#18221f",
-                background: "#c8f064",
-                padding: "4px 10px",
-                borderRadius: 6
-              }}
-            >
-              LANGKAH {steps[activeStep].num}
-            </span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#60706a" }}>
-              {steps[activeStep].tag}
-            </span>
-          </div>
-
-          <h3 style={{ fontSize: 24, fontWeight: 800, color: "#18221f", marginBottom: 14 }}>
-            {steps[activeStep].title}
-          </h3>
-
-          <p style={{ fontSize: 15, lineHeight: 1.68, color: "#55635e", marginBottom: 24 }}>
-            {steps[activeStep].detail}
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {steps[activeStep].chips.map((c, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#18221f", fontWeight: 600 }}>
-                <CheckCircle2 size={16} color="#4b6623" />
-                <span>{c}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: "#18221f",
-            color: "#eff5ec",
-            borderRadius: 16,
-            padding: 30,
-            border: "1px solid #283832",
-            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: "#c8f064", letterSpacing: "0.06em", fontWeight: 700 }}>
-              METODE TERARAH
-            </span>
-            <Zap size={15} color="#c8f064" />
-          </div>
-          <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#d5dfd9", marginBottom: 22 }}>
-            "{steps[activeStep].summary}"
-          </p>
-          <button
-            className="stepper-cta-btn"
-            onClick={onActionLaunch}
-            style={{
-              width: "100%",
-              background: "#c8f064",
-              color: "#18221f",
-              border: "none",
-              borderRadius: 10,
-              padding: "12px 18px",
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              transition: "background 0.15s ease"
-            }}
-          >
-            <span>Coba Mulai Belajar</span>
-            <ChevronRight size={15} />
-          </button>
-        </div>
+      </ol>
+      <div className="sp-end">
+        <button className="cx-btn" onClick={onActionLaunch}>Mulai dari langkah pertama <ArrowRight size={18} /></button>
       </div>
     </section>
   );

@@ -1,141 +1,38 @@
-import React from "react";
-
 export interface LandingFooterProps {
   onActionLaunch: () => void;
 }
 
+const COLS = [
+  { h: "Jelajahi", links: [["Tanya Nara", "#tanya-nara"], ["Cara Kerja", "#alur"], ["Peta Konsep", "#peta-konsep"], ["Bedah Soal", "#bedah-soal"]] },
+  { h: "Pelajari", links: [["Keunggulan", "#keunggulan"], ["Bongkar Rumus", "#bongkar-rumus"], ["Bandingkan", "#perbandingan"], ["Untuk Siapa", "#testimoni"]] }
+] as const;
+
 export function LandingFooter({ onActionLaunch }: LandingFooterProps) {
   return (
-    <footer className="landing-footer">
-      <div className="landing-footer-inner">
-        <div className="footer-top">
-          <div>
-            <div
-              className="landing-brand"
-              onClick={onActionLaunch}
-              style={{ marginBottom: 14 }}
-            >
-              <div className="landing-brand-box">t</div>
-              <span className="landing-brand-text">tanka.</span>
-            </div>
-            <p
-              style={{
-                fontSize: 14.5,
-                lineHeight: 1.68,
-                color: "#55635e",
-                maxWidth: 380
-              }}
-            >
-              Platform Belajar Mandiri Adaptif dengan Pendamping AI Nara untuk Siswa SMA & Mahasiswa.
-            </p>
-          </div>
-
-          <div>
-            <div
-              style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 11.5,
-                fontWeight: 800,
-                color: "#18221f",
-                marginBottom: 14,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase"
-              }}
-            >
-              NAVIGASI FITUR
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <a
-                href="#keunggulan"
-                style={{
-                  fontSize: 13.5,
-                  color: "#55635e",
-                  textDecoration: "none",
-                  transition: "color 0.15s ease"
-                }}
-              >
-                Tutor Nara AI 24 Jam
-              </a>
-              <a
-                href="#keunggulan"
-                style={{
-                  fontSize: 13.5,
-                  color: "#55635e",
-                  textDecoration: "none",
-                  transition: "color 0.15s ease"
-                }}
-              >
-                Rangkum Video & Dokumen
-              </a>
-              <a
-                href="#keunggulan"
-                style={{
-                  fontSize: 13.5,
-                  color: "#55635e",
-                  textDecoration: "none",
-                  transition: "color 0.15s ease"
-                }}
-              >
-                Kuis Logika & Bank Salah
-              </a>
-              <a
-                href="#keunggulan"
-                style={{
-                  fontSize: 13.5,
-                  color: "#55635e",
-                  textDecoration: "none",
-                  transition: "color 0.15s ease"
-                }}
-              >
-                Peta Saraf Materi
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <div
-              style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 11.5,
-                fontWeight: 800,
-                color: "#18221f",
-                marginBottom: 14,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase"
-              }}
-            >
-              PRINSIP & PRIVASI
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <span style={{ fontSize: 13.5, color: "#55635e" }}>
-                100% Data Privat di Perangkat
-              </span>
-              <span style={{ fontSize: 13.5, color: "#55635e" }}>
-                Fokus Penuh pada Materi
-              </span>
-              <span style={{ fontSize: 13.5, color: "#55635e" }}>
-                Pendamping AI Nara 24 Jam
-              </span>
-              <span style={{ fontSize: 13.5, color: "#55635e" }}>
-                Tanpa Iklan, Tanpa Pelacak
-              </span>
-            </div>
-          </div>
+    <footer className="ft">
+      <div className="ft-grid">
+        <div className="ft-brand">
+          <button className="ft-logo" onClick={onActionLaunch} aria-label="Buka aplikasi Tanka"><span>t</span>tanka.</button>
+          <p>Platform belajar mandiri dengan tutor Nara. Ubah materi apapun jadi langsung bisa dipahami.</p>
         </div>
-
-        <div className="footer-bottom">
-          <span>© 2026 Tanka. Dibuat oleh Eka Restu Syahputra. Seluruh hak cipta dilindungi.</span>
-          <span
-            style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: 12.5,
-              color: "#4b6623",
-              fontWeight: 700
-            }}
-          >
-            Platform Belajar Mandiri Adaptif
-          </span>
+        {COLS.map((c) => (
+          <nav key={c.h} aria-label={c.h}>
+            <h2>{c.h}</h2>
+            <ul>{c.links.map(([t, h]) => <li key={h}><a href={h}>{t}</a></li>)}</ul>
+          </nav>
+        ))}
+        <div>
+          <h2>Prinsip</h2>
+          <ul className="ft-plain">
+            <li>Bebas iklan</li>
+            <li>Penjelasan literal, tanpa analogi</li>
+            <li>Dapat dibaca offline sebagai PWA</li>
+          </ul>
         </div>
+      </div>
+      <div className="ft-bar">
+        <span>© 2026 Tanka. Dirancang dan dibangun oleh Eka Restu Syahputra.</span>
+        <a href="#atas">Kembali ke atas ↑</a>
       </div>
     </footer>
   );

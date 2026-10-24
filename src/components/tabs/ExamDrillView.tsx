@@ -1144,13 +1144,14 @@ export const ExamDrillView = React.memo(function ExamDrillView({
                 if (q.id !== undefined) itemRefs.current[q.id] = el;
               }}
               id={`soal-${q.id}`}
+              className="card-hover-lift"
               style={{
                 backgroundColor: "#ffffff",
                 border: activeQuestionId === q.id ? "2px solid #566b36" : "1px solid #dce2da",
                 borderRadius: 12,
                 overflow: "hidden",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
-                transition: "border-color 0.2s ease"
+                boxShadow: activeQuestionId === q.id ? "0 8px 24px rgba(86, 107, 54, 0.12)" : "0 2px 6px rgba(0,0,0,0.02)",
+                transition: "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease"
               }}
             >
               {/* Card Header Bar */}

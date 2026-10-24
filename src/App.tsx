@@ -87,10 +87,18 @@ export default function App() {
 
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const tabScrollMap = useRef<Record<string, number>>({});
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const handleContentScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (activeTab !== "landing") {
       tabScrollMap.current[activeTab] = e.currentTarget.scrollTop;
+      const target = e.currentTarget;
+      const maxScroll = target.scrollHeight - target.clientHeight;
+      if (maxScroll > 24) {
+        setScrollProgress(Math.min(1, Math.max(0, target.scrollTop / maxScroll)));
+      } else {
+        setScrollProgress(0);
+      }
     }
   };
 
@@ -961,6 +969,34 @@ export default function App() {
                     <small>{item.count}</small>
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Publication-grade Workspace Reading & Scroll Progress Bar */}
+            {activeTab !== "home" && (
+              <div
+                className="print-hidden"
+                style={{
+                  height: 2.5,
+                  width: "100%",
+                  backgroundColor: "rgba(220, 226, 218, 0.4)",
+                  position: "relative",
+                  overflow: "hidden",
+                  flexShrink: 0,
+                  zIndex: 10
+                }}
+                aria-hidden="true"
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${(scrollProgress * 100).toFixed(1)}%`,
+                    backgroundImage: "linear-gradient(90deg, #5b8026, #c8f064)",
+                    transition: "width 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease",
+                    opacity: scrollProgress > 0.005 ? 1 : 0,
+                    borderRadius: "0 2px 2px 0"
+                  }}
+                />
               </div>
             )}
 

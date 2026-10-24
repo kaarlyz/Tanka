@@ -53,7 +53,7 @@
 
       /* 3D Flashcard Stage and Animation */
       .flashcard-stage {
-        perspective: 1200px;
+        perspective: 1400px;
         width: 100%;
         max-width: 680px;
         margin: 14px auto 0;
@@ -64,12 +64,21 @@
         width: 100%;
         min-height: 320px;
         transform-style: preserve-3d;
-        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.65s cubic-bezier(0.34, 1.25, 0.64, 1), box-shadow 0.25s ease;
         cursor: pointer;
         user-select: none;
       }
+      .flashcard-card:hover {
+        transform: translateY(-3px);
+      }
+      .flashcard-card:active {
+        transform: scale(0.985);
+      }
       .flashcard-card.flipped {
         transform: rotateY(180deg);
+      }
+      .flashcard-card.flipped:hover {
+        transform: rotateY(180deg) translateY(-3px);
       }
       .flashcard-face {
         position: absolute;
@@ -78,15 +87,25 @@
         height: 100%;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
-        border-radius: 16px;
+        border-radius: 18px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         padding: 32px 28px;
         box-sizing: border-box;
         border: 1px solid #dde1da;
-        box-shadow: 0 25px 50px rgba(27, 38, 33, 0.12);
+        box-shadow: 0 20px 48px -10px rgba(27, 38, 33, 0.14);
         overflow-y: auto;
+        position: relative;
+      }
+      .flashcard-face::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        pointer-events: none;
       }
       .flashcard-front {
         background: linear-gradient(145deg, #24312c, #18221e);
@@ -94,12 +113,18 @@
         border: 1px solid #33403b;
         transform: rotateY(0deg);
       }
+      .flashcard-front::before {
+        background: linear-gradient(90deg, transparent, rgba(200, 240, 100, 0.4), transparent);
+      }
       .flashcard-back {
         background: linear-gradient(145deg, #d5f58a, #bfe45f);
         color: #26301e;
         border: 1px solid #b7de5c;
         box-shadow: 0 25px 50px rgba(27, 38, 33, 0.15);
         transform: rotateY(180deg);
+      }
+      .flashcard-back::before {
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
       }
 
       /* Figma Make Core Design System Components */
@@ -399,19 +424,24 @@
         font-size: 12.5px;
         font-weight: 600;
         text-decoration: none;
-        transition: 140ms ease;
+        transition: color 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         background: transparent;
         border: none;
         cursor: pointer;
         width: 100%;
         text-align: left;
       }
-      .figma-nav-link:hover,
+      .figma-nav-link:hover {
+        color: #f5f8f3;
+        background: #232e29;
+        transform: translateX(3px);
+      }
+      .figma-nav-link:active {
+        transform: scale(0.97) translateX(1px);
+      }
       .figma-nav-link.active {
         color: #f5f8f3;
         background: #232e29;
-      }
-      .figma-nav-link.active {
         box-shadow: inset 3px 0 #c8f064;
       }
       .side-mark-box {
@@ -1919,13 +1949,20 @@
         }
         .mobile-bottom-btn.active svg {
           stroke: #41541d !important;
+          transform: translateY(-2px);
+          transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
         .mobile-bottom-btn-indicator {
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
+          width: 14px;
+          height: 3px;
+          border-radius: 999px;
           background: #779f2f;
-          margin-top: -2px;
+          margin-top: 1px;
+          animation: indicatorPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes indicatorPop {
+          from { transform: scaleX(0.2); opacity: 0; }
+          to { transform: scaleX(1); opacity: 1; }
         }
 
         /* Prevent iOS zoom on inputs */
@@ -2182,6 +2219,40 @@
           opacity: 1;
           transform: translateY(0);
         }
+      }
+
+      /* Quiz Option Button Fluid Spring Feedback */
+      .quiz-option-btn {
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, background-color 0.2s ease !important;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .quiz-option-btn:hover:not(:disabled) {
+          transform: translateX(4px) !important;
+          box-shadow: 0 4px 14px rgba(24, 34, 31, 0.07) !important;
+        }
+      }
+      .quiz-option-btn:active:not(:disabled) {
+        transform: scale(0.985) translateX(2px) !important;
+      }
+
+      /* Spaced Repetition Buttons Tactile Press */
+      .spaced-rep-grid button {
+        transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.16s ease, filter 0.15s ease !important;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .spaced-rep-grid button:hover {
+          transform: translateY(-2px);
+          filter: brightness(0.97);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+      }
+      .spaced-rep-grid button:active {
+        transform: scale(0.96) translateY(0);
+      }
+
+      /* Smooth Desktop Sidebar Toggle */
+      .main-row {
+        transition: grid-template-columns 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
       }
 
       .modal-scale-in {

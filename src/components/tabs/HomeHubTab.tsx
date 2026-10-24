@@ -618,6 +618,10 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                           return (
                             <div
                               key={doc.id}
+                              onClick={() => {
+                                loadDocument(doc);
+                                setActiveTab("material");
+                              }}
                               style={{
                                 backgroundColor: "#ffffff",
                                 border: isCurrent ? "1.5px solid #72a728" : "1px solid #dce1da",
@@ -627,7 +631,8 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                 flexDirection: "column",
                                 justifyContent: "space-between",
                                 boxShadow: "0 2px 10px rgba(27, 39, 35, 0.02)",
-                                transition: "all 0.15s ease"
+                                transition: "all 0.15s ease",
+                                cursor: "pointer"
                               }}
                             >
                               <div>
@@ -646,7 +651,10 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                     {badge.label}
                                   </span>
                                   <button
-                                    onClick={(e) => handleDeleteDocument(doc.id, e)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteDocument(doc.id, e);
+                                    }}
                                     title="Hapus modul"
                                     style={{ background: "none", border: "none", color: "#aeb9b4", cursor: "pointer", padding: 3 }}
                                   >

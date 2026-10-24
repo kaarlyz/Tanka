@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Flashcard } from "../types";
 
 export interface UseFlashcardsProps {
@@ -12,6 +12,33 @@ export function useFlashcards({ activeDocId, selectedModel, showNotice }: UseFla
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isGeneratingCards, setIsGeneratingCards] = useState(false);
+
+  // Auto-hydrate saved flashcards from SQLite whenever active document changes
+  useEffect(() => {
+    if (!activeDocId) {
+      setFlashcards([]);
+      setCurrentCardIndex(0);
+      setIsFlipped(false);
+      return;
+    }
+    let isCancelled = false;
+    fetch(`/api/documents/${activeDocId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!isCancelled && data && Array.isArray(data.flashcards)) {
+          setFlashcards(data.flashcards);
+          setCurrentCardIndex(0);
+          setIsFlipped(false);
+        }
+      })
+      .catch((err) => {
+        console.warn("[useFlashcards] Gagal memuat flashcards tersimpan:", err?.message);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeDocId]);
 
   const handleGenerateFlashcards = useCallback(async () => {
     if (!activeDocId) {

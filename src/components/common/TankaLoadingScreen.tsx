@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-const LIME = "#c8f064";
-const SAGE = "#8da868";
+const BG_LIME = "#c8f064";
+const INK_DARK = "#121a17";
+const INK_MUTED = "#334739";
 
 export interface TankaLoadingScreenProps {
   label?: string;
@@ -38,7 +39,7 @@ export function TankaLoadingScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ duration: 0.35, ease: EASE }}
+      transition={{ duration: 0.3, ease: EASE }}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -47,10 +48,8 @@ export function TankaLoadingScreen({
         width: "100%",
         height: fullScreen ? "100vh" : "100%",
         minHeight: fullScreen ? "100vh" : "360px",
-        backgroundColor: "rgba(18, 26, 23, 0.75)",
-        backdropFilter: "blur(24px) saturate(130%)",
-        WebkitBackdropFilter: "blur(24px) saturate(130%)",
-        color: "#eff5ec",
+        backgroundColor: BG_LIME,
+        color: INK_DARK,
         position: fullScreen ? "fixed" : "relative",
         top: fullScreen ? 0 : "auto",
         left: fullScreen ? 0 : "auto",
@@ -68,24 +67,11 @@ export function TankaLoadingScreen({
       role="status"
       aria-live="polite"
     >
-      {/* Subtle Ambient Lime Light (Matching Landing Hero Backdrop) */}
-      <div
-        style={{
-          position: "absolute",
-          width: 440,
-          height: 440,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(200, 240, 100, 0.12) 0%, rgba(18, 26, 23, 0) 70%)",
-          filter: "blur(50px)",
-          pointerEvents: "none"
-        }}
-      />
-
-      {/* Frosted Glass Floating Card */}
+      {/* Frosted Glass Floating Card on Bright Green Lime Background */}
       <motion.div
-        initial={{ scale: 0.96, opacity: 0 }}
+        initial={{ scale: 0.97, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.45, ease: EASE }}
+        transition={{ duration: 0.35, ease: EASE }}
         style={{
           position: "relative",
           zIndex: 2,
@@ -95,25 +81,24 @@ export function TankaLoadingScreen({
           maxWidth: 390,
           width: "100%",
           textAlign: "center",
-          backgroundColor: "rgba(24, 34, 31, 0.72)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(200, 240, 100, 0.22)",
-          boxShadow: "0 24px 64px -16px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+          backgroundColor: "rgba(255, 255, 255, 0.45)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1.5px solid rgba(255, 255, 255, 0.65)",
+          boxShadow: "0 16px 48px -10px rgba(18, 26, 23, 0.14)",
           borderRadius: 24,
           padding: "36px 36px 32px 36px",
           boxSizing: "border-box"
         }}
       >
-        {/* Tactile Monogram Pod */}
+        {/* Tactile Dark Monogram Pod */}
         <div
           style={{
             position: "relative",
             width: 62,
             height: 62,
             borderRadius: 18,
-            backgroundColor: "#18221f",
-            border: "1px solid rgba(200, 240, 100, 0.3)",
+            backgroundColor: INK_DARK,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -124,8 +109,8 @@ export function TankaLoadingScreen({
             style={{
               fontFamily: "'DM Mono', monospace",
               fontWeight: 800,
-              fontSize: 30,
-              color: LIME,
+              fontSize: 31,
+              color: BG_LIME,
               lineHeight: 1
             }}
           >
@@ -139,12 +124,12 @@ export function TankaLoadingScreen({
               width: 7,
               height: 7,
               borderRadius: "50%",
-              backgroundColor: LIME
+              backgroundColor: BG_LIME
             }}
           />
         </div>
 
-        {/* Clean Editorial Status Badge */}
+        {/* Clean Editorial Status Badge (Zero Glow) */}
         <div
           style={{
             display: "inline-flex",
@@ -152,8 +137,8 @@ export function TankaLoadingScreen({
             gap: 7,
             padding: "5px 14px",
             borderRadius: 999,
-            backgroundColor: "rgba(200, 240, 100, 0.12)",
-            border: "1px solid rgba(200, 240, 100, 0.3)",
+            backgroundColor: "rgba(18, 26, 23, 0.08)",
+            border: "1.5px solid rgba(18, 26, 23, 0.18)",
             marginBottom: 14
           }}
         >
@@ -162,7 +147,7 @@ export function TankaLoadingScreen({
               width: 6,
               height: 6,
               borderRadius: "50%",
-              backgroundColor: LIME
+              backgroundColor: INK_DARK
             }}
           />
           <span
@@ -170,7 +155,7 @@ export function TankaLoadingScreen({
               fontFamily: "'Inter', sans-serif",
               fontSize: 11.5,
               fontWeight: 700,
-              color: LIME,
+              color: INK_DARK,
               letterSpacing: "0.03em",
               textTransform: "uppercase"
             }}
@@ -186,7 +171,7 @@ export function TankaLoadingScreen({
             fontWeight: 800,
             fontSize: 22,
             letterSpacing: "-0.03em",
-            color: "#fcfdfa",
+            color: INK_DARK,
             margin: "0 0 16px 0"
           }}
         >
@@ -199,8 +184,7 @@ export function TankaLoadingScreen({
             width: 200,
             height: 4,
             borderRadius: 999,
-            backgroundColor: "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            backgroundColor: "rgba(18, 26, 23, 0.14)",
             overflow: "hidden",
             position: "relative",
             marginBottom: 16
@@ -211,7 +195,7 @@ export function TankaLoadingScreen({
               width: "40%",
               height: "100%",
               borderRadius: 999,
-              backgroundColor: LIME
+              backgroundColor: INK_DARK
             }}
             animate={{
               x: ["-100%", "260%"]
@@ -224,7 +208,7 @@ export function TankaLoadingScreen({
           />
         </div>
 
-        {/* Subtitle - Pure Opacity Crossfade (Locked Height, Zero Vertical Jump) */}
+        {/* Subtitle - Pure Opacity Crossfade (Locked Height, Zero Vertical Shift) */}
         <div style={{ height: 20, lineHeight: "20px", position: "relative", width: "100%", overflow: "hidden" }}>
           <AnimatePresence mode="wait">
             <motion.p
@@ -236,8 +220,8 @@ export function TankaLoadingScreen({
               style={{
                 fontFamily: "'Inter', sans-serif",
                 fontSize: 12.5,
-                fontWeight: 500,
-                color: SAGE,
+                fontWeight: 600,
+                color: INK_MUTED,
                 margin: 0
               }}
             >

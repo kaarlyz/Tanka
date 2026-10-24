@@ -37,11 +37,10 @@ import { TankaLoadingScreen } from "./components/common/TankaLoadingScreen";
 
 function TabFallbackSkeleton() {
   return (
-    <TankaLoadingScreen
-      fullScreen={false}
-      label="Menyiapkan fitur..."
-      sublabel="Sinkronisasi data pembelajaran"
-    />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "50vh", gap: 10, color: "#617169" }}>
+      <div style={{ width: 24, height: 24, border: "2px solid #dce2d8", borderTopColor: "#4b6623", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <span style={{ fontSize: 12.5, fontWeight: 500, color: "#617169" }}>Memuat...</span>
+    </div>
   );
 }
 

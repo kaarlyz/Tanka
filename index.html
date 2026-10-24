@@ -19,7 +19,7 @@
   </head>
   <body>
     <div id="root">
-      <div id="tanka-preloader" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;height:-webkit-fill-available;background:rgba(18,26,23,0.75);backdrop-filter:blur(24px) saturate(130%);-webkit-backdrop-filter:blur(24px) saturate(130%);color:#eff5ec;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none;box-sizing:border-box;padding:24px;">
+      <div id="tanka-preloader" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;height:-webkit-fill-available;background:#c8f064;color:#121a17;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none;box-sizing:border-box;padding:24px;">
         <style>
           @keyframes tankaCleanScan {
             0% { transform: translateX(-100%); }
@@ -27,34 +27,31 @@
           }
         </style>
 
-        <!-- Ambient Lime Light (Matching Landing Hero) -->
-        <div style="position:absolute;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle, rgba(200, 240, 100, 0.12) 0%, rgba(18, 26, 23, 0) 70%);filter:blur(50px);pointer-events:none;"></div>
-
-        <!-- Frosted Glass Floating Card -->
-        <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;max-width:390px;width:100%;text-align:center;background:rgba(24,34,31,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(200,240,100,0.22);box-shadow:0 24px 64px -16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);border-radius:24px;padding:36px 36px 32px 36px;box-sizing:border-box;">
+        <!-- Frosted Glass Floating Card on Green Background -->
+        <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;max-width:390px;width:100%;text-align:center;background:rgba(255,255,255,0.45);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,0.65);box-shadow:0 16px 48px -10px rgba(18,26,23,0.14);border-radius:24px;padding:36px 36px 32px 36px;box-sizing:border-box;">
           <!-- Tactile Monogram Pod -->
-          <div style="position:relative;width:62px;height:62px;border-radius:18px;background:#18221f;border:1px solid rgba(200,240,100,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
-            <span style="font-family:'DM Mono',monospace,sans-serif;font-weight:800;font-size:30px;color:#c8f064;line-height:1;">t</span>
+          <div style="position:relative;width:62px;height:62px;border-radius:18px;background:#121a17;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+            <span style="font-family:'DM Mono',monospace,sans-serif;font-weight:800;font-size:31px;color:#c8f064;line-height:1;">t</span>
             <div style="position:absolute;bottom:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#c8f064;"></div>
           </div>
 
           <!-- Clean Editorial Status Badge -->
-          <div style="display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border-radius:999px;background:rgba(200,240,100,0.12);border:1px solid rgba(200,240,100,0.3);margin-bottom:14px;">
-            <span style="width:6px;height:6px;border-radius:50%;background:#c8f064;"></span>
-            <span style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:11.5px;font-weight:700;color:#c8f064;letter-spacing:0.03em;text-transform:uppercase;">Mempersiapkan</span>
+          <div style="display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border-radius:999px;background:rgba(18,26,23,0.08);border:1.5px solid rgba(18,26,23,0.18);margin-bottom:14px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:#121a17;"></span>
+            <span style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:11.5px;font-weight:700;color:#121a17;letter-spacing:0.03em;text-transform:uppercase;">Mempersiapkan</span>
           </div>
 
           <!-- Clean Headline -->
-          <h2 style="font-family:'Syne',-apple-system,sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.03em;color:#fcfdfa;margin:0 0 16px 0;">Menyiapkan ruang belajar<span style="color:#c8f064;">.</span></h2>
+          <h2 style="font-family:'Syne',-apple-system,sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.03em;color:#121a17;margin:0 0 16px 0;">Menyiapkan ruang belajar<span style="color:#121a17;">.</span></h2>
 
           <!-- Precision Progress Track -->
-          <div style="width:200px;height:4px;border-radius:999px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);overflow:hidden;position:relative;margin-bottom:16px;">
-            <div style="width:40%;height:100%;border-radius:999px;background:#c8f064;animation:tankaCleanScan 1.6s cubic-bezier(0.16,1,0.3,1) infinite;"></div>
+          <div style="width:200px;height:4px;border-radius:999px;background:rgba(18,26,23,0.14);overflow:hidden;position:relative;margin-bottom:16px;">
+            <div style="width:40%;height:100%;border-radius:999px;background:#121a17;animation:tankaCleanScan 1.6s cubic-bezier(0.16,1,0.3,1) infinite;"></div>
           </div>
 
           <!-- Calm Subtitle (Locked Height, Zero Vertical Jump) -->
           <div style="height:20px;line-height:20px;position:relative;width:100%;overflow:hidden;">
-            <p style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:12.5px;font-weight:500;color:#8da868;margin:0;">Memuat pembelajaran kamu...</p>
+            <p style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:12.5px;font-weight:600;color:#334739;margin:0;">Memuat pembelajaran kamu...</p>
           </div>
         </div>
       </div>

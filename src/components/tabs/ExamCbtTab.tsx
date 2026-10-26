@@ -105,15 +105,26 @@ const SUBJECT_PATTERNS_MAP: Record<string, Array<{ id: string; name: string }>> 
   ],
 };
 
+function normalizeStatementValue(val?: string | null): string {
+  if (!val) return "";
+  const v = String(val).trim().toLowerCase();
+  if (["true", "benar", "sesuai", "tepat", "setuju"].includes(v)) return "benar";
+  if (["false", "salah", "tidak sesuai", "tidak tepat", "tidak setuju"].includes(v)) return "salah";
+  return v;
+}
+
 function normalizeAnswer(ans: string | undefined | null): string {
   if (!ans) return "";
   const s = String(ans).trim().toLowerCase();
   const parts = s.split(/[;,]/).map((p) => {
     const trimmed = p.trim();
     if (trimmed.includes(":")) {
-      return trimmed.split(":").map((sub) => sub.trim()).join(":");
+      const subParts = trimmed.split(":");
+      const id = subParts[0].trim();
+      const val = subParts.slice(1).join(":").trim();
+      return `${id}:${normalizeStatementValue(val)}`;
     }
-    return trimmed;
+    return normalizeStatementValue(trimmed);
   }).filter(Boolean);
   if (parts.length > 1) {
     parts.sort();
@@ -146,12 +157,25 @@ function getStatementChoiceLabels(item: ExamBankItem): [string, string] {
   if (item.options && item.options[0]?.labels && Array.isArray(item.options[0].labels) && item.options[0].labels.length >= 2) {
     return [item.options[0].labels[0], item.options[0].labels[1]];
   }
+
+  const rawKey = ((item.kunci_jawaban || "") + " " + (item.kunci_jawaban_text || "")).toLowerCase();
+  const mapelLower = ((item as any).subtes_or_mapel || "").toLowerCase();
+  const textCombined = ((item.bacaan || "") + " " + (item.soal || "")).toLowerCase();
+  const isEnglish = mapelLower.includes("inggris") || mapelLower.includes("english") ||
+    rawKey.includes("true") || rawKey.includes("false") ||
+    textCombined.includes("following passage") || textCombined.includes("based on the text") ||
+    /\b(which of the following|according to the text|statement)\b/i.test(textCombined);
+
+  // Jika kunci mengandung true/false atau mapel/naskah English
+  if (isEnglish) return ["True", "False"];
+
   // Prioritas 1: Ekstrak dari colonPairs di kunci_jawaban (misal a:sesuai;b:tidak sesuai)
   const colonPairs = (item.kunci_jawaban || "").split(";").map((p) => p.split(":")[1]?.trim()).filter(Boolean);
   const colonUnique = Array.from(new Set(colonPairs));
   if (colonUnique.length >= 2) {
     const capitalize = (s: string) => s.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
     const lower = colonUnique.map((u) => u.toLowerCase());
+    if (lower.includes("false") && lower.includes("true")) return ["True", "False"];
     if (lower.includes("tidak setuju") && lower.includes("setuju")) return ["Setuju", "Tidak Setuju"];
     if (lower.includes("tidak tepat") && lower.includes("tepat")) return ["Tepat", "Tidak Tepat"];
     if (lower.includes("tidak sesuai") && lower.includes("sesuai")) return ["Sesuai", "Tidak Sesuai"];
@@ -160,13 +184,13 @@ function getStatementChoiceLabels(item: ExamBankItem): [string, string] {
   }
 
   // Prioritas 2: Ekstrak dari teks kurung HANYA JIKA BUKAN huruf id tunggal (a, b, c)
-  const rawKey = item.kunci_jawaban_text || "";
   const parenMatches = Array.from(rawKey.matchAll(/\(([^)]+)\)/g))
     .map((m) => m[1].trim())
     .filter((txt) => !/^[a-eA-E]$/.test(txt));
   const unique = Array.from(new Set(parenMatches));
   if (unique.length >= 2) {
     const lower = unique.map((u) => u.toLowerCase());
+    if (lower.includes("false") && lower.includes("true")) return ["True", "False"];
     if (lower.includes("tidak setuju") && lower.includes("setuju")) return ["Setuju", "Tidak Setuju"];
     if (lower.includes("tidak tepat") && lower.includes("tepat")) return ["Tepat", "Tidak Tepat"];
     if (lower.includes("tidak sesuai") && lower.includes("sesuai")) return ["Sesuai", "Tidak Sesuai"];
@@ -190,7 +214,7 @@ function formatStatementValue(val?: string): string {
 function isPositiveStatementValue(val?: string): boolean {
   if (!val) return false;
   const v = val.toLowerCase();
-  return v === "benar" || v === "setuju" || v === "tepat" || v === "sesuai" || v === "similarity";
+  return v === "true" || v === "benar" || v === "setuju" || v === "tepat" || v === "sesuai" || v === "similarity";
 }
 
 function isAnswerCorrect(userAns: string | undefined | null, keyAns: string | undefined | null, tipeSoal?: string): boolean {
@@ -199,12 +223,12 @@ function isAnswerCorrect(userAns: string | undefined | null, keyAns: string | un
   if (!normUser || !normKey) return false;
   if (normUser === normKey) return true;
 
-  if (tipeSoal === "pernyataan") {
+  if (tipeSoal === "pernyataan" || (normKey.includes(":") && normUser.includes(":"))) {
     const parsePairs = (str: string) => {
       const map: Record<string, string> = {};
       str.split(";").forEach((p) => {
-        const [k, v] = p.split(":");
-        if (k && v) map[k.trim()] = v.trim();
+        const [k, ...v] = p.split(":");
+        if (k && v.length) map[k.trim()] = normalizeStatementValue(v.join(":"));
       });
       return map;
     };
@@ -3325,8 +3349,8 @@ Tolong berikan bedah diagnostik umum tentang kelemahan konsep saya dan materi pr
                           const keyMap = parseStatementAnswers(currentItem.kunci_jawaban);
                           const keyChoice = keyMap[stmtId];
 
-                          const isRowCorrect = Boolean(userChoice && keyChoice && userChoice === keyChoice);
-                          const isRowWrong = Boolean(userChoice && keyChoice && userChoice !== keyChoice);
+                          const isRowCorrect = Boolean(userChoice && keyChoice && normalizeStatementValue(userChoice) === normalizeStatementValue(keyChoice));
+                          const isRowWrong = Boolean(userChoice && keyChoice && normalizeStatementValue(userChoice) !== normalizeStatementValue(keyChoice));
 
                           let rowBg = rIdx % 2 === 0 ? "#ffffff" : "#fafcf9";
                           if (studyMode === "drill" && isItemEvaluated) {
@@ -3466,8 +3490,8 @@ Tolong berikan bedah diagnostik umum tentang kelemahan konsep saya dan materi pr
                       const userChoice = userMap[stmtId];
                       const keyMap = parseStatementAnswers(currentItem.kunci_jawaban);
                       const keyChoice = keyMap[stmtId];
-                      const isRowCorrect = Boolean(userChoice && keyChoice && userChoice === keyChoice);
-                      const isRowWrong = Boolean(userChoice && keyChoice && userChoice !== keyChoice);
+                      const isRowCorrect = Boolean(userChoice && keyChoice && normalizeStatementValue(userChoice) === normalizeStatementValue(keyChoice));
+                      const isRowWrong = Boolean(userChoice && keyChoice && normalizeStatementValue(userChoice) !== normalizeStatementValue(keyChoice));
 
                       return (
                         <div
@@ -5184,7 +5208,7 @@ Tolong berikan petunjuk/clue pemikiran tanpa langsung membocorkan jawaban final.
                                       const keyMap = parseStatementAnswers(item.kunci_jawaban);
                                       const userPick = userMap[opt.id.toLowerCase()];
                                       const keyPick = keyMap[opt.id.toLowerCase()];
-                                      const isCorrect = Boolean(userPick && keyPick && userPick === keyPick);
+                                      const isCorrect = Boolean(userPick && keyPick && normalizeStatementValue(userPick) === normalizeStatementValue(keyPick));
 
                                       return (
                                         <tr key={opt.id} style={{ backgroundColor: isCorrect ? "#f0fdf4" : userPick ? "#fff1f2" : "#ffffff", borderBottom: "1px solid #e5ebe1" }}>
@@ -5226,7 +5250,7 @@ Tolong berikan petunjuk/clue pemikiran tanpa langsung membocorkan jawaban final.
                                               <span style={{ color: "#15803d", fontWeight: 700, fontSize: 11.5, backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: 4 }}>
                                                 ✓ Tepat
                                               </span>
-                                            ) : userPick && keyPick && userPick !== keyPick ? (
+                                            ) : userPick && keyPick && normalizeStatementValue(userPick) !== normalizeStatementValue(keyPick) ? (
                                               <span style={{ color: "#be123c", fontWeight: 700, fontSize: 11.5, backgroundColor: "#fee2e2", padding: "2px 6px", borderRadius: 4 }}>
                                                 ✕ Salah
                                               </span>

@@ -59,9 +59,9 @@ test("Test 2: Zero leak saat pola !== 'all' untuk Ekonomi (pola 1..6)", async ()
         prompts.push(messages);
         return JSON.stringify({
           bacaan: "<p><strong>Teks untuk soal nomor 1 s.d. 5</strong></p><p>Isi studi kasus ekonomi...</p>",
-          items: [
-            { nomor: 1, pola: parseInt(testPola, 10), tipe_soal: "pilihan_ganda", soal: "Soal", options: [{ id: "a", text: "A" }], kunci_jawaban: "a", kunci_jawaban_text: "Penjelasan" }
-          ]
+          items: Array.from({ length: 5 }, (_, i) => ({
+            nomor: i + 1, pola: parseInt(testPola, 10), tipe_soal: "pilihan_ganda", soal: "Soal", options: [{ id: "a", text: "A" }], kunci_jawaban: "a", kunci_jawaban_text: "Penjelasan"
+          }))
         });
       };
 
@@ -132,9 +132,9 @@ test("Test 3: Zero leak saat pola !== 'all' untuk Sosiologi (pola 1..6)", async 
         prompts.push(messages);
         return JSON.stringify({
           bacaan: "<p><strong>Teks untuk soal nomor 1 s.d. 5</strong></p><p>Isi kasus sosiologis...</p>",
-          items: [
-            { nomor: 1, pola: parseInt(testPola, 10), tipe_soal: "pilihan_ganda", soal: "Soal", options: [{ id: "a", text: "A" }], kunci_jawaban: "a", kunci_jawaban_text: "Penjelasan" }
-          ]
+          items: Array.from({ length: 5 }, (_, i) => ({
+            nomor: i + 1, pola: parseInt(testPola, 10), tipe_soal: "pilihan_ganda", soal: "Soal", options: [{ id: "a", text: "A" }], kunci_jawaban: "a", kunci_jawaban_text: "Penjelasan"
+          }))
         });
       };
 

@@ -3,15 +3,26 @@ const { callRouter } = require("../ai");
 const { safeJsonParse } = require("../utils/jsonParser");
 const { generateAiDrillPackage, POLA_BLUEPRINT } = require("../services/aiDrillGenerator");
 
+function normalizeStatementValue(val) {
+  if (!val) return "";
+  const v = String(val).trim().toLowerCase();
+  if (["true", "benar", "sesuai", "tepat", "setuju"].includes(v)) return "benar";
+  if (["false", "salah", "tidak sesuai", "tidak tepat", "tidak setuju"].includes(v)) return "salah";
+  return v;
+}
+
 function normalizeAnswer(ans) {
   if (ans === null || ans === undefined) return "";
   const s = String(ans).trim().toLowerCase();
   const parts = s.split(/[;,]/).map((p) => {
     const trimmed = p.trim();
     if (trimmed.includes(":")) {
-      return trimmed.split(":").map((sub) => sub.trim()).join(":");
+      const subParts = trimmed.split(":");
+      const id = subParts[0].trim();
+      const val = subParts.slice(1).join(":").trim();
+      return `${id}:${normalizeStatementValue(val)}`;
     }
-    return trimmed;
+    return normalizeStatementValue(trimmed);
   }).filter(Boolean);
   if (parts.length > 1) {
     parts.sort();
@@ -26,12 +37,12 @@ function isAnswerCorrect(userAns, keyAns, tipeSoal) {
   if (!normUser || !normKey) return false;
   if (normUser === normKey) return true;
 
-  if (tipeSoal === "pernyataan") {
+  if (tipeSoal === "pernyataan" || (normKey.includes(":") && normUser.includes(":"))) {
     const parsePairs = (str) => {
       const map = {};
       str.split(";").forEach((p) => {
-        const [k, v] = p.split(":");
-        if (k && v) map[k.trim()] = v.trim();
+        const [k, ...v] = p.split(":");
+        if (k && v.length) map[k.trim()] = normalizeStatementValue(v.join(":"));
       });
       return map;
     };
@@ -408,6 +419,7 @@ async function handleExamBankRoutes(req, res, pathname, helpers) {
       const paketTitle = pola === "all"
         ? `Simulasi Pusmendik [${count} Butir - Campuran]`
         : `Drill Khusus Pola ${pola} [${count} Butir]`;
+      const kategori = ["Ekonomi", "Sosiologi"].includes(subject) ? "pilihan" : "wajib";
 
       db.exec("BEGIN");
       try {
@@ -419,7 +431,7 @@ async function handleExamBankRoutes(req, res, pathname, helpers) {
           pkgId,
           "ai_drill",
           "SMA",
-          "wajib",
+          kategori,
           subject,
           paketTitle,
           aiData.items.length,

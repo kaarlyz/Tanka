@@ -138,9 +138,9 @@ test("English Drill Diversity: Zero Indonesian leak saat pola !== 'all' untuk Ba
         prompts.push(messages);
         return JSON.stringify({
           bacaan: "<p><strong>Questions 1 to 5 are based on the following passage.</strong></p><p>Passage content...</p>",
-          items: [
-            { nomor: 1, pola: parseInt(testPola, 10), tipe_soal: "pilihan_ganda", soal: "Question 1", options: [{ id: "a", text: "A" }], kunci_jawaban: "a", kunci_jawaban_text: "Reason" }
-          ]
+          items: Array.from({ length: 5 }, (_, i) => ({
+            nomor: i + 1, pola: parseInt(testPola, 10), tipe_soal: "pilihan_ganda", soal: "Question 1", options: [{ id: "a", text: "A" }], kunci_jawaban: "a", kunci_jawaban_text: "Reason"
+          }))
         });
       };
 

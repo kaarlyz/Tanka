@@ -740,7 +740,7 @@ PENTING ATURAN KUNCI JAWABAN:
   }
 
   // Generate all units in parallel
-  const tasks = unitDefs.map(u => {
+  const tasks = unitDefs.map(async (u) => {
     const unitCount = u.end - u.start + 1;
     const polaIdStr = String(u.polaId || "");
     const isIndo = !isMath && !isEnglish && !isEkonomi && !isSosiologi;
@@ -1037,22 +1037,56 @@ Format Output JSON Murni:
   ]
 }`;
 
-    return ai.callRouter(
+    const extractItems = (parsedObj) => {
+      if (Array.isArray(parsedObj)) return parsedObj;
+      if (parsedObj && typeof parsedObj === "object") {
+        if (Array.isArray(parsedObj.items)) return parsedObj.items;
+        if (Array.isArray(parsedObj.soal)) return parsedObj.soal;
+      }
+      return [];
+    };
+
+    const callUnitAi = () => ai.callRouter(
       [{ role: "system", content: systemPrompt }, { role: "user", content: unitPrompt }],
       model,
       0.2,
       4096,
       120000
     );
+
+    let raw = null;
+    let parsed = null;
+    let unitItems = [];
+
+    // Attempt 1
+    try {
+      raw = await callUnitAi();
+      parsed = safeJsonParse(raw);
+      unitItems = extractItems(parsed);
+    } catch (err) {
+      console.warn(`[aiDrillGenerator] Unit ${u.start}-${u.end} attempt 1 gagal:`, err?.message || err);
+    }
+
+    // Per-Unit Retry 1x jika hasil parsing kosong atau gagal
+    if (!parsed || unitItems.length === 0) {
+      try {
+        console.warn(`[aiDrillGenerator] Unit ${u.start}-${u.end} kosong/gagal parsing, menjalankan retry 1x...`);
+        raw = await callUnitAi();
+        parsed = safeJsonParse(raw);
+        unitItems = extractItems(parsed);
+      } catch (err) {
+        console.warn(`[aiDrillGenerator] Unit ${u.start}-${u.end} attempt retry gagal:`, err?.message || err);
+      }
+    }
+
+    return { u, parsed, unitItems };
   });
 
-  const rawResponses = await Promise.all(tasks);
+  const unitResults = await Promise.all(tasks);
   let allItems = [];
   let firstBacaan = "";
 
-  rawResponses.forEach((raw, idx) => {
-    const u = unitDefs[idx];
-    const parsed = safeJsonParse(raw);
+  unitResults.forEach(({ u, parsed, unitItems }) => {
     const defaultHeader = isMath
       ? `<p><strong>Stimulus untuk soal nomor ${u.start} s.d. ${u.end}</strong></p>`
       : isEnglish
@@ -1065,14 +1099,6 @@ Format Output JSON Murni:
     }
     if (!firstBacaan) firstBacaan = unitBacaan;
 
-    let unitItems = [];
-    if (Array.isArray(parsed)) {
-      unitItems = parsed;
-    } else if (parsed && typeof parsed === "object") {
-      if (Array.isArray(parsed.items)) unitItems = parsed.items;
-      else if (Array.isArray(parsed.soal)) unitItems = parsed.soal;
-    }
-
     // Attach unit wacana to every item in this unit
     unitItems.forEach((it, i) => {
       it.nomor = u.start + i;
@@ -1082,23 +1108,188 @@ Format Output JSON Murni:
     allItems.push(...unitItems);
   });
 
-  if (allItems.length === 0) {
-    throw new Error("Gagal mem-parsing paket soal dari AI (format respons tidak valid)");
+  if (allItems.length < targetCount) {
+    throw new Error(`Gagal menghasilkan kuota penuh ${targetCount} butir`);
   }
 
-  // Ensure strict sequential numbering 1 to targetCount
+  // Ensure strict sequential numbering 1 to targetCount and sanitize option prefix
   allItems = allItems.slice(0, targetCount);
   allItems.forEach((it, idx) => {
     it.nomor = idx + 1;
+    if (Array.isArray(it.options)) {
+      it.options = it.options.map((opt) => {
+        if (typeof opt === "string") {
+          return opt.replace(/^[A-Ea-e][\.\)\:\-]\s*/, "").trim();
+        }
+        if (opt && typeof opt === "object") {
+          if (typeof opt.text === "string") {
+            opt.text = opt.text.replace(/^[A-Ea-e][\.\)\:\-]\s*/, "").trim();
+          }
+          return opt;
+        }
+        return opt;
+      });
+    }
   });
+
+  allItems = calibrateKeyDistribution(allItems, subject);
 
   const title = `Paket Latihan AI - ${subject} [${targetCount} Butir ${isChallenge ? "Mode Challenge" : "Standar Pusmendik"}]`;
   return { title, bacaan: firstBacaan, items: allItems };
+}
+
+const DEFAULT_KEY_WEIGHTS = {
+  a: 0.20,
+  b: 0.20,
+  c: 0.20,
+  d: 0.20,
+  e: 0.20,
+};
+
+const PUSMENDIK_KEY_WEIGHTS = {
+  "Bahasa Inggris": { a: 0.15, b: 0.40, c: 0.20, d: 0.15, e: 0.10 },
+  "Matematika": { a: 0.08, b: 0.32, c: 0.35, d: 0.17, e: 0.08 },
+  "Ekonomi": { a: 0.12, b: 0.18, c: 0.20, d: 0.20, e: 0.30 },
+  "Sosiologi": { a: 0.18, b: 0.20, c: 0.28, d: 0.24, e: 0.10 },
+  "Bahasa Indonesia": { a: 0.15, b: 0.28, c: 0.26, d: 0.18, e: 0.13 },
+};
+
+function calibrateKeyDistribution(items, subject) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return items;
+  }
+
+  const letters = ["a", "b", "c", "d", "e"];
+
+  // Filter butir soal yang eligible untuk kalibrasi
+  const eligibleItems = items.filter((it) => {
+    if (!it || typeof it !== "object") return false;
+    const tipe = it.tipe_soal;
+    if (tipe && tipe !== "pilihan_ganda") return false;
+    if (!Array.isArray(it.options) || it.options.length !== 5) return false;
+    if (typeof it.kunci_jawaban !== "string") return false;
+    const kj = it.kunci_jawaban.trim().toLowerCase();
+    return /^[a-e]$/.test(kj);
+  });
+
+  const N = eligibleItems.length;
+  if (N === 0) {
+    return items;
+  }
+
+  // Bobot subjek atau default
+  let weights = DEFAULT_KEY_WEIGHTS;
+  if (subject && typeof subject === "string") {
+    if (PUSMENDIK_KEY_WEIGHTS[subject]) {
+      weights = PUSMENDIK_KEY_WEIGHTS[subject];
+    } else {
+      const lower = subject.trim().toLowerCase();
+      for (const [subjKey, subjWeights] of Object.entries(PUSMENDIK_KEY_WEIGHTS)) {
+        if (subjKey.toLowerCase() === lower) {
+          weights = subjWeights;
+          break;
+        }
+      }
+    }
+  }
+
+  // Hamilton method (Largest Remainder)
+  const quotaRaw = letters.map((l, index) => {
+    const w = (weights && typeof weights[l] === "number") ? weights[l] : 0.2;
+    const quota = N * w;
+    const floored = Math.floor(quota);
+    return {
+      letter: l,
+      index,
+      quota,
+      floored,
+      remainder: quota - floored,
+    };
+  });
+
+  const totalFloored = quotaRaw.reduce((sum, r) => sum + r.floored, 0);
+  const remainingSlots = N - totalFloored;
+
+  const sortedByRemainder = [...quotaRaw].sort((x, y) => {
+    if (Math.abs(y.remainder - x.remainder) > 1e-9) {
+      return y.remainder - x.remainder;
+    }
+    return x.index - y.index;
+  });
+
+  const extraLetterSet = new Set(
+    sortedByRemainder.slice(0, remainingSlots).map((r) => r.letter)
+  );
+
+  const targetPool = [];
+  for (const item of quotaRaw) {
+    const count = item.floored + (extraLetterSet.has(item.letter) ? 1 : 0);
+    for (let i = 0; i < count; i++) {
+      targetPool.push(item.letter);
+    }
+  }
+
+  for (let i = targetPool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [targetPool[i], targetPool[j]] = [targetPool[j], targetPool[i]];
+  }
+
+  eligibleItems.forEach((it) => {
+    const targetKey = targetPool.pop();
+    const origKey = it.kunci_jawaban.trim().toLowerCase();
+
+    let correctIndex = it.options.findIndex(
+      (opt) => opt && typeof opt === "object" && String(opt.id || "").trim().toLowerCase() === origKey
+    );
+    if (correctIndex === -1) {
+      const idxByLetter = letters.indexOf(origKey);
+      correctIndex = idxByLetter >= 0 && idxByLetter < it.options.length ? idxByLetter : 0;
+    }
+
+    const correctOption = it.options[correctIndex];
+    const distractors = it.options.filter((_, idx) => idx !== correctIndex);
+
+    for (let i = distractors.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [distractors[i], distractors[j]] = [distractors[j], distractors[i]];
+    }
+
+    let distractorIdx = 0;
+    const newOptions = letters.map((huruf) => {
+      if (huruf === targetKey) {
+        if (correctOption && typeof correctOption === "object") {
+          return { ...correctOption, id: huruf };
+        }
+        return { id: huruf, text: correctOption };
+      } else {
+        const d = distractors[distractorIdx++];
+        if (d && typeof d === "object") {
+          return { ...d, id: huruf };
+        }
+        return { id: huruf, text: d };
+      }
+    });
+
+    it.options = newOptions;
+    it.kunci_jawaban = targetKey;
+
+    if (typeof it.kunci_jawaban_text === "string") {
+      it.kunci_jawaban_text = it.kunci_jawaban_text.replace(
+        /^(Kunci|Jawaban|Pilihan)\s+[A-Ea-e]/i,
+        (m, p) => p + " " + targetKey.toUpperCase()
+      );
+    }
+  });
+
+  return items;
 }
 
 module.exports = {
   SUBJECT_BLUEPRINTS,
   POLA_BLUEPRINT: SUBJECT_BLUEPRINTS["Bahasa Indonesia"],
   DIVERSE_THEME_POOLS,
-  generateAiDrillPackage
+  generateAiDrillPackage,
+  calibrateKeyDistribution,
+  PUSMENDIK_KEY_WEIGHTS,
+  DEFAULT_KEY_WEIGHTS
 };

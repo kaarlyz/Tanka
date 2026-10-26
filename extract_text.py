@@ -7,6 +7,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 import tempfile
 import glob
+import hashlib
 
 def extract_pdf(file_path):
     try:
@@ -94,8 +95,26 @@ def extract_pdf(file_path):
         try:
             uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", "exam_images")
             os.makedirs(uploads_dir, exist_ok=True)
-            doc_base = os.path.splitext(os.path.basename(file_path))[0]
+            with open(file_path, "rb") as f:
+                doc_hash = hashlib.sha256(f.read()).hexdigest()[:16]
             
+            # Ambil koordinat vertikal (top) dan tinggi halaman via pdftohtml -xml jika tersedia
+            xml_page_images = {}
+            try:
+                xml_res = subprocess.run(["pdftohtml", "-xml", "-stdout", file_path], capture_output=True, text=True, timeout=12)
+                if xml_res.returncode == 0 and xml_res.stdout:
+                    root_xml = ET.fromstring(xml_res.stdout)
+                    for page_el in root_xml.findall("page"):
+                        p_num_xml = int(page_el.get("number", 0))
+                        p_h = float(page_el.get("height", 0))
+                        xml_page_images[p_num_xml] = []
+                        for img_el in page_el.findall("image"):
+                            top_val = float(img_el.get("top", 0))
+                            h_val = float(img_el.get("height", 0))
+                            xml_page_images[p_num_xml].append((top_val, h_val, p_h))
+            except Exception:
+                pass
+
             with tempfile.TemporaryDirectory() as img_tmpdir:
                 prefix_img = os.path.join(img_tmpdir, "img")
                 # 1. Ekstrak objek raster asli secara native ke tmpfs (tanpa overhead dekompresi PNG)
@@ -106,6 +125,7 @@ def extract_pdf(file_path):
                 if list_res.returncode == 0:
                     lines = list_res.stdout.splitlines()
                     candidates = []
+                    page_img_counts = {}
                     for line in lines[2:]:
                         parts = line.split()
                         if len(parts) >= 5 and parts[0].isdigit() and parts[1].isdigit():
@@ -118,10 +138,18 @@ def extract_pdf(file_path):
                             if is_not_mask and w >= 220 and h >= 120:
                                 cands = glob.glob(f"{prefix_img}-{img_idx:03d}.*")
                                 if cands:
-                                    candidates.append((p_num, img_idx, cands[0]))
+                                    pos_on_page = page_img_counts.get(p_num, 0)
+                                    page_img_counts[p_num] = pos_on_page + 1
+
+                                    top_val = None
+                                    p_height = None
+                                    if p_num in xml_page_images and pos_on_page < len(xml_page_images[p_num]):
+                                        top_val, _, p_height = xml_page_images[p_num][pos_on_page]
+
+                                    candidates.append((p_num, img_idx, cands[0], w, h, top_val, p_height, pos_on_page))
 
                     def process_candidate_img(cand):
-                        p_num, img_idx, img_filepath = cand
+                        p_num, img_idx, img_filepath, w, h, top_val, p_height, pos_on_page = cand
                         try:
                             # Jalankan OCR lokal cepat pada kandidat gambar
                             t_res = subprocess.run(
@@ -141,18 +169,39 @@ def extract_pdf(file_path):
                             is_pure_art = len(img_ocr_text) <= 5
 
                             # Layer 3: True Graphic/Chart/Table/Infographic
-                            # Harus mengandung penanda eksplisit grafik/tabel/infografis
-                            has_explicit_heading = any(re.search(rf"\b{kw}\b", img_ocr_text, re.I) for kw in ["grafik", "tabel", "infografis", "diagram", "kementerian", "urbanisasi", "kelompok primer"])
+                            # Keyword visual sah HANYA: grafik, diagram, tabel, kurva, bagan, infografis, peta, kartun, karikatur, ilustrasi
+                            visual_keywords = ["grafik", "diagram", "tabel", "kurva", "bagan", "infografis", "peta", "kartun", "karikatur", "ilustrasi"]
+                            has_explicit_heading = any(re.search(rf"\b{kw}\b", img_ocr_text, re.I) for kw in visual_keywords)
                             has_chart_symbols = bool(re.search(r"\b\d+\s+\d+\s+\d+\s+\d+\b", img_ocr_text)) # deretan angka sumbu grafik
                             is_structured_visual = has_explicit_heading or has_chart_symbols
 
+                            # Kepadatan teks (karakter per pixel)
+                            area = (w * h) if (w and h) else 0
+                            density = (len(img_ocr_text) / area) if area > 0 else 0
+
+                            # Tolak Raster Wacana Teks Padat (Dense Prose Rejection):
+                            # Jika len > 200 dan teks berupa kalimat/paragraf narasi biasa (memuat konjungsi/paragraf tanpa tabel/angka sumbu grafik),
+                            # gambar tersebut adalah wacana bacaan yang ter-rasterize, BUKAN ilustrasi visual. Tolak.
+                            has_table_matrix = bool(re.search(r"\|\s*[^|]+\s*\|", img_ocr_text))
+                            conjs = [" bahwa ", " yang ", " dan ", " di ", " dari ", " untuk ", " dengan ", " dalam ", " pada ", " atau ", " jika ", " maka ", " akan "]
+                            has_prose_conjunctions = sum(1 for c in conjs if c in f" {img_ocr_text.lower()} ") >= 2
+                            is_dense_prose = len(img_ocr_text) > 200 and not has_chart_symbols and not has_table_matrix and (has_prose_conjunctions or density > 0.0008)
+                            if is_dense_prose:
+                                return None
+
+                            # Terima Ilustrasi / Poster Wacana:
+                            # Gambar berdimensi besar (lebar >= 400 dan tinggi >= 200) dengan kepadatan teks rendah (< 0.0008 karakter per pixel)
+                            # atau memuat poster slogan ("PANTAI BERSIH TANPA SAMPAH")
+                            has_poster_slogan = bool(re.search(r"pantai\s+bersih\s+tanpa\s+sampah", img_ocr_text, re.I))
+                            is_illustration = ((w >= 400 and h >= 200 and density < 0.0008) or has_poster_slogan) and not is_dense_prose
+
                             # Anti-Leak: Jangan ambil potongan jika itu murni teks soal/pilihan ganda
-                            is_pure_question_or_choice = bool(re.search(r"^\s*(?:[A-Ea-e][\.\)]|Berdasarkan|Manakah|Bagaimana)\b", img_ocr_text, re.I)) and not any(k in img_ocr_text.lower() for k in ["tabel perspesi", "tingkat partisipasi"])
+                            is_pure_question_or_choice = bool(re.search(r"^\s*(?:[A-Ea-e][\.\)]|Berdasarkan|Manakah|Bagaimana|Apa|Mengapa)\b", img_ocr_text, re.I)) and not any(k in img_ocr_text.lower() for k in ["tabel perspesi", "tingkat partisipasi"])
                             if is_pure_question_or_choice and not is_pure_art:
                                 return None
 
-                            if is_pure_art or (is_structured_visual and not is_pure_question_or_choice):
-                                return (p_num, img_idx, img_filepath)
+                            if is_pure_art or is_illustration or (is_structured_visual and not is_pure_question_or_choice):
+                                return (p_num, img_idx, img_filepath, img_ocr_text, top_val, p_height, pos_on_page)
                         except Exception:
                             pass
                         return None
@@ -163,8 +212,8 @@ def extract_pdf(file_path):
 
                     for m in matched:
                         if m:
-                            p_num, img_idx, img_filepath = m
-                            target_filename = f"{doc_base}_img-{img_idx:03d}.png"
+                            p_num, img_idx, img_filepath, img_ocr_text, top_val, p_height, pos_on_page = m
+                            target_filename = f"pdf_{doc_hash}_img-{img_idx:03d}.png"
                             target_path = os.path.join(uploads_dir, target_filename)
                             if img_filepath.endswith(".png"):
                                 import shutil
@@ -174,7 +223,14 @@ def extract_pdf(file_path):
                             
                             if p_num not in page_images_map:
                                 page_images_map[p_num] = []
-                            page_images_map[p_num].append(f"/uploads/exam_images/{target_filename}")
+                            page_images_map[p_num].append({
+                                "url": f"/uploads/exam_images/{target_filename}",
+                                "ocr_text": img_ocr_text,
+                                "top": top_val,
+                                "page_height": p_height,
+                                "pos_idx": pos_on_page,
+                                "total_pos": page_img_counts.get(p_num, 1)
+                            })
         except Exception as filter_err:
             pass
 
@@ -184,8 +240,49 @@ def extract_pdf(file_path):
         for p_num, txt in final_pages:
             p_txt = txt
             if p_num in page_images_map:
-                for img_url in page_images_map[p_num]:
-                    p_txt = f"[Gambar: {img_url}]\n\n" + p_txt
+                for img_info in page_images_map[p_num]:
+                    img_url = img_info["url"]
+                    img_ocr = img_info.get("ocr_text", "")
+                    top = img_info.get("top")
+                    p_height = img_info.get("page_height")
+                    pos_idx = img_info.get("pos_idx", 0)
+                    total_pos = img_info.get("total_pos", 1)
+
+                    placed = False
+                    # 1. Coba cocokkan heading wacana jika teks OCR memuat judul/heading di halaman
+                    if img_ocr:
+                        for line in img_ocr.splitlines():
+                            l_strip = line.strip()
+                            if len(l_strip) >= 10 and l_strip in p_txt:
+                                p_txt = p_txt.replace(l_strip, f"{l_strip}\n\n[Gambar: {img_url}]", 1)
+                                placed = True
+                                break
+                        if not placed:
+                            # Coba normalisasi quote (misal tanda petik miring)
+                            norm_ocr = re.sub(r'[“"”]', '"', img_ocr)
+                            for line in norm_ocr.splitlines():
+                                l_strip = line.strip()
+                                if len(l_strip) >= 10:
+                                    rx_pattern = re.escape(l_strip).replace('\\"', r'["“”]')
+                                    m_heading = re.search(rx_pattern, p_txt)
+                                    if m_heading:
+                                        matched_str = m_heading.group(0)
+                                        p_txt = p_txt.replace(matched_str, f"{matched_str}\n\n[Gambar: {img_url}]", 1)
+                                        placed = True
+                                        break
+
+                    # 2. Jika tidak ada kecocokan heading teks, gunakan posisi koordinat vertikal
+                    if not placed:
+                        is_bottom = False
+                        if top is not None and p_height is not None and p_height > 0:
+                            is_bottom = top > (p_height * 0.5)
+                        elif total_pos > 1:
+                            is_bottom = pos_idx >= (total_pos / 2.0)
+                        
+                        if is_bottom:
+                            p_txt = f"{p_txt.rstrip()}\n\n[Gambar: {img_url}]"
+                        else:
+                            p_txt = f"[Gambar: {img_url}]\n\n{p_txt}"
             augmented_pages.append(p_txt)
 
         extracted = "\n\n--- Halaman Berikutnya ---\n\n".join(augmented_pages)

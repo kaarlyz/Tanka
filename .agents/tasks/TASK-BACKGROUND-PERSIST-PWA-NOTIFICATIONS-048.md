@@ -102,3 +102,16 @@
   - `tests/notificationPersistence.test.js`: 5/5 passing
   - `npm test`: 126/126 passing (0 failures)
   - `npm run build`: built clean in ~420ms without warnings/errors
+
+---
+
+## 5. Independent Audit Report (AURA)
+- Date: 2026-10-24
+- Auditor: AURA (`gikano`)
+- Verdict: `ACCEPTED`
+- Scope Verification:
+  1. `src/utils/notification.ts`: Service Worker `registration.showNotification` diprioritaskan di atas `new Notification()`. Permission check rapi (`granted` / `denied` short-circuit). Anti-spam terproteksi via memory `Set` dan native OS notification tag.
+  2. `public/sw.js`: Cache bump `tanka-pwa-v7` terverifikasi. Handler `notificationclick` menutup notifikasi, memfokuskan tab klien aktif / navigasi URL target, dan fallback ke `clients.openWindow`.
+  3. `useDocuments.ts` & `useUploadStaging.ts`: Tracking pending jobs via `localStorage` (`tanka_processing_docs`). Listener `visibilitychange` dan `focus` sukses men-trigger re-hydration instan saat tab dibuka kembali di mobile.
+  4. Independent test suite: 126/126 passing, build sukses tanpa issue.
+- Telegram notification: Terkirim ke Eka.

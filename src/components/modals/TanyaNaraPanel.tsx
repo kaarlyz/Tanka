@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback, useMemo, useEffect } from "react";
-import { RotateCw, X, Sparkles, Brain, Camera, Image, FileText, Send, Copy, Check, Plus, ArrowUp } from "lucide-react";
+import { RotateCw, X, Sparkles, Brain, Camera, Image, FileText, Send, Copy, Check, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -25,8 +26,11 @@ export const ChatMessageItem = React.memo(
     }, [m.content, isUser]);
 
     return (
-      <div
-        className="chat-bubble-enter"
+      <motion.div
+        initial={{ opacity: 0, y: 12, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 400, damping: 28, mass: 0.5 }}
+        className="chat-bubble-wrapper chat-bubble-enter"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -83,6 +87,10 @@ export const ChatMessageItem = React.memo(
         <div
           style={{
             maxWidth: isUser ? "85%" : "94%",
+            boxSizing: "border-box",
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+            minWidth: 0,
             padding: isUser ? "9px 13px" : "11px 14px",
             borderRadius: isUser ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
             backgroundColor: isUser ? "#1c2b25" : "#ffffff",
@@ -141,7 +149,7 @@ export const ChatMessageItem = React.memo(
             </>
           )}
         </div>
-      </div>
+      </motion.div>
     );
   },
   (prev, next) => {
@@ -639,10 +647,20 @@ export function TanyaNaraPanel({
 }: TanyaNaraPanelProps) {
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
+
+  const handleChatScroll = useCallback(() => {
+    const el = chatWindowRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowScrollBottomBtn(distanceFromBottom > 140);
+  }, []);
 
   const handleCopy = useCallback((id: string, text: string) => {
     if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(text);
+      // Pastikan teks yang disalin bersih dari tag KaTeX mentah atau newlines aneh
+      const cleanText = text.replace(/\\\\/g, "\\");
+      navigator.clipboard.writeText(cleanText);
       setCopiedMsgId(id);
       setTimeout(() => setCopiedMsgId(null), 1800);
     }
@@ -658,7 +676,53 @@ export function TanyaNaraPanel({
     if (isNearBottom || isUserMsg || isChatSending) {
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowScrollBottomBtn(distanceFromBottom > 140);
   }, [messages, isChatSending]);
+
+  // Resizable panel width state (Desktop)
+  const [panelWidth, setPanelWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("tanka_tanya_nara_width");
+      return saved ? Math.max(340, Math.min(parseInt(saved, 10), 850)) : 420;
+    } catch {
+      return 420;
+    }
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const widthRef = useRef(panelWidth);
+  widthRef.current = panelWidth;
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = widthRef.current;
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "col-resize";
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = startX - moveEvent.clientX;
+      const maxAllowed = Math.min(850, window.innerWidth - 320);
+      const newWidth = Math.max(340, Math.min(startWidth + delta, maxAllowed));
+      widthRef.current = newWidth;
+      setPanelWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      try {
+        localStorage.setItem("tanka_tanya_nara_width", String(widthRef.current));
+      } catch {}
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }, []);
 
   // Lock body scroll on mobile touch when drawer is open
   useEffect(() => {
@@ -700,21 +764,59 @@ export function TanyaNaraPanel({
         className={`ai-panel-box ${isAiPanelOpen ? "open" : ""}`}
         style={{
           display: isAiPanelOpen ? "flex" : "none",
-          width: 380,
-          minWidth: 320,
-          maxWidth: 420,
+          width: panelWidth,
+          minWidth: 340,
+          maxWidth: "min(850px, 85vw)",
           flexShrink: 0,
           height: "100%",
           maxHeight: "100%",
           minHeight: 0,
           position: "relative",
           boxSizing: "border-box",
-          overflow: "hidden"
+          overflow: "visible",
+          overflowX: "hidden",
+          touchAction: "pan-y"
         }}
       >
+        {/* Left Resize Handle (Desktop) */}
+        <div
+          className="ai-panel-resizer-desktop"
+          onMouseDown={startResize}
+          onDoubleClick={() => {
+            setPanelWidth(420);
+            widthRef.current = 420;
+            try { localStorage.setItem("tanka_tanya_nara_width", "420"); } catch {}
+          }}
+          title="Tarik untuk atur lebar panel Tanya Nara (klik 2x untuk reset)"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: -4,
+            width: 8,
+            height: "100%",
+            cursor: "col-resize",
+            zIndex: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            userSelect: "none"
+          }}
+        >
+          <div
+            style={{
+              width: 3,
+              height: 40,
+              borderRadius: 3,
+              backgroundColor: isResizing ? "#166534" : "rgba(22, 101, 52, 0.25)",
+              transition: "background-color 0.15s ease",
+            }}
+          />
+        </div>
+
         <div
           className="ai-panel-inner"
           style={{
+            position: "relative",
             display: "flex",
             flexDirection: "column",
             height: "100%",
@@ -934,11 +1036,13 @@ export function TanyaNaraPanel({
           {/* 2. Messages Container (Full bleed scrollable area) */}
           <div
             ref={chatWindowRef}
+            onScroll={handleChatScroll}
             className="chat-window-box no-scrollbar"
             style={{
               flex: 1,
               minHeight: 0,
               overflowY: "auto",
+              overflowX: "hidden",
               overscrollBehavior: "contain",
               WebkitOverflowScrolling: "touch",
               touchAction: "pan-y",
@@ -1024,24 +1128,100 @@ export function TanyaNaraPanel({
               ))
             )}
 
-            {isChatSending && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 11,
-                  color: "#5b6d65",
-                  fontStyle: "italic",
-                  padding: "4px 8px"
-                }}
-              >
-                <Sparkles size={12} color="#18221f" />
-                <span>Nara sedang menyusun penjelasan...</span>
-              </div>
-            )}
+            <AnimatePresence>
+              {isChatSending && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                  className="nara-typing-indicator"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 14px",
+                    borderRadius: "16px 16px 16px 4px",
+                    backgroundColor: "#f0f4ea",
+                    border: "1px solid #dce4d6",
+                    width: "fit-content",
+                    marginBottom: 4
+                  }}
+                >
+                  <Sparkles size={14} color="#166534" />
+                  <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+                    {[0, 1, 2].map((dot) => (
+                      <motion.span
+                        key={dot}
+                        animate={{ y: [0, -5, 0] }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 0.6,
+                          delay: dot * 0.15,
+                          ease: "easeInOut"
+                        }}
+                        style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: "50%",
+                          backgroundColor: "#166534",
+                          display: "inline-block"
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 11.5, fontWeight: 600, color: "#253b2b" }}>
+                    Nara sedang meracik jawaban...
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div ref={chatEndRef} />
           </div>
+
+          {/* Floating Scroll to Bottom Button */}
+          <AnimatePresence>
+            {showScrollBottomBtn && (
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, y: 10, scale: 0.85, x: "-50%" }}
+                animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+                exit={{ opacity: 0, y: 10, scale: 0.85, x: "-50%" }}
+                whileTap={{ scale: 0.93 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                onClick={() => {
+                  const el = chatWindowRef.current;
+                  if (el) {
+                    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+                    setShowScrollBottomBtn(false);
+                  }
+                }}
+                className="chat-scroll-bottom-fab"
+                style={{
+                  position: "absolute",
+                  bottom: 115,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  backgroundColor: "#18221f",
+                  color: "#c8f064",
+                  border: "1.5px solid rgba(200, 240, 100, 0.45)",
+                  borderRadius: 9999,
+                  padding: "8px 18px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  boxShadow: "0 6px 20px rgba(0, 0, 0, 0.28)",
+                  cursor: "pointer",
+                  zIndex: 70,
+                  touchAction: "manipulation",
+                }}
+              >
+                <ArrowDown size={15} color="#c8f064" strokeWidth={2.5} />
+                <span>Pesan Terbaru</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           {/* 3. Footer (Input & Attachment Bar) */}
           <ChatInputBar

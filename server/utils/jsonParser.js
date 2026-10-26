@@ -65,6 +65,35 @@ function repairTruncatedJsonArray(raw) {
   return null;
 }
 
+function repairTruncatedJsonObjectWithArray(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  const pre = preprocessLatexJson(raw);
+  const start = pre.indexOf("{");
+  if (start === -1) return null;
+
+  let pos = pre.lastIndexOf("}");
+  while (pos > start) {
+    let candidate = pre.slice(start, pos + 1).trim();
+    candidate = candidate.replace(/,\s*$/, "") + "\n  ]\n}";
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && (Array.isArray(parsed.items) || Array.isArray(parsed.soal) || Array.isArray(parsed.questions))) {
+        return candidate;
+      }
+    } catch {
+      try {
+        const repaired = candidate.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+        const parsed = JSON.parse(repaired);
+        if (parsed && (Array.isArray(parsed.items) || Array.isArray(parsed.soal) || Array.isArray(parsed.questions))) {
+          return repaired;
+        }
+      } catch {}
+    }
+    pos = pre.lastIndexOf("}", pos - 1);
+  }
+  return null;
+}
+
 function safeJsonParse(raw, fallback = null) {
   if (!raw || typeof raw !== "string") return fallback;
 
@@ -77,6 +106,10 @@ function safeJsonParse(raw, fallback = null) {
 
   // 0. Preprocess LaTeX JSON to prevent control character corruption
   s = preprocessLatexJson(s);
+
+  // 0b. Clean hallucinated noise strings after empty quotes (e.g. "" Jaeger" -> "")
+  s = s.replace(/""\s*[A-Za-z0-9_-]+"/g, '""');
+  s = s.replace(/""\s*[A-Za-z0-9_-]+\s*([,\}])/g, '""$1');
 
   // 1. Direct standard parse
   try {
@@ -117,6 +150,14 @@ function safeJsonParse(raw, fallback = null) {
     } catch {}
   }
 
+  // 5b. Truncated object with array repair
+  const repairedObjectCandidate = repairTruncatedJsonObjectWithArray(s);
+  if (repairedObjectCandidate) {
+    try {
+      return healControlCharsToLatex(JSON.parse(repairedObjectCandidate));
+    } catch {}
+  }
+
   // 6. Extract first object structure { ... }
   const objMatch = s.match(/\{[\s\S]*\}/);
   if (objMatch) {
@@ -137,5 +178,6 @@ module.exports = {
   safeJsonParse,
   preprocessLatexJson,
   healControlCharsToLatex,
-  repairTruncatedJsonArray
+  repairTruncatedJsonArray,
+  repairTruncatedJsonObjectWithArray
 };

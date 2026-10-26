@@ -24,7 +24,8 @@ import {
   Check,
   ChevronDown,
   Zap,
-  X
+  X,
+  LayoutGrid
 } from "lucide-react";
 import { ActiveTab, QuizQuestion, MistakeItem, ChatMessage, DocumentItem } from "../../types";
 import { MathView } from "../common/MathView";
@@ -203,6 +204,133 @@ const QuizTutorInputBar = React.memo(function QuizTutorInputBar({
   );
 });
 
+export function renderFormattedStimulus(stimulusText: string) {
+  if (!stimulusText || typeof stimulusText !== "string") return null;
+
+  const rawBlocks = stimulusText
+    .split(/\r?\n+/)
+    .map((b) => b.trim())
+    .filter(Boolean);
+
+  if (rawBlocks.length === 0) return null;
+
+  let title: string | null = null;
+  let remainingBlocks = rawBlocks;
+
+  const first = rawBlocks[0];
+  const isTitleCandidate =
+    rawBlocks.length > 1 &&
+    (first.startsWith("#") ||
+      first.startsWith("**") ||
+      (first.length <= 100 && !first.endsWith(".") && !first.endsWith(";")) ||
+      /^(bacaan|teks|wacana|judul|artikel)\b/i.test(first));
+
+  if (isTitleCandidate) {
+    title = first.replace(/^#+\s*/, "").replace(/^\*\*(.*?)\*\*$/, "$1").trim();
+    remainingBlocks = rawBlocks.slice(1);
+  }
+
+  const isCitationLine = (t: string) =>
+    /^(sumber|source|referensi|reference|dikutip|disadur|adaptasi|dok\.|foto|pustaka|catatan)[:\s]/i.test(t) ||
+    /^(rachmawati|[A-Z][a-z]+(\s+[A-Z]\.|\s+dkk|\s+et\s+al|\s*,|\s*\(\d{4}\)))/i.test(t) ||
+    /^\((sumber|source|disadur|dikutip)/i.test(t);
+
+  const bodyParagraphs: string[] = [];
+  const citations: string[] = [];
+
+  for (const block of remainingBlocks) {
+    if (isCitationLine(block) || citations.length > 0) {
+      citations.push(block);
+    } else {
+      bodyParagraphs.push(block);
+    }
+  }
+
+  if (bodyParagraphs.length === 0 && citations.length > 0) {
+    bodyParagraphs.push(citations.shift()!);
+  }
+
+  return (
+    <div
+      className="quiz-stimulus-card"
+      style={{
+        backgroundColor: "#fdfefc",
+        border: "1px solid #dce1da",
+        borderLeft: "4px solid #15803d",
+        borderRadius: 10,
+        padding: "18px 22px",
+        marginBottom: 24
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: "#4a5752",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          marginBottom: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: 6
+        }}
+      >
+        <BookOpen size={14} color="#15803d" />
+        <span>Teks Bacaan / Stimulus Cerita</span>
+      </div>
+
+      <div style={{ maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
+        {title && (
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#17201d",
+              marginBottom: 12
+            }}
+          >
+            <MathView text={title} />
+          </div>
+        )}
+
+        {bodyParagraphs.map((para, idx) => (
+          <p
+            key={`stimulus-p-${idx}`}
+            style={{
+              fontSize: 14,
+              lineHeight: 1.75,
+              color: "#283430",
+              margin: "0 0 14px 0",
+              textAlign: "justify"
+            }}
+          >
+            <MathView text={para} />
+          </p>
+        ))}
+
+        {citations.length > 0 && (
+          <div
+            style={{
+              borderTop: "1px dashed #e2e6de",
+              marginTop: 16,
+              paddingTop: 8,
+              fontSize: 12,
+              fontStyle: "italic",
+              color: "#6f7975"
+            }}
+          >
+            {citations.map((cite, cIdx) => (
+              <div key={`stimulus-c-${cIdx}`}>
+                <MathView text={cite} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export interface QuizTabProps {
   quizQuestions: QuizQuestion[];
   currentQuestionIndex: number;
@@ -324,6 +452,52 @@ export const QuizTab = React.memo(function QuizTab({
 }: QuizTabProps) {
   const [isTailoring, setIsTailoring] = React.useState(false);
   const [copiedQuizChatId, setCopiedQuizChatId] = React.useState<string | null>(null);
+  const [isPaletteOpen, setIsPaletteOpen] = React.useState(false);
+
+  // Resizable Split Pane State (CBT layout for Stimulus vs Question)
+  const [splitRatio, setSplitRatio] = React.useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("tanka_quiz_split_ratio");
+      return saved ? Math.max(25, Math.min(parseInt(saved, 10), 75)) : 46;
+    } catch {
+      return 46;
+    }
+  });
+  const [isResizingSplit, setIsResizingSplit] = React.useState(false);
+  const quizGridRef = React.useRef<HTMLDivElement>(null);
+  const splitRatioRef = React.useRef(splitRatio);
+  splitRatioRef.current = splitRatio;
+
+  const startSplitResize = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const container = quizGridRef.current;
+    if (!container) return;
+    setIsResizingSplit(true);
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "col-resize";
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      const relativeX = moveEvent.clientX - rect.left;
+      const pct = Math.max(25, Math.min(Math.round((relativeX / rect.width) * 100), 75));
+      splitRatioRef.current = pct;
+      setSplitRatio(pct);
+    };
+
+    const onMouseUp = () => {
+      setIsResizingSplit(false);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      try {
+        localStorage.setItem("tanka_quiz_split_ratio", String(splitRatioRef.current));
+      } catch {}
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }, []);
 
   const handleCopyQuizChat = React.useCallback((id: string, text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -342,9 +516,10 @@ export const QuizTab = React.memo(function QuizTab({
     return selectedOption === idx;
   };
   const isCorrect = isAnswerSubmitted && isQuizAnswerCorrect(currentQuestion, selectedOption);
+  const hasStimulus = Boolean(currentQuestion?.stimulus || currentQuestion?.imageUrl);
 
   return (
-    <div className="quiz-view tab-pane-animate" style={{ maxWidth: 940, margin: "0 auto" }}>
+    <div className="quiz-view tab-pane-animate" style={{ maxWidth: (hasStimulus && !isQuizCompleted) ? 1380 : 940, margin: "0 auto", transition: "max-width 0.2s ease" }}>
                 {/* Quiz Question Count Selector (Shown only when quiz questions already exist) */}
                 {quizQuestions.length > 0 && (
                   <div
@@ -1250,77 +1425,315 @@ export const QuizTab = React.memo(function QuizTab({
                         </button>
                       </div>
                     )}
+
+                    {/* Review Pembahasan & Evaluasi Seluruh Soal */}
+                    {quizQuestions.length > 0 && (
+                      <div style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid #dde1da", textAlign: "left" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                          <h4 style={{ fontSize: 16, fontWeight: 700, color: "#17201d", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                            <BookOpen size={17} color="#72a728" />
+                            <span>Review & Pembahasan Seluruh Soal</span>
+                          </h4>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "#6f7975" }}>
+                            {quizQuestions.length} Butir Soal
+                          </span>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                          {quizQuestions.map((q, qIdx) => {
+                            const userAns = userAnswers[qIdx];
+                            const isCorrectAns = isQuizAnswerCorrect(q, userAns);
+                            const hasAns = userAns !== undefined;
+
+                            return (
+                              <div
+                                key={q.id || qIdx}
+                                style={{
+                                  backgroundColor: "#fafbf8",
+                                  border: `1px solid ${hasAns ? (isCorrectAns ? "#c2e28f" : "#fecaca") : "#dde1da"}`,
+                                  borderRadius: 10,
+                                  padding: "16px 18px",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.02)"
+                                }}
+                              >
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                                  <span style={{ fontSize: 12, fontWeight: 800, color: "#45544e", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                    Nomor {qIdx + 1}
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      padding: "2px 8px",
+                                      borderRadius: 999,
+                                      backgroundColor: hasAns ? (isCorrectAns ? "#eef8db" : "#fef2f2") : "#f4f6f2",
+                                      color: hasAns ? (isCorrectAns ? "#22370c" : "#991b1b") : "#6f7975",
+                                      border: `1px solid ${hasAns ? (isCorrectAns ? "#c2e28f" : "#fecaca") : "#dce1da"}`
+                                    }}
+                                  >
+                                    {hasAns ? (isCorrectAns ? "✓ Benar" : "✕ Salah") : "— Dilewati"}
+                                  </span>
+                                </div>
+
+                                {/* Reading Stimulus / Passage Text jika ada */}
+                                {q.stimulus && renderFormattedStimulus(q.stimulus)}
+
+                                {q.imageUrl && (
+                                  <div style={{ marginBottom: 12, textAlign: "center" }}>
+                                    <img
+                                      src={q.imageUrl}
+                                      alt={q.imageCaption || `Stimulus Visual Soal ${qIdx + 1}`}
+                                      style={{ maxWidth: "100%", maxHeight: 360, borderRadius: 8, border: "1px solid #dde1da", objectFit: "contain", backgroundColor: "#fafbf8" }}
+                                    />
+                                    {q.imageCaption && (
+                                      <div style={{ fontSize: 11, color: "#6f7975", marginTop: 4, fontStyle: "italic" }}>
+                                        {q.imageCaption}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                <div style={{ fontSize: 14.5, fontWeight: 600, color: "#17201d", lineHeight: 1.5, marginBottom: 10 }}>
+                                  <MathView text={q.question} />
+                                </div>
+
+                                {q.formula && (
+                                  <div className="question-formula" style={{ marginBottom: 10 }}>
+                                    <MathView text={q.formula} />
+                                  </div>
+                                )}
+
+                                {q.explanation && (
+                                  <div style={{ fontSize: 12.5, color: "#45544e", lineHeight: 1.6, padding: "8px 12px", backgroundColor: "#ffffff", borderRadius: 6, border: "1px solid #e5e7eb", marginTop: 8 }}>
+                                    <strong style={{ color: "#17201d" }}>Pembahasan: </strong>
+                                    <MathView text={q.explanation} />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   /* Active Question Card */
                   <div>
-                    {/* Question Strip Navigation (Tampil di Exam Mode & Study Mode) */}
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14, padding: "10px 12px", backgroundColor: "#ffffff", border: "1px solid #dde1da", borderRadius: 10 }}>
-                      {quizQuestions.map((q, idx) => {
-                        const isAns = userAnswers[idx] !== undefined;
-                        const isCur = currentQuestionIndex === idx;
-                        const isFlg = !!examFlagged[idx];
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => {
-                              setCurrentQuestionIndex(idx);
-                              setSelectedOption(userAnswers[idx] !== undefined ? userAnswers[idx] : null);
-                            }}
-                            style={{
-                              width: 34,
-                              height: 34,
-                              borderRadius: 6,
-                              backgroundColor: isCur ? "#18221f" : (isFlg ? "#fef3c7" : (isAns ? "#eef8db" : "#fafbf8")),
-                              color: isCur ? "#c8f064" : (isFlg ? "#b45309" : (isAns ? "#22370c" : "#56615d")),
-                              border: isCur ? "2px solid #18221f" : (isFlg ? "1px solid #f59e0b" : (isAns ? "1px solid #8dbd42" : "1px solid #dce1da")),
-                              fontSize: 12.5,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              position: "relative"
-                            }}
-                            title={`Lompat ke Soal ${idx + 1}`}
-                          >
-                            {idx + 1}
-                            {isFlg && <Flag size={8} color="#f59e0b" style={{ position: "absolute", top: -3, right: -2 }} />}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {/* Header Progress Tracker & Palette Toggle */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: "#18221f" }}>
+                          Soal {currentQuestionIndex + 1} <span style={{ color: "#8a9691", fontWeight: 500 }}>/ {quizQuestions.length}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsPaletteOpen((prev) => !prev)}
+                          style={{
+                            backgroundColor: isPaletteOpen ? "#18221f" : "#ffffff",
+                            color: isPaletteOpen ? "#c8f064" : "#45544e",
+                            border: "1px solid #dce1da",
+                            borderRadius: 8,
+                            padding: "5px 11px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+                          }}
+                        >
+                          <LayoutGrid size={13} />
+                          <span>Palet Nomor ({Object.keys(userAnswers).length}/{quizQuestions.length})</span>
+                          <ChevronDown size={13} style={{ transform: isPaletteOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }} />
+                        </button>
+                      </div>
 
-                    {/* Header Progress Tracker */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: "#6f7975" }}>
-                        Soal {currentQuestionIndex + 1} dari {quizQuestions.length}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         {examFlagged[currentQuestionIndex] && (
-                          <span style={{ color: "#b45309", marginLeft: 8, fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <span style={{ color: "#b45309", backgroundColor: "#fef3c7", border: "1px solid #fde68a", padding: "3px 8px", borderRadius: 6, fontSize: 11.5, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
                             <Flag size={11} /> Ditandai Ragu-ragu
                           </span>
                         )}
-                      </span>
-                      {quizMode === "study" && (
-                        <span style={{ fontSize: 13, fontWeight: 700, color: "#22370c", backgroundColor: "#eef8db", padding: "2px 8px", borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>
-                          Skor: {score} Poin
-                        </span>
-                      )}
+                        {quizMode === "study" && (
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "#22370c", backgroundColor: "#eef8db", padding: "3px 10px", borderRadius: 6, fontFamily: "'DM Mono', monospace" }}>
+                            Skor: {score} Poin
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Question Card */}
+                    {/* Collapsible Palette Grid */}
+                    {isPaletteOpen && (
+                      <div
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #dde1da",
+                          borderRadius: 12,
+                          padding: 16,
+                          marginBottom: 16,
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                          animation: "slideInUp 0.15s ease"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: "#18221f", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                            Navigasi Nomor Soal
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsPaletteOpen(false)}
+                            style={{ background: "none", border: "none", color: "#6f7975", cursor: "pointer", padding: 2 }}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(36px, 1fr))", gap: 6 }}>
+                          {quizQuestions.map((q, idx) => {
+                            const isAns = userAnswers[idx] !== undefined;
+                            const isCur = currentQuestionIndex === idx;
+                            const isFlg = !!examFlagged[idx];
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  setCurrentQuestionIndex(idx);
+                                  setSelectedOption(userAnswers[idx] !== undefined ? userAnswers[idx] : null);
+                                  setIsPaletteOpen(false);
+                                }}
+                                style={{
+                                  height: 36,
+                                  borderRadius: 8,
+                                  backgroundColor: isCur ? "#18221f" : (isFlg ? "#fef3c7" : (isAns ? "#eef8db" : "#fafbf8")),
+                                  color: isCur ? "#c8f064" : (isFlg ? "#b45309" : (isAns ? "#22370c" : "#56615d")),
+                                  border: isCur ? "2px solid #18221f" : (isFlg ? "1.5px solid #f59e0b" : (isAns ? "1px solid #8dbd42" : "1px solid #dce1da")),
+                                  fontSize: 12.5,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  position: "relative"
+                                }}
+                                title={`Lompat ke Soal ${idx + 1}`}
+                              >
+                                {idx + 1}
+                                {isFlg && <Flag size={8} color="#f59e0b" style={{ position: "absolute", top: 2, right: 2 }} />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Split Grid when Stimulus is present, or clean Single Card when no stimulus */}
                     <div
-                      key={currentQuestionIndex}
-                      className="quiz-card-enter"
+                      ref={quizGridRef}
+                      className={hasStimulus ? "cbt-layout-grid" : ""}
                       style={{
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #dde1da",
-                        borderRadius: 12,
-                        padding: "20px 16px",
-                        marginBottom: 16,
-                        boxShadow: "0 10px 35px rgba(27, 39, 35, 0.04)"
+                        display: hasStimulus ? "grid" : "block",
+                        gridTemplateColumns: hasStimulus
+                          ? `minmax(280px, ${splitRatio}%) auto minmax(320px, 1fr)`
+                          : undefined,
+                        gap: hasStimulus ? 8 : undefined,
+                        alignItems: hasStimulus ? "start" : undefined,
+                        marginBottom: 16
                       }}
                     >
+                      {/* Left Pane: Stimulus / Wacana */}
+                      {hasStimulus && (
+                        <section
+                          className="cbt-pane"
+                          style={{
+                            backgroundColor: "#ffffff",
+                            border: "1px solid #dde1da",
+                            borderRadius: 14,
+                            padding: 20,
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+                            minHeight: 380,
+                            maxHeight: "calc(100vh - 220px)",
+                            overflowY: "auto"
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, backgroundColor: "#f0f4ea", color: "#4b6623", padding: "4px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700 }}>
+                              <BookOpen size={12} />
+                              <span>Stimulus & Wacana Soal</span>
+                            </div>
+                          </div>
+
+                          {currentQuestion?.imageUrl && (
+                            <div style={{ marginBottom: 16, textAlign: "center" }}>
+                              <img
+                                src={currentQuestion.imageUrl}
+                                alt={currentQuestion.imageCaption || "Stimulus Visual Soal"}
+                                style={{ width: "100%", maxWidth: "100%", maxHeight: 420, borderRadius: 10, border: "1px solid #dde1da", objectFit: "contain", backgroundColor: "#fafbf8" }}
+                              />
+                              {currentQuestion.imageCaption && (
+                                <div style={{ fontSize: 12, fontWeight: 600, color: "#56615d", marginTop: 6, fontStyle: "italic" }}>
+                                  {currentQuestion.imageCaption}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {currentQuestion?.stimulus && renderFormattedStimulus(currentQuestion.stimulus)}
+                        </section>
+                      )}
+
+                      {/* Resizer Divider */}
+                      {hasStimulus && (
+                        <div
+                          onMouseDown={startSplitResize}
+                          onDoubleClick={() => {
+                            setSplitRatio(46);
+                            splitRatioRef.current = 46;
+                            try { localStorage.setItem("tanka_quiz_split_ratio", "46"); } catch {}
+                          }}
+                          title="Tarik untuk atur proporsi stimulus dan soal (klik 2x untuk reset)"
+                          style={{
+                            width: 12,
+                            alignSelf: "stretch",
+                            cursor: "col-resize",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 20,
+                            userSelect: "none",
+                            margin: "0 -2px"
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 3,
+                              height: 48,
+                              borderRadius: 3,
+                              backgroundColor: isResizingSplit ? "#166534" : "rgba(22, 101, 52, 0.22)",
+                              transition: "background-color 0.15s ease"
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Right Pane: Question Card */}
+                      <div
+                        key={currentQuestionIndex}
+                        className={`quiz-card-enter ${hasStimulus ? "cbt-pane" : ""}`}
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #dde1da",
+                          borderRadius: 14,
+                          padding: "20px 20px",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+                          minHeight: hasStimulus ? 380 : undefined,
+                          maxHeight: hasStimulus ? "calc(100vh - 220px)" : undefined,
+                          overflowY: hasStimulus ? "auto" : undefined,
+                          display: "flex",
+                          flexDirection: "column",
+                          minWidth: 0,
+                          marginBottom: hasStimulus ? 0 : 16
+                        }}
+                      >
                       {/* Indikator Pilihan Ganda Kompleks / Kategori */}
                       {isKategori && (
                         <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
@@ -1346,24 +1759,23 @@ export const QuizTab = React.memo(function QuizTab({
                         </div>
                       )}
 
-                      {/* Image Stimulus Soal jika ada */}
-                      {currentQuestion?.imageUrl && (
-                        <div style={{ marginBottom: 20, textAlign: "center" }}>
-                          <img
-                            src={currentQuestion.imageUrl}
-                            alt={currentQuestion.imageCaption || "Stimulus Visual Soal"}
-                            style={{ width: "100%", maxWidth: "100%", maxHeight: 580, borderRadius: 10, border: "1px solid #dde1da", objectFit: "contain", backgroundColor: "#fafbf8", boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }}
-                          />
-                          {currentQuestion.imageCaption && (
-                            <div style={{ fontSize: 12, fontWeight: 600, color: "#56615d", marginTop: 8, fontStyle: "italic" }}>
-                              {currentQuestion.imageCaption}
-                            </div>
-                          )}
+                      {/* Kontainer Pertanyaan Mandiri */}
+                      <div
+                        className="quiz-question-box"
+                        style={{
+                          backgroundColor: "#f7f9f6",
+                          border: "1px solid #e1e7dd",
+                          borderRadius: 10,
+                          padding: "16px 20px",
+                          marginBottom: currentQuestion?.formula ? 14 : 20
+                        }}
+                      >
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
+                          Pertanyaan No. {currentQuestionIndex + 1}
                         </div>
-                      )}
-
-                      <div style={{ fontSize: 16, fontWeight: 600, lineHeight: "1.6", color: "#17201d", marginBottom: currentQuestion?.formula ? 12 : 18 }}>
-                        <MathView text={currentQuestion?.question} />
+                        <div style={{ fontSize: 15.5, fontWeight: 700, lineHeight: 1.6, color: "#111815" }}>
+                          <MathView text={currentQuestion?.question} />
+                        </div>
                       </div>
 
                       {/* Question Formula Card: HANYA tampil jika user sudah menjawab di mode Belajar agar tidak membocorkan cara pengerjaan soal saat ujian */}
@@ -2323,6 +2735,7 @@ export const QuizTab = React.memo(function QuizTab({
                         </div>
                       )}
                     </div>
+                  </div>
 
                     {/* AI Tailoring for Quiz */}
                     {quizQuestions.length > 0 && activeDocId && (

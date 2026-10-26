@@ -51,6 +51,8 @@ export interface TopBarProps {
   onLogout?: () => void;
   onOpenProfileModal?: () => void;
   setActiveTab?: (tab: ActiveTab) => void;
+  isCbtRunning?: boolean;
+  cbtPackageTitle?: string;
 }
 
 export function formatModelName(modelId: string): string {
@@ -108,7 +110,9 @@ export function TopBar({
   onOpenAuthModal,
   onLogout,
   onOpenProfileModal,
-  setActiveTab
+  setActiveTab,
+  isCbtRunning = false,
+  cbtPackageTitle = ""
 }: TopBarProps) {
   const timerMins = Math.floor(timerSeconds / 60);
   const timerSecs = timerSeconds % 60;
@@ -166,19 +170,30 @@ export function TopBar({
               maxWidth: "min(65vw, 680px)",
               lineHeight: 1.2
             }}
-            title={activeTab === "home" ? "Beranda" : (activeDocTitle || "Pilih Materi")}
+            title={
+              activeTab === "home"
+                ? "Beranda"
+                : activeTab === "cbt"
+                ? (cbtPackageTitle || "Simulasi Ujian CBT")
+                : (activeDocTitle || "Pilih Materi")
+            }
           >
-            {activeTab === "home" ? "Beranda" : (activeDocTitle || "Pilih Materi")}
+            {activeTab === "home"
+              ? "Beranda"
+              : activeTab === "cbt"
+              ? (cbtPackageTitle || "Simulasi Ujian CBT")
+              : (activeDocTitle || "Pilih Materi")}
           </h1>
         </div>
       </div>
 
       {/* Sisi Kanan: Timer Pomodoro Aesthetic & Akun */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-        {/* Timer Pill */}
-        <div style={{ position: "relative" }}>
-          <div
-            onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
+        {/* Timer Pill: Disembunyikan saat ujian CBT aktif agar hanya ada 1 timer di layar */}
+        {!(activeTab === "cbt" && isCbtRunning) && (
+          <div style={{ position: "relative" }}>
+            <div
+              onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}
             style={{
               display: "flex",
               alignItems: "center",
@@ -414,6 +429,7 @@ export function TopBar({
             </div>
           )}
         </div>
+        )}
 
         {/* User Account Button */}
         {currentUser ? (

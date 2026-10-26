@@ -115,11 +115,13 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS study_rooms (
     id TEXT PRIMARY KEY,
     doc_id TEXT NOT NULL,
+    package_id TEXT DEFAULT NULL,
     title TEXT NOT NULL,
     host_user_id TEXT NOT NULL,
     host_name TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'waiting',
     quiz_count INTEGER DEFAULT 5,
+    max_participants INTEGER DEFAULT 0,
     questions_json TEXT,
     created_at INTEGER NOT NULL
   );
@@ -203,6 +205,80 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_document_segments_doc_id ON document_segments(doc_id);
   CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
   CREATE INDEX IF NOT EXISTS idx_auth_verifications_phone ON auth_verifications(phone);
+
+  CREATE TABLE IF NOT EXISTS exam_bank_packages (
+    id TEXT PRIMARY KEY,
+    source TEXT NOT NULL,
+    jenjang TEXT NOT NULL,
+    kategori TEXT NOT NULL,
+    subtes_or_mapel TEXT NOT NULL,
+    paket TEXT NOT NULL,
+    source_id TEXT,
+    total_questions INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'completed',
+    metadata_json TEXT DEFAULT '{}',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS exam_bank_items (
+    id TEXT PRIMARY KEY,
+    package_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    jenjang TEXT NOT NULL,
+    subtes_or_mapel TEXT NOT NULL,
+    paket TEXT NOT NULL,
+    part TEXT DEFAULT '',
+    nomor INTEGER NOT NULL,
+    tipe_soal TEXT NOT NULL DEFAULT 'pilihan_ganda',
+    bacaan TEXT DEFAULT '',
+    soal TEXT NOT NULL,
+    soal_img TEXT DEFAULT '',
+    options_json TEXT NOT NULL DEFAULT '[]',
+    kunci_jawaban TEXT NOT NULL,
+    kunci_jawaban_text TEXT DEFAULT '',
+    metadata_json TEXT DEFAULT '{}',
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (package_id) REFERENCES exam_bank_packages(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_exam_bank_items_pkg ON exam_bank_items(package_id);
+  CREATE INDEX IF NOT EXISTS idx_exam_bank_items_lookup ON exam_bank_items(source, jenjang, subtes_or_mapel);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_bank_items_pkg_nomor ON exam_bank_items(package_id, nomor);
+  CREATE INDEX IF NOT EXISTS idx_exam_bank_packages_source ON exam_bank_packages(source, jenjang);
+
+  CREATE TABLE IF NOT EXISTS cbt_active_sessions (
+    user_id TEXT PRIMARY KEY,
+    package_id TEXT NOT NULL,
+    current_index INTEGER DEFAULT 0,
+    answers_json TEXT DEFAULT '{}',
+    doubtful_json TEXT DEFAULT '{}',
+    drill_checked_json TEXT DEFAULT '{}',
+    time_left INTEGER NOT NULL,
+    study_mode TEXT DEFAULT 'exam',
+    updated_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_cbt_active_sessions_pkg ON cbt_active_sessions(package_id);
+
+  CREATE TABLE IF NOT EXISTS exam_bank_submissions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT DEFAULT 'anon',
+    package_id TEXT NOT NULL,
+    package_title TEXT DEFAULT '',
+    total_questions INTEGER NOT NULL,
+    answered_count INTEGER NOT NULL,
+    correct_count INTEGER NOT NULL,
+    score_percent REAL NOT NULL,
+    estimated_irt INTEGER NOT NULL,
+    study_mode TEXT DEFAULT 'exam',
+    answers_json TEXT DEFAULT '{}',
+    breakdown_json TEXT DEFAULT '[]',
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (package_id) REFERENCES exam_bank_packages(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_exam_bank_submissions_user ON exam_bank_submissions(user_id);
+  CREATE INDEX IF NOT EXISTS idx_exam_bank_submissions_pkg ON exam_bank_submissions(package_id);
+  CREATE INDEX IF NOT EXISTS idx_exam_bank_submissions_created ON exam_bank_submissions(created_at DESC);
 `);
 
 console.log("[tanka-db] Database initialized at:", dbPath);
@@ -217,19 +293,38 @@ function hasTable(targetDb, tableName) {
 }
 
 function cleanOrphanedRecords(targetDb = db) {
-  if (!hasTable(targetDb, "documents")) return;
   try {
-    if (hasTable(targetDb, "mistake_notebook")) targetDb.prepare("DELETE FROM mistake_notebook WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "flashcards")) targetDb.prepare("DELETE FROM flashcards WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "quizzes")) targetDb.prepare("DELETE FROM quizzes WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "chat_messages")) targetDb.prepare("DELETE FROM chat_messages WHERE doc_id != 'global' AND doc_id IS NOT NULL AND doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "formula_cheatsheets")) targetDb.prepare("DELETE FROM formula_cheatsheets WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "chapter_plans")) targetDb.prepare("DELETE FROM chapter_plans WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "concept_edges")) targetDb.prepare("DELETE FROM concept_edges WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "document_concepts")) targetDb.prepare("DELETE FROM document_concepts WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "document_segments")) targetDb.prepare("DELETE FROM document_segments WHERE doc_id NOT IN (SELECT id FROM documents)").run();
-    if (hasTable(targetDb, "learner_events")) targetDb.prepare("DELETE FROM learner_events WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+    if (hasTable(targetDb, "documents")) {
+      if (hasTable(targetDb, "mistake_notebook")) {
+        let mistakeSql = "DELETE FROM mistake_notebook WHERE doc_id NOT IN (SELECT id FROM documents)";
+        if (hasTable(targetDb, "exam_bank_packages")) {
+          mistakeSql += " AND doc_id NOT IN (SELECT id FROM exam_bank_packages)";
+        }
+        mistakeSql += " AND doc_id NOT LIKE 'exam_bank%'";
+        targetDb.prepare(mistakeSql).run();
+      }
+      if (hasTable(targetDb, "flashcards")) targetDb.prepare("DELETE FROM flashcards WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+      if (hasTable(targetDb, "quizzes")) targetDb.prepare("DELETE FROM quizzes WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+      if (hasTable(targetDb, "chat_messages")) targetDb.prepare("DELETE FROM chat_messages WHERE doc_id != 'global' AND doc_id IS NOT NULL AND doc_id NOT IN (SELECT id FROM documents)").run();
+      if (hasTable(targetDb, "formula_cheatsheets")) targetDb.prepare("DELETE FROM formula_cheatsheets WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+      if (hasTable(targetDb, "chapter_plans")) targetDb.prepare("DELETE FROM chapter_plans WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+      if (hasTable(targetDb, "concept_edges")) targetDb.prepare("DELETE FROM concept_edges WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+      if (hasTable(targetDb, "document_concepts")) targetDb.prepare("DELETE FROM document_concepts WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+      if (hasTable(targetDb, "document_segments")) targetDb.prepare("DELETE FROM document_segments WHERE doc_id NOT IN (SELECT id FROM documents)").run();
+      if (hasTable(targetDb, "learner_events")) {
+        let learnerSql = "DELETE FROM learner_events WHERE doc_id != 'global' AND doc_id NOT IN (SELECT id FROM documents)";
+        if (hasTable(targetDb, "exam_bank_packages")) {
+          learnerSql += " AND doc_id NOT IN (SELECT id FROM exam_bank_packages)";
+        }
+        learnerSql += " AND doc_id NOT LIKE 'exam_bank%'";
+        targetDb.prepare(learnerSql).run();
+      }
+    }
     if (hasTable(targetDb, "user_sessions") && hasTable(targetDb, "users")) targetDb.prepare("DELETE FROM user_sessions WHERE user_id NOT IN (SELECT id FROM users)").run();
+    if (hasTable(targetDb, "exam_bank_items") && hasTable(targetDb, "exam_bank_packages")) targetDb.prepare("DELETE FROM exam_bank_items WHERE package_id NOT IN (SELECT id FROM exam_bank_packages)").run();
+    if (hasTable(targetDb, "cbt_active_sessions") && hasTable(targetDb, "users")) targetDb.prepare("DELETE FROM cbt_active_sessions WHERE user_id NOT IN (SELECT id FROM users)").run();
+    if (hasTable(targetDb, "exam_bank_submissions") && hasTable(targetDb, "exam_bank_packages")) targetDb.prepare("DELETE FROM exam_bank_submissions WHERE package_id NOT IN (SELECT id FROM exam_bank_packages)").run();
+    if (hasTable(targetDb, "exam_bank_submissions") && hasTable(targetDb, "users")) targetDb.prepare("DELETE FROM exam_bank_submissions WHERE user_id != 'anon' AND user_id NOT IN (SELECT id FROM users)").run();
   } catch (e) {
     console.warn("[tanka-db] Orphan cleanup notice:", e.message);
   }
@@ -295,6 +390,10 @@ function runMigrations(targetDb = db) {
       if (!roomColumns.includes("max_participants")) {
         targetDb.prepare("ALTER TABLE study_rooms ADD COLUMN max_participants INTEGER DEFAULT 0").run();
         console.log("[tanka-db] Added max_participants column to study_rooms table");
+      }
+      if (!roomColumns.includes("package_id")) {
+        targetDb.prepare("ALTER TABLE study_rooms ADD COLUMN package_id TEXT DEFAULT NULL").run();
+        console.log("[tanka-db] Added package_id column to study_rooms table");
       }
     }
   } catch (err) {
@@ -421,6 +520,86 @@ function runMigrations(targetDb = db) {
     `);
   } catch (err) {
     console.warn("[tanka-db] chapter_plans/concept_edges table ensure notice:", err.message);
+  }
+
+  try {
+    targetDb.exec(`
+      CREATE TABLE IF NOT EXISTS exam_bank_packages (
+        id TEXT PRIMARY KEY,
+        source TEXT NOT NULL,
+        jenjang TEXT NOT NULL,
+        kategori TEXT NOT NULL,
+        subtes_or_mapel TEXT NOT NULL,
+        paket TEXT NOT NULL,
+        source_id TEXT,
+        total_questions INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'completed',
+        metadata_json TEXT DEFAULT '{}',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS exam_bank_items (
+        id TEXT PRIMARY KEY,
+        package_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        jenjang TEXT NOT NULL,
+        subtes_or_mapel TEXT NOT NULL,
+        paket TEXT NOT NULL,
+        part TEXT DEFAULT '',
+        nomor INTEGER NOT NULL,
+        tipe_soal TEXT NOT NULL DEFAULT 'pilihan_ganda',
+        bacaan TEXT DEFAULT '',
+        soal TEXT NOT NULL,
+        soal_img TEXT DEFAULT '',
+        options_json TEXT NOT NULL DEFAULT '[]',
+        kunci_jawaban TEXT NOT NULL,
+        kunci_jawaban_text TEXT DEFAULT '',
+        metadata_json TEXT DEFAULT '{}',
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (package_id) REFERENCES exam_bank_packages(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_exam_bank_items_pkg ON exam_bank_items(package_id);
+      CREATE INDEX IF NOT EXISTS idx_exam_bank_items_lookup ON exam_bank_items(source, jenjang, subtes_or_mapel);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_bank_items_pkg_nomor ON exam_bank_items(package_id, nomor);
+      CREATE INDEX IF NOT EXISTS idx_exam_bank_packages_source ON exam_bank_packages(source, jenjang);
+
+      CREATE TABLE IF NOT EXISTS cbt_active_sessions (
+        user_id TEXT PRIMARY KEY,
+        package_id TEXT NOT NULL,
+        current_index INTEGER DEFAULT 0,
+        answers_json TEXT DEFAULT '{}',
+        doubtful_json TEXT DEFAULT '{}',
+        drill_checked_json TEXT DEFAULT '{}',
+        time_left INTEGER NOT NULL,
+        study_mode TEXT DEFAULT 'exam',
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_cbt_active_sessions_pkg ON cbt_active_sessions(package_id);
+
+      CREATE TABLE IF NOT EXISTS exam_bank_submissions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT DEFAULT 'anon',
+        package_id TEXT NOT NULL,
+        package_title TEXT DEFAULT '',
+        total_questions INTEGER NOT NULL,
+        answered_count INTEGER NOT NULL,
+        correct_count INTEGER NOT NULL,
+        score_percent REAL NOT NULL,
+        estimated_irt INTEGER NOT NULL,
+        study_mode TEXT DEFAULT 'exam',
+        answers_json TEXT DEFAULT '{}',
+        breakdown_json TEXT DEFAULT '[]',
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (package_id) REFERENCES exam_bank_packages(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_exam_bank_submissions_user ON exam_bank_submissions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_exam_bank_submissions_pkg ON exam_bank_submissions(package_id);
+      CREATE INDEX IF NOT EXISTS idx_exam_bank_submissions_created ON exam_bank_submissions(created_at DESC);
+    `);
+  } catch (err) {
+    console.warn("[tanka-db] exam_bank table ensure notice:", err.message);
   }
 }
 runMigrations();

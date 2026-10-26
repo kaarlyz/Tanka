@@ -141,6 +141,7 @@ function extractCleanSummary(summary: string, content: string): string {
 
 export interface MaterialTabProps {
   activeDocId: string | null;
+  activeDocStatus?: string | null;
   activeDocTitle: string;
   setActiveDocTitle: (val: string) => void;
   activeDocContent: string;
@@ -195,6 +196,7 @@ function renderWithLineBreaks(children: React.ReactNode): React.ReactNode {
 
 export const MaterialTab = React.memo(function MaterialTab({
   activeDocId,
+  activeDocStatus,
   activeDocTitle,
   setActiveDocTitle,
   activeDocContent,
@@ -241,6 +243,12 @@ export const MaterialTab = React.memo(function MaterialTab({
   const [isTransitioningChapter, setIsTransitioningChapter] = React.useState(false);
   const [targetChapterIdx, setTargetChapterIdx] = React.useState<number | null>(null);
   const readerCardRef = React.useRef<HTMLDivElement>(null);
+
+  const isDocProcessing = React.useMemo(() => {
+    if (activeDocStatus === "processing") return true;
+    const metaDoc = documents.find((d) => d.id === activeDocId);
+    return metaDoc?.status === "processing";
+  }, [activeDocStatus, documents, activeDocId]);
 
   // Deteksi lembar soal / bedah kisi-kisi
   const isExamSheetDoc = React.useMemo(() => {
@@ -610,7 +618,77 @@ export const MaterialTab = React.memo(function MaterialTab({
   return (
               <div className="tab-pane-animate material-book-layout">
                 {activeDocId ? (
-                  <div className="material-outer-box">
+                  isDocProcessing ? (
+                    <div
+                      style={{
+                        maxWidth: 640,
+                        margin: "60px auto",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #dce1da",
+                        borderRadius: 16,
+                        padding: "48px 32px",
+                        textAlign: "center",
+                        boxShadow: "0 4px 20px rgba(27, 39, 35, 0.04)"
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: "50%",
+                          backgroundColor: "rgba(234, 179, 8, 0.12)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          margin: "0 auto 20px"
+                        }}
+                      >
+                        <RotateCw size={26} color="#b45309" className="animate-spin" />
+                      </div>
+                      <h2
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 800,
+                          color: "#17201d",
+                          letterSpacing: "-0.02em",
+                          margin: "0 0 10px 0"
+                        }}
+                      >
+                        Materi & Butir Soal Sedang Disiapkan
+                      </h2>
+                      <p
+                        style={{
+                          fontSize: 13.5,
+                          lineHeight: 1.6,
+                          color: "#6f7975",
+                          maxWidth: 480,
+                          margin: "0 auto 28px"
+                        }}
+                      >
+                        Pipeline AI sedang membedah naskah soal (Ekstraksi, Solve 3× Multi-Vote, Pembahasan). Modul akan otomatis terbuka begitu analisis selesai.
+                      </p>
+                      <button
+                        onClick={() => setActiveTab("home")}
+                        style={{
+                          backgroundColor: "#18221f",
+                          color: "#c8f064",
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "10px 22px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          boxShadow: "0 2px 8px rgba(24, 34, 31, 0.15)"
+                        }}
+                      >
+                        <span>Kembali ke Beranda</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="material-outer-box">
                     <div className="material-header-panel material-header-panel-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
                       <div style={{ flex: 1, minWidth: 260 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1676,6 +1754,7 @@ export const MaterialTab = React.memo(function MaterialTab({
                       </div>
                     )}
                   </div>
+                  )
                 ) : (
                   /* Single Unified Create / Ingest Hub */
                   <div className="material-hub-card">

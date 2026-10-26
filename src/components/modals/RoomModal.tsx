@@ -1,9 +1,47 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   X, Swords, Users, Copy, Check, Play, Trophy, 
-  Sparkles, Award, ArrowRight, Share2, RefreshCw, CheckCircle2, AlertCircle, Link2, Zap
+  Sparkles, Award, ArrowRight, Share2, RefreshCw, CheckCircle2, AlertCircle, Link2, Zap,
+  Minimize2, Maximize2
 } from "lucide-react";
-import { UserAccount, StudyRoom, RoomParticipant } from "../../types";
+import { UserAccount, StudyRoom, RoomParticipant, ExamBankPackage } from "../../types";
+
+export const isCbtRoom = (
+  room?: StudyRoom | null,
+  qList?: any[],
+  docs?: Array<{ id: string; title: string; is_exam_sheet?: boolean }>
+): boolean => {
+  if (!room) return false;
+  const docId = (room as any).doc_id || room.docId;
+  const pkgId = (room as any).package_id || (room as any).packageId;
+  const title = room.title || "";
+
+  // 1. Explicit packageId or docId is "cbt"
+  if (pkgId || docId === "cbt") return true;
+
+  // 2. Room title contains exam / CBT keywords
+  if (/tka|utbk|snbt|cbt|tryout|pusmendik|naskah/i.test(title)) return true;
+
+  // 3. Matched document is exam sheet or exam title
+  if (docs && docId) {
+    const matched = docs.find(d => d.id === docId);
+    if (matched?.is_exam_sheet || /tka|utbk|snbt|cbt|tryout|soal|ujian/i.test(matched?.title || "")) {
+      return true;
+    }
+  }
+
+  // 4. Questions have exam characteristics
+  if (Array.isArray(qList) && qList.length > 0) {
+    const hasExamAttr = qList.some(q => 
+      q.bacaan || 
+      (q.tipe_soal && q.tipe_soal !== "pilihan_ganda") || 
+      (typeof q.question === "string" && (q.question.includes("exam-bacaan") || q.question.includes("Pusmendik")))
+    );
+    if (hasExamAttr) return true;
+  }
+
+  return false;
+};
 
 export interface RoomModalProps {
   isOpen: boolean;
@@ -37,6 +75,11 @@ export function RoomModal({
   const [viewState, setViewState] = useState<"hub" | "lobby" | "playing" | "result">(initialViewState || "hub");
   const [hubTab, setHubTab] = useState<"create" | "join">("create");
   
+  // Source selection: Modul Tersimpan vs Paket CBT Resmi
+  const [sourceType, setSourceType] = useState<"doc" | "cbt">("doc");
+  const [cbtPackages, setCbtPackages] = useState<ExamBankPackage[]>([]);
+  const [selectedPackageId, setSelectedPackageId] = useState<string>("");
+
   // Create room inputs
   const [selectedDocId, setSelectedDocId] = useState<string>(activeDocId || "");
   const [roomTitle, setRoomTitle] = useState<string>("");
@@ -64,6 +107,13 @@ export function RoomModal({
   const [isGuestJoining, setIsGuestJoining] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsMinimized(false);
+    }
+  }, [isOpen]);
 
   // Synchronized Match Start Countdown
   const [startCountdown, setStartCountdown] = useState<number | null>(null);
@@ -87,6 +137,31 @@ export function RoomModal({
       setQuizCount(10);
     }
   };
+
+  const applyCbtPackageDefaults = (pkg?: ExamBankPackage) => {
+    if (!pkg) return;
+    setRoomTitle(`⚔️ Adu Tryout CBT: ${pkg.subtes_or_mapel} (${pkg.paket})`);
+    setQuizType("exam_sheet");
+    setQuizCount(pkg.total_questions || 30);
+  };
+
+  // Fetch 26 official CBT packages when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/exam-bank/packages")
+      .then(res => res.json())
+      .then((data: ExamBankPackage[]) => {
+        if (Array.isArray(data)) {
+          setCbtPackages(data);
+          if (data.length > 0 && !selectedPackageId) {
+            setSelectedPackageId(data[0].id);
+          }
+        }
+      })
+      .catch(err => {
+        console.warn("[RoomModal] Gagal memuat paket CBT:", err);
+      });
+  }, [isOpen]);
 
   useEffect(() => {
     if (activeDocId) {
@@ -115,7 +190,8 @@ export function RoomModal({
         setStartCountdown(null);
         setIsStartingMatch(false);
         isCountdownRunningRef.current = false;
-        if (onStartRoomExam && quizQuestions.length > 0) {
+        const isCbt = isCbtRoom(room, quizQuestions, documents);
+        if (onStartRoomExam && (isCbt || quizQuestions.length > 0)) {
           onStartRoomExam(room, quizQuestions);
           onClose();
         } else {
@@ -438,20 +514,26 @@ export function RoomModal({
     e.preventDefault();
     setIsCreating(true);
     try {
+      const isCbtSource = sourceType === "cbt" && Boolean(selectedPackageId);
+      const chosenPkg = isCbtSource ? cbtPackages.find(p => p.id === selectedPackageId) : null;
+
+      const payload: any = {
+        docId: isCbtSource ? "cbt" : (selectedDocId || "global"),
+        packageId: isCbtSource ? selectedPackageId : undefined,
+        title: roomTitle.trim() || (isCbtSource ? `⚔️ Adu Tryout CBT: ${chosenPkg?.subtes_or_mapel || "Ujian"} (${chosenPkg?.paket || "Naskah Resmi"})` : "Kompetisi Kuis"),
+        userId: currentUser.id,
+        userName: currentUser.name || currentUser.username,
+        schoolClass: currentUser.school_class || "Kelas XII",
+        avatarColor: currentUser.avatar_color || "#10b981",
+        quizCount: isCbtSource ? (chosenPkg?.total_questions || quizCount) : quizCount,
+        quizType: isCbtSource ? "exam_sheet" : quizType,
+        maxParticipants
+      };
+
       const res = await fetch("/api/rooms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          docId: selectedDocId || "global",
-          title: roomTitle.trim() || "Kompetisi Kuis",
-          userId: currentUser.id,
-          userName: currentUser.name || currentUser.username,
-          schoolClass: currentUser.school_class || "Kelas XII",
-          avatarColor: currentUser.avatar_color || "#10b981",
-          quizCount,
-          quizType,
-          maxParticipants
-        })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (res.ok && data.room) {
@@ -592,6 +674,92 @@ export function RoomModal({
     }
   };
 
+  if (!isOpen) return null;
+
+  if (isMinimized) {
+    return (
+      <div
+        className="room-minimized-floating"
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: 99999,
+          backgroundColor: "#161b19",
+          color: "#e6ece9",
+          borderRadius: 16,
+          padding: "10px 16px",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          boxShadow: "0 12px 35px rgba(0,0,0,0.55)",
+          border: "1.5px solid #2a3430",
+          userSelect: "none"
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "#c8f064", boxShadow: "0 0 10px #c8f064" }} />
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ fontSize: 10, color: "#8a9691", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Room {currentRoom?.id || "Kompetisi"}
+            </div>
+            <div style={{ fontSize: 12.5, fontWeight: 800, color: "#f0f5f2", maxWidth: 190, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {currentRoom?.title || "Menunggu Teman..."}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "#c8f064", backgroundColor: "#202a24", padding: "4px 8px", borderRadius: 8, border: "1px solid #314037" }}>
+          <Users size={12} />
+          <span>{participants.length}{currentRoom?.maxParticipants ? `/${currentRoom.maxParticipants}` : ""}</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsMinimized(false)}
+          title="Buka kembali ruang kompetisi"
+          style={{
+            backgroundColor: "#c8f064",
+            color: "#161b19",
+            border: "none",
+            borderRadius: 8,
+            padding: "6px 12px",
+            fontSize: 11.5,
+            fontWeight: 800,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5
+          }}
+        >
+          <Maximize2 size={13} />
+          <span>Buka</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsMinimized(false);
+            onClose();
+          }}
+          title="Tinggalkan room"
+          style={{
+            background: "none",
+            border: "none",
+            color: "#8a9691",
+            cursor: "pointer",
+            padding: 4,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <X size={15} />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className="modal-backdrop"
@@ -612,10 +780,10 @@ export function RoomModal({
         style={{
           backgroundColor: "#161b19",
           color: "#e6ece9",
-          borderRadius: 20,
+          borderRadius: 16,
           maxWidth: 580,
           width: "100%",
-          maxHeight: "90vh",
+          maxHeight: "96vh",
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 25px 60px rgba(0, 0, 0, 0.55)",
@@ -675,7 +843,7 @@ export function RoomModal({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "16px 22px",
+            padding: "10px 16px",
             borderBottom: "1px solid #252e2a"
           }}
         >
@@ -734,6 +902,28 @@ export function RoomModal({
                 ← Menu Room
               </button>
             )}
+            {/* Minimize button (only when inside an active room session) */}
+            {currentRoom && (
+              <button
+                type="button"
+                onClick={() => setIsMinimized(true)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#c8f064",
+                  cursor: "pointer",
+                  padding: 6,
+                  borderRadius: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.15s ease"
+                }}
+                title="Kecilkan ke widget layar (tetap bisa gunakan website sambil menunggu teman)"
+              >
+                <Minimize2 size={17} />
+              </button>
+            )}
             <button
               onClick={() => {
                 if (viewState === "result") {
@@ -759,22 +949,22 @@ export function RoomModal({
         </div>
 
         {/* BODY CONTENT */}
-        <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1 }}>
+        <div style={{ padding: "10px 16px", overflowY: "auto", flex: 1 }}>
           {/* VIEW: HUB (CREATE OR JOIN) */}
           {viewState === "hub" && (
             <div>
-              <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <button
                   onClick={() => setHubTab("create")}
                   style={{
                     flex: 1,
-                    padding: "10px 0",
-                    borderRadius: 10,
+                    padding: "8px 0",
+                    borderRadius: 8,
                     backgroundColor: hubTab === "create" ? "#222f27" : "#1a211e",
                     border: hubTab === "create" ? "1.5px solid #c8f064" : "1px solid #2a3430",
                     color: hubTab === "create" ? "#c8f064" : "#8a9691",
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: 12,
                     cursor: "pointer"
                   }}
                 >
@@ -784,13 +974,13 @@ export function RoomModal({
                   onClick={() => setHubTab("join")}
                   style={{
                     flex: 1,
-                    padding: "10px 0",
-                    borderRadius: 10,
+                    padding: "8px 0",
+                    borderRadius: 8,
                     backgroundColor: hubTab === "join" ? "#222f27" : "#1a211e",
                     border: hubTab === "join" ? "1.5px solid #c8f064" : "1px solid #2a3430",
                     color: hubTab === "join" ? "#c8f064" : "#8a9691",
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: 12,
                     cursor: "pointer"
                   }}
                 >
@@ -799,74 +989,194 @@ export function RoomModal({
               </div>
 
               {hubTab === "create" ? (
-                <form onSubmit={handleCreateRoom} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  {selectedDocId && (() => {
-                    const currentDoc = documents.find(d => d.id === selectedDocId);
-                    const isTkaSnbt = Boolean(
-                      currentDoc?.is_exam_sheet ||
-                      /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|kedinasan|soal/i.test(currentDoc?.title || "")
-                    );
-                    if (!isTkaSnbt) return null;
-                    return (
-                      <div
-                        style={{
-                          padding: "10px 14px",
-                          borderRadius: 8,
-                          background: "rgba(200, 240, 100, 0.1)",
-                          border: "1px solid rgba(200, 240, 100, 0.35)",
-                          color: "#c8f064",
-                          fontSize: 12,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          marginBottom: -2
-                        }}
-                      >
-                        <Zap size={14} color="#c8f064" />
-                        <span>
-                          Format <b>TKA / SNBT</b> Terdeteksi: Mode <b>HOTS</b> dan durasi otomatis disiapkan.
-                        </span>
-                      </div>
-                    );
-                  })()}
-
-                  <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
-                      PILIH MATERI KUIS
-                    </label>
-                    <select
-                      value={selectedDocId}
-                      onChange={e => {
-                        const newDocId = e.target.value;
-                        setSelectedDocId(newDocId);
-                        const found = documents.find(d => d.id === newDocId);
-                        applyDocDefaults(found);
-                      }}
+                <form onSubmit={handleCreateRoom} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {/* Status Banner Deteksi Mode CBT / Naskah Ujian */}
+                  {sourceType === "cbt" ? (
+                    <div
                       style={{
-                        width: "100%",
-                        padding: "10px 14px",
+                        padding: "7px 11px",
                         borderRadius: 8,
-                        backgroundColor: "#1e2622",
-                        border: "1px solid #33403a",
-                        color: "#ffffff",
-                        fontSize: 13,
-                        boxSizing: "border-box"
+                        background: "rgba(200, 240, 100, 0.1)",
+                        border: "1px solid rgba(200, 240, 100, 0.35)",
+                        color: "#c8f064",
+                        fontSize: 11.5,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8
                       }}
                     >
-                      <option value="">Pilih dari modul tersimpan...</option>
-                      {documents.map(d => (
-                        <option key={d.id} value={d.id}>
-                          {d.title}
-                        </option>
-                      ))}
-                    </select>
-                    <p style={{ margin: "5px 0 0", fontSize: 11, color: "#6f7975" }}>
-                      Butir soal room akan diambil & di-generate secara eksklusif dari materi yang dipilih.
-                    </p>
+                      <Zap size={14} color="#c8f064" style={{ flexShrink: 0 }} />
+                      <span>
+                        🔒 <b>Format Resmi CBT Terdeteksi (Mode 1:1 Ujian)</b>: Naskah asli Pusmendik/SNBT, timer sinkron & langsung meluncur ke CBT Cockpit resmi.
+                      </span>
+                    </div>
+                  ) : (
+                    selectedDocId && (() => {
+                      const currentDoc = documents.find(d => d.id === selectedDocId);
+                      const isTkaSnbt = Boolean(
+                        currentDoc?.is_exam_sheet ||
+                        /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|kedinasan|soal/i.test(currentDoc?.title || "")
+                      );
+                      if (!isTkaSnbt) return null;
+                      return (
+                        <div
+                          style={{
+                            padding: "7px 11px",
+                            borderRadius: 8,
+                            background: "rgba(200, 240, 100, 0.1)",
+                            border: "1px solid rgba(200, 240, 100, 0.35)",
+                            color: "#c8f064",
+                            fontSize: 11.5,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8
+                          }}
+                        >
+                          <Zap size={14} color="#c8f064" style={{ flexShrink: 0 }} />
+                          <span>
+                            Format <b>TKA / SNBT</b> Terdeteksi: Mode <b>HOTS</b> dan durasi otomatis disiapkan.
+                          </span>
+                        </div>
+                      );
+                    })()
+                  )}
+
+                  {/* Pemilih Sumber Materi Kuis */}
+                  <div>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a9691", marginBottom: 4 }}>
+                      SUMBER MATERI KUIS
+                    </label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSourceType("doc");
+                          const currentDoc = documents.find(d => d.id === selectedDocId);
+                          applyDocDefaults(currentDoc);
+                        }}
+                        style={{
+                          padding: "7px 10px",
+                          borderRadius: 8,
+                          border: sourceType === "doc" ? "1.5px solid #c8f064" : "1px solid #33403a",
+                          backgroundColor: sourceType === "doc" ? "#1e2b22" : "#171e1a",
+                          color: sourceType === "doc" ? "#c8f064" : "#8a9691",
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        <span>📄 Modul & Ringkasan Saya</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSourceType("cbt");
+                          const targetPkg = cbtPackages.find(p => p.id === selectedPackageId) || cbtPackages[0];
+                          if (targetPkg) {
+                            setSelectedPackageId(targetPkg.id);
+                            applyCbtPackageDefaults(targetPkg);
+                          }
+                        }}
+                        style={{
+                          padding: "7px 10px",
+                          borderRadius: 8,
+                          border: sourceType === "cbt" ? "1.5px solid #c8f064" : "1px solid #33403a",
+                          backgroundColor: sourceType === "cbt" ? "#1e2b22" : "#171e1a",
+                          color: sourceType === "cbt" ? "#c8f064" : "#8a9691",
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        <Zap size={13} color={sourceType === "cbt" ? "#c8f064" : "#8a9691"} />
+                        <span>🏛️ Paket CBT Resmi</span>
+                      </button>
+                    </div>
+
+                    {sourceType === "cbt" ? (
+                      <div>
+                        <select
+                          value={selectedPackageId}
+                          onChange={e => {
+                            const newPkgId = e.target.value;
+                            setSelectedPackageId(newPkgId);
+                            const found = cbtPackages.find(p => p.id === newPkgId);
+                            if (found) {
+                              applyCbtPackageDefaults(found);
+                            }
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            backgroundColor: "#1e2622",
+                            border: "1px solid #33403a",
+                            color: "#ffffff",
+                            fontSize: 12.5,
+                            boxSizing: "border-box"
+                          }}
+                        >
+                          {cbtPackages.length === 0 && (
+                            <option value="">Memuat 26 Paket Resmi CBT Pusmendik / SNBT...</option>
+                          )}
+                          {cbtPackages.map(pkg => (
+                            <option key={pkg.id} value={pkg.id}>
+                              {pkg.subtes_or_mapel} ({pkg.paket}) — {pkg.total_questions} Soal
+                            </option>
+                          ))}
+                        </select>
+                        <p style={{ margin: "3px 0 0", fontSize: 10, color: "#8a9691" }}>
+                          Pilihan naskah resmi Pusmendik & SNBT. Format 1:1 ujian nasional dengan durasi presisi.
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <select
+                          value={selectedDocId}
+                          onChange={e => {
+                            const newDocId = e.target.value;
+                            setSelectedDocId(newDocId);
+                            const found = documents.find(d => d.id === newDocId);
+                            applyDocDefaults(found);
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            backgroundColor: "#1e2622",
+                            border: "1px solid #33403a",
+                            color: "#ffffff",
+                            fontSize: 12.5,
+                            boxSizing: "border-box"
+                          }}
+                        >
+                          <option value="">Pilih dari modul tersimpan...</option>
+                          {documents.map(d => (
+                            <option key={d.id} value={d.id}>
+                              {d.title}
+                            </option>
+                          ))}
+                        </select>
+                        <p style={{ margin: "3px 0 0", fontSize: 10, color: "#6f7975" }}>
+                          Butir soal room akan diambil & di-generate secara eksklusif dari materi yang dipilih.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a9691", marginBottom: 3 }}>
                       JUDUL EVENT ROOM
                     </label>
                     <input
@@ -876,12 +1186,12 @@ export function RoomModal({
                       placeholder="Contoh: Kuis Bareng Kimmy & Eka"
                       style={{
                         width: "100%",
-                        padding: "10px 14px",
+                        padding: "7px 12px",
                         borderRadius: 8,
                         backgroundColor: "#1e2622",
                         border: "1px solid #33403a",
                         color: "#ffffff",
-                        fontSize: 13,
+                        fontSize: 12.5,
                         boxSizing: "border-box"
                       }}
                     />
@@ -889,62 +1199,65 @@ export function RoomModal({
 
                   {/* Settings Grid: Tipe Soal & Jumlah Soal */}
                   {(() => {
+                    const isCbt = sourceType === "cbt";
                     const currentDoc = documents.find(d => d.id === selectedDocId);
-                    const isTkaSnbt = Boolean(
+                    const isTkaSnbt = isCbt || Boolean(
                       currentDoc?.is_exam_sheet ||
                       /tka|utbk|snbt|ujian|tryout|penalaran|sbmptn|kedinasan|soal/i.test(currentDoc?.title || "")
                     );
 
                     if (isTkaSnbt) {
+                      const currentPkg = isCbt ? (cbtPackages.find(p => p.id === selectedPackageId) || cbtPackages[0]) : null;
+                      const totalQ = isCbt ? (currentPkg?.total_questions || quizCount) : (currentDoc?.question_count || quizCount);
                       return (
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                           <div>
-                            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a9691", marginBottom: 3 }}>
                               TIPE / KUALITAS SOAL
                             </label>
                             <div
                               style={{
                                 width: "100%",
-                                padding: "10px 12px",
+                                padding: "7px 10px",
                                 borderRadius: 8,
                                 backgroundColor: "#17201b",
                                 border: "1px solid #2e4035",
                                 color: "#c8f064",
-                                fontSize: 12.5,
+                                fontSize: 12,
                                 fontFamily: "'DM Mono', monospace",
                                 fontWeight: 700,
                                 boxSizing: "border-box"
                               }}
                             >
-                              🔒 Naskah Asli Ujian
+                              {isCbt ? "🔒 Format Resmi CBT" : "🔒 Naskah Asli"}
                             </div>
-                            <p style={{ margin: "4px 0 0", fontSize: 10.5, color: "#6f7975" }}>
-                              Tipe soal baku (Single, MCMA, Kategori).
+                            <p style={{ margin: "2px 0 0", fontSize: 10, color: "#6f7975" }}>
+                              {isCbt ? "Mode resmi Pusmendik/SNBT." : "Tipe soal baku ujian."}
                             </p>
                           </div>
 
                           <div>
-                            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a9691", marginBottom: 3 }}>
                               JUMLAH SOAL
                             </label>
                             <div
                               style={{
                                 width: "100%",
-                                padding: "10px 12px",
+                                padding: "7px 10px",
                                 borderRadius: 8,
                                 backgroundColor: "#17201b",
                                 border: "1px solid #2e4035",
                                 color: "#c8f064",
-                                fontSize: 12.5,
+                                fontSize: 12,
                                 fontFamily: "'DM Mono', monospace",
                                 fontWeight: 700,
                                 boxSizing: "border-box"
                               }}
                             >
-                              🔒 {currentDoc?.question_count || quizCount} Soal Lengkap
+                              🔒 {totalQ} Soal Lengkap
                             </div>
-                            <p style={{ margin: "4px 0 0", fontSize: 10.5, color: "#6f7975" }}>
-                              Seluruh butir naskah asli diujikan.
+                            <p style={{ margin: "2px 0 0", fontSize: 10, color: "#6f7975" }}>
+                              Seluruh butir naskah asli.
                             </p>
                           </div>
                         </div>
@@ -952,9 +1265,9 @@ export function RoomModal({
                     }
 
                     return (
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                         <div>
-                          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                          <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a9691", marginBottom: 3 }}>
                             TIPE / KUALITAS SOAL
                           </label>
                           <select
@@ -962,23 +1275,23 @@ export function RoomModal({
                             onChange={e => setQuizType(e.target.value)}
                             style={{
                               width: "100%",
-                              padding: "10px 12px",
+                              padding: "7px 10px",
                               borderRadius: 8,
                               backgroundColor: "#1e2622",
                               border: "1px solid #33403a",
                               color: "#ffffff",
-                              fontSize: 12.5,
+                              fontSize: 12,
                               boxSizing: "border-box"
                             }}
                           >
-                            <option value="conceptual">Standar Ujian (Konseptual)</option>
-                            <option value="hots">HOTS (Analisis & Kasus Kritis)</option>
-                            <option value="beginner">Pemula & Fondasi Bertahap</option>
+                            <option value="conceptual">Standar (Konseptual)</option>
+                            <option value="hots">HOTS (Analisis)</option>
+                            <option value="beginner">Pemula (Bertahap)</option>
                           </select>
                         </div>
 
                         <div>
-                          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                          <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a9691", marginBottom: 3 }}>
                             JUMLAH SOAL
                           </label>
                           <select
@@ -986,19 +1299,19 @@ export function RoomModal({
                             onChange={e => setQuizCount(Number(e.target.value))}
                             style={{
                               width: "100%",
-                              padding: "10px 12px",
+                              padding: "7px 10px",
                               borderRadius: 8,
                               backgroundColor: "#1e2622",
                               border: "1px solid #33403a",
                               color: "#ffffff",
-                              fontSize: 12.5,
+                              fontSize: 12,
                               boxSizing: "border-box"
                             }}
                           >
                             <option value={5}>5 Soal (Duel Cepat)</option>
-                            <option value={10}>10 Soal (Standar Ujian)</option>
-                            <option value={15}>15 Soal (Kompetisi Seru)</option>
-                            <option value={20}>20 Soal (Tryout Penuh)</option>
+                            <option value={10}>10 Soal (Standar)</option>
+                            <option value={15}>15 Soal (Kompetisi)</option>
+                            <option value={20}>20 Soal (Tryout)</option>
                           </select>
                         </div>
                       </div>
@@ -1006,7 +1319,7 @@ export function RoomModal({
                   })()}
 
                   <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#8a9691", marginBottom: 6 }}>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a9691", marginBottom: 3 }}>
                       BATAS KAPASITAS PESERTA
                     </label>
                     <select
@@ -1014,12 +1327,12 @@ export function RoomModal({
                       onChange={e => setMaxParticipants(Number(e.target.value))}
                       style={{
                         width: "100%",
-                        padding: "10px 14px",
+                        padding: "7px 12px",
                         borderRadius: 8,
                         backgroundColor: "#1e2622",
                         border: "1px solid #33403a",
                         color: "#ffffff",
-                        fontSize: 13,
+                        fontSize: 12.5,
                         boxSizing: "border-box"
                       }}
                     >
@@ -1032,19 +1345,19 @@ export function RoomModal({
                     </select>
                   </div>
 
-                  <div style={{ marginTop: 8 }}>
+                  <div style={{ marginTop: 4 }}>
                     <button
                       type="submit"
                       disabled={isCreating}
                       style={{
                         width: "100%",
-                        padding: "12px 0",
-                        borderRadius: 10,
+                        padding: "10px 0",
+                        borderRadius: 9,
                         backgroundColor: "#c8f064",
                         color: "#161b19",
                         border: "none",
                         fontWeight: 700,
-                        fontSize: 14,
+                        fontSize: 13.5,
                         cursor: isCreating ? "not-allowed" : "pointer"
                       }}
                     >
@@ -1104,6 +1417,28 @@ export function RoomModal({
           {/* VIEW: LOBBY */}
           {viewState === "lobby" && currentRoom && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {/* CBT Mode Active Indicator */}
+              {isCbtRoom(currentRoom, questions, documents) && (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    backgroundColor: "rgba(200, 240, 100, 0.08)",
+                    border: "1px solid rgba(200, 240, 100, 0.3)",
+                    color: "#c8f064",
+                    fontSize: 12.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10
+                  }}
+                >
+                  <Zap size={16} color="#c8f064" style={{ flexShrink: 0 }} />
+                  <div>
+                    <span style={{ fontWeight: 700 }}>🔒 Format CBT Resmi Terdeteksi:</span> Saat countdown selesai, seluruh peserta otomatis dialihkan ke CBT Cockpit resmi (bukan kuis sederhana).
+                  </div>
+                </div>
+              )}
+
               {/* Room Code & Direct Invite Link Box */}
               <div
                 style={{

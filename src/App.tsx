@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo, useCallback, useEffect, useLayoutEffect, lazy, Suspense } from "react";
 import { CheckCircle2, MessageSquare } from "lucide-react";
-import { ActiveTab, QuizQuestion } from "./types";
+import { ActiveTab, QuizQuestion, ExamBankPackage, ExamBankItem, ExamBankOption, StudyRoom } from "./types";
 import { normalizeDiagramsInMarkdown } from "./utils/diagramNormalizer";
 
 // Layout & Modals (Static)
@@ -20,6 +20,7 @@ const FlashcardsTab = lazy(() => import("./components/tabs/FlashcardsTab").then(
 const FeynmanTab = lazy(() => import("./components/tabs/FeynmanTab").then(m => ({ default: m.FeynmanTab })));
 const SummaryTab = lazy(() => import("./components/tabs/SummaryTab").then(m => ({ default: m.SummaryTab })));
 const MistakesTab = lazy(() => import("./components/tabs/MistakesTab").then(m => ({ default: m.MistakesTab })));
+const ExamCbtTab = lazy(() => import("./components/tabs/ExamCbtTab").then(m => ({ default: m.ExamCbtTab })));
 
 // Lazy Modals (Fallback null)
 const TanyaNaraPanel = lazy(() => import("./components/modals/TanyaNaraPanel").then(m => ({ default: m.TanyaNaraPanel })));
@@ -151,6 +152,7 @@ export default function App() {
   // 2.6 Multiplayer Room Modal
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [activeRoomSession, setActiveRoomSession] = useState<{ roomId: string; title: string; quizCount: number } | null>(null);
+  const [roomCbtSession, setRoomCbtSession] = useState<{ room: StudyRoom; pkg: ExamBankPackage; items: ExamBankItem[] } | null>(null);
   const [roomModalInitialView, setRoomModalInitialView] = useState<"hub" | "lobby" | "playing" | "result">("hub");
   const [roomModalRoomId, setRoomModalRoomId] = useState<string | null>(null);
 
@@ -161,19 +163,37 @@ export default function App() {
       const roomParam = urlParams.get("room") || urlParams.get("join");
       if (roomParam) {
         const cleanCode = roomParam.trim().toUpperCase();
-        setRoomModalRoomId(cleanCode);
-        setRoomModalInitialView("lobby");
-        setIsRoomModalOpen(true);
-        showNotice(`Tautan undangan room ${cleanCode} terdeteksi!`);
+        if (cleanCode === "HUB" || cleanCode === "CREATE") {
+          setRoomModalRoomId(null);
+          setRoomModalInitialView("hub");
+          setIsRoomModalOpen(true);
+        } else {
+          setRoomModalRoomId(cleanCode);
+          setRoomModalInitialView("lobby");
+          setIsRoomModalOpen(true);
+          showNotice(`Tautan undangan room ${cleanCode} terdeteksi!`);
+        }
       }
     } catch (e) {
       console.warn("Parse room URL param error:", e);
     }
   }, [showNotice]);
 
-  // Auto-transition from landing to home when user is logged in
+  // Auto-transition from landing to last active tab when user is logged in
   useEffect(() => {
     if (currentUser && activeTab === "landing") {
+      try {
+        const savedTab = localStorage.getItem("tanka_last_active_tab");
+        if (savedTab && savedTab !== "landing") {
+          setActiveTab(savedTab as ActiveTab);
+          return;
+        }
+        const savedPkg = localStorage.getItem("tanka_cbt_active_package");
+        if (savedPkg) {
+          setActiveTab("cbt");
+          return;
+        }
+      } catch {}
       setActiveTab("home");
     }
   }, [currentUser, activeTab, setActiveTab]);
@@ -196,11 +216,40 @@ export default function App() {
   // 3. UI State
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("tanka_desktop_sidebar_collapsed") === "true";
+    }
+    return false;
+  });
+
+  const handleToggleDesktopSidebarCollapse = useCallback(() => {
+    setIsDesktopSidebarCollapsed((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tanka_desktop_sidebar_collapsed", String(next));
+        } catch (e) {
+          console.warn("Failed to save sidebar collapsed state:", e);
+        }
+      }
+      return next;
+    });
+  }, []);
   const [showRawText, setShowRawText] = useState(false);
   const [homeSearchQuery, setHomeSearchQuery] = useState("");
   const [homeSubjectFilter, setHomeSubjectFilter] = useState("Semua");
   const [materialCreationTab, setMaterialCreationTab] = useState<"upload" | "topic" | "manual">("upload");
   const [quizType, setQuizType] = useState<any>("beginner");
+  const [isCbtRunning, setIsCbtRunning] = useState(false);
+  const [cbtPackageTitle, setCbtPackageTitle] = useState("");
+
+  const handleCbtRunnerStateChange = useCallback((isRunning: boolean, packageTitle?: string) => {
+    setIsCbtRunning(isRunning);
+    if (packageTitle !== undefined) {
+      setCbtPackageTitle(packageTitle);
+    }
+  }, []);
 
   // 4. File and Camera Input Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -217,6 +266,7 @@ export default function App() {
     setActiveDocContent,
     activeDocSummary,
     setActiveDocSummary,
+    activeDocStatus,
     models,
     selectedModel,
     setSelectedModel,
@@ -359,43 +409,75 @@ export default function App() {
     onExamComplete: handleRoomExamComplete
   });
 
-  // Handler to launch multiplayer challenge directly into Quiz / Tryout tab
-  const handleStartRoomExam = useCallback((room: any, questions: any[]) => {
-    const formatted: QuizQuestion[] = (questions || []).map((q: any, idx: number) => {
-      let correctIdx = 0;
-      if (typeof q.correctIndex === "number") correctIdx = q.correctIndex;
-      else if (typeof q.correct_index === "number") correctIdx = q.correct_index;
-      else if (typeof q.answer === "string" && ["A", "B", "C", "D", "E"].includes(q.answer.trim().toUpperCase())) {
-        correctIdx = ["A", "B", "C", "D", "E"].indexOf(q.answer.trim().toUpperCase());
+  // Handler to launch multiplayer challenge directly into Official CBT tab
+  const handleStartRoomExam = useCallback((room: StudyRoom, rawQuestions: any[]) => {
+    const items: ExamBankItem[] = (rawQuestions || []).map((q: any, idx: number) => {
+      let opts: ExamBankOption[] = [];
+      if (Array.isArray(q.options)) {
+        opts = q.options.map((opt: any, oIdx: number) => {
+          const id = ["a", "b", "c", "d", "e"][oIdx] || String(oIdx);
+          if (typeof opt === "string") return { id, text: opt };
+          return { id: opt.id || id, text: opt.text || "" };
+        });
       }
+      let kunci = "a";
+      if (typeof q.answer === "string") {
+        kunci = q.answer.trim().toLowerCase();
+      } else if (typeof q.correctIndex === "number") {
+        kunci = ["a", "b", "c", "d", "e"][q.correctIndex] || "a";
+      }
+
+      let bacaan = q.bacaan || "";
+      let soal = q.soal || q.question || "";
+      if (typeof soal === "string" && (soal.includes("exam-bacaan") || soal.includes('class="exam-bacaan"'))) {
+        const match = soal.match(/<div class="exam-bacaan"[^>]*>([\s\S]*?)<\/div>/i);
+        if (match) {
+          if (!bacaan) {
+            bacaan = match[1];
+          }
+          soal = soal.replace(match[0], "").trim();
+        }
+      }
+
       return {
-        id: q.id || idx + 1,
-        question: q.question,
-        options: Array.isArray(q.options) ? q.options : [],
-        correctIndex: correctIdx,
-        correct_index: correctIdx,
-        explanation: q.explanation || ""
+        id: q.id || `room_item_${idx + 1}`,
+        nomor: q.nomor || idx + 1,
+        tipe_soal: q.tipe_soal || "pilihan_ganda",
+        bacaan,
+        soal,
+        soal_img: q.soal_img || "",
+        options: opts,
+        kunci_jawaban: kunci,
+        kunci_jawaban_text: q.explanation || q.kunci_jawaban_text || ""
       };
     });
 
-    setQuizQuestions(formatted);
-    setQuizQuestionCount(formatted.length);
-    setQuizMode("exam");
-    setCurrentQuestionIndex(0);
-    setUserAnswers({});
-    setSelectedOption(null);
-    setIsAnswerSubmitted(false);
-    setIsQuizCompleted(false);
-    setExamSubmitted(false);
-    const durationSec = Math.max(180, formatted.length * 60);
-    setExamDurationSeconds(durationSec);
-    setExamTimeLeft(durationSec);
-    setIsExamTimerRunning(true);
-    setActiveRoomSession({ roomId: room.id, title: room.title, quizCount: formatted.length });
-    setActiveTab("quiz");
+    let subtesName = "Arena Kompetisi";
+    let paketName = room.title || `Room ${room.id}`;
+    if (room.title) {
+      const match = room.title.match(/(?:Adu Tryout CBT|Battle Tryout|Kompetisi)[:\s]+([^()]+)(?:\(([^)]+)\))?/i);
+      if (match) {
+        subtesName = match[1].trim();
+        if (match[2]) paketName = match[2].trim();
+      }
+    }
+
+    const pkg: ExamBankPackage = {
+      id: `room_${room.id}`,
+      source: "arena_kompetisi",
+      jenjang: "SMA",
+      kategori: "kompetisi",
+      subtes_or_mapel: subtesName,
+      paket: paketName,
+      total_questions: items.length
+    };
+
+    setActiveRoomSession({ roomId: room.id, title: room.title, quizCount: items.length });
+    setRoomCbtSession({ room, pkg, items });
+    setActiveTab("cbt");
     setIsRoomModalOpen(false);
-    showNotice(`⚔️ Room ${room.id} dimulai! Tryout serentak ${formatted.length} soal berjalan.`);
-  }, [setQuizQuestions, setQuizQuestionCount, setQuizMode, setCurrentQuestionIndex, setUserAnswers, setSelectedOption, setIsAnswerSubmitted, setIsQuizCompleted, setExamSubmitted, setExamDurationSeconds, setExamTimeLeft, setIsExamTimerRunning, setActiveTab, showNotice]);
+    showNotice(`⚔️ Arena Kompetisi ${room.id} (${items.length} Soal) dimulai dalam format CBT resmi!`);
+  }, [setActiveTab, showNotice]);
 
   // Handler to close multiplayer room modal and cleanly reset session & URL params
   const handleCloseRoomModal = useCallback(() => {
@@ -864,6 +946,8 @@ export default function App() {
       <Sidebar
         isMobileDrawerOpen={isMobileDrawerOpen}
         setIsMobileDrawerOpen={setIsMobileDrawerOpen}
+        isDesktopCollapsed={isDesktopSidebarCollapsed}
+        onToggleDesktopCollapse={handleToggleDesktopSidebarCollapse}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         setIsAiPanelOpen={setIsAiPanelOpen}
@@ -909,6 +993,8 @@ export default function App() {
           setIsMobileDrawerOpen={setIsMobileDrawerOpen}
           activeTab={activeTab}
           activeDocTitle={activeDocTitle}
+          isCbtRunning={activeTab === "cbt" && isCbtRunning}
+          cbtPackageTitle={cbtPackageTitle}
           activeDocContent={activeDocContent}
           timerMode={timerMode}
           timerSeconds={timerSeconds}
@@ -944,7 +1030,7 @@ export default function App() {
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative", minHeight: 0, height: "100%" }}>
           <section className="main-scroll-section" style={{ flex: 1, minWidth: 0, minHeight: 0, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
-            {activeTab !== "home" && (
+            {activeTab !== "home" && activeTab !== "cbt" && (
               <div
                 className="mode-tabs print-hidden"
                 role="tablist"
@@ -982,7 +1068,7 @@ export default function App() {
             )}
 
             {/* Publication-grade Workspace Reading & Scroll Progress Bar */}
-            {activeTab !== "home" && (
+            {activeTab !== "home" && activeTab !== "cbt" && (
               <div
                 className="print-hidden"
                 style={{
@@ -1010,7 +1096,7 @@ export default function App() {
             )}
 
             <div className="content-scroll" ref={contentScrollRef} onScroll={handleContentScroll} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: "16px 20px max(112px, calc(80px + env(safe-area-inset-bottom, 0px))) 20px" }}>
-              <div style={{ maxWidth: (activeTab === "material" || activeTab === "summary") ? 1440 : 1080, margin: "0 auto", width: "100%" }}>
+              <div style={{ maxWidth: (activeTab === "material" || activeTab === "summary" || activeTab === "cbt") ? 1440 : 1080, margin: "0 auto", width: "100%" }}>
                 {isTabMounted("home") && (
                   <div key="tab-pane-home" className={`tab-pane-container ${activeTab === "home" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <HomeHubTab
@@ -1047,6 +1133,36 @@ export default function App() {
                   </div>
                 )}
 
+                {isTabMounted("cbt") && (
+                  <div key="tab-pane-cbt" className={`tab-pane-container ${activeTab === "cbt" ? "tab-pane-active" : "tab-pane-hidden"}`}>
+                    <Suspense fallback={<TabFallbackSkeleton />}>
+                      <ExamCbtTab
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        roomCbtSession={roomCbtSession}
+                        onClearRoomCbtSession={() => setRoomCbtSession(null)}
+                        onRunnerStateChange={handleCbtRunnerStateChange}
+                        onOpenNara={(query) => {
+                          setIsAiPanelOpen(true);
+                          if (query) {
+                            handleSendMessage(query);
+                          }
+                        }}
+                        onOpenRoomModal={(initialRoomId) => {
+                          if (initialRoomId) {
+                            setRoomModalRoomId(initialRoomId);
+                            setRoomModalInitialView("result");
+                          } else {
+                            setRoomModalRoomId(null);
+                            setRoomModalInitialView("hub");
+                          }
+                          setIsRoomModalOpen(true);
+                        }}
+                      />
+                    </Suspense>
+                  </div>
+                )}
+
                 {isTabMounted("material") && (
                   <div key="tab-pane-material" className={`tab-pane-container ${activeTab === "material" ? "tab-pane-active" : "tab-pane-hidden"}`}>
                     <Suspense fallback={<TabFallbackSkeleton />}>
@@ -1054,6 +1170,7 @@ export default function App() {
                         documents={documents}
                         loadDocument={loadDocument}
                         activeDocId={activeDocId}
+                        activeDocStatus={activeDocStatus}
                         activeDocTitle={activeDocTitle}
                         setActiveDocTitle={setActiveDocTitle}
                         activeDocContent={activeDocContent}
@@ -1378,11 +1495,17 @@ export default function App() {
       </Suspense>
 
       {/* Mobile Bottom Navigation Bar (With integrated Tanya Nara center button, no floating FAB overlay) */}
-
-      {/* Mobile Bottom Navigation Bar */}
       <MobileBottomNav
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(newTab) => {
+          if (activeTab === "cbt" && isCbtRunning && newTab !== "cbt") {
+            if (window.confirm("Ujian sedang berlangsung. Yakin ingin meninggalkan sesi latihan? Progres jawaban tetap tersimpan di sesi ini.")) {
+              setActiveTab(newTab);
+            }
+            return;
+          }
+          setActiveTab(newTab);
+        }}
         setIsMobileDrawerOpen={setIsMobileDrawerOpen}
         isAiPanelOpen={isAiPanelOpen}
         setIsAiPanelOpen={setIsAiPanelOpen}

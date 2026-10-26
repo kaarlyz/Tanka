@@ -29,13 +29,15 @@ export function normalizeMathExpression(text: string): string {
   // 0. Fix double-escaped backslashes from AI JSON output:
   //    \\\\frac -> \\frac, \\\\sqrt -> \\sqrt, etc.
   //    Only inside math delimiters ($...$, $$...$$) or before known LaTeX commands
-  str = str.replace(/\\\\(frac|sqrt|sum|prod|int|log|ln|sin|cos|tan|cot|sec|csc|text|mathrm|mathbf|mathit|mathcal|mathbb|operatorname|left|right|begin|end|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|subset|supset|infty|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|to|rightarrow|leftarrow|iff|implies|forall|exists|nabla|partial|lim|max|min|sup|inf|binom|choose|overline|underline|hat|bar|vec|dot|ddot|tilde|widehat|widetilde|not|in|notin|cup|cap|vee|wedge|oplus|otimes|vert|lvert|rvert|lVert|rVert|quad|qquad|hspace|vspace|displaystyle|textstyle|boxed|cancel|bcancel|xcancel|overset|underset|stackrel)\b/g, "\\$1");
+  str = str.replace(/\\\\(frac|sqrt|sum|prod|int|log|ln|sin|cos|tan|cot|sec|csc|text|mathrm|mathbf|mathit|mathcal|mathbb|operatorname|left|right|begin|end|cdot|times|div|pm|mp|leq|geq|le|ge|neq|approx|equiv|subset|supset|infty|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|to|rightarrow|leftarrow|iff|implies|forall|exists|nabla|partial|lim|max|min|sup|inf|binom|choose|overline|underline|hat|bar|vec|dot|ddot|tilde|widehat|widetilde|not|in|notin|cup|cap|vee|wedge|oplus|otimes|vert|lvert|rvert|lVert|rVert|quad|qquad|hspace|vspace|displaystyle|textstyle|boxed|cancel|bcancel|xcancel|overset|underset|stackrel)\b/g, "\\$1");
 
   // Escape bare $ yang benar-benar mata uang. JANGAN escape kalau di baris itu ada pasangan $
   // yang isinya rumus — dulu "$4, 7, 10, \dots$" ikut di-escape jadi "\$4, ... \$" dan
   // tampil sebagai teks mentah ber-backslash.
   const looksLikeMathSpan = (s: string): boolean => {
     const withoutCommands = s.replace(/\\[a-zA-Z]+/g, ""); // \dots, \quad, \frac bukan prosa
+    // Single variable math like $c$, $x$, $y$, $a$ is valid math
+    if (/^[A-Za-z]$/.test(withoutCommands.trim())) return true;
     return !/[A-Za-z]{4,}/.test(withoutCommands) && (/\\/.test(s) || /[=^_{}()+\-*/]/.test(s) || /^\s*[\d\s,.]+\s*$/.test(s));
   };
   str = str
@@ -68,46 +70,43 @@ export function normalizeMathExpression(text: string): string {
     return `$${math.trim()}$`;
   });
 
-  // 3. Auto-wrap naked environments: \begin{(aligned|cases|matrix|pmatrix|bmatrix)}...\end{...}
-  // Mask existing $$...$$ blocks first so we don't double wrap environments already inside $$
+  const hasTable = /\|.+\|/.test(str);
+
+  // 3. Mask existing $$...$$ blocks first so we don't double wrap environments already inside $$
   const blockPlaceholders: string[] = [];
-  str = str.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
-    blockPlaceholders.push(match);
+  str = str.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+    const safeMath = hasTable ? math.replace(/(?<!\\)\|/g, "\\vert ") : math;
+    blockPlaceholders.push(`$$${safeMath}$$`);
     return `@@@TANKA_BLOCK_MATH_${blockPlaceholders.length - 1}@@@`;
   });
 
-  // Strip optional single $ if someone wrapped an environment in single $ (e.g. $\begin{aligned}...\end{aligned}$)
-  const envPattern = /(?:\$\s*)?(\\begin\{(aligned|cases|matrix|pmatrix|bmatrix)\}[\s\S]*?\\end\{\2\})(?:\s*\$)?/g;
-  str = str.replace(envPattern, (_, env) => {
-    return `$$\n${env.trim()}\n$$`;
-  });
-
-  // Restore existing $$...$$ blocks
-  str = str.replace(/@@@TANKA_BLOCK_MATH_(\d+)@@@/g, (_, idx) => {
-    return blockPlaceholders[Number(idx)];
-  });
-
-  // 4. Protect table pipes: if text contains markdown table rows (| ... |),
-  // replace | inside $ ... $ or $$ ... $$ with \vert
-  const hasTable = /\|.+\|/.test(str);
-  if (hasTable) {
-    // In block math $$...$$
-    str = str.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
-      const safeMath = math.replace(/(?<!\\)\|/g, "\\vert ");
-      return `$$${safeMath}$$`;
-    });
-
-    // In inline math $...$
-    str = str.replace(/(?<!\$)\$(?!\$)((?:[^\$\n]|\n(?!\s*\n))+?)(?<!\$)\$(?!\$)/g, (_, math) => {
-      const safeMath = math.replace(/(?<!\\)\|/g, "\\vert ");
-      return `$${safeMath}$`;
-    });
-  }
-
-  // 5. Normalize newlines inside inline math $...$ and strip trailing \ or \\ that crashes KaTeX inline
+  // 4. Mask inline math $...$ to protect inline math (e.g. $T = \begin{pmatrix} 30 \\ 4 \end{pmatrix}$)
+  const inlinePlaceholders: string[] = [];
   str = str.replace(/(?<!\$)\$(?!\$)((?:[^\$\n]|\n(?!\s*\n))+?)(?<!\$)\$(?!\$)/g, (_, math) => {
     let normalized = math.replace(/\n\s*/g, " ").replace(/\\+\s*$/, "").trim();
-    return `$${normalized}$`;
+    if (hasTable) {
+      normalized = normalized.replace(/(?<!\\)\|/g, "\\vert ");
+    }
+    inlinePlaceholders.push(`$${normalized}$`);
+    return `@@@TANKA_INLINE_MATH_${inlinePlaceholders.length - 1}@@@`;
+  });
+
+  // 5. Auto-wrap naked environments: \begin{(aligned|cases|matrix|pmatrix|bmatrix)}...\end{...}
+  // Because $$...$$ and $...$ are already masked, only naked environments outside math delimiters remain.
+  const envPattern = /\\begin\{(aligned|cases|matrix|pmatrix|bmatrix)\}[\s\S]*?\\end\{\1\}/g;
+  str = str.replace(envPattern, (match) => {
+    const safeMath = hasTable ? match.replace(/(?<!\\)\|/g, "\\vert ") : match;
+    return `$$\n${safeMath.trim()}\n$$`;
+  });
+
+  // 6. Restore inline math $...$
+  str = str.replace(/@@@TANKA_INLINE_MATH_(\d+)@@@/g, (_, idx) => {
+    return inlinePlaceholders[Number(idx)];
+  });
+
+  // 7. Restore block math $$...$$
+  str = str.replace(/@@@TANKA_BLOCK_MATH_(\d+)@@@/g, (_, idx) => {
+    return blockPlaceholders[Number(idx)];
   });
 
   return str;

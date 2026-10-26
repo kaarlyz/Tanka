@@ -23,6 +23,133 @@ import {
 import { MathView } from "../common/MathView";
 import { QuizQuestion } from "../../types";
 
+export function renderFormattedStimulus(stimulusText: string) {
+  if (!stimulusText || typeof stimulusText !== "string") return null;
+
+  const rawBlocks = stimulusText
+    .split(/\r?\n+/)
+    .map((b) => b.trim())
+    .filter(Boolean);
+
+  if (rawBlocks.length === 0) return null;
+
+  let title: string | null = null;
+  let remainingBlocks = rawBlocks;
+
+  const first = rawBlocks[0];
+  const isTitleCandidate =
+    rawBlocks.length > 1 &&
+    (first.startsWith("#") ||
+      first.startsWith("**") ||
+      (first.length <= 100 && !first.endsWith(".") && !first.endsWith(";")) ||
+      /^(bacaan|teks|wacana|judul|artikel)\b/i.test(first));
+
+  if (isTitleCandidate) {
+    title = first.replace(/^#+\s*/, "").replace(/^\*\*(.*?)\*\*$/, "$1").trim();
+    remainingBlocks = rawBlocks.slice(1);
+  }
+
+  const isCitationLine = (t: string) =>
+    /^(sumber|source|referensi|reference|dikutip|disadur|adaptasi|dok\.|foto|pustaka|catatan)[:\s]/i.test(t) ||
+    /^(rachmawati|[A-Z][a-z]+(\s+[A-Z]\.|\s+dkk|\s+et\s+al|\s*,|\s*\(\d{4}\)))/i.test(t) ||
+    /^\((sumber|source|disadur|dikutip)/i.test(t);
+
+  const bodyParagraphs: string[] = [];
+  const citations: string[] = [];
+
+  for (const block of remainingBlocks) {
+    if (isCitationLine(block) || citations.length > 0) {
+      citations.push(block);
+    } else {
+      bodyParagraphs.push(block);
+    }
+  }
+
+  if (bodyParagraphs.length === 0 && citations.length > 0) {
+    bodyParagraphs.push(citations.shift()!);
+  }
+
+  return (
+    <div
+      className="quiz-stimulus-card"
+      style={{
+        backgroundColor: "#fdfefc",
+        border: "1px solid #dce1da",
+        borderLeft: "4px solid #15803d",
+        borderRadius: 10,
+        padding: "18px 22px",
+        marginBottom: 24
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: "#4a5752",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          marginBottom: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: 6
+        }}
+      >
+        <BookOpen size={14} color="#15803d" />
+        <span>Teks Bacaan / Stimulus Cerita</span>
+      </div>
+
+      <div style={{ maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
+        {title && (
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#17201d",
+              marginBottom: 12
+            }}
+          >
+            <MathView text={title} />
+          </div>
+        )}
+
+        {bodyParagraphs.map((para, idx) => (
+          <p
+            key={`stimulus-p-${idx}`}
+            style={{
+              fontSize: 14,
+              lineHeight: 1.75,
+              color: "#283430",
+              margin: "0 0 14px 0",
+              textAlign: "justify"
+            }}
+          >
+            <MathView text={para} />
+          </p>
+        ))}
+
+        {citations.length > 0 && (
+          <div
+            style={{
+              borderTop: "1px dashed #e2e6de",
+              marginTop: 16,
+              paddingTop: 8,
+              fontSize: 12,
+              fontStyle: "italic",
+              color: "#6f7975"
+            }}
+          >
+            {citations.map((cite, cIdx) => (
+              <div key={`stimulus-c-${cIdx}`}>
+                <MathView text={cite} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export interface ExamDrillViewProps {
   docId: string;
   docTitle: string;
@@ -803,21 +930,7 @@ export const ExamDrillView = React.memo(function ExamDrillView({
 
                   {/* Body Soal & Gambar */}
                   <div style={{ padding: "18px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
-                    {currentQ.stimulus && (
-                      <div
-                        style={{
-                          borderLeft: "3px solid #779f2f",
-                          backgroundColor: "#f9faf6",
-                          padding: "10px 14px",
-                          borderRadius: "0 8px 8px 0",
-                          fontSize: 12.5,
-                          color: "#45544e",
-                          lineHeight: 1.55
-                        }}
-                      >
-                        <MathView text={currentQ.stimulus} />
-                      </div>
-                    )}
+                    {currentQ.stimulus && renderFormattedStimulus(currentQ.stimulus)}
 
                     {currentQ.imageUrl && (
                       <div style={{ textAlign: "center", borderRadius: 10, overflow: "hidden", border: "1px solid #dce2da", backgroundColor: "#fafbf8", padding: 8 }}>
@@ -849,8 +962,22 @@ export const ExamDrillView = React.memo(function ExamDrillView({
                       </div>
                     )}
 
-                    <div style={{ fontSize: 14.5, fontWeight: 700, color: "#17201d", lineHeight: 1.6 }}>
-                      <MathView text={currentQ.question} />
+                    <div
+                      className="quiz-question-box"
+                      style={{
+                        backgroundColor: "#f7f9f6",
+                        border: "1px solid #e1e7dd",
+                        borderRadius: 10,
+                        padding: "16px 20px",
+                        marginBottom: 16
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 800, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
+                        Pertanyaan No. {activeIndex + 1}
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#111815", lineHeight: 1.6 }}>
+                        <MathView text={currentQ.question} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1131,7 +1258,7 @@ export const ExamDrillView = React.memo(function ExamDrillView({
       ) : (
       /* VIEW MODE: DAFTAR VERTIKAL PENUH */
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {filteredQuestions.map((q) => {
+        {filteredQuestions.map((q, idx) => {
           const isExpanded = q.id !== undefined && Boolean(expandedIds[q.id]);
           const correctIdx = q.correctIndex ?? 0;
           const correctIndices = q.correctIndices || [correctIdx];
@@ -1273,22 +1400,7 @@ export const ExamDrillView = React.memo(function ExamDrillView({
               {/* Card Body */}
               <div style={{ padding: "16px 20px" }}>
                 {/* Stimulus Bacaan */}
-                {q.stimulus && (
-                  <div
-                    style={{
-                      borderLeft: "3px solid #779f2f",
-                      backgroundColor: "#f9faf6",
-                      padding: "10px 14px",
-                      borderRadius: "0 8px 8px 0",
-                      fontSize: 12.5,
-                      color: "#45544e",
-                      lineHeight: 1.55,
-                      marginBottom: 12
-                    }}
-                  >
-                    <MathView text={q.stimulus} />
-                  </div>
-                )}
+                {q.stimulus && renderFormattedStimulus(q.stimulus)}
 
                 {/* Image */}
                 {q.imageUrl && (
@@ -1324,8 +1436,22 @@ export const ExamDrillView = React.memo(function ExamDrillView({
                 )}
 
                 {/* Pertanyaan */}
-                <div style={{ fontSize: 14.5, fontWeight: 700, color: "#17201d", lineHeight: 1.55, marginBottom: 14 }}>
-                  <MathView text={q.question} />
+                <div
+                  className="quiz-question-box"
+                  style={{
+                    backgroundColor: "#f7f9f6",
+                    border: "1px solid #e1e7dd",
+                    borderRadius: 10,
+                    padding: "14px 18px",
+                    marginBottom: 14
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
+                    Pertanyaan No. {idx + 1}
+                  </div>
+                  <div style={{ fontSize: 14.5, fontWeight: 700, color: "#111815", lineHeight: 1.55 }}>
+                    <MathView text={q.question} />
+                  </div>
                 </div>
 
                 {/* Options List / Matrix Statements */}

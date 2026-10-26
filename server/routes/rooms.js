@@ -16,7 +16,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
   if (pathname === "/api/rooms" && req.method === "POST") {
     try {
       const body = await getBody(req);
-      const { docId, title, userId, userName, schoolClass, avatarColor, quizCount = 5, quizType = "conceptual", maxParticipants = 0 } = body;
+      const { docId, packageId, examPackageId, title, userId, userName, schoolClass, avatarColor, quizCount = 5, quizType = "conceptual", maxParticipants = 0 } = body;
 
       if (!userId || !userName) {
         return sendJSON(res, { error: "User ID dan nama diperlukan untuk membuat room" }, 400);
@@ -60,7 +60,42 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
         return extracted;
       };
 
-      if (docId && docId !== "global") {
+      if (packageId || examPackageId) {
+        const pkgId = packageId || examPackageId;
+        const examItems = db.prepare("SELECT * FROM exam_bank_items WHERE package_id = ? ORDER BY nomor ASC").all(pkgId);
+        if (examItems && examItems.length > 0) {
+          questions = examItems.map((it) => {
+            let opts = [];
+            try {
+              opts = it.options_json ? JSON.parse(it.options_json) : [];
+            } catch {
+              opts = [];
+            }
+            const optStrings = opts.map((o) => o.text);
+            let correctIdx = 0;
+            if (it.kunci_jawaban) {
+              const k = it.kunci_jawaban.trim().toLowerCase();
+              if (["a", "b", "c", "d", "e"].includes(k)) {
+                correctIdx = ["a", "b", "c", "d", "e"].indexOf(k);
+              }
+            }
+            return {
+              id: it.id,
+              nomor: it.nomor,
+              tipe_soal: it.tipe_soal || "pilihan_ganda",
+              bacaan: it.bacaan || "",
+              question: it.soal,
+              soal: it.soal,
+              soal_img: it.soal_img || "",
+              options: optStrings.length > 0 ? optStrings : ["Opsi A", "Opsi B", "Opsi C", "Opsi D"],
+              answer: ["A", "B", "C", "D", "E"][correctIdx] || "A",
+              correctIndex: correctIdx,
+              correct_index: correctIdx,
+              explanation: it.kunci_jawaban_text || ""
+            };
+          });
+        }
+      } else if (docId && docId !== "global") {
         const targetDoc = db.prepare("SELECT * FROM documents WHERE id = ?").get(docId);
         if (targetDoc) {
           const isDocExam = Boolean(
@@ -182,11 +217,13 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
       const roomTitle = title || "Kompetisi Kuis Cepat";
       const now = Date.now();
       const maxLimit = Math.max(0, parseInt(maxParticipants, 10) || 0);
+      const pkgId = packageId || examPackageId || null;
+      const targetDocId = docId || (pkgId ? "cbt" : "global");
 
       db.prepare(`
-        INSERT INTO study_rooms (id, doc_id, title, host_user_id, host_name, status, quiz_count, max_participants, questions_json, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(roomId, docId || "global", roomTitle, userId, userName, "waiting", questions.length, maxLimit, JSON.stringify(questions), now);
+        INSERT INTO study_rooms (id, doc_id, package_id, title, host_user_id, host_name, status, quiz_count, max_participants, questions_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(roomId, targetDocId, pkgId, roomTitle, userId, userName, "waiting", questions.length, maxLimit, JSON.stringify(questions), now);
 
       // Add Host as first participant (ready = 1)
       const partId = `part_${roomId}_${userId}`;
@@ -201,7 +238,8 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
         success: true,
         room: {
           id: roomId,
-          docId: docId || "global",
+          docId: targetDocId,
+          packageId: pkgId,
           title: roomTitle,
           hostUserId: userId,
           hostName: userName,
@@ -265,6 +303,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
         room: {
           id: room.id,
           docId: room.doc_id,
+          packageId: room.package_id || (room.doc_id === "cbt" ? "cbt" : null),
           title: room.title,
           hostUserId: room.host_user_id,
           hostName: room.host_name,
@@ -313,6 +352,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
           room: {
             id: room.id,
             docId: room.doc_id,
+            packageId: room.package_id || (room.doc_id === "cbt" ? "cbt" : null),
             title: room.title,
             hostUserId: room.host_user_id,
             hostName: room.host_name,
@@ -374,6 +414,7 @@ async function handleRoomsRoutes(req, res, pathname, { sendJSON, getBody }) {
           room: {
             id: room.id,
             docId: room.doc_id,
+            packageId: room.package_id || (room.doc_id === "cbt" ? "cbt" : null),
             title: room.title,
             hostUserId: room.host_user_id,
             host_user_id: room.host_user_id,

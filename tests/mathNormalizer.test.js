@@ -99,3 +99,15 @@ test("Diagram Normalizer: sanitizeMathMarkdown merapikan spasi berlebih pada inl
   const output = sanitizeMathMarkdown(input);
   assert.equal(output, "Hitunglah nilai $2^3$ dan $\\frac{1}{2}$ dalam kalkulus.");
 });
+
+test("Math Normalizer: melindungi inline math yang memuat matriks pmatrix tanpa terpotong", () => {
+  const input = "Translasi kurva dengan $T = \\begin{pmatrix} 30 \\\\ 4 \\end{pmatrix}$ menghasilkan bayangan kurva.";
+  const output = normalizeMathExpression(input);
+  assert.equal(output, "Translasi kurva dengan $T = \\begin{pmatrix} 30 \\\\ 4 \\end{pmatrix}$ menghasilkan bayangan kurva.");
+});
+
+test("Math Normalizer: menangani operator relasi dan double backslash dari JSON AI", () => {
+  const input = "Kondisi: $\\\\le$, $\\\\ge$, $\\\\iff$, $\\\\implies$, $\\\\to$ dan $\\\\frac{a}{b}$";
+  const output = normalizeMathExpression(input);
+  assert.equal(output, "Kondisi: $\\le$, $\\ge$, $\\iff$, $\\implies$, $\\to$ dan $\\frac{a}{b}$");
+});

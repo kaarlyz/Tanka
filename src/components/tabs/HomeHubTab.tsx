@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2, Video, X, Camera, Compass, Flame } from "lucide-react";
+import { Upload, Plus, Search, Sparkles, BookOpen, Layers, Target, AlertTriangle, ChevronRight, ArrowRight, Trash2, Video, X, Camera, Compass, Flame, Loader2 } from "lucide-react";
 import { YouTubeIcon } from "../common/YouTubeIcon";
 import { ActiveTab, DocumentItem, QuizQuestion, Flashcard, MistakeItem, UserAccount } from "../../types";
 import { getSubjectBadge } from "../../utils/subjectBadge";
@@ -382,6 +382,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                 {(activeDoc || (documents && documents[0])) && (() => {
                   const targetDoc = activeDoc || documents[0];
                   const badge = getSubjectBadge(targetDoc.title);
+                  const isTargetProcessing = targetDoc.status === "processing";
                   return (
                     <div
                       className="home-last-session-card"
@@ -414,6 +415,25 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                         >
                           {badge.label}
                         </span>
+                        {isTargetProcessing && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              backgroundColor: "rgba(234, 179, 8, 0.12)",
+                              color: "#b45309",
+                              border: "1px solid rgba(234, 179, 8, 0.3)",
+                              padding: "2px 8px",
+                              borderRadius: 6,
+                              fontSize: 10.5,
+                              fontWeight: 700
+                            }}
+                          >
+                            <Loader2 size={11} className="animate-spin" />
+                            <span>Sedang Dianalisis... (AI Pipeline)</span>
+                          </span>
+                        )}
                         <div style={{ overflow: "hidden" }}>
                           <div style={{ fontSize: 10.5, color: "#8a9691", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
                             Lanjutkan Sesi Terakhir
@@ -426,7 +446,9 @@ export const HomeHubTab = React.memo(function HomeHubTab({
 
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }} className="home-last-session-actions">
                         <button
+                          disabled={isTargetProcessing}
                           onClick={() => {
+                            if (isTargetProcessing) return;
                             loadDocument(targetDoc);
                             setActiveTab("material");
                           }}
@@ -441,19 +463,32 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                             padding: "8px 12px",
                             fontSize: 12,
                             fontWeight: 700,
-                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                            cursor: isTargetProcessing ? "not-allowed" : "pointer",
+                            opacity: isTargetProcessing ? 0.6 : 1,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             gap: 6
                           }}
                         >
-                          <BookOpen size={13} />
-                          <span>Baca Materi</span>
+                          {isTargetProcessing ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" />
+                              <span>Sedang Memproses...</span>
+                            </>
+                          ) : (
+                            <>
+                              <BookOpen size={13} />
+                              <span>Baca Materi</span>
+                            </>
+                          )}
                         </button>
 
                         <button
+                          disabled={isTargetProcessing}
                           onClick={() => {
+                            if (isTargetProcessing) return;
                             loadDocument(targetDoc);
                             setActiveTab("quiz");
                           }}
@@ -467,7 +502,8 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                             padding: "8px 12px",
                             fontSize: 12,
                             fontWeight: 600,
-                            cursor: "pointer",
+                            cursor: isTargetProcessing ? "not-allowed" : "pointer",
+                            opacity: isTargetProcessing ? 0.4 : 1,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -479,7 +515,9 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                         </button>
 
                         <button
+                          disabled={isTargetProcessing}
                           onClick={() => {
+                            if (isTargetProcessing) return;
                             loadDocument(targetDoc);
                             setActiveTab("flashcards");
                           }}
@@ -493,7 +531,8 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                             padding: "8px 12px",
                             fontSize: 12,
                             fontWeight: 600,
-                            cursor: "pointer",
+                            cursor: isTargetProcessing ? "not-allowed" : "pointer",
+                            opacity: isTargetProcessing ? 0.4 : 1,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -615,10 +654,12 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                         {filteredDocs.map((doc) => {
                           const badge = getSubjectBadge(doc.title);
                           const isCurrent = doc.id === activeDocId;
+                          const isProcessing = doc.status === "processing";
                           return (
                             <div
                               key={doc.id}
                               onClick={() => {
+                                if (isProcessing) return;
                                 loadDocument(doc);
                                 setActiveTab("material");
                               }}
@@ -632,24 +673,45 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                 justifyContent: "space-between",
                                 boxShadow: "0 2px 10px rgba(27, 39, 35, 0.02)",
                                 transition: "all 0.15s ease",
-                                cursor: "pointer"
+                                cursor: isProcessing ? "not-allowed" : "pointer"
                               }}
                             >
                               <div>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                                  <span
-                                    style={{
-                                      backgroundColor: badge.bg,
-                                      color: badge.color,
-                                      border: `1px solid ${badge.border}`,
-                                      padding: "2px 8px",
-                                      borderRadius: 6,
-                                      fontSize: 10.5,
-                                      fontWeight: 700
-                                    }}
-                                  >
-                                    {badge.label}
-                                  </span>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                    <span
+                                      style={{
+                                        backgroundColor: badge.bg,
+                                        color: badge.color,
+                                        border: `1px solid ${badge.border}`,
+                                        padding: "2px 8px",
+                                        borderRadius: 6,
+                                        fontSize: 10.5,
+                                        fontWeight: 700
+                                      }}
+                                    >
+                                      {badge.label}
+                                    </span>
+                                    {isProcessing && (
+                                      <span
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: 4,
+                                          backgroundColor: "rgba(234, 179, 8, 0.12)",
+                                          color: "#b45309",
+                                          border: "1px solid rgba(234, 179, 8, 0.3)",
+                                          padding: "2px 8px",
+                                          borderRadius: 6,
+                                          fontSize: 10.5,
+                                          fontWeight: 700
+                                        }}
+                                      >
+                                        <Loader2 size={11} className="animate-spin" />
+                                        <span>Sedang Dianalisis... (AI Pipeline)</span>
+                                      </span>
+                                    )}
+                                  </div>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -663,7 +725,11 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                 </div>
 
                                 <h4
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    if (isProcessing) {
+                                      e.stopPropagation();
+                                      return;
+                                    }
                                     loadDocument(doc);
                                     setActiveTab("material");
                                   }}
@@ -673,7 +739,7 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                     margin: "0 0 8px 0",
                                     color: "#17201d",
                                     lineHeight: 1.4,
-                                    cursor: "pointer"
+                                    cursor: isProcessing ? "not-allowed" : "pointer"
                                   }}
                                 >
                                   {doc.title}
@@ -706,7 +772,12 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                               >
                                 {Boolean(doc.is_exam_sheet || (doc.question_count && doc.question_count > 0) || /\b(soal|tka|utbk|ujian|latihan|kisi|try\s*out|kuis|exam|quiz|test|ulangan|bank\s*soal|drill)\b/i.test(doc.title || "")) ? (
                                   <button
-                                    onClick={() => {
+                                    disabled={isProcessing}
+                                    onClick={(e) => {
+                                      if (isProcessing) {
+                                        e.stopPropagation();
+                                        return;
+                                      }
                                       loadDocument(doc);
                                       setActiveTab("material");
                                     }}
@@ -719,19 +790,35 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                       padding: "7px 10px",
                                       fontSize: 12,
                                       fontWeight: 700,
-                                      cursor: "pointer",
+                                      whiteSpace: "nowrap",
+                                      cursor: isProcessing ? "not-allowed" : "pointer",
+                                      opacity: isProcessing ? 0.6 : 1,
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       gap: 5
                                     }}
                                   >
-                                    <Target size={13} />
-                                    <span>Bedah Soal</span>
+                                    {isProcessing ? (
+                                      <>
+                                        <Loader2 size={13} className="animate-spin" />
+                                        <span>Sedang Memproses...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Target size={13} />
+                                        <span>Bedah Soal</span>
+                                      </>
+                                    )}
                                   </button>
                                 ) : (
                                   <button
-                                    onClick={() => {
+                                    disabled={isProcessing}
+                                    onClick={(e) => {
+                                      if (isProcessing) {
+                                        e.stopPropagation();
+                                        return;
+                                      }
                                       loadDocument(doc);
                                       setActiveTab("material");
                                     }}
@@ -744,20 +831,36 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                       padding: "7px 10px",
                                       fontSize: 12,
                                       fontWeight: 700,
-                                      cursor: "pointer",
+                                      whiteSpace: "nowrap",
+                                      cursor: isProcessing ? "not-allowed" : "pointer",
+                                      opacity: isProcessing ? 0.6 : 1,
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       gap: 5
                                     }}
                                   >
-                                    <BookOpen size={13} />
-                                    <span>Baca Materi</span>
+                                    {isProcessing ? (
+                                      <>
+                                        <Loader2 size={13} className="animate-spin" />
+                                        <span>Sedang Memproses...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <BookOpen size={13} />
+                                        <span>Baca Materi</span>
+                                      </>
+                                    )}
                                   </button>
                                 )}
 
                                 <button
-                                  onClick={() => {
+                                  disabled={isProcessing}
+                                  onClick={(e) => {
+                                    if (isProcessing) {
+                                      e.stopPropagation();
+                                      return;
+                                    }
                                     loadDocument(doc);
                                     setActiveTab("quiz");
                                   }}
@@ -770,7 +873,8 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                     padding: "7px 11px",
                                     fontSize: 12,
                                     fontWeight: 600,
-                                    cursor: "pointer",
+                                    cursor: isProcessing ? "not-allowed" : "pointer",
+                                    opacity: isProcessing ? 0.4 : 1,
                                     display: "flex",
                                     alignItems: "center",
                                     gap: 4
@@ -781,7 +885,12 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                 </button>
 
                                 <button
-                                  onClick={() => {
+                                  disabled={isProcessing}
+                                  onClick={(e) => {
+                                    if (isProcessing) {
+                                      e.stopPropagation();
+                                      return;
+                                    }
                                     loadDocument(doc);
                                     setActiveTab("flashcards");
                                   }}
@@ -794,7 +903,8 @@ export const HomeHubTab = React.memo(function HomeHubTab({
                                     padding: "7px 11px",
                                     fontSize: 12,
                                     fontWeight: 600,
-                                    cursor: "pointer",
+                                    cursor: isProcessing ? "not-allowed" : "pointer",
+                                    opacity: isProcessing ? 0.4 : 1,
                                     display: "flex",
                                     alignItems: "center",
                                     gap: 4

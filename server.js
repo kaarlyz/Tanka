@@ -18,6 +18,7 @@ const { handleExamResultsRoutes } = require("./server/routes/examResults");
 const { handleAuthRoutes, getSessionUser } = require("./server/routes/auth");
 const { handleUsersRoutes } = require("./server/routes/users");
 const { handleRoomsRoutes } = require("./server/routes/rooms");
+const { handleExamBankRoutes } = require("./server/routes/examBank");
 
 // Helper for JSON response
 function sendJSON(res, data, statusCode = 200) {
@@ -199,16 +200,20 @@ const server = http.createServer(async (req, res) => {
     if (await handleAuthRoutes(req, res, pathname, helpers)) return;
     if (await handleUsersRoutes(req, res, pathname, helpers)) return;
     if (await handleRoomsRoutes(req, res, pathname, helpers)) return;
+    if (await handleExamBankRoutes(req, res, pathname, helpers)) return;
 
     // Static file fallback (production built frontend or uploaded assets)
     const distPath = path.resolve(__dirname, "dist");
     const uploadsPath = path.resolve(__dirname, "uploads");
+    const publicPath = path.resolve(__dirname, "public");
     const rawFilePath = pathname.startsWith("/uploads/")
       ? path.join(__dirname, pathname)
+      : pathname.startsWith("/cbt_images/")
+      ? path.join(publicPath, pathname)
       : path.join(distPath, pathname === "/" ? "index.html" : pathname);
     const filePath = path.resolve(rawFilePath);
 
-    const isSafePath = filePath.startsWith(distPath) || filePath.startsWith(uploadsPath);
+    const isSafePath = filePath.startsWith(distPath) || filePath.startsWith(uploadsPath) || filePath.startsWith(publicPath);
     if (isSafePath && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       const ext = path.extname(filePath);
       const mimeTypes = {

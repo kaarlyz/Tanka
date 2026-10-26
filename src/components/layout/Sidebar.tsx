@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronLeft, User, Target, Trophy, Swords, LogOut } from "lucide-react";
+import { ChevronLeft, User, Target, Trophy, Swords, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { ActiveTab, DocumentItem, QuizQuestion, MistakeItem, Flashcard, UserAccount } from "../../types";
 
 export interface SidebarProps {
   isMobileDrawerOpen: boolean;
   setIsMobileDrawerOpen: (val: boolean) => void;
+  isDesktopCollapsed?: boolean;
+  onToggleDesktopCollapse?: () => void;
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   setIsAiPanelOpen?: (val: boolean) => void;
@@ -38,6 +40,8 @@ export interface SidebarProps {
 export function Sidebar({
   isMobileDrawerOpen,
   setIsMobileDrawerOpen,
+  isDesktopCollapsed = false,
+  onToggleDesktopCollapse,
   activeTab,
   setActiveTab,
   setIsAiPanelOpen,
@@ -129,9 +133,11 @@ export function Sidebar({
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isProfileMenuOpen]);
+  const isRail = isDesktopCollapsed && !isMobileDrawerOpen;
+
   return (
       <aside
-        className={`figma-sidebar ${isMobileDrawerOpen ? "sidebar-drawer open" : "desktop-only"}`}
+        className={`figma-sidebar ${isMobileDrawerOpen ? "sidebar-drawer open" : "desktop-only"} ${isRail ? "is-collapsed" : ""}`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -142,50 +148,102 @@ export function Sidebar({
       >
         <div className="sidebar-scroll-viewport">
           {/* Brand Row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexShrink: 0 }}>
+          <div
+            className={`sidebar-brand-row ${isRail ? "is-collapsed" : ""}`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: isRail ? "center" : "space-between",
+              flexDirection: isRail ? "column" : "row",
+              gap: isRail ? 8 : 4,
+              marginBottom: 12,
+              flexShrink: 0
+            }}
+          >
             <div
               className="brand-box"
-              style={{ padding: 0, cursor: "pointer" }}
+              style={{
+                padding: 0,
+                cursor: "pointer",
+                justifyContent: isRail ? "center" : "flex-start",
+                width: isRail ? "100%" : "auto"
+              }}
               onClick={() => {
                 setActiveTab("landing");
                 setIsMobileDrawerOpen(false);
               }}
               title="Ke Halaman Depan (Landing Page)"
             >
-              <div className="brand-symbol-box">t</div>
-              <span>tanka.</span>
+              <div className="brand-symbol-box">{isRail ? "t." : "t"}</div>
+              {!isRail && <span>tanka.</span>}
             </div>
-            <button
-              onClick={() => {
-                setActiveTab("landing");
-                setIsMobileDrawerOpen(false);
-              }}
-              className="landing-shortcut-btn"
-              style={{
-                fontSize: 10,
-                fontFamily: "'DM Mono', monospace",
-                fontWeight: 600,
-                color: "#95a39d",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                borderRadius: 4,
-                padding: "3px 7px",
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4
-              }}
-              title="Buka Landing Page"
-            >
-              <span>web</span>
-              <span style={{ color: "#c8f064" }}>↗</span>
-            </button>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {!isRail && (
+                <button
+                  onClick={() => {
+                    setActiveTab("landing");
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className="landing-shortcut-btn"
+                  style={{
+                    fontSize: 10,
+                    fontFamily: "'DM Mono', monospace",
+                    fontWeight: 600,
+                    color: "#95a39d",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: 4,
+                    padding: "3px 7px",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4
+                  }}
+                  title="Buka Landing Page"
+                >
+                  <span>web</span>
+                  <span style={{ color: "#c8f064" }}>↗</span>
+                </button>
+              )}
+
+              {onToggleDesktopCollapse && (
+                <button
+                  onClick={onToggleDesktopCollapse}
+                  className="sidebar-collapse-toggle desktop-only"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: isRail ? "#c8f064" : "#95a39d",
+                    borderRadius: 5,
+                    width: 26,
+                    height: 26,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    padding: 0,
+                    flexShrink: 0,
+                    transition: "all 0.15s ease"
+                  }}
+                  title={isDesktopCollapsed ? "Perluas Sidebar" : "Ciutkan Sidebar (Layar Penuh)"}
+                  aria-label={isDesktopCollapsed ? "Perluas Sidebar" : "Ciutkan Sidebar"}
+                >
+                  {isDesktopCollapsed ? (
+                    <PanelLeftOpen size={15} color="#c8f064" />
+                  ) : (
+                    <PanelLeftClose size={15} color="#95a39d" />
+                  )}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Main Navigation Links with Side Mark Chips */}
           <nav className="main-nav" style={{ marginBottom: 18 }}>
             {[
               { id: "home", label: "Beranda Hub", mark: "H" },
+              { id: "cbt", label: "Simulasi CBT", mark: "C" },
               { id: "material", label: "Materi Saya", mark: "M" },
               { id: "quiz", label: "Latihan Kuis", mark: "L", count: (quizQuestions || []).length },
               { id: "mistakes", label: "Bank Soal Salah", mark: "B", count: activeDocId ? (activeDocMistakes || []).length : (mistakes || []).length, highlight: (activeDocId ? (activeDocMistakes || []).length : (mistakes || []).length) > 0 },
@@ -201,10 +259,28 @@ export function Sidebar({
                     setActiveTab(nav.id as any);
                     setIsMobileDrawerOpen(false);
                   }}
+                  title={isRail ? `${nav.label}${nav.count ? ` (${nav.count})` : ""}` : nav.label}
+                  style={isRail ? { justifyContent: "center", padding: "7px 0" } : undefined}
                 >
-                  <div className="side-mark-box">{nav.mark}</div>
-                  <span style={{ flex: 1 }}>{nav.label}</span>
-                  {nav.count !== undefined && nav.count > 0 && (
+                  <div className="side-mark-box" style={{ position: "relative" }}>
+                    {nav.mark}
+                    {isRail && nav.count !== undefined && nav.count > 0 && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: -3,
+                          right: -3,
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          backgroundColor: nav.highlight ? "#ef4444" : "#c8f064",
+                          boxShadow: "0 0 4px rgba(0,0,0,0.5)"
+                        }}
+                      />
+                    )}
+                  </div>
+                  {!isRail && <span style={{ flex: 1 }}>{nav.label}</span>}
+                  {!isRail && nav.count !== undefined && nav.count > 0 && (
                     <span
                       style={{
                         fontSize: 10,
@@ -229,20 +305,24 @@ export function Sidebar({
                 style={{
                   marginTop: 4,
                   backgroundColor: "rgba(200, 240, 100, 0.05)",
-                  borderColor: "rgba(200, 240, 100, 0.2)"
+                  borderColor: "rgba(200, 240, 100, 0.2)",
+                  ...(isRail ? { justifyContent: "center", padding: "7px 0" } : {})
                 }}
                 onClick={() => {
                   onOpenRoomModal();
                   setIsMobileDrawerOpen(false);
                 }}
+                title={isRail ? "Room Kompetisi Kuis" : undefined}
               >
                 <div className="side-mark-box" style={{ color: "#c8f064", backgroundColor: "rgba(200, 240, 100, 0.15)" }}>
                   <Swords size={12} color="#c8f064" />
                 </div>
-                <span style={{ flex: 1, color: "#d6f58d", fontWeight: 700 }}>Room Kompetisi</span>
-                <span style={{ fontSize: 9, backgroundColor: "#2b3c2a", color: "#c8f064", padding: "2px 6px", borderRadius: 999, fontWeight: 700 }}>
-                  EVENT
-                </span>
+                {!isRail && <span style={{ flex: 1, color: "#d6f58d", fontWeight: 700 }}>Room Kompetisi</span>}
+                {!isRail && (
+                  <span style={{ fontSize: 9, backgroundColor: "#2b3c2a", color: "#c8f064", padding: "2px 6px", borderRadius: 999, fontWeight: 700 }}>
+                    EVENT
+                  </span>
+                )}
               </button>
             )}
           </nav>
@@ -251,44 +331,46 @@ export function Sidebar({
         {/* Sidebar Bottom: Dynamic Streak Widget & Profile Row with Action Popover */}
         <div ref={profileMenuRef} className="sidebar-bottom-pinned">
           {/* Real Dynamic Weekly Target & Streak Widget */}
-          <div 
-            className="streak-card-box" 
-            style={{ margin: "0 0 6px", cursor: "pointer", transition: "transform 0.15s ease" }}
-            onClick={() => {
-              if (onOpenProfileModal) {
-                onOpenProfileModal("stats");
-              } else if (onOpenAuthModal && !currentUser) {
-                onOpenAuthModal("register");
-              }
-            }}
-            title="Klik untuk melihat statistik & target mingguan"
-          >
-            <div className="streak-top-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: 10.5 }}>
-                <Target size={12} color="#c8f064" style={{ flexShrink: 0 }} /> Target mingguan
-              </span>
-              <strong style={{ fontFamily: "'DM Mono', monospace", color: "#c8f064", flexShrink: 0, fontSize: 10.5 }}>
-                {currentUser?.active_days_this_week?.length || 0}/{currentUser?.target_weekly_days || 5} hari
-              </strong>
+          {!isRail && (
+            <div 
+              className="streak-card-box" 
+              style={{ margin: "0 0 6px", cursor: "pointer", transition: "transform 0.15s ease" }}
+              onClick={() => {
+                if (onOpenProfileModal) {
+                  onOpenProfileModal("stats");
+                } else if (onOpenAuthModal && !currentUser) {
+                  onOpenAuthModal("register");
+                }
+              }}
+              title="Klik untuk melihat statistik & target mingguan"
+            >
+              <div className="streak-top-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: 10.5 }}>
+                  <Target size={12} color="#c8f064" style={{ flexShrink: 0 }} /> Target mingguan
+                </span>
+                <strong style={{ fontFamily: "'DM Mono', monospace", color: "#c8f064", flexShrink: 0, fontSize: 10.5 }}>
+                  {currentUser?.active_days_this_week?.length || 0}/{currentUser?.target_weekly_days || 5} hari
+                </strong>
+              </div>
+              <div className="streak-days" style={{ margin: "6px 0 5px" }}>
+                {["S", "S", "R", "K", "J", "S", "M"].map((day, idx) => {
+                  const isDone = (currentUser?.active_days_this_week || []).includes(idx);
+                  return (
+                    <span className={isDone ? "filled" : ""} key={`${day}-${idx}`} style={{ width: 22, height: 22, fontSize: 8.5, borderRadius: 4, transition: "all 0.2s ease" }}>
+                      {isDone ? "✓" : day}
+                    </span>
+                  );
+                })}
+              </div>
+              <p style={{ margin: 0, fontSize: 10, color: "#8a9691", lineHeight: 1.3 }}>
+                {currentUser 
+                  ? (currentUser.active_days_this_week?.length || 0) >= (currentUser.target_weekly_days || 5)
+                    ? "Target mingguan tercapai."
+                    : `${(currentUser.target_weekly_days || 5) - (currentUser.active_days_this_week?.length || 0)} hari belajar lagi untuk target.`
+                  : "Masuk akun untuk melacak konsistensi belajarmu."}
+              </p>
             </div>
-            <div className="streak-days" style={{ margin: "6px 0 5px" }}>
-              {["S", "S", "R", "K", "J", "S", "M"].map((day, idx) => {
-                const isDone = (currentUser?.active_days_this_week || []).includes(idx);
-                return (
-                  <span className={isDone ? "filled" : ""} key={`${day}-${idx}`} style={{ width: 22, height: 22, fontSize: 8.5, borderRadius: 4, transition: "all 0.2s ease" }}>
-                    {isDone ? "✓" : day}
-                  </span>
-                );
-              })}
-            </div>
-            <p style={{ margin: 0, fontSize: 10, color: "#8a9691", lineHeight: 1.3 }}>
-              {currentUser 
-                ? (currentUser.active_days_this_week?.length || 0) >= (currentUser.target_weekly_days || 5)
-                  ? "Target mingguan tercapai."
-                  : `${(currentUser.target_weekly_days || 5) - (currentUser.active_days_this_week?.length || 0)} hari belajar lagi untuk target.`
-                : "Masuk akun untuk melacak konsistensi belajarmu."}
-            </p>
-          </div>
+          )}
 
           {/* Floating Popover Menu when dots or profile clicked */}
           {isProfileMenuOpen && currentUser && (
@@ -296,9 +378,10 @@ export function Sidebar({
               className="modal-scale-in"
               style={{
                 position: "absolute",
-                bottom: 80,
-                left: 0,
-                right: 0,
+                bottom: isRail ? 8 : 80,
+                left: isRail ? 68 : 0,
+                width: isRail ? 220 : "auto",
+                right: isRail ? "auto" : 0,
                 backgroundColor: "#19211d",
                 border: "1.5px solid #2b3933",
                 borderRadius: 14,
@@ -448,34 +531,45 @@ export function Sidebar({
                 onOpenAuthModal("login");
               }
             }}
-            style={{ cursor: "pointer", width: "100%", textAlign: "left" }}
-            title={currentUser ? "Klik untuk menu opsi & profil" : "Klik untuk masuk / daftar akun"}
+            style={{
+              cursor: "pointer",
+              width: "100%",
+              textAlign: isRail ? "center" : "left",
+              justifyContent: isRail ? "center" : "flex-start",
+              padding: isRail ? "6px 0" : "6px 8px"
+            }}
+            title={currentUser ? (isRail ? `${currentUser.name || currentUser.username} (@${currentUser.username})` : "Klik untuk menu opsi & profil") : "Klik untuk masuk / daftar akun"}
           >
             <div 
               className="avatar-box"
               style={{
                 backgroundColor: currentUser?.avatar_color || "#25322e",
                 color: "#ffffff",
-                fontWeight: 700
+                fontWeight: 700,
+                ...(isRail ? { width: 34, height: 34, fontSize: 11, margin: "0 auto" } : {})
               }}
             >
               {currentUser ? (currentUser.name || currentUser.username).slice(0, 2).toUpperCase() : "TK"}
             </div>
-            <span>
-              <strong>{currentUser ? (currentUser.name || currentUser.username) : "Tamu Belajar"}</strong>
-              <small>{currentUser ? `@${currentUser.username} • ${currentUser.school_class || "Kelas XII"}` : "Klik Masuk / Daftar"}</small>
-            </span>
-            <span 
-              className="profile-more-dots"
-              onClick={(e) => {
-                if (currentUser) {
-                  e.stopPropagation();
-                  setIsProfileMenuOpen(prev => !prev);
-                }
-              }}
-            >
-              •••
-            </span>
+            {!isRail && (
+              <span>
+                <strong>{currentUser ? (currentUser.name || currentUser.username) : "Tamu Belajar"}</strong>
+                <small>{currentUser ? `@${currentUser.username} • ${currentUser.school_class || "Kelas XII"}` : "Klik Masuk / Daftar"}</small>
+              </span>
+            )}
+            {!isRail && (
+              <span 
+                className="profile-more-dots"
+                onClick={(e) => {
+                  if (currentUser) {
+                    e.stopPropagation();
+                    setIsProfileMenuOpen(prev => !prev);
+                  }
+                }}
+              >
+                •••
+              </span>
+            )}
           </button>
         </div>
 

@@ -27,6 +27,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
   const [activeDocTitle, setActiveDocTitle] = useState("");
   const [activeDocContent, setActiveDocContent] = useState("");
   const [activeDocSummary, setActiveDocSummary] = useState("");
+  const [activeDocStatus, setActiveDocStatus] = useState<string | null>(null);
   const [isDetectingTitle, setIsDetectingTitle] = useState(false);
   const [models, setModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>(() => {
@@ -84,10 +85,12 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       setActiveDocTitle(local.title || "");
       setActiveDocContent(local.content || "");
       setActiveDocSummary(local.summary || "");
+      setActiveDocStatus(local.status || null);
       if (callback) callback(local);
       if (onDocumentLoaded) onDocumentLoaded(local);
     } else {
       setActiveDocId(targetId);
+      setActiveDocStatus(null);
     }
 
     try {
@@ -95,6 +98,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
       const data = await res.json();
       if (data.document) {
         setActiveDocId(data.document.id);
+        setActiveDocStatus(data.document.status || null);
         if (data.document.title && data.document.title !== local?.title) {
           setActiveDocTitle(data.document.title);
         }
@@ -214,6 +218,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
         setActiveDocTitle("");
         setActiveDocContent("");
         setActiveDocSummary("");
+        setActiveDocStatus(null);
         if (resetCallback) resetCallback();
       }
       fetchDocuments();
@@ -244,6 +249,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
         setActiveDocTitle("");
         setActiveDocContent("");
         setActiveDocSummary("");
+        setActiveDocStatus(null);
         if (resetCallback) resetCallback();
         await fetchDocuments();
       } else {
@@ -319,11 +325,15 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
           showNotice(`Materi "${doc.title || "Dokumen"}" selesai diproses!`);
           if (docId === activeDocIdRef.current) {
             setActiveDocContent(doc.content || "");
+            setActiveDocStatus(doc.status || "completed");
             if (doc.summary) setActiveDocSummary(doc.summary);
           }
           fetchDocuments();
         } else if (doc.status === "failed") {
           removeProcessingDoc(docId);
+          if (docId === activeDocIdRef.current) {
+            setActiveDocStatus("failed");
+          }
           showNotice(`Pembuatan materi "${doc.title || docId}" mengalami kendala`);
         }
       } catch (err) {
@@ -337,8 +347,10 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
   useEffect(() => {
     const runPoller = async () => {
       const pending = getProcessingDocs();
-      if (pending.length > 0) {
+      const hasProcessing = pending.length > 0 || documentsRef.current.some((d) => d.status === "processing");
+      if (hasProcessing) {
         await checkProcessingDocs();
+        await fetchDocuments();
       }
     };
 
@@ -351,7 +363,7 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
         backgroundPollRef.current = null;
       }
     };
-  }, [checkProcessingDocs]);
+  }, [checkProcessingDocs, fetchDocuments]);
 
   useEffect(() => {
     const handleWakeUp = () => {
@@ -398,6 +410,8 @@ export function useDocuments({ showNotice, setActiveTab, onDocumentLoaded }: Use
     setActiveDocContent,
     activeDocSummary,
     setActiveDocSummary,
+    activeDocStatus,
+    setActiveDocStatus,
     isDetectingTitle,
     setIsDetectingTitle,
     models,

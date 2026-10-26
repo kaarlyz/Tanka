@@ -196,6 +196,26 @@ function splitDocumentIntoQuestionChunks(rawText) {
     return chunks;
   }
 
+  // Anchor boundaries to preceding passage headers if present
+  // TASK-PASSAGE-RANGE-STIMULUS-SYNC-053:
+  // Batas chunking harus memotong sebelum deklarasi wacana baru, bukan setelahnya.
+  const passageHeaderRegex = /(?:^|\n)(?:(?:\[Gambar:[^\]]+\]\s+)?(?:Teks\s+["“][^"”]+["”]\s+untuk\s+soal\s+nomor\s+\d+|Wacana\s+untuk\s+soal\s+nomor\s+\d+))/gi;
+  const passageHeaders = [];
+  let pm;
+  while ((pm = passageHeaderRegex.exec(rawText)) !== null) {
+    const pStart = pm[0].startsWith("\n") ? pm.index + 1 : pm.index;
+    passageHeaders.push({ index: pStart, text: pm[0].trim() });
+  }
+
+  for (let i = 1; i < matches.length; i++) {
+    const prev = matches[i - 1];
+    const curr = matches[i];
+    const ph = passageHeaders.find(p => p.index > prev && p.index < curr);
+    if (ph) {
+      matches[i] = ph.index;
+    }
+  }
+
   const rawParts = [];
   if (matches[0] > 0) {
     const preamble = rawText.slice(0, matches[0]).trim();
@@ -214,14 +234,117 @@ function splitDocumentIntoQuestionChunks(rawText) {
     rawParts[0] = preamble + "\n\n" + rawParts[0];
   }
 
-  // Gabungkan per 5 soal utuh per chunk agar tidak token fatigue dan anti-missing
+  // Gabungkan per 5 soal utuh per chunk, pecah jika ada deklarasi wacana baru agar tidak terpisah dari soalnya
   const CHUNK_SOAL_COUNT = 5;
   const batchedChunks = [];
-  for (let i = 0; i < rawParts.length; i += CHUNK_SOAL_COUNT) {
-    const batch = rawParts.slice(i, i + CHUNK_SOAL_COUNT);
-    batchedChunks.push(batch.join("\n\n---\n\n"));
+  let currentBatch = [];
+
+  for (let i = 0; i < rawParts.length; i++) {
+    const part = rawParts[i];
+    const isNewPassageHeader = /^(?:\[Gambar:[^\]]+\]\s+)?(?:Teks\s+["“][^"”]+["”]\s+untuk\s+soal\s+nomor\s+\d+|Wacana\s+untuk\s+soal\s+nomor\s+\d+)/i.test(part);
+
+    if (isNewPassageHeader && currentBatch.length > 0) {
+      batchedChunks.push(currentBatch.join("\n\n---\n\n"));
+      currentBatch = [part];
+    } else {
+      currentBatch.push(part);
+      if (currentBatch.length >= CHUNK_SOAL_COUNT) {
+        batchedChunks.push(currentBatch.join("\n\n---\n\n"));
+        currentBatch = [];
+      }
+    }
+  }
+  if (currentBatch.length > 0) {
+    batchedChunks.push(currentBatch.join("\n\n---\n\n"));
   }
   return batchedChunks;
+}
+
+/**
+ * Ekstrak naskah wacana kanonikal dan rentang soal yang diaturnya dari teks mentah.
+ */
+function extractPassagesFromText(rawText) {
+  if (!rawText || typeof rawText !== "string") return [];
+  const rangeRegex = /(?:(?:Teks|Wacana)\s+["“]([^"”]+)["”]|(?:Teks|Wacana))\s+untuk\s+soal\s+nomor\s+(\d+)(?:\s*(?:s\.d\.?|sampai|s\/d|-)\s*(\d+))?/gi;
+  const passages = [];
+  let m;
+  while ((m = rangeRegex.exec(rawText)) !== null) {
+    const title = (m[1] || "").trim();
+    const start = parseInt(m[2], 10);
+    const end = m[3] ? parseInt(m[3], 10) : start;
+    passages.push({
+      header: m[0],
+      title,
+      start,
+      end,
+      index: m.index,
+      headerEnd: m.index + m[0].length
+    });
+  }
+
+  for (let i = 0; i < passages.length; i++) {
+    const cur = passages[i];
+    const nextStart = passages[i + 1] ? passages[i + 1].index : rawText.length;
+    const sub = rawText.slice(cur.headerEnd, nextStart);
+    const cutMatch = sub.match(/(?:^|\n)(?:(?:\[Gambar:[^\]]+\]\s+)?(?:[A-Z0-9$]+\s+)?(?:Hierarki\s+Indikator|Indikator:[^\n]*\(\d+\)|Kompetensi:|(?:[1-9]\d?|100)[\.\)]\s+[A-Z]))/i);
+    let body = cutMatch ? sub.slice(0, cutMatch.index) : sub;
+    body = body.replace(/^\s*(?:\[Gambar:[^\]]+\]\s+)?(?:[A-Z0-9]\s+)?(?:[A-Z0-9$]+(?:-[A-Z0-9$]+)+\s+)?(?:Bentuk Soal\s*:[^\n]*\n+)?/i, "");
+    body = body.trim();
+
+    let imageUrl = null;
+    const lookBack = rawText.slice(Math.max(0, cur.index - 200), cur.index);
+    const lookAhead = rawText.slice(cur.index, Math.min(rawText.length, cur.headerEnd + 500));
+    const imgMatch = (lookBack + "\n" + lookAhead).match(/\[Gambar:\s*([^\]]+)\]/i);
+    if (imgMatch) {
+      imageUrl = imgMatch[1].trim();
+    }
+    cur.content = body;
+    cur.imageUrl = imageUrl;
+  }
+  return passages;
+}
+
+/**
+ * Propagasi stimulus wacana kanonikal secara deterministik ke butir soal nomor start s.d. end.
+ */
+function propagatePassageStimulus(questions, rawText) {
+  if (!Array.isArray(questions) || !rawText) return questions;
+  const passages = extractPassagesFromText(rawText);
+  if (passages.length === 0) return questions;
+
+  for (const p of passages) {
+    const questionsInRange = questions.filter(q => {
+      const num = Number(q.nomor !== undefined ? q.nomor : q.id);
+      return num >= p.start && num <= p.end;
+    });
+
+    const hasAnyStimulusWithTitle = questionsInRange.some(q =>
+      q.stimulus && p.title && q.stimulus.toLowerCase().includes(p.title.toLowerCase())
+    );
+    const otherPassagesSameRange = passages.filter(other => other !== p && other.start === p.start && other.end === p.end);
+    const otherMatched = otherPassagesSameRange.some(other =>
+      questionsInRange.some(q => q.stimulus && other.title && q.stimulus.toLowerCase().includes(other.title.toLowerCase()))
+    );
+
+    if (!hasAnyStimulusWithTitle && otherMatched) {
+      continue;
+    }
+
+    for (const q of questionsInRange) {
+      const num = Number(q.nomor !== undefined ? q.nomor : q.id);
+      const curStim = (q.stimulus || "").trim();
+      const needsStimulus = !curStim || (p.title && !curStim.toLowerCase().includes(p.title.toLowerCase()) && curStim.length < 200);
+
+      if (needsStimulus) {
+        q.stimulus = p.content;
+      }
+
+      if (p.imageUrl && num === p.start && !q.imageUrl) {
+        q.imageUrl = p.imageUrl;
+      }
+    }
+  }
+  return questions;
 }
 
 /**
@@ -292,6 +415,7 @@ async function runExamPipeline(rawText, title, userModel = "ag/gemini-3.8-flash-
     }
   }
   const questions = Array.from(questionMap.values()).sort((a, b) => (Number(a.nomor) || 0) - (Number(b.nomor) || 0));
+  propagatePassageStimulus(questions, rawText);
   const terpotong = allTerpotong;
 
   if (questions.length === 0) {
@@ -459,7 +583,7 @@ async function runExamPipeline(rawText, title, userModel = "ag/gemini-3.8-flash-
   }
 
   console.log(`[ExamPipeline] Complete. Stats:`, JSON.stringify(stats));
-  return { soal: questions, terpotong, stats };
+  return { soal: questions, terpotong, stats, rawText };
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -523,8 +647,9 @@ function voteAnswers(parsedSolves, kunciDokumen) {
  * - questions array for quizzes table
  * - studyGuide markdown for document content
  */
-function pipelineToTankaFormat(pipelineResult, title) {
+function pipelineToTankaFormat(pipelineResult, title, rawText) {
   const { soal, terpotong, stats } = pipelineResult;
+  const effectiveRawText = rawText || pipelineResult.rawText || null;
 
   // Susun output akhir urut dari nomor 1 sampai selesai (kanonikal)
   const sortedSoal = [...(soal || [])].sort((a, b) => (Number(a.nomor) || 0) - (Number(b.nomor) || 0));
@@ -567,9 +692,12 @@ function pipelineToTankaFormat(pipelineResult, title) {
         }))
       : undefined;
 
+    // Clean raw image tags from question text if extracted as imageUrl
+    const cleanQuestion = q.pertanyaan ? q.pertanyaan.replace(/^\s*\[Gambar:\s*[^\]]+\]\s*/i, "").trim() || q.pertanyaan : q.pertanyaan;
+
     return {
       id: q.nomor,
-      question: q.pertanyaan,
+      question: cleanQuestion,
       stimulus: q.stimulus || null,
       imageUrl,
       imageCaption,
@@ -592,6 +720,10 @@ function pipelineToTankaFormat(pipelineResult, title) {
       has_visual: hasVisual,
     };
   });
+
+  if (effectiveRawText) {
+    propagatePassageStimulus(quizQuestions, effectiveRawText);
+  }
 
   // Build study guide markdown (semua teks lewat mathify() di bawah)
   for (const qq of quizQuestions) {
@@ -718,4 +850,5 @@ module.exports = {
   ATURAN_MODE_SOAL,
   detectSubtes,
   splitDocumentIntoQuestionChunks,
+  propagatePassageStimulus,
 };

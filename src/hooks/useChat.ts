@@ -260,11 +260,18 @@ export function useChat({ activeDocId, selectedModel, showNotice, currentUser }:
     }, 50);
 
     try {
+      let cbtContext: any = null;
+      try {
+        const rawCbt = localStorage.getItem("tanka_active_cbt_context");
+        if (rawCbt) cbtContext = JSON.parse(rawCbt);
+      } catch {}
+
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-User-Id": userId },
         body: JSON.stringify({
           docId: effectiveDocId || null,
+          cbtContext,
           message: text,
           userId,
           attachment: currentAttachment ? {

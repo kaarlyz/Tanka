@@ -214,6 +214,19 @@ export function useUploadStaging({
       }
 
       if (data.success) {
+        if (data.status === "processing" || data.status !== "completed") {
+          if (data.id) {
+            addProcessingDoc(data.id);
+          }
+          await fetchDocuments();
+          setUploadStatus("");
+          handleCancelStaging();
+          setActiveTab("home");
+          const docTitle = data.title || stagedDocTitle || "Dokumen";
+          showNotice(`📋 Berkas "${docTitle}" berhasil diunggah! Sedang diproses di latar belakang. Kartu modul akan otomatis aktif setelah selesai.`);
+          return;
+        }
+
         if (data.isExamSheet && data.questionCount > 0) {
           showNotice(`📋 Terdeteksi ${data.questionCount} Soal Kisi-Kisi! Materi teori berhasil disusun & soal siap dikerjakan.`);
           if (data.detectedQuestions && data.detectedQuestions.length > 0) {
@@ -228,56 +241,14 @@ export function useUploadStaging({
           showNotice(`Materi "${data.title}" berhasil dibuat dan siap dipelajari!`);
         }
         await fetchDocuments();
-        let isStillProcessing = false;
         if (data.id) {
-          addProcessingDoc(data.id);
-          // Polling hingga pipeline di latar belakang selesai
-          const maxAttempts = data.isExamSheet ? 120 : 30;
-          for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            setUploadStatus(
-              data.isExamSheet
-                ? `Menganalisis butir soal & menyusun pembahasan… (${attempt + 1}/${maxAttempts})`
-                : `Menyusun bab materi… (${attempt + 1}/${maxAttempts})`
-            );
-            try {
-              const checkRes = await fetch(`/api/documents/${data.id}`);
-              const checkData = await checkRes.json();
-              const doc = checkData.document;
-              if (doc?.status === "completed" || doc?.content?.includes("## Bab ")) {
-                removeProcessingDoc(data.id);
-                notifyDocumentCompleted(doc);
-                break;
-              }
-              if (doc?.status === "failed") {
-                removeProcessingDoc(data.id);
-                break;
-              }
-            } catch {}
-            await new Promise((r) => setTimeout(r, 2500));
-          }
-          try {
-            const finalCheck = await fetch(`/api/documents/${data.id}`);
-            const finalDoc = (await finalCheck.json())?.document;
-            if (finalDoc?.status === "completed") {
-              removeProcessingDoc(data.id);
-              notifyDocumentCompleted(finalDoc);
-            } else if (finalDoc?.status === "failed") {
-              removeProcessingDoc(data.id);
-            } else if (finalDoc?.status === "processing") {
-              isStillProcessing = true;
-            }
-          } catch {}
           await loadDocument(data.id);
         }
         setUploadStatus("");
         handleCancelStaging();
         setActiveTab("material");
         if (data.isExamSheet) {
-          if (isStillProcessing) {
-            showNotice(`📋 Lembar soal "${data.title}" tersimpan. Analisis butir soal sedang berjalan di latar belakang.`);
-          } else {
-            showNotice(`📋 Kisi-kisi soal "${data.title}" siap dipelajari di Bedah Soal!`);
-          }
+          showNotice(`📋 Kisi-kisi soal "${data.title}" siap dipelajari di Bedah Soal!`);
         }
       } else {
         setUploadError(data.error || "Gagal memproses berkas dokumen");

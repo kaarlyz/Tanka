@@ -541,6 +541,23 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
       });
     }
 
+    // In-Flight Processing Deduplication: jika berkas identik sedang diproses di pipeline latar belakang, jangan buat duplikat
+    const inFlightDoc = db.prepare(
+      "SELECT * FROM documents WHERE content_hash = ? AND status = 'processing' ORDER BY created_at DESC LIMIT 1"
+    ).get(contentHash);
+    if (inFlightDoc) {
+      console.log(`[Upload In-Flight Hit] Berkas identik sedang diproses: "${inFlightDoc.title}" (${inFlightDoc.id})`);
+      return sendJSON(res, {
+        success: true,
+        id: inFlightDoc.id,
+        title: inFlightDoc.title,
+        content: inFlightDoc.content,
+        status: "processing",
+        inFlight: true,
+        message: "Dokumen ini sedang diproses di latar belakang."
+      });
+    }
+
     const id = "doc_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
     const createdAt = Date.now();
 
@@ -574,6 +591,7 @@ async function handleDocumentsRoutes(req, res, pathname, helpers) {
         wordCount: finalContent.split(/\s+/).length,
         created_at: createdAt,
         isExamSheet: examResult.isExamSheet || false,
+        status: initialStatus,
         questionCount: examResult.questionCount || 0,
         detectedQuestions: examResult.questions || []
       });

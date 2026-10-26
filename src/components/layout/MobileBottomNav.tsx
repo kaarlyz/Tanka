@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, BookOpen, Target, AlertTriangle, MessageSquare } from "lucide-react";
+import { Home, BookOpen, Target, AlertTriangle, MessageSquare, GraduationCap } from "lucide-react";
 import { ActiveTab, MistakeItem } from "../../types";
 
 export interface MobileBottomNavProps {
@@ -9,6 +9,7 @@ export interface MobileBottomNavProps {
   setIsAiPanelOpen: (val: boolean) => void;
   setIsMobileDrawerOpen: (val: boolean) => void;
   mistakes: MistakeItem[];
+  hidden?: boolean;
 }
 
 export const MobileBottomNav = React.memo(function MobileBottomNav({
@@ -18,7 +19,10 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({
   setIsAiPanelOpen,
   setIsMobileDrawerOpen,
   mistakes,
+  hidden = false,
 }: MobileBottomNavProps) {
+  if (hidden) return null;
+
   return (
       <nav className="mobile-only mobile-bottom-nav" aria-label="Navigasi Bawah Ponsel">
         <button
@@ -32,6 +36,19 @@ export const MobileBottomNav = React.memo(function MobileBottomNav({
           <Home size={18} />
           <span>Beranda</span>
           {activeTab === "home" && !isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
+        </button>
+
+        <button
+          className={`mobile-bottom-btn ${activeTab === "cbt" && !isAiPanelOpen ? "active" : ""}`}
+          onClick={() => {
+            setActiveTab("cbt");
+            setIsAiPanelOpen(false);
+            setIsMobileDrawerOpen(false);
+          }}
+        >
+          <GraduationCap size={18} />
+          <span>CBT</span>
+          {activeTab === "cbt" && !isAiPanelOpen && <span className="mobile-bottom-btn-indicator" />}
         </button>
 
         <button

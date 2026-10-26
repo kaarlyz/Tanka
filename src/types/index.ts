@@ -6,6 +6,7 @@ export interface DocumentItem {
   flashcard_count?: number;
   is_exam_sheet?: boolean;
   question_count?: number;
+  status?: string;
 }
 
 export interface Flashcard {
@@ -124,12 +125,65 @@ export interface FormulaItem {
 export type ActiveTab =
   | "landing"
   | "home"
+  | "cbt"
   | "material"
   | "quiz"
   | "mistakes"
   | "feynman"
   | "flashcards"
   | "summary";
+
+export interface ExamBankPackage {
+  id: string;
+  source: string;
+  jenjang: string;
+  kategori: string;
+  subtes_or_mapel: string;
+  paket: string;
+  total_questions: number;
+}
+
+export interface ExamBankOption {
+  id: string;
+  text: string;
+  img?: string;
+  labels?: string[];
+}
+
+export interface ExamBankItem {
+  id: string;
+  nomor: number;
+  tipe_soal: string;
+  bacaan?: string;
+  soal: string;
+  soal_img?: string;
+  options: ExamBankOption[];
+  kunci_jawaban: string;
+  kunci_jawaban_text?: string;
+}
+
+export interface ExamBankSubmitBreakdown {
+  id?: string;
+  nomor: number;
+  tipe_soal?: string;
+  soal: string;
+  bacaan?: string;
+  soal_img?: string;
+  options?: ExamBankOption[];
+  user_answer: string;
+  kunci_jawaban: string;
+  kunci_jawaban_text?: string;
+  is_correct: boolean;
+}
+
+export interface ExamBankSubmitResult {
+  total: number;
+  answered: number;
+  correct: number;
+  score_percent: number;
+  estimated_irt: number;
+  breakdown: ExamBankSubmitBreakdown[];
+}
 
 export interface StagedFile {
   id: string;
@@ -201,6 +255,9 @@ export interface RoomParticipant {
 export interface StudyRoom {
   id: string;
   docId: string;
+  packageId?: string;
+  package_id?: string;
+  doc_id?: string;
   title: string;
   hostUserId: string;
   hostName: string;

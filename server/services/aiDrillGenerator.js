@@ -116,6 +116,34 @@ const DIVERSE_THEME_POOLS = {
     "Kriptografi IT: Transformasi matriks enkripsi Hill Cipher, fungsi hashing, dan kompleksitas komputasi modular",
     "Optimasi Industri Logistik: Minimasi biaya distribusi rantai pasok dan pemrograman linear rute armada pengiriman",
     "Statistika Terapan: Pengujian mutu sampling massal batch pabrik, estimasi risiko aktuaria, dan analisis regresi tren"
+  ],
+  ekonomi: [
+    "Kelangkaan komoditas beras & intervensi stabilisasi harga pasar",
+    "Keseimbangan pasar Qd=Qs, pergeseran kurva akibat kenaikan PPN 12%",
+    "Kebijakan moneter Bank Indonesia (BI-Rate, operasi pasar terbuka, SRBI)",
+    "Kebijakan fiskal APBN (belanja subsidi energi vs pembiayaan infrastruktur)",
+    "Koperasi simpan pinjam vs perseroan terbatas (pembagian SHU & tata kelola)",
+    "Fluktuasi kurs Rupiah/USD dan kinerja ekspor manufaktur tekstil vs impor bahan baku",
+    "Neraca transaksi berjalan & hilirisasi komoditas tambang nikel",
+    "Inflasi pangan bergejolak (volatile foods) dan indeks harga konsumen (IHK)",
+    "Tingkat pengangguran terbuka, upah minimum provinsi (UMP), dan produktivitas tenaga kerja",
+    "Rasio Gini, kurva Lorenz, dan pemerataan distribusi pendapatan nasional",
+    "Pasar modal ritel, obligasi negara (SBN), dan edukasi literasi keuangan",
+    "Lembaga Penjamin Simpanan (LPS) dan stabilitas sistem perbankan nasional"
+  ],
+  sosiologi: [
+    "Ciri non-etis sosiologi: studi sosiologis pemukiman bantaran rel tanpa vonis moral",
+    "Teori aksi sosial Max Weber: rasionalitas tujuan pedagang online shop live streaming",
+    "Fakta sosial memaksa Émile Durkheim: aturan adat awig-awig di desa adat Bali",
+    "Teori konflik kelas Karl Marx: relasi kuasa pekerja gig economy (driver ojol) vs platform digital",
+    "Diferensiasi horizontal (suku, ras, agama) vs stratifikasi vertikal kekayaan",
+    "Akomodasi konflik sengketa lahan: perbedaan mediasi sukarela vs arbitrase mengikat",
+    "Fenomena cultural lag: adopsi cepat teknologi kecerdasan buatan vs etika integritas akademik",
+    "Transformasi sosial gemeinschaft (paguyuban desa) menjadi gesellschaft (patembayan kota) di kawasan penyangga",
+    "Dampak konsumerisme dan gaya hidup hedonis akibat media sosial terhadap kohesi sosial",
+    "Metodologi kuantitatif survei kuesioner vs kualitatif observasi partisipatoris",
+    "Mobilitas sosial antargenerasi melalui akses pendidikan tinggi (beasiswa KIP-K)",
+    "Globalisasi budaya pop dan ketahanan kearifan lokal seni pertunjukan tradisional"
   ]
 };
 
@@ -135,6 +163,8 @@ async function generateAiDrillPackage({ subject = "Bahasa Indonesia", pola = "al
   const blueprintMap = SUBJECT_BLUEPRINTS[subject] || SUBJECT_BLUEPRINTS["Bahasa Indonesia"];
   const isEnglish = subject === "Bahasa Inggris";
   const isMath = subject === "Matematika";
+  const isEkonomi = subject === "Ekonomi";
+  const isSosiologi = subject === "Sosiologi";
   const isChallenge = tier === "challenge";
 
   let polaInstruction = "";
@@ -260,12 +290,14 @@ PENTING ATURAN KUNCI JAWABAN:
   const sampledArtikel = getRandomThemes(DIVERSE_THEME_POOLS.artikel, 8);
   const sampledInggris = getRandomThemes(DIVERSE_THEME_POOLS.inggris, DIVERSE_THEME_POOLS.inggris.length);
   const mathThemes = DIVERSE_THEME_POOLS.matematika;
+  const sampledEkonomi = getRandomThemes(DIVERSE_THEME_POOLS.ekonomi, DIVERSE_THEME_POOLS.ekonomi.length);
+  const sampledSosiologi = getRandomThemes(DIVERSE_THEME_POOLS.sosiologi, DIVERSE_THEME_POOLS.sosiologi.length);
 
   let unitDefs = [];
   if (pola !== "all") {
     const selectedPola = blueprintMap[pola] || blueprintMap[1];
     const isSastraPola = ["6", "7", "8", "9"].includes(String(selectedPola.id)) || selectedPola.nama.toLowerCase().includes("sastra") || selectedPola.nama.toLowerCase().includes("cerpen");
-    const themePool = isMath ? mathThemes : isEnglish ? sampledInggris : (isSastraPola ? sampledCerpen : sampledArtikel);
+    const themePool = isMath ? mathThemes : isEnglish ? sampledInggris : isEkonomi ? sampledEkonomi : isSosiologi ? sampledSosiologi : (isSastraPola ? sampledCerpen : sampledArtikel);
     unitDefs = [];
     let cur = 1;
     let themeIdx = 0;
@@ -466,6 +498,176 @@ PENTING ATURAN KUNCI JAWABAN:
         }
       ];
     }
+  } else if (isEkonomi) {
+    // Alokasi 6 Pola Baku Ekonomi Pusmendik (Kelangkaan, Pasar Qd=Qs, Moneter, Fiskal, Badan Usaha, Neraca Pembayaran)
+    if (targetCount === 25) {
+      unitDefs = [
+        {
+          start: 1, end: 4,
+          type: `Ekonomi — Kelangkaan & Opportunity Cost (${sampledEkonomi[0]})`,
+          polas: "Pola 1 — Kelangkaan & Biaya Peluang (Opportunity Cost)",
+          polaId: 1
+        },
+        {
+          start: 5, end: 8,
+          type: `Ekonomi — Keseimbangan Pasar Qd=Qs (${sampledEkonomi[1]})`,
+          polas: "Pola 2 — Mekanisme Pasar & Keseimbangan (Qd = Qs)",
+          polaId: 2
+        },
+        {
+          start: 9, end: 12,
+          type: `Ekonomi — Inflasi & Moneter BI (${sampledEkonomi[2]})`,
+          polas: "Pola 3 — Inflasi, Indeks Harga & Kebijakan Moneter",
+          polaId: 3
+        },
+        {
+          start: 13, end: 17,
+          type: `Ekonomi — Fiskal APBN & Pajak (${sampledEkonomi[3]})`,
+          polas: "Pola 4 — Kebijakan Fiskal, APBN/APBD & Pajak",
+          polaId: 4
+        },
+        {
+          start: 18, end: 21,
+          type: `Ekonomi — Badan Usaha & Akuntansi (${sampledEkonomi[4]})`,
+          polas: "Pola 5 — Badan Usaha (BUMN, BUMS, Koperasi) & Akuntansi",
+          polaId: 5
+        },
+        {
+          start: 22, end: 25,
+          type: `Ekonomi — Neraca Pembayaran & Valas (${sampledEkonomi[5]})`,
+          polas: "Pola 6 — Perdagangan Internasional & Neraca Pembayaran",
+          polaId: 6
+        }
+      ];
+    } else if (targetCount === 20) {
+      unitDefs = [
+        { start: 1, end: 3, type: `Ekonomi — Kelangkaan & Opportunity Cost (${sampledEkonomi[0]})`, polas: "Pola 1 — Kelangkaan & Biaya Peluang (Opportunity Cost)", polaId: 1 },
+        { start: 4, end: 6, type: `Ekonomi — Keseimbangan Pasar Qd=Qs (${sampledEkonomi[1]})`, polas: "Pola 2 — Mekanisme Pasar & Keseimbangan (Qd = Qs)", polaId: 2 },
+        { start: 7, end: 10, type: `Ekonomi — Inflasi & Moneter BI (${sampledEkonomi[2]})`, polas: "Pola 3 — Inflasi, Indeks Harga & Kebijakan Moneter", polaId: 3 },
+        { start: 11, end: 13, type: `Ekonomi — Fiskal APBN & Pajak (${sampledEkonomi[3]})`, polas: "Pola 4 — Kebijakan Fiskal, APBN/APBD & Pajak", polaId: 4 },
+        { start: 14, end: 16, type: `Ekonomi — Badan Usaha & Akuntansi (${sampledEkonomi[4]})`, polas: "Pola 5 — Badan Usaha (BUMN, BUMS, Koperasi) & Akuntansi", polaId: 5 },
+        { start: 17, end: 20, type: `Ekonomi — Neraca Pembayaran & Valas (${sampledEkonomi[5]})`, polas: "Pola 6 — Perdagangan Internasional & Neraca Pembayaran", polaId: 6 }
+      ];
+    } else if (targetCount === 30) {
+      unitDefs = [
+        { start: 1, end: 5, type: `Ekonomi — Kelangkaan & Opportunity Cost (${sampledEkonomi[0]})`, polas: "Pola 1 — Kelangkaan & Biaya Peluang (Opportunity Cost)", polaId: 1 },
+        { start: 6, end: 10, type: `Ekonomi — Keseimbangan Pasar Qd=Qs (${sampledEkonomi[1]})`, polas: "Pola 2 — Mekanisme Pasar & Keseimbangan (Qd = Qs)", polaId: 2 },
+        { start: 11, end: 15, type: `Ekonomi — Inflasi & Moneter BI (${sampledEkonomi[2]})`, polas: "Pola 3 — Inflasi, Indeks Harga & Kebijakan Moneter", polaId: 3 },
+        { start: 16, end: 20, type: `Ekonomi — Fiskal APBN & Pajak (${sampledEkonomi[3]})`, polas: "Pola 4 — Kebijakan Fiskal, APBN/APBD & Pajak", polaId: 4 },
+        { start: 21, end: 25, type: `Ekonomi — Badan Usaha & Akuntansi (${sampledEkonomi[4]})`, polas: "Pola 5 — Badan Usaha (BUMN, BUMS, Koperasi) & Akuntansi", polaId: 5 },
+        { start: 26, end: 30, type: `Ekonomi — Neraca Pembayaran & Valas (${sampledEkonomi[5]})`, polas: "Pola 6 — Perdagangan Internasional & Neraca Pembayaran", polaId: 6 }
+      ];
+    } else if (targetCount === 10) {
+      unitDefs = [
+        {
+          start: 1, end: 5,
+          type: `Ekonomi Mikro (${sampledEkonomi[0]})`,
+          polas: "Pola 1 (Kelangkaan/Opportunity Cost), Pola 2 (Keseimbangan Pasar Qd=Qs), Pola 5 (Badan Usaha & Akuntansi)",
+          polaId: 1
+        },
+        {
+          start: 6, end: 10,
+          type: `Ekonomi Makro (${sampledEkonomi[1]})`,
+          polas: "Pola 3 (Inflasi & Moneter BI), Pola 4 (Fiskal APBN & Pajak), Pola 6 (Neraca Pembayaran & Valas)",
+          polaId: 3
+        }
+      ];
+    } else {
+      const singleTheme = sampledEkonomi[Math.floor(Math.random() * sampledEkonomi.length)] || sampledEkonomi[0];
+      unitDefs = [
+        {
+          start: 1, end: targetCount,
+          type: `Ekonomi Terapan (${singleTheme})`,
+          polas: "Pola 1 s/d Pola 6 (Kelangkaan, Keseimbangan Pasar Qd=Qs, Inflasi & Moneter, Fiskal & APBN, Badan Usaha, Neraca Pembayaran)",
+          polaId: 1
+        }
+      ];
+    }
+  } else if (isSosiologi) {
+    // Alokasi 6 Pola Baku Sosiologi Pusmendik (Ciri Non-Etis, Teori Tokoh, Stratifikasi, Konflik, Perubahan Sosial, Metodologi)
+    if (targetCount === 25) {
+      unitDefs = [
+        {
+          start: 1, end: 4,
+          type: `Sosiologi — Ciri Non-Etis (${sampledSosiologi[0]})`,
+          polas: "Pola 1 — Konsep Sosiologi & Ciri Non-Etis",
+          polaId: 1
+        },
+        {
+          start: 5, end: 8,
+          type: `Sosiologi — Teori Tokoh Weber/Durkheim/Marx (${sampledSosiologi[1]})`,
+          polas: "Pola 2 — Interaksi Sosial & Teori Tokoh (Weber, Durkheim, Marx)",
+          polaId: 2
+        },
+        {
+          start: 9, end: 12,
+          type: `Sosiologi — Stratifikasi & Diferensiasi (${sampledSosiologi[2]})`,
+          polas: "Pola 3 — Stratifikasi & Diferensiasi Sosial Multikultural",
+          polaId: 3
+        },
+        {
+          start: 13, end: 17,
+          type: `Sosiologi — Konflik & Integrasi (${sampledSosiologi[3]})`,
+          polas: "Pola 4 — Konflik Sosial & Resolusi Integrasi",
+          polaId: 4
+        },
+        {
+          start: 18, end: 21,
+          type: `Sosiologi — Perubahan Sosial & Cultural Lag (${sampledSosiologi[4]})`,
+          polas: "Pola 5 — Perubahan Sosial & Dampak Globalisasi",
+          polaId: 5
+        },
+        {
+          start: 22, end: 25,
+          type: `Sosiologi — Metodologi Penelitian (${sampledSosiologi[5]})`,
+          polas: "Pola 6 — Metodologi Penelitian Sosial",
+          polaId: 6
+        }
+      ];
+    } else if (targetCount === 20) {
+      unitDefs = [
+        { start: 1, end: 3, type: `Sosiologi — Ciri Non-Etis (${sampledSosiologi[0]})`, polas: "Pola 1 — Konsep Sosiologi & Ciri Non-Etis", polaId: 1 },
+        { start: 4, end: 6, type: `Sosiologi — Teori Tokoh Weber/Durkheim/Marx (${sampledSosiologi[1]})`, polas: "Pola 2 — Interaksi Sosial & Teori Tokoh (Weber, Durkheim, Marx)", polaId: 2 },
+        { start: 7, end: 10, type: `Sosiologi — Stratifikasi & Diferensiasi (${sampledSosiologi[2]})`, polas: "Pola 3 — Stratifikasi & Diferensiasi Sosial Multikultural", polaId: 3 },
+        { start: 11, end: 13, type: `Sosiologi — Konflik & Integrasi (${sampledSosiologi[3]})`, polas: "Pola 4 — Konflik Sosial & Resolusi Integrasi", polaId: 4 },
+        { start: 14, end: 16, type: `Sosiologi — Perubahan Sosial & Cultural Lag (${sampledSosiologi[4]})`, polas: "Pola 5 — Perubahan Sosial & Dampak Globalisasi", polaId: 5 },
+        { start: 17, end: 20, type: `Sosiologi — Metodologi Penelitian (${sampledSosiologi[5]})`, polas: "Pola 6 — Metodologi Penelitian Sosial", polaId: 6 }
+      ];
+    } else if (targetCount === 30) {
+      unitDefs = [
+        { start: 1, end: 5, type: `Sosiologi — Ciri Non-Etis (${sampledSosiologi[0]})`, polas: "Pola 1 — Konsep Sosiologi & Ciri Non-Etis", polaId: 1 },
+        { start: 6, end: 10, type: `Sosiologi — Teori Tokoh Weber/Durkheim/Marx (${sampledSosiologi[1]})`, polas: "Pola 2 — Interaksi Sosial & Teori Tokoh (Weber, Durkheim, Marx)", polaId: 2 },
+        { start: 11, end: 15, type: `Sosiologi — Stratifikasi & Diferensiasi (${sampledSosiologi[2]})`, polas: "Pola 3 — Stratifikasi & Diferensiasi Sosial Multikultural", polaId: 3 },
+        { start: 16, end: 20, type: `Sosiologi — Konflik & Integrasi (${sampledSosiologi[3]})`, polas: "Pola 4 — Konflik Sosial & Resolusi Integrasi", polaId: 4 },
+        { start: 21, end: 25, type: `Sosiologi — Perubahan Sosial & Cultural Lag (${sampledSosiologi[4]})`, polas: "Pola 5 — Perubahan Sosial & Dampak Globalisasi", polaId: 5 },
+        { start: 26, end: 30, type: `Sosiologi — Metodologi Penelitian (${sampledSosiologi[5]})`, polas: "Pola 6 — Metodologi Penelitian Sosial", polaId: 6 }
+      ];
+    } else if (targetCount === 10) {
+      unitDefs = [
+        {
+          start: 1, end: 5,
+          type: `Struktur & Teori Sosiologi (${sampledSosiologi[0]})`,
+          polas: "Pola 1 (Ciri Non-Etis), Pola 2 (Teori Tokoh Weber/Durkheim/Marx), Pola 3 (Stratifikasi & Diferensiasi)",
+          polaId: 1
+        },
+        {
+          start: 6, end: 10,
+          type: `Dinamika & Metodologi Sosiologi (${sampledSosiologi[1]})`,
+          polas: "Pola 4 (Konflik & Integrasi), Pola 5 (Perubahan Sosial & Cultural Lag), Pola 6 (Metodologi Penelitian)",
+          polaId: 4
+        }
+      ];
+    } else {
+      const singleTheme = sampledSosiologi[Math.floor(Math.random() * sampledSosiologi.length)] || sampledSosiologi[0];
+      unitDefs = [
+        {
+          start: 1, end: targetCount,
+          type: `Sosiologi Terapan (${singleTheme})`,
+          polas: "Pola 1 s/d Pola 6 (Ciri Non-Etis, Teori Tokoh Weber/Durkheim/Marx, Stratifikasi & Diferensiasi, Konflik & Integrasi, Perubahan Sosial, Metodologi Penelitian)",
+          polaId: 1
+        }
+      ];
+    }
   } else if (targetCount === 25) {
     unitDefs = [
       {
@@ -541,12 +743,13 @@ PENTING ATURAN KUNCI JAWABAN:
   const tasks = unitDefs.map(u => {
     const unitCount = u.end - u.start + 1;
     const polaIdStr = String(u.polaId || "");
-    const isCerpen = ["6", "7", "8", "9"].includes(polaIdStr) || u.type.toLowerCase().includes("cerpen") || u.type.toLowerCase().includes("sastra");
-    const isDual = polaIdStr === "10";
-    const isDialogEval = polaIdStr === "11";
-    const isWhatIf = polaIdStr === "7";
-    const isChronology = polaIdStr === "8";
-    const isRelevance = polaIdStr === "9";
+    const isIndo = !isMath && !isEnglish && !isEkonomi && !isSosiologi;
+    const isCerpen = !isMath && !isEnglish && !isEkonomi && !isSosiologi && (["6", "7", "8", "9"].includes(polaIdStr) || u.type.toLowerCase().includes("cerpen") || u.type.toLowerCase().includes("sastra"));
+    const isDual = isIndo && polaIdStr === "10";
+    const isDialogEval = isIndo && polaIdStr === "11";
+    const isWhatIf = isIndo && polaIdStr === "7";
+    const isChronology = isIndo && polaIdStr === "8";
+    const isRelevance = isIndo && polaIdStr === "9";
     const unitDomain = topic.trim() ? `${u.type} (Konteks spesifik: ${topic.trim()})` : u.type;
 
     const targetWordCount = isChallenge ? "300 - 360 KATA (Level Riset Akademis/Challenge)" : "200 - 250 KATA (Standar Resmi Pusmendik SMA Kelas 12)";
@@ -659,6 +862,107 @@ OUTPUT JSON SCHEMA:
   ]
 }`;
         })()
+      : isEkonomi
+      ? `Buatkan 1 wacana studi kasus ekonomi standar resmi TKA Pusmendik (${targetWordCount}).
+WACANA WAJIB DIAWALI HEADER HTML BERIKUT:
+<p><strong>Teks untuk soal nomor ${u.start} s.d. ${u.end}</strong></p>
+
+DOMAIN TOPIK WACANA INI: ${unitDomain}
+FOKUS POLA UJI: ${u.polas}
+
+PETUNJUK KHUSUS EKONOMI TERAPAN:
+- Stimulus berupa kasus nyata ekonomi terapan (kelangkaan komoditas, kurva penawaran/permintaan, intervensi pasar, kebijakan moneter BI, instrumen fiskal APBN, rasio Gini, atau neraca pembayaran).
+- TEGAS DILARANG MEMBUAT CERPEN/SASTRA FIKSI. Wacana WAJIB berupa artikel ekonomi analitis atau studi kasus empiris riil.
+- Panjang artikel: ${isChallenge ? "300 - 360 kata" : "200 - 240 kata (3 paragraf padat)"}.
+- Bahasa lugas, ilmiah populer, objektif, dan berbasis data/fenomena perekonomian nyata.
+
+STANDAR KETAT TINGKAT KESULITAN PUSMENDIK (HIGH DISCRIMINATION):
+1. MANDATORI: Wajib hasilkan TEPAT ${unitCount} butir soal bernomor urut ${u.start} sampai ${u.end} yang 100% berakar kuat di wacana tersebut.
+2. PANJANG OPSI HOMOGEN: Seluruh opsi jawaban (a, b, c, d, e) wajib memiliki panjang kalimat yang setara dan struktur kalimat yang seimbang.
+3. JEBAKAN PENGECOH ASLI PUSMENDIK:
+   - DILARANG membuat opsi salah yang kentara konyol atau mudah dicoret!
+   - 4 opsi pengecoh harus tampak 90% benar dan sangat meyakinkan:
+     * Gunakan jebakan pembalikan arah kausalitas (sebab-akibat ekonomi dibalik tipis).
+     * Gunakan jebakan slip kualifikasi (teks menyebut "sebagian", opsi menyebut "seluruhnya/pasti").
+     * Gunakan jebakan asumsi plausibel non-tekstual (pernyataan masuk akal di dunia nyata, tetapi TIDAK ADA buktinya di teks wacana).
+4. SOAL TABEL PERNYATAAN (Pola 5):
+   - Gunakan format 3 baris pernyataan (id: "a", "b", "c").
+   - Sertakan "labels": ["Benar", "Salah"] atau ["Sesuai", "Tidak Sesuai"] atau ["Setuju", "Tidak Setuju"].
+   - Kunci jawaban wajib pasangan lengkap: contoh "a:sesuai;b:tidak sesuai;c:sesuai".
+
+Format Output JSON Murni:
+{
+  "bacaan": "<p><strong>Teks untuk soal nomor ${u.start} s.d. ${u.end}</strong></p><p>Isi wacana lengkap...</p>",
+  "items": [
+    {
+      "nomor": ${u.start},
+      "pola": ${u.polaId || 1},
+      "tipe_soal": "pilihan_ganda",
+      "soal": "Pertanyaan berbobot analitis...",
+      "options": [
+        {"id": "a", "text": "Kalimat opsi A yang panjangnya setara dan meyakinkan."},
+        {"id": "b", "text": "Kalimat opsi B yang panjangnya setara dan meyakinkan."},
+        {"id": "c", "text": "Kalimat opsi C yang panjangnya setara dan meyakinkan."},
+        {"id": "d", "text": "Kalimat opsi D yang panjangnya setara dan meyakinkan."},
+        {"id": "e", "text": "Kalimat opsi E yang panjangnya setara dan meyakinkan."}
+      ],
+      "kunci_jawaban": "b",
+      "kunci_jawaban_text": "Kunci B karena wacana secara eksplisit menguraikan hubungan data tersebut, sedangkan opsi lain terkecoh asumsi di luar stimulus."
+    }
+  ]
+}
+`
+      : isSosiologi
+      ? `Buatkan 1 wacana studi kasus sosiologi standar resmi TKA Pusmendik (${targetWordCount}).
+WACANA WAJIB DIAWALI HEADER HTML BERIKUT:
+<p><strong>Teks untuk soal nomor ${u.start} s.d. ${u.end}</strong></p>
+
+DOMAIN TOPIK WACANA INI: ${unitDomain}
+FOKUS POLA UJI: ${u.polas}
+
+PETUNJUK KHUSUS SOSIOLOGI TERAPAN:
+- Stimulus berupa kasus sosiologis nyata (dinamika masyarakat, struktur & diferensiasi, interaksi kelompok, aksi sosial, sengketa lahan, atau transformasi kultural).
+- MANDATORI CIRI NON-ETIS: analisis fakta sosial secara objektif tanpa vonis moral baik/buruk. Kajian sosiologi membedah realitas sosial apa adanya secara ilmiah tanpa menghakimi secara etis.
+- TEGAS DILARANG MEMBUAT CERPEN/SASTRA FIKSI. Wacana WAJIB berupa teks kajian sosiologis empiris atau studi kasus deskriptif-analitis.
+- Panjang artikel: ${isChallenge ? "300 - 360 kata" : "200 - 240 kata (3 paragraf padat)"}.
+- Bahasa lugas, ilmiah sosiologis, objektif, dan berbasis pengamatan fakta masyarakat nyata.
+
+STANDAR KETAT TINGKAT KESULITAN PUSMENDIK (HIGH DISCRIMINATION):
+1. MANDATORI: Wajib hasilkan TEPAT ${unitCount} butir soal bernomor urut ${u.start} sampai ${u.end} yang 100% berakar kuat di wacana tersebut.
+2. PANJANG OPSI HOMOGEN: Seluruh opsi jawaban (a, b, c, d, e) wajib memiliki panjang kalimat yang setara dan struktur kalimat yang seimbang.
+3. JEBAKAN PENGECOH ASLI PUSMENDIK:
+   - DILARANG membuat opsi salah yang kentara konyol atau mudah dicoret!
+   - 4 opsi pengecoh harus tampak 90% benar dan sangat meyakinkan:
+     * Gunakan jebakan pembalikan arah kausalitas (sebab-akibat fenomena dibalik tipis).
+     * Gunakan jebakan slip kualifikasi (teks menyebut "sebagian", opsi menyebut "seluruhnya/pasti").
+     * Gunakan jebakan asumsi plausibel non-tekstual (pernyataan masuk akal di dunia nyata, tetapi TIDAK ADA buktinya di teks wacana).
+4. SOAL TABEL PERNYATAAN (Pola 5):
+   - Gunakan format 3 baris pernyataan (id: "a", "b", "c").
+   - Sertakan "labels": ["Benar", "Salah"] atau ["Sesuai", "Tidak Sesuai"] atau ["Setuju", "Tidak Setuju"].
+   - Kunci jawaban wajib pasangan lengkap: contoh "a:sesuai;b:tidak sesuai;c:sesuai".
+
+Format Output JSON Murni:
+{
+  "bacaan": "<p><strong>Teks untuk soal nomor ${u.start} s.d. ${u.end}</strong></p><p>Isi wacana lengkap...</p>",
+  "items": [
+    {
+      "nomor": ${u.start},
+      "pola": ${u.polaId || 1},
+      "tipe_soal": "pilihan_ganda",
+      "soal": "Pertanyaan berbobot analitis...",
+      "options": [
+        {"id": "a", "text": "Kalimat opsi A yang panjangnya setara dan meyakinkan."},
+        {"id": "b", "text": "Kalimat opsi B yang panjangnya setara dan meyakinkan."},
+        {"id": "c", "text": "Kalimat opsi C yang panjangnya setara dan meyakinkan."},
+        {"id": "d", "text": "Kalimat opsi D yang panjangnya setara dan meyakinkan."},
+        {"id": "e", "text": "Kalimat opsi E yang panjangnya setara dan meyakinkan."}
+      ],
+      "kunci_jawaban": "b",
+      "kunci_jawaban_text": "Kunci B karena sesuai dengan fakta sosial objektif pada teks wacana, sedangkan opsi lain memuat vonis moral atau distorsi hubungan antarparagraf."
+    }
+  ]
+}
+`
       : `Buatkan 1 wacana membaca standar resmi TKA Pusmendik (${targetWordCount}).
 WACANA WAJIB DIAWALI HEADER HTML BERIKUT:
 <p><strong>Teks untuk soal nomor ${u.start} s.d. ${u.end}</strong></p>
